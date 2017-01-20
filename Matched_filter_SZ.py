@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[43]:
+# In[49]:
 
 import camb
 import numpy as np
@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 from camb import model
 from scipy import special
 from sympy.functions import coth
+from Tinker_MF import dn_dlogM
+from Tinker_MF import tinker_params
 import time
 from numba import autojit
 
@@ -238,8 +240,44 @@ class Halo_MF:
         N_dzdm = dn_dm[:,1:] * dV_dz[1:] * 4*np.pi
         return N_dzdm
 
+    def N_of_z_SZ(self,z_arr):
+        h0 = 70.
+        lnYmin = np.log(1e-12)
+        dlnY = 0.1
+        lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
+    
+        M = 10**np.arange(14.0, 16, .1)
+        dM = np.gradient(M)
+        rho_crit0m = 3. / (8 * np.pi) * (h0 * 1e5)**2 / c.G_CGS * c.MPC2CM / c.MSUN_CGS * cp.om
+        hh = h0/100.
 
-# In[44]:
+        M200 = np.outer(M,np.zeros([len(z_arr)]))
+        dM200 = np.outer(M,np.zeros([len(z_arr)]))
+        P_func = np.outer(M,np.zeros([len(z_arr)]))
+        sigN = np.outer(M,np.zeros([len(z_arr)]))
+        M_arr =  np.outer(M,np.ones([len(z_arr)]))
+
+        DA_z = results.angular_diameter_distance(z) * (cp.h0/100.)
+        
+        for i in xrange (len(z_arr)):
+            M200[:,i] = HP.Mass_con_del_2_del_mean200(M/hh,500,z_arr[i])
+            dM200[:,i] = np.gradient(M200[:,i])
+            for j in xrange(len(M)):
+                R500 = HP.rdel_c(M[j],z_arr[i],500)
+                thtc = R500/DA_z
+                sigN[j,i] = SZProf.filter_variance(M[j],z_arr[i],thtc)
+            
+            P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
+
+        #dN_dzdm = self.N_of_Mz(M200,z_arr,200.)
+        dn_dzdm = self.dn_dm(M200,z_arr,200.)
+        N_z = np.zeros(len(z_arr) - 1)
+        for i in xrange (len(z_arr) - 1):
+            N_z[i] = np.sum(dn_dzdm[:,i]*P_func[:,i+1]*dM200[:,i+1])
+
+        #N_z = np.dot(dN_dzdm,np.transpose(P_func[:,1:]*dM200[:,1:]))
+
+        return N_z
 
 class SZ_Cluster_Model:
     def __init__(self,P0=8.403,xc=1.177,al=1.05,gm=0.31,bt=5.49,fwhm=1,rms_noise =1,**options):
@@ -279,10 +317,10 @@ class SZ_Cluster_Model:
         ans = P500 * self.GNFW(xx)
         return ans
     
-    def y2D_norm(self,tht):
+    def y2D_norm(self,tht,M,z):
         ## tht here is unitless and the profile is normalized to 1 at smallest radii
-        M = 1e14 #FIX
-        z = 0.01 #FIX
+        ##M = 1e14 #FIX
+        ##z = 0.01 #FIX
         
         R500 = HP.rdel_c(M,z,500)
         rad = (np.arange(1e5) + 1.0)*self.drint #in MPC (max rad is 10 MPC)
@@ -296,14 +334,15 @@ class SZ_Cluster_Model:
         return y2D_out
     
 
-    def y2D_tilde_norm(self,ell,thtc):
+    def y2D_tilde_norm(self,ell,M,z,thtc):
         dtht = 0.00001
+        
         thta = np.arange(dtht,25*thtc,dtht)
         ans = ell*0.
-        y2D_use = self.y2D_norm(thta/thtc)
-        ans = forloop(ell,thta,y2D_use)*dtht
-        #for ii in xrange(len(ell)):
-        #    ans[ii] = np.sum(thta*special.jv(0,ell[ii]*thta)*y2D_use)*dtht
+        y2D_use = self.y2D_norm(thta/thtc,M,z)
+        #ans = forloop(ell,thta,y2D_use)*dtht
+        for ii in xrange(len(ell)):
+            ans[ii] = np.sum(thta*special.jv(0,ell[ii]*thta)*y2D_use)*dtht
         return ans
     
     def y2D_test(self,tht,thtc):
@@ -330,7 +369,7 @@ class SZ_Cluster_Model:
     
     def tot_noise_spec(self):
         #spec_file = "/Users/nab/CAMB/test_lensedCls_new.dat"
-        spec_file = "/Users/nab/CAMB/test_scalCls_new.dat"
+        spec_file = "test_scalCls_new.dat"
         ell,cl = np.loadtxt(spec_file,usecols=[0,1],unpack=True)
         ell_extra = np.arange(60000)+np.max(ell)+1.
         cll_extra = np.zeros(60000)
@@ -353,7 +392,7 @@ class SZ_Cluster_Model:
         return f
 
     
-    def filter_variance_test_JBM2005(self,thtc): #FIX
+    def filter_variance_test_JBM2005(self,M,z,thtc): #FIX
         dtht = 0.000001
         tht = np.arange(dtht,10*thtc,dtht)
         dk = 0.001
@@ -364,41 +403,101 @@ class SZ_Cluster_Model:
         var = np.sum(kk*self.y2D_tilde_test(kk,thtc)**2/self.tot_noise_spec_k(kk))*dk 
         return prof_int / np.sqrt(var) / np.sqrt(freq_fac)
 
-    def filter_variance(self,thtc):
+    def filter_variance(self,M,z,thtc):
         
         el, nltemp, cl = self.tot_noise_spec()
         dell = 100
         ells = np.arange(2,60000,dell)
         nl = np.interp(ells,el,nltemp)
         freq_fac = (self.f_nu(150.))**2
-        y2dtilde_2 = (self.y2D_tilde_norm(ells,thtc))**2
+        y2dtilde_2 = (self.y2D_tilde_norm(ells,M,z,thtc))**2
         var = np.sum(ells*y2dtilde_2/nl)*dell*freq_fac
         
         dtht = 0.00001
         thta = np.arange(dtht,5*thtc,dtht)
-        y2D_use = self.y2D_norm(thta/thtc)
-        prof_int = 2.*np.pi*(np.sum(y2D_use)*dtht)**2
+        y2D_use = self.y2D_norm(thta/thtc,M,z)
+        prof_int = 2.*np.pi*(np.sum(y2D_use*thta)*dtht)**2
         return prof_int/var
+    
+    
+    def Y_M(self,M,z):
+        pars = camb.CAMBparams()
+        pars.set_cosmology(H0=cp.h0, ombh2=cp.ob*(cp.h0/100.)**2, omch2=(cp.om - cp.ob)*(cp.h0/100.)**2,)    
+        results = camb.get_background(pars)
+        DA_z = results.angular_diameter_distance(z)
+        
+        Y_star = 10**(-0.19) #sterads
+        #dropped h70 factor
+        alpha_ym = 1.79
+        b_ym = 0.8
+        beta_ym = 0.66
+        
+        ans = Y_star*((1-b_ym)*M / 6e14)**alpha_ym *(0.01/DA_z)**2 * HP.E_z(z)
+        print (0.01/DA_z)**2
+        return ans
+    
+    def Y_erf(self,Y_true,sigma_N):
+        q = 5.
+        ans = 0.5 * (1. + special.erf((Y_true - q*sigma_N)/(np.sqrt(2.)*sigma_N)))
+        return ans
+    
+    def P_of_Y (self,lnL,M,z):
+        sig = 0.127  
+        Y = np.exp(lnY)
+        Ma = np.outer(M,np.ones(len(Y[0,:])))
+        numer = -1.*np.log(Y/self.Y_M(Ma,z))**2
+        ans = 1/(sig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*sig))
+        return ans
+    
+    def P_of_q (self,lnY,M,z,sigma_N):
+        lnYa = np.outer(np.ones(len(M)),lnY)
+        
+        pars = camb.CAMBparams()
+        pars.set_cosmology(H0=cp.h0, ombh2=cp.ob*(cp.h0/100.)**2, omch2=(cp.om - cp.ob)*(cp.h0/100.)**2,)    
+        results = camb.get_background(pars)
+        DA_z = results.angular_diameter_distance(z) * (cp.h0/100.)
+        R500 = HP.rdel_c(M,z,500)
+        thtc = R500/DA_z
+        
+        sig_thresh = self.Y_erf(np.log(lnYa),sigma_N)
+        ans = np.dot(self.P_of_L(lnYa,M,z),sig_thresh)
+        return ans
     
 c = Constants()
 HP = Halo_tools()
 cp = CosmoParams()
 SZProf = SZ_Cluster_Model(rms_noise = 1.,fwhm=1.5 )
+HMF = Halo_MF()
+
+M = 5e15
+z = 0.5
+
+print SZProf.Y_M(M,z)
 
 
-# In[29]:
+# In[15]:
+
 
 
 noise_plot = SZProf.plot_noise()
 noise_plot.show()
 
-dell = 1
+pars = camb.CAMBparams()
+pars.set_cosmology(H0=cp.h0, ombh2=cp.ob*(cp.h0/100.)**2, omch2=(cp.om - cp.ob)*(cp.h0/100.)**2,)    
+results = camb.get_background(pars)
+DA_z = results.angular_diameter_distance(z) * (cp.h0/100.)
+R500 = HP.rdel_c(M,z,500)
+thetc = R500/DA_z
+
+#dell = 1
 #ells = np.arange(2,20000,dell)
 #ktest = 10**(np.arange(-3.5,1.0,0.1))
 
 arc = 5.9
 
-thetc = np.deg2rad(arc / 60.)
+
+
+#thetc = np.deg2rad(arc / 60.)
 thetc2 = np.deg2rad(arc/2. / 60.)
 print "thetc = ", thetc
 
@@ -408,7 +507,7 @@ dell = 100
 ells = np.arange(2,60000,dell)
 nl = np.interp(ells,el,nltemp)
 start = time.time()
-y2dt2= SZProf.y2D_tilde_norm(ells,thetc)
+y2dt2= SZProf.y2D_tilde_norm(ells,M,z,thetc)
 #y2dt2_2= SZProf.y2D_tilde_norm(ells,thetc2)
 
 print time.time() - start
@@ -440,12 +539,13 @@ for ii in xrange(len(tht)):
 print time.time() - start2
 
 
-# In[45]:
+# In[21]:
 
-
+#arc = 5.9
+#thetc = np.deg2rad(arc / 60.)
 
 start2 = time.time()
-print SZProf.filter_variance(thetc)
+print SZProf.filter_variance(M,z,thetc)
 print time.time() - start2
 #plt.figure()
 #plt.loglog(ktest,y2dt2/y2dt2_2)
@@ -454,9 +554,10 @@ print time.time() - start2
 fig = plt.figure(figsize=(10,10))
 plt.xlim([0,10])
 #plt.plot(tht/thetc,filt/np.max(filt))
+
 plt.plot(np.rad2deg(tht)*60.,filt/np.max(filt),'k')
 #plt.plot(np.rad2deg(tht*thetc2)*60.,filt2/np.max(filt2))
-plt.plot(np.rad2deg(tht)*60.,SZProf.y2D_norm(tht/thetc),'k--')
+plt.plot(np.rad2deg(tht)*60.,SZProf.y2D_norm(tht/thetc,M,z),'k--')
 #plt.plot(np.rad2deg(tht)*60.,SZProf.y2D_norm(tht),'--')
 #plt.plot(np.rad2deg(tht)*60.,SZProf.y2D_test(tht,thetc),'--')
 plt.plot([0,10],[0,0],'k--')
@@ -465,6 +566,16 @@ plt.plot([0,10],[0,0],'k--')
 
 
 # In[50]:
+
+zmin = 0.2
+zmax = 1.0
+delz = (zmax-zmin)/4.
+zbin_temp = np.arange(zmin,zmax,delz)
+zbin = np.insert(zbin_temp,0,0.0)
+HMF.N_of_z_SZ(zbin)
+
+
+# In[ ]:
 
 dtht = 0.00001
 thta = np.arange(dtht,10*thetc,dtht)
