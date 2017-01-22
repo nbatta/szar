@@ -1,8 +1,3 @@
-
-# coding: utf-8
-
-# In[2]:
-
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline as iuSpline
 
