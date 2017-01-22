@@ -4,7 +4,7 @@ from scipy import special
 
 import matplotlib.pyplot as plt
 import sys, os, platform, time
-from szCounts import Constants,CosmoParams,SZ_Cluster_Model,Halo_MF
+from szlib.szcounts import Constants,CosmoParams,SZ_Cluster_Model,Halo_MF
 
 from orphics.tools.output import Plotter
 

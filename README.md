@@ -1,4 +1,4 @@
-# szcounts
+# szlib
 
 
 ## Installation
