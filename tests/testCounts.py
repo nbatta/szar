@@ -130,7 +130,7 @@ print "Time for N of z " , time.time() - start3
 plt.plot(zbin[1:], dndm * dvdz[1:])
 
 
-np.savetxt('dndm_dVdz_1muK_3_0arc.txt',np.transpose([zbin[1:],dndm,dvdz[1:]]))
+np.savetxt('output/dndm_dVdz_1muK_3_0arc.txt',np.transpose([zbin[1:],dndm,dvdz[1:]]))
 
 
 # In[ ]:
