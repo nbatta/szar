@@ -1,4 +1,4 @@
-# SZ_filter
+# szcounts
 
 
 ## Installation
@@ -26,4 +26,4 @@ Use the command
 python tests/testCounts.py
 ```
 
-to run a test of the modules.
+to run the same tests as in your original IPython notebook.
