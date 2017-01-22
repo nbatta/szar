@@ -1,5 +1,10 @@
 # szlib
 
+## Changes
+
+- Moved most of the classes to szlib/szcounts.py
+- Moved the main iPython script to tests/testCounts.py
+- Some functions referenced the global instantiation of its parent class instead of `self`. Changed those to `self`.
 
 ## Installation
 
