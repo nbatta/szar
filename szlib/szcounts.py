@@ -10,6 +10,25 @@ from Tinker_MF import tinker_params
 
 from orphics.tools.output import Plotter
 
+class Cosmology(object):
+    '''
+    A wrapper around CAMB that tries to pre-calculate as much as possible
+    '''
+    def __init__(self,paramDict,constDict):
+
+        cosmo = paramDict
+        self.H0 = cosmo['H0']
+        self.omch2 = cosmo['omch2']
+        self.ombh2 = cosmo['ombh2']
+        
+        self.pars = camb.CAMBparams()
+        self.pars.set_cosmology(H0=self.H0, ombh2=cosmo['ombh2'], omch2=self.omch2)
+        self.pars.InitPower.set_params(ns=cosmo['ns'],As=cosmo['As'])
+
+        self.results= camb.get_background(self.pars)
+        self.omnuh2 = self.pars.omegan * ((self.H0 / 100.0) ** 2.)
+        
+
 class CosmoParams:
     def __init__(self,constants,         #default is WMAP9
                  om=0.279,ol=0.721,h0=70.0,s8=0.821,ns=0.972,
@@ -87,10 +106,6 @@ class Halo_MF:
     #Using CAMB to get p of k
     def pk(self,z_arr):
         
-        pars = camb.CAMBparams()
-        pars.set_cosmology(H0=self.cp.h0, ombh2=self.cp.ob*(self.cp.h0/100.)**2, omch2=(self.cp.om - self.cp.ob)*(self.cp.h0/100.)**2,                            mnu=self.cp.mnu , tau=self.cp.tau)
-        
-        pars.InitPower.set_params(ns=self.cp.ns, r=self.cp.r)
         
         pars = camb.CAMBparams()
         pars.set_cosmology(H0=self.cp.h0, ombh2=self.cp.ob*(self.cp.h0/100.)**2, omch2=(self.cp.om - self.cp.ob)*(self.cp.h0/100.)**2,)    
