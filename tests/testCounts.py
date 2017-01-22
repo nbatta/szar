@@ -55,11 +55,12 @@ y2dt2= SZProfExample.y2D_tilde_norm(ells,thetc)
 print "Time for norm ", time.time() - start
 
 
-plt.figure()
-plt.plot(ells,nl,'--')
-plt.loglog(ells,y2dt2)
-plt.plot(ells,y2dt2/nl)
+pl = Plotter(scaleX='log', scaleY='log')
+pl.add(ells,nl,ls='--')
+pl.add(ells,y2dt2)
+pl.add(ells,y2dt2/nl)
 #plt.loglog(ells,y2dt2_2)
+pl.done("output/ynorm.png")
 
 #FIX
 #fvar = SZProf.filter_variance(thetc)
@@ -96,19 +97,19 @@ print "Time for var " , time.time() - start2
 #plt.loglog(ktest,y2dt2/y2dt2_2)
 
 #print y2dt2/y2dt2_2
-fig = plt.figure(figsize=(10,10))
-plt.xlim([0,10])
+pl = Plotter()
+pl._ax.set_xlim(0,10)
 #plt.plot(tht/thetc,filt/np.max(filt))
 
-plt.plot(np.rad2deg(tht)*60.,filt/np.max(filt),'k')
+pl.add(np.rad2deg(tht)*60.,filt/np.max(filt),color='black')
 #plt.plot(np.rad2deg(tht*thetc2)*60.,filt2/np.max(filt2))
-plt.plot(np.rad2deg(tht)*60.,SZProfExample.y2D_norm(tht/thetc),'k--')
+pl.add(np.rad2deg(tht)*60.,SZProfExample.y2D_norm(tht/thetc),color="black",ls='--')
 #plt.plot(np.rad2deg(tht)*60.,SZProf.y2D_norm(tht),'--')
 #plt.plot(np.rad2deg(tht)*60.,SZProf.y2D_test(tht,thetc),'--')
-plt.plot([0,10],[0,0],'k--')
+pl.add([0,10],[0,0],color="black",ls='--')
 #xx,yy = np.loadtxt('/Users/nab/Desktop/Projects/Match_filter/JBM_2005.dat',unpack=True)
 #plt.plot(xx,yy,'rx')
-
+pl.done("output/filter.png")
 
 # In[4]:
 
@@ -127,7 +128,9 @@ print "Time for N of z " , time.time() - start3
 
 # In[ ]:
 
-plt.plot(zbin[1:], dndm * dvdz[1:])
+pl = Plotter()
+pl.add(zbin[1:], dndm * dvdz[1:])
+pl.done("output/dndm.png")
 
 
 np.savetxt('output/dndm_dVdz_1muK_3_0arc.txt',np.transpose([zbin[1:],dndm,dvdz[1:]]))
