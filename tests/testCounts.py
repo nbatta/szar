@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 import camb
 import numpy as np
 from scipy import special
