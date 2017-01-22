@@ -1,11 +1,8 @@
 
 # coding: utf-8
 
-# In[160]:
-
 import camb
 import numpy as np
-get_ipython().magic(u'pylab inline')
 import matplotlib.pyplot as plt
 from camb import model
 import sys, os, platform, time
@@ -13,14 +10,30 @@ from scipy import special
 from sympy.functions import coth
 from Tinker_MF import dn_dlogM
 from Tinker_MF import tinker_params
-from numba import autojit
+from numba import autojit, jit
+import numba as nb
 
-@autojit
+
+#@autojit
+#@nb.jit("f8[:](i8[:],f8[:],f8[:])",nopython=True)                             
 def forloop(ell,thta,y2D_use): 
-    ans = ell*0
+    # print ell.dtype
+    # print thta.dtype
+    # print y2D_use.dtype
+    # print ell.shape
+    # print thta.shape
+    # print y2D_use.shape
+    
+    # print "in forloop"
+    ans = ell*0.
+    #print ell.shape
+    #print thta.shape
+    #print y2D_use.shape
     for ii in xrange(len(ell)):
         ans[ii] = np.sum(thta*special.jv(0,ell[ii]*thta)*y2D_use)
+    #sys.exit()
     return ans
+    r#eturn ans
 
 class CosmoParams:
     def __init__(self,         #default is WMAP9
@@ -196,7 +209,7 @@ class Halo_MF:
         #print elapsed1 
         
         #plot tinker values
-        f = figure(figsize=(8,8))
+        f = plt.figure(figsize=(8,8))
         plt.ylim([-3.6,-0.8])
         plt.plot(np.log10(M),np.log10(N[:,0]*M/(cp.rho_crit0*cp.om)),'k')
         plt.plot(np.log10(M),np.log10(N_8[:,0]*M/(cp.rho_crit0*cp.om)),'k')
@@ -293,6 +306,20 @@ class SZ_Cluster_Model:
         
         self.NNR = 1000
         self.drint = 1e-4
+
+
+        from scipy.interpolate import interp1d
+        r = np.arange(0.0001,18.,0.0001)
+        self.R500 = HP.rdel_c(M,z,500)
+        self.M = M
+        self.z = z
+        prof = self.Prof(r,M,z)
+        #print prof
+        print "interpolating"
+        self.profunc = interp1d(r,prof,bounds_error=True)
+        #sys.exit()
+        
+
         if options.get("Model") == 'BBPS':
             self.P0 = 7.49
             self.xc = 0.710
@@ -330,32 +357,45 @@ class SZ_Cluster_Model:
         return ans
     
     def y2D_norm(self,tht):
+        print "in y2d_norm"
         ## tht here is unitless and the profile is normalized to 1 at smallest radii
-        ##M = 1e14 #FIX
-        ##z = 0.01 #FIX
         
         R500 = self.R500
         rad = (np.arange(1e5) + 1.0)*self.drint #in MPC (max rad is 10 MPC)
 
+
+        #P2D = normloop(tht,R500,rad,self.profunc,rint)
         P2D = tht * 0.0
         for ii in xrange(len(tht)):
             rint = np.sqrt((rad)**2 + tht[ii]**2*(R500)**2)
-            #P2D[ii] = np.sum(2.*self.Prof(rint,M,z)*self.drint)
+            #if ii==0: print rint
+            #P2D[ii] = np.sum(2.*self.Prof(rint,self.M,self.z)*self.drint)
             P2D[ii] = np.sum(2.*self.profunc(rint)*self.drint)
+
         P2D /= P2D[0]
         y2D_out = P2D
+        print "out y2d_norm"
         return y2D_out
     
 
     def y2D_tilde_norm(self,ell,thtc):
+        print "in y2d_tilde_norm"
         dtht = 0.00001
-        
-        thta = np.arange(dtht,25*thtc,dtht)
-        ans = ell*0.
+        #dtht = 0.001
+        tfact = 25
+        #tfact = 5
+        thta = np.arange(dtht,tfact*thtc,dtht)
+        #ans = ell*0.
         y2D_use = self.y2D_norm(thta/thtc)
-        #ans = forloop(ell,thta,y2D_use)*dtht
-        for ii in xrange(len(ell)):
-            ans[ii] = np.sum(thta*special.jv(0,ell[ii]*thta)*y2D_use)*dtht
+        print thta
+        ans = forloop(ell,thta,y2D_use)*dtht
+        #for ii in xrange(len(ell)):
+        #    ans[ii] = np.sum(thta*special.jv(0,ell[ii]*thta)*y2D_use)*dtht
+        #    print ii
+        #    print special.jv(0,ell[ii]*thta)
+        #    print thta,y2D_use,ell[ii],ans[ii]
+        #    sys.exit()
+
         return ans
     
     def y2D_test(self,tht,thtc):
@@ -381,6 +421,7 @@ class SZ_Cluster_Model:
         return ans
     
     def tot_noise_spec(self):
+        print "in totnoise"
         #spec_file = "/Users/nab/CAMB/test_lensedCls_new.dat"
         spec_file = "test_scalCls_new.dat"
         ell,cl = np.loadtxt(spec_file,usecols=[0,1],unpack=True)
@@ -390,15 +431,15 @@ class SZ_Cluster_Model:
         cl = np.append(cl,cll_extra) *2.*np.pi/(ell*(ell+1.)) 
         
         cltot = (cl + self.noise_func(ell)) / c.TCMBmuK**2
+        print "out of totnoise"
+
         return ell,cltot,cl
 
     def plot_noise(self):
         el,nl,cl = self.tot_noise_spec()
         
         nl *= c.TCMBmuK **2
-        cl *= c.TCMBmuK **2
-        
-        f = figure(figsize=(6,6))
+        f = plt.figure(figsize=(6,6))
         plt.xlim([60,8e3])
         plt.ylim([1e-2,1e5])
         plt.loglog(el,nl*el**2)
@@ -418,12 +459,12 @@ class SZ_Cluster_Model:
         freq_fac = (self.f_nu(150.))**2
         y2dtilde_2 = (self.y2D_tilde_norm(ells,thtc))**2
         var = np.sum(ells*y2dtilde_2/nl)*dell*freq_fac
-        
         dtht = 0.0000025
         thta = np.arange(dtht,5.*thtc,dtht)
         y2D_use = self.y2D_norm(thta/thtc)
         prof_int = 2.*np.pi*(np.sum(y2D_use*thta)*dtht)**2
         
+        print " var " , var
         return prof_int/var
     
     
@@ -491,8 +532,8 @@ print SZProf.Y_M(MM/0.7,zz)
 
 
 
-noise_plot = SZProf.plot_noise()
-noise_plot.show()
+#noise_plot = SZProf.plot_noise()
+#noise_plot.show()
 
 pars = camb.CAMBparams()
 pars.set_cosmology(H0=cp.h0, ombh2=cp.ob*(cp.h0/100.)**2, omch2=(cp.om - cp.ob)*(cp.h0/100.)**2,)    
@@ -522,18 +563,20 @@ start = time.time()
 y2dt2= SZProf.y2D_tilde_norm(ells,thetc)
 #y2dt2_2= SZProf.y2D_tilde_norm(ells,thetc2)
 
-print time.time() - start
+print "Took " , time.time() - start, " seconds"
 
-plt.figure()
-plt.plot(ells,nl,'--')
-plt.loglog(ells,y2dt2)
-plt.plot(ells,y2dt2/nl)
-#plt.loglog(ells,y2dt2_2)
 
-#FIX
-#fvar = SZProf.filter_variance(thetc)
-#print fvar #UNITS!!!!!!! [armin2] dropped a deg to arcmin somewhere
-#print fvar * thetc**2
+#sys.exit()
+#plt.figure()
+#plt.plot(ells,nl,'--')
+#plt.loglog(ells,y2dt2)
+#plt.plot(ells,y2dt2/nl)
+##plt.loglog(ells,y2dt2_2)
+
+##FIX
+##fvar = SZProf.filter_variance(thetc)
+##print fvar #UNITS!!!!!!! [armin2] dropped a deg to arcmin somewhere
+##print fvar * thetc**2
 
 
 dthttest = np.deg2rad(0.1/60)
@@ -548,7 +591,7 @@ start2 = time.time()
 for ii in xrange(len(tht)):
     filt[ii] = np.sum(special.jv(0,ells*tht[ii])*ells*y2dt2/nl)*dell
 #    filt2[ii] = np.sum(special.jv(0,ells*tht[ii])*ells*y2dt2_2/nl)
-print time.time() - start2
+print "Took ", time.time() - start2, " seconds"
 
 #arc = 5.9
 #thetc = np.deg2rad(arc / 60.)
@@ -559,8 +602,10 @@ results = camb.get_background(pars)
 DA_z = results.angular_diameter_distance(zz) * (cp.h0/100.)
 
 start2 = time.time()
+
 print np.sqrt(SZProf.filter_variance(DA_z))
 print time.time() - start2
+
 #plt.figure()
 #plt.loglog(ktest,y2dt2/y2dt2_2)
 
@@ -599,7 +644,7 @@ y2D_use = SZProf.y2D_norm(thta/thetc)
 #for ii in xrange(len(k)):
 ii = 9000
 print ktest[ii]
-figure()
+plt.figure()
 plt.plot(thta,thta*special.jv(0,ktest[ii]*thta/thetc)*y2D_use)
 #ans[ii] = np.sum(tht*special.jv(0,k[ii]*thta/thtc)*y2D_use)*dtht
 
