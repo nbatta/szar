@@ -2,7 +2,7 @@ from distutils.core import setup, Extension
 import os
 
 
-setup(name='szCounts',
+setup(name='szlib',
       version='0.1',
       description='Modules for calculating SZ counts',
       url='https://github.com/nbatta/SZ_filter',
