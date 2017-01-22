@@ -9,5 +9,5 @@ setup(name='szCounts',
       author='Nick Battaglia',
       #author_email='nbatta@astro.princeton.edu',
       #license='BSD-2-Clause',
-      packages=['szCounts'],
+      packages=['szlib'],
       zip_safe=False)
