@@ -10,7 +10,7 @@ from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,dictFromSec
 from orphics.tools.output import Plotter
 from ConfigParser import SafeConfigParser 
 
-beam = 1.5
+beam = 1.0
 noise = 1.0
 
 iniFile = "input/cosmology.ini"
@@ -137,25 +137,5 @@ pl = Plotter()
 pl.add(zbin[1:], dndm * dvdz[1:])
 pl.done("output/dndm.png")
 
+#np.savetxt('output/dndm_dVdz_1muK_3_0arc.txt',np.transpose([zbin[1:],dndm,dvdz[1:]]))
 
-np.savetxt('output/dndm_dVdz_1muK_3_0arc.txt',np.transpose([zbin[1:],dndm,dvdz[1:]]))
-
-
-ktest = 10**(np.arange(-3.5,1.0,0.1))
-
-dtht = 0.00001
-thta = np.arange(dtht,10*thetc,dtht)
-ans = ktest
-y2D_use = SZProfExample.y2D_norm(thta/thetc)
-#for ii in xrange(len(k)):
-ii = 9000
-print ktest[ii]
-pl = Plotter()
-pl.add(thta,thta*special.jv(0,ktest[ii]*thta/thetc)*y2D_use)
-pl.done("output/jv.png")
-#ans[ii] = np.sum(tht*special.jv(0,k[ii]*thta/thtc)*y2D_use)*dtht
-
-print np.sum(thta*special.jv(0,ktest[ii]*thta/thetc)*y2D_use)*dtht
-
-print 2*np.pi*np.sum(SZProfExample.y2D_norm(tht/thetc)*tht)*dthttest * (180. / np.pi)**2
-print 3.42501068855e-07 * (180. / np.pi)**2
