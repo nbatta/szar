@@ -5,7 +5,6 @@ import numpy as np
 from scipy import special
 import matplotlib.pyplot as plt
 import sys, os, time
-#from szlib.szcounts import Constants,CosmoParams,SZ_Cluster_Model,Halo_MF
 from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF
 
 from orphics.tools.output import Plotter
@@ -32,13 +31,7 @@ MM= 5e14
 print "y_m",SZProfExample.Y_M(MM,zz)
 SZProfExample.plot_noise()
 
-#pars = camb.CAMBparams()
-#pars.set_cosmology(H0=cp.h0, ombh2=cp.ob*(cp.h0/100.)**2, omch2=(cp.om - cp.ob)*(cp.h0/100.)**2,)    
-#results = camb.get_background(pars)
 results = cc.results
-
-# print results.hubble_parameter(zz)/cp.h0
-# sys.exit()
 
 DA_z = results.angular_diameter_distance(zz) * (cc.H0/100.)
 
@@ -95,9 +88,6 @@ print "Time for filt ", time.time() - start2
 #arc = 5.9
 #thetc = np.deg2rad(arc / 60.)
 
-#pars = camb.CAMBparams()
-#pars.set_cosmology(H0=cp.h0, ombh2=cp.ob*(cp.h0/100.)**2, omch2=(cp.om - cp.ob)*(cp.h0/100.)**2,)    
-#results = camb.get_background(pars)
 DA_z = results.angular_diameter_distance(zz) * (cc.H0/100.)
 
 start2 = time.time()

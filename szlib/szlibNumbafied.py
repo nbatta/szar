@@ -2,6 +2,36 @@ import math
 import numpy as np
 import numba as nb
 
+    
+# @nb.jit("f8[:](f8[:],f8,f8,f8,f8,f8)",nopython=True)
+# def GNFW(xx,xc,gm,al,bt,P0):
+#     ans = P0 / ((xx*xc)**gm * (1 + (xx*xc)**al)**((bt-gm)/al))
+#     return ans
+
+# @nb.jit("f8[:](f8[:],f8,f8,f8,f8,f8,f8,f8,f8,f8)",nopython=True)
+# def Prof(r,M,z,R500,Ez,xc,gm,al,bt,P0):
+#     R500 = R500
+#     xx = r / R500
+#     M_fac = M / (3.e14) * (100./70.)
+#     P500 = 1.65e-3 * (100./70.)**2 * M_fac**(2./3.) * Ez #keV cm^3
+#     ans = P500 * GNFW(xx,xc,gm,al,bt,P0)
+#     return ans
+    
+
+# @nb.jit("f8[:](f8[:],f8,f8,f8,f8[:],f8,f8,f8,f8,f8,f8,f8)",nopython=True)
+# def y2D_norm(tht,M,z,R500,rad2,Ez,drint,xc,gm,al,bt,P0):
+#     thtr5002 = (tht*R500)**2.
+#     P2D = tht * 0.0
+#     for ii in xrange(len(tht)):
+#         rint = np.sqrt(rad2 + thtr5002[ii])
+#         P2D[ii] = np.sum(Prof(rint,M,z,R500,Ez,xc,gm,al,bt,P0))
+
+#     P2D *= 2.*drint
+#     P2D /= P2D[0]
+#     return P2D
+
+
+
 @nb.jit("f8(f8)",nopython=True)
 def m_x(x):
     #NFW cumulative mass distribution
