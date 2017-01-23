@@ -1,6 +1,7 @@
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
+
 beam = 1.0
 noise = 1.0
 
