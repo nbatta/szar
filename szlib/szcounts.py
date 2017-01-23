@@ -227,7 +227,7 @@ class Halo_MF:
         return N_z
 
 class SZ_Cluster_Model:
-    def __init__(self,clusterCosmology,P0=8.403,xc=1.177,al=1.05,gm=0.31,bt=5.49,fwhm=1,rms_noise =1, M = 1.e14 ,z = 0.01 ,**options):
+    def __init__(self,clusterCosmology,spec_file,P0=8.403,xc=1.177,al=1.05,gm=0.31,bt=5.49,fwhm=1,rms_noise =1, M = 1.e14 ,z = 0.01 ,**options):
         self.cc = clusterCosmology
         self.P0 = P0
         self.xc = xc
@@ -244,7 +244,7 @@ class SZ_Cluster_Model:
 
 
 
-        self.noisepkg = self.tot_noise_spec()
+        self.noisepkg = self.tot_noise_spec(spec_file)
         el, nltemp, cl = self.noisepkg
         self.dell = 100
         ells = np.arange(2,60000,self.dell)
@@ -321,8 +321,8 @@ class SZ_Cluster_Model:
         ans = rms**2 * np.exp(tht_fwhm**2*ell**2 / (8.*np.log(2))) ## Add Hasselfield noise knee
         return ans
     
-    def tot_noise_spec(self):
-        spec_file = "input/test_scalCls_new.dat"
+    def tot_noise_spec(self,spec_file):
+
         ell,cl = np.loadtxt(spec_file,usecols=[0,1],unpack=True)
         ell_extra = np.arange(60000)+np.max(ell)+1.
         cll_extra = np.zeros(60000)
@@ -346,12 +346,13 @@ class SZ_Cluster_Model:
     def filter_variance(self,DAz):
         
         thtc = self.R500/DAz
-        thta = np.arange(self.dtht,25.*thtc,self.dtht)
+        thta = np.arange(self.dtht,5.*thtc,self.dtht)  ### Changed 25 to 5 and it didn't change much
         ytilde, y2D_use = self.y2D_tilde_norm(self.ells,thtc,thta)
         y2dtilde_2 = (ytilde)**2
         var = np.sum(self.ells*y2dtilde_2/self.nl)*self.dell*self.freq_fac
         #y2D_use = self.y2D_norm(thta/thtc)  ######
-        prof_int = 2.*np.pi*(np.sum(y2D_use*thta)*self.dtht)**2
+
+        prof_int = 2.*np.pi*(np.sum((y2D_use*thta)[thta < 5*thtc])*self.dtht)**2
         
         return prof_int/var
     

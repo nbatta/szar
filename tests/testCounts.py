@@ -10,7 +10,7 @@ from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,dictFromSec
 from orphics.tools.output import Plotter
 from ConfigParser import SafeConfigParser 
 
-beam = 1.0
+beam = 1.5
 noise = 1.0
 
 iniFile = "input/cosmology.ini"
@@ -22,8 +22,10 @@ cosmoDict = dictFromSection(Config,'WMAP9')
 constDict = dictFromSection(Config,'constants')
 cc = ClusterCosmology(cosmoDict,constDict)
 
+spec_file = 'input/test_scalCls_new.dat'
+
 # make an SZ profile example
-SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,rms_noise = noise,fwhm=beam,M=5e14,z=0.5 )
+SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,spec_file=spec_file,rms_noise = noise,fwhm=beam,M=5e14,z=0.5 )
 zz = 0.5
 MM= 5e14
 print "y_m",SZProfExample.Y_M(MM,zz)
@@ -44,7 +46,7 @@ arc = 5.9
 thetc2 = np.deg2rad(arc/2. / 60.)
 print "thetc = ", thetc
 
-el, nltemp, cl = SZProfExample.tot_noise_spec()
+el, nltemp, cl = SZProfExample.tot_noise_spec(spec_file)
 
 dell = 100
 ells = np.arange(2,60000,dell)
