@@ -130,7 +130,7 @@ start3 = time.time()
 
 HMF = Halo_MF(clusterCosmology=cc)
 dvdz = HMF.dVdz(zbin)
-dndm = HMF.N_of_z_SZ(zbin,beam,noise,fileFunc = lambda beam,noise,Mexp,z:"output/m"+str(Mexp)+"z"+str(z)+"b"+str(beam)+"n"+str(noise)+".txt")
+dndm = HMF.N_of_z_SZ(zbin,beam,noise,fileFunc = lambda beam,noise,Mexp,z:"data/m"+str(Mexp)+"z"+str(z)+"b"+str(beam)+"n"+str(noise)+".txt")
 
 print "Time for N of z " , time.time() - start3
 

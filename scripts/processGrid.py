@@ -13,7 +13,7 @@ mgrid = np.zeros((len(mrange),len(zrange)))
 for i,Mexp in enumerate(mrange):
     for j,z in enumerate(zrange):
 
-        filename =  "output/m"+str(Mexp)+"z"+str(z)+"b"+str(beam)+"n"+str(noise)+".txt"
+        filename =  "data/m"+str(Mexp)+"z"+str(z)+"b"+str(beam)+"n"+str(noise)+".txt"
         d1,d2,b,n,sn = np.loadtxt(filename,unpack=True)
         mgrid[i,j] = sn
 

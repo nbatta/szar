@@ -25,4 +25,4 @@ SZProf = SZ_Cluster_Model(clusterCosmology=cc,rms_noise = noise,fwhm=beam,M=M,z=
 DA_z = cc.results.angular_diameter_distance(z) * (cc.H0/100.)
 sigN = np.sqrt(SZProf.filter_variance(DA_z))
             
-np.savetxt("output/m"+str(Mexp)+"z"+str(z)+"b"+str(beam)+"n"+str(noise)+".txt",np.array([Mexp,z,beam,noise,sigN]))
+np.savetxt("data/m"+str(Mexp)+"z"+str(z)+"b"+str(beam)+"n"+str(noise)+".txt",np.array([Mexp,z,beam,noise,sigN]))
