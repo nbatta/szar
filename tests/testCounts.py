@@ -5,26 +5,44 @@ import numpy as np
 from scipy import special
 import matplotlib.pyplot as plt
 import sys, os, time
-from szlib.szcounts import Constants,CosmoParams,SZ_Cluster_Model,Halo_MF
+#from szlib.szcounts import Constants,CosmoParams,SZ_Cluster_Model,Halo_MF
+from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF
 
 from orphics.tools.output import Plotter
+from ConfigParser import SafeConfigParser 
 
-# initialize cosmology
-c = Constants()
-cp = CosmoParams(constants=c)
+def dictFromSection(config,sectionName):
+    del config._sections[sectionName]['__name__']
+    return dict([a, float(x)] for a, x in config._sections[sectionName].iteritems())
 
+
+iniFile = "input/cosmology.ini"
+Config = SafeConfigParser()
+Config.optionxform=str
+Config.read(iniFile)
+
+cosmoDict = dictFromSection(Config,'WMAP9')
+constDict = dictFromSection(Config,'constants')
+cc = ClusterCosmology(cosmoDict,constDict)
 
 # make an SZ profile example
-SZProfExample = SZ_Cluster_Model(cosmoParams=cp,rms_noise = 1.,fwhm=1.5,M=5e14,z=0.5 )
+SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,rms_noise = 1.,fwhm=1.5,M=5e14,z=0.5 )
 zz = 0.5
 MM= 5e14
 print "y_m",SZProfExample.Y_M(MM,zz)
 SZProfExample.plot_noise()
 
-pars = camb.CAMBparams()
-pars.set_cosmology(H0=cp.h0, ombh2=cp.ob*(cp.h0/100.)**2, omch2=(cp.om - cp.ob)*(cp.h0/100.)**2,)    
-results = camb.get_background(pars)
-DA_z = results.angular_diameter_distance(zz) * (cp.h0/100.)
+#pars = camb.CAMBparams()
+#pars.set_cosmology(H0=cp.h0, ombh2=cp.ob*(cp.h0/100.)**2, omch2=(cp.om - cp.ob)*(cp.h0/100.)**2,)    
+#results = camb.get_background(pars)
+results = cc.results
+
+# print results.hubble_parameter(zz)/cp.h0
+# sys.exit()
+
+DA_z = results.angular_diameter_distance(zz) * (cc.H0/100.)
+
+
 R500 = SZProfExample.R500
 thetc = R500/DA_z
 #dell = 1
@@ -77,10 +95,10 @@ print "Time for filt ", time.time() - start2
 #arc = 5.9
 #thetc = np.deg2rad(arc / 60.)
 
-pars = camb.CAMBparams()
-pars.set_cosmology(H0=cp.h0, ombh2=cp.ob*(cp.h0/100.)**2, omch2=(cp.om - cp.ob)*(cp.h0/100.)**2,)    
-results = camb.get_background(pars)
-DA_z = results.angular_diameter_distance(zz) * (cp.h0/100.)
+#pars = camb.CAMBparams()
+#pars.set_cosmology(H0=cp.h0, ombh2=cp.ob*(cp.h0/100.)**2, omch2=(cp.om - cp.ob)*(cp.h0/100.)**2,)    
+#results = camb.get_background(pars)
+DA_z = results.angular_diameter_distance(zz) * (cc.H0/100.)
 
 start2 = time.time()
 print np.sqrt(SZProfExample.filter_variance(DA_z))
@@ -110,7 +128,7 @@ zbin_temp = np.arange(zmin,zmax,delz)
 zbin = np.insert(zbin_temp,0,0.0)
 start3 = time.time()
 
-HMF = Halo_MF(cosmoParams=cp,cambResults=results)
+HMF = Halo_MF(clusterCosmology=cc)
 dvdz = HMF.dVdz(zbin)
 dndm = HMF.N_of_z_SZ(zbin)
 

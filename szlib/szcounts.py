@@ -3,122 +3,112 @@ from scipy import special
 from sympy.functions import coth
 import camb
 from camb import model
-import haloTools as HP
+# import haloTools as HP
 
 from Tinker_MF import dn_dlogM
 from Tinker_MF import tinker_params
 
 from orphics.tools.output import Plotter
+from scipy.interpolate import interp1d
+
+import szlibNumbafied as fast
 
 class Cosmology(object):
     '''
     A wrapper around CAMB that tries to pre-calculate as much as possible
+    Intended to be inherited by other classes like LimberCosmology and 
+    ClusterCosmology
     '''
     def __init__(self,paramDict,constDict):
 
         cosmo = paramDict
+        self.paramDict = paramDict
+        c = constDict
+        self.c = c
+
+        self.c['TCMBmuK'] = self.c['TCMB'] * 1.0e6
+
         self.H0 = cosmo['H0']
-        self.omch2 = cosmo['omch2']
-        self.ombh2 = cosmo['ombh2']
+        try:
+            self.omch2 = cosmo['omch2']
+        except:
+            self.omch2 = (cosmo['om']-cosmo['ob'])*self.H0*self.H0/100./100.
+            
+        try:
+            self.ombh2 = cosmo['ombh2']
+        except:
+            self.ombh2 = cosmo['ob']*self.H0*self.H0/100./100.
         
         self.pars = camb.CAMBparams()
-        self.pars.set_cosmology(H0=self.H0, ombh2=cosmo['ombh2'], omch2=self.omch2)
+        self.pars.set_cosmology(H0=self.H0, ombh2=self.ombh2, omch2=self.omch2)
         self.pars.InitPower.set_params(ns=cosmo['ns'],As=cosmo['As'])
 
         self.results= camb.get_background(self.pars)
         self.omnuh2 = self.pars.omegan * ((self.H0 / 100.0) ** 2.)
         
 
-class CosmoParams:
-    def __init__(self,constants,         #default is WMAP9
-                 om=0.279,ol=0.721,h0=70.0,s8=0.821,ns=0.972,
-                 ob=0.0463,r=0.0,mnu=0.00,tau=0.08,**options):
+        self.rho_crit0 = 3. / (8. * np.pi) * (100 * 1.e5)**2. / c['G_CGS'] * c['MPC2CM'] / c['MSUN_CGS']
 
-        c = constants
-        self.c = c
-        h100 = 100. 
-        self.rho_crit0 = 3. / (8 * np.pi) * (h100 * 1e5)**2 / c.G_CGS * c.MPC2CM / c.MSUN_CGS
 
-        self.om = om
-        self.ol = ol
-        self.h0 = h0
-        self.s8 = s8
-        self.ns = ns
-        self.ob = ob
-        self.r = r
-        self.mnu = mnu
-        self.tau = tau
-            
-        if options.get("Param") == 'Planck15':
-            self.om = 0.315
-            self.ol = 0.685
-            self.h0 = 67.31
-            self.s8 = 0.829
-            self.ns = 0.9655
-            self.ob = 0.04904
-            self.r = 0.0
-            self.mnu = 0.00
-            self.tau = 0.08
-                
-        if options.get("Param") == 'Tinker':
-            self.om = 0.30
-            self.ol = 0.70
-            self.h0 = 70
-            self.s8 = 0.9
-            self.ns = 1.0
-            self.ob = 0.04
-            self.r = 0.0
-            self.mnu = 0.00
-            self.tau = 0.08
-            
-        if options.get("Param") == 'JB':
-            self.om = 0.30
-            self.ol = 0.70
-            self.h0 = 70
-            self.s8 = 0.98
-            self.ns = 1.0
-            self.ob = 0.04
-            self.r = 0.0
-            self.mnu = 0.00
-            self.tau = 0.17
-            
-class Constants:
-    def __init__(self):
-        self.ERRTOL = 1e-12
-        self.G_CGS = 6.67259e-08
-        self.MSUN_CGS = 1.98900e+33
-        self.MPC2CM = 3.085678e+24
-        self.SIGMA_T = 6.65246e-25 #cgs
-        self.ME = 9.10939E-28
-        self.C = 2.99792e+10
-        self.K_CGS = 1.3806488e-16
-        self.H_CGS = 6.62608e-27
-        self.TCMB = 2.726
-        self.TCMBmuK = self.TCMB * 1.0e6
-        self.eV_2_erg = 1.60217662e-12
+class ClusterCosmology(Cosmology):
+
+    def __init__(self,paramDict,constDict):
+        Cosmology.__init__(self,paramDict,constDict)
+        self.om = paramDict['om']
+        self.rhoc0om = self.rho_crit0*self.om
+        self.s8 = paramDict['s8']
         
+    def E_z(self,z):
+        #hubble function
+        ans = self.results.hubble_parameter(z)/self.paramDict['H0']
+        return ans
+
+    def rhoc(self,z):
+        #critical density as a function of z
+        ans = self.rho_crit0*self.E_z(z)**2.
+        return ans
+
+    def rdel_c(self,M,z,delta):
+        #spherical overdensity radius w.r.t. the critical density
+        rhocz = self.rhoc(z)
+        M = np.atleast_1d(M)
+        return fast.rdel_c(M,z,delta,rhocz)
+
+    def rdel_m(self,M,z,delta):
+        #spherical overdensity radius w.r.t. the mean matter density
+        return fast.rdel_m(M,z,delta,self.rhoc0om)
+
+
+    def Mass_con_del_2_del_mean200(self,Mdel,delta,z):
+        #Mass conversion critical to mean overdensity, needed because the Tinker Mass function uses mean matter
+        rhocz = self.rhoc(z)
+        ERRTOL = self.c['ERRTOL']        
+        return fast.Mass_con_del_2_del_mean200(Mdel,delta,z,rhocz,self.rhoc0om,ERRTOL)
+
+
+
     
 class Halo_MF:
-    def __init__(self,cosmoParams,cambResults):
-        self.cp = cosmoParams
-        self.HP = HP.HaloTools(self.cp)
-        self.results = cambResults
-    #Using CAMB to get p of k
+    def __init__(self,clusterCosmology):
+        self.cc = clusterCosmology
+
     def pk(self,z_arr):
+        #Using CAMB to get p of k
         
         
-        pars = camb.CAMBparams()
-        pars.set_cosmology(H0=self.cp.h0, ombh2=self.cp.ob*(self.cp.h0/100.)**2, omch2=(self.cp.om - self.cp.ob)*(self.cp.h0/100.)**2,)    
-        pars.set_dark_energy() #re-set defaults
-        pars.InitPower.set_params(As=2.19e-9,ns=self.cp.ns)
+        #pars = camb.CAMBparams()
+        #pars.set_cosmology(H0=self.cp.h0, ombh2=self.cp.ob*(self.cp.h0/100.)**2, omch2=(self.cp.om - self.cp.ob)*(self.cp.h0/100.)**2,)    
+        #pars.set_dark_energy() #re-set defaults
+        #pars.InitPower.set_params(As=2.19e-9,ns=self.cp.ns)
         
-        pars.set_matter_power(redshifts=z_arr, kmax=11.0)
-        pars.Transfer.high_precision = True
         
-        pars.NonLinear = model.NonLinear_none
-        self.results = camb.get_results(pars)
-        kh2, z2, pk2 = self.results.get_matter_power_spectrum(minkh=2e-5, maxkh=11, npoints = 200,)
-        s8 = np.array(self.results.get_sigma8())
+        self.cc.pars.set_matter_power(redshifts=z_arr, kmax=11.0)
+        self.cc.pars.Transfer.high_precision = True
+        
+        self.cc.pars.NonLinear = model.NonLinear_none
+        self.cc.results = camb.get_results(self.cc.pars)
+        kh2, z2, pk2 = self.cc.results.get_matter_power_spectrum(minkh=2e-5, maxkh=11, npoints = 200,)
+        s8 = np.array(self.cc.results.get_sigma8())
         return kh2, z2, pk2, s8
     
     def Halo_Tinker_test(self):
@@ -136,9 +126,9 @@ class Halo_MF:
         #get p of k and s8 
         kh, z, pk, s8 = self.pk(z_arr)
         # dn_dlogM from tinker
-        N = dn_dlogM(M,z_arr,self.cp.rho_crit0*self.cp.om,delts,kh,pk[:1,:])
-        N_8 = dn_dlogM(M,z_arr,self.cp.rho_crit0*self.cp.om,delts_8,kh,pk[:1,:])
-        N_32 = dn_dlogM(M,z_arr,self.cp.rho_crit0*self.cp.om,delts_32,kh,pk[:1,:])
+        N = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts,kh,pk[:1,:])
+        N_8 = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts_8,kh,pk[:1,:])
+        N_32 = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts_32,kh,pk[:1,:])
         
         elapsed1 = (time.clock() - start)
         #print elapsed1 
@@ -146,33 +136,33 @@ class Halo_MF:
         #plot tinker values
         pl = Plotter()
         pl._ax.set_ylim(-3.6,-0.8)
-        pl.add(np.log10(M),np.log10(N[:,0]*M/(self.cp.rho_crit0*self.cp.om)),color='black')
-        pl.add(np.log10(M),np.log10(N_8[:,0]*M/(self.cp.rho_crit0*self.cp.om)),color='black')
-        pl.add(np.log10(M),np.log10(N_32[:,0]*M/(self.cp.rho_crit0*self.cp.om)),color='black')
+        pl.add(np.log10(M),np.log10(N[:,0]*M/(self.cc.rhoc0om)),color='black')
+        pl.add(np.log10(M),np.log10(N_8[:,0]*M/(self.cc.rhoc0om)),color='black')
+        pl.add(np.log10(M),np.log10(N_32[:,0]*M/(self.cc.rhoc0om)),color='black')
         pl.done("output/tinkervals.png")
         
         return f
     
     def dVdz(self,z_arr):
-        pars = camb.CAMBparams()
-        pars.set_cosmology(H0=self.cp.h0, ombh2=self.cp.ob*(self.cp.h0/100.)**2, omch2=(self.cp.om - self.cp.ob)*(self.cp.h0/100.)**2,)    
-        results = camb.get_background(pars)
-        DA_z = results.angular_diameter_distance(z_arr)
+        #pars = camb.CAMBparams()
+        #pars.set_cosmology(H0=self.cp.h0, ombh2=self.cp.ob*(self.cp.h0/100.)**2, omch2=(self.cp.om - self.cp.ob)*(self.cp.h0/100.)**2,)    
+        #results = camb.get_background(pars)
+        DA_z = self.cc.results.angular_diameter_distance(z_arr)
         dV_dz = DA_z**2 * (1.+z_arr)**2
         for i in xrange (len(z_arr)):
-            dV_dz[i] /= (results.h_of_z(z_arr[i]))
+            dV_dz[i] /= (self.cc.results.h_of_z(z_arr[i]))
         #print (results.h_of_z(z_arr[i])),z_arr[i],100. * 1e5/2.99792458e10*hh
-        dV_dz *= (self.cp.h0/100.)**3
+        dV_dz *= (self.cc.H0/100.)**3 # was h0
         return dV_dz
 
     def dn_dM(self,M,z_arr,delta):
         
         delts = z_arr*0 + delta
         kh, z, pk, s8 = self.pk(z_arr)
-        fac = (self.cp.s8/s8[-1])**2 # sigma8 values are in reverse order
+        fac = (self.cc.s8/s8[-1])**2 # sigma8 values are in reverse order
         pk *= fac
     
-        dn_dlnm = dn_dlogM(M,z_arr,self.cp.rho_crit0*self.cp.om,delts,kh,pk[:,:],'comoving')
+        dn_dlnm = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts,kh,pk[:,:],'comoving')
         dn_dm = dn_dlnm/M
         return dn_dm
     
@@ -180,10 +170,10 @@ class Halo_MF:
         
         delts = z_arr*0 + delta
         kh, z, pk, s8 = self.pk(z_arr)
-        fac = (self.cp.s8/s8[-1])**2 # sigma8 values are in reverse order
+        fac = (self.cc.s8/s8[-1])**2 # sigma8 values are in reverse order
         pk *= fac
     
-        dn_dlnm = dn_dlogM(M,z_arr,self.cp.rho_crit0*self.cp.om,delts,kh,pk[:,:],'comoving')
+        dn_dlnm = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts,kh,pk[:,:],'comoving')
         dn_dm = dn_dlnm/M
         dV_dz = self.dVdz(z_arr)
         
@@ -199,7 +189,7 @@ class Halo_MF:
         #M = 10**np.arange(14.0, 15.5, .1)
         M = 10**np.arange(14.0, 15.5, 0.5)
         dM = np.gradient(M)
-        rho_crit0m = 3. / (8 * np.pi) * (h0 * 1e5)**2 / self.cp.c.G_CGS * self.cp.c.MPC2CM / self.cp.c.MSUN_CGS * self.cp.om
+        rho_crit0m = self.cc.rhoc0om #3. / (8 * np.pi) * (h0 * 1e5)**2 / self.cc.const[G_CGS] * self.cp.c.MPC2CM / self.cp.c.MSUN_CGS * self.cc.om
         hh = h0/100.
 
         M200 = np.outer(M,np.zeros([len(z_arr)]))
@@ -208,13 +198,13 @@ class Halo_MF:
         sigN = np.outer(M,np.zeros([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
 
-        DA_z = self.results.angular_diameter_distance(z_arr) * (self.cp.h0/100.)
+        DA_z = self.cc.results.angular_diameter_distance(z_arr) * (self.cc.H0/100.)
         for ii in xrange (len(z_arr)-1):
             i = ii + 1
-            M200[:,i] = self.HP.Mass_con_del_2_del_mean200(M/hh,500,z_arr[i])
+            M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M/hh,500,z_arr[i])
             dM200[:,i] = np.gradient(M200[:,i])
             for j in xrange(len(M)):
-                SZProf = SZ_Cluster_Model(self.cp,rms_noise = 1.,fwhm=3.0,M=M[j],z=z_arr[i])
+                SZProf = SZ_Cluster_Model(self.cc,rms_noise = 1.,fwhm=3.0,M=M[j],z=z_arr[i])
                 sigN[j,i] = np.sqrt(SZProf.filter_variance(DA_z[i]))
             
             P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
@@ -232,9 +222,8 @@ class Halo_MF:
         return N_z
 
 class SZ_Cluster_Model:
-    def __init__(self,cosmoParams,P0=8.403,xc=1.177,al=1.05,gm=0.31,bt=5.49,fwhm=1,rms_noise =1, M = 1.e14 ,z = 0.01 ,**options):
-        self.cp = cosmoParams
-        self.HP = HP.HaloTools(self.cp)
+    def __init__(self,clusterCosmology,P0=8.403,xc=1.177,al=1.05,gm=0.31,bt=5.49,fwhm=1,rms_noise =1, M = 1.e14 ,z = 0.01 ,**options):
+        self.cc = clusterCosmology
         self.P0 = P0
         self.xc = xc
         self.al = al
@@ -252,16 +241,15 @@ class SZ_Cluster_Model:
             self.gm = -0.3
             self.bt = 4.19
 
-        from scipy.interpolate import interp1d
         r = np.arange(0.0001,100.,0.0001)
-        self.R500 = self.HP.rdel_c(M,z,500)
+        self.R500 = self.cc.rdel_c(M,z,500.)
         self.M = M
         self.z = z
         prof = self.Prof(r,M,z)
         self.profunc = interp1d(r,prof,bounds_error=True)        
     
     def f_nu(self,nu):
-        mu = self.cp.c.H_CGS*(1e9*nu)/(self.cp.c.K_CGS*self.cp.c.TCMB)
+        mu = self.cc.c['H_CGS']*(1e9*nu)/(self.cc.c['K_CGS']*self.cc.c['TCMB'])
         ans = mu*coth(mu/2.0) - 4.0
         return np.float(ans)
     
@@ -275,7 +263,7 @@ class SZ_Cluster_Model:
         R500 = self.R500
         xx = r / R500
         M_fac = self.M / (3e14) * (100./70.)
-        P500 = 1.65e-3 * (100./70.)**2 * M_fac**(2./3.) * self.HP.E_z(self.z) #keV cm^3
+        P500 = 1.65e-3 * (100./70.)**2 * M_fac**(2./3.) * self.cc.E_z(self.z) #keV cm^3
         ans = P500 * self.GNFW(xx)
         return ans
     
@@ -332,13 +320,13 @@ class SZ_Cluster_Model:
         ell = np.append(ell,ell_extra)
         cl = np.append(cl,cll_extra) *2.*np.pi/(ell*(ell+1.))
         
-        cltot = (cl + self.noise_func(ell)) / self.cp.c.TCMBmuK**2
+        cltot = (cl + self.noise_func(ell)) / self.cc.c['TCMBmuK']**2.
         return ell,cltot,cl
 
     def plot_noise(self):
         el,nl,cl = self.tot_noise_spec()
         
-        nl *= self.cp.c.TCMBmuK **2
+        nl *= self.cc.c['TCMBmuK'] **2
         pl = Plotter(scaleX='log',scaleY='log')
         pl._ax.set_xlim(60,8e3)
         pl._ax.set_ylim(1e-2,1e5)
@@ -367,10 +355,10 @@ class SZ_Cluster_Model:
     
     
     def Y_M(self,MM,zz):
-        pars = camb.CAMBparams()
-        pars.set_cosmology(H0=self.cp.h0, ombh2=self.cp.ob*(self.cp.h0/100.)**2, omch2=(self.cp.om - self.cp.ob)*(self.cp.h0/100.)**2,)    
-        results = camb.get_background(pars)
-        DA_z = results.angular_diameter_distance(zz) * (self.cp.h0/100.)
+        #pars = camb.CAMBparams()
+        #pars.set_cosmology(H0=self.cp.h0, ombh2=self.cp.ob*(self.cc.H0/100.)**2, omch2=(self.cp.om - self.cp.ob)*(self.cp.h0/100.)**2,)    
+        #results = camb.get_background(pars)
+        DA_z = self.cc.results.angular_diameter_distance(zz) * (self.cc.H0/100.)
         
         #MM *= (self.cp.h0/100.) 
         
@@ -380,7 +368,7 @@ class SZ_Cluster_Model:
         b_ym = 0.8
         beta_ym = 0.66
         
-        ans = Y_star*((b_ym)*MM/ 1e14)**alpha_ym *(DA_z/100.)**(-2.) * self.HP.E_z(zz) ** beta_ym
+        ans = Y_star*((b_ym)*MM/ 1e14)**alpha_ym *(DA_z/100.)**(-2.) * self.cc.E_z(zz) ** beta_ym
         #print (0.01/DA_z)**2
         return ans
     
@@ -402,10 +390,10 @@ class SZ_Cluster_Model:
     def P_of_q (self,lnY,MM,zz,sigma_N):
         lnYa = np.outer(np.ones(len(MM)),lnY)
         
-        pars = camb.CAMBparams()
-        pars.set_cosmology(H0=self.cp.h0, ombh2=self.cp.ob*(self.cp.h0/100.)**2, omch2=(self.cp.om - self.cp.ob)*(self.cp.h0/100.)**2,)    
-        results = camb.get_background(pars)
-        DA_z = results.angular_diameter_distance(zz) * (self.cp.h0/100.)
+        #pars = camb.CAMBparams()
+        #pars.set_cosmology(H0=self.cp.h0, ombh2=self.cp.ob*(self.cp.h0/100.)**2, omch2=(self.cp.om - self.cp.ob)*(self.cp.h0/100.)**2,)    
+        #results = camb.get_background(pars)
+        DA_z = self.cc.results.angular_diameter_distance(zz) * (self.cc.H0/100.)
         
         sig_thresh = self.Y_erf(np.exp(lnYa),sigma_N)
         P_Y = self.P_of_Y(lnYa,MM, zz)

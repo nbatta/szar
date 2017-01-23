@@ -11,6 +11,9 @@ class HaloTools(object):
     #hubble function
     def E_z(self,z):
         ans = np.sqrt(self.cp.om * (1 + z)**3 + self.cp.ol)
+        # print z, ans
+        # import sys
+        # sys.exit()
         return ans
     #critical density as a function of z
     def rhoc(self,z):
@@ -53,6 +56,9 @@ class HaloTools(object):
                 conz = self.con_M_rel_duffy200(Mass[i],z) #DUFFY
                 rs = self.rdel_m(Mass[i],z,200)/conz
                 xx = rdels[i] / rs
+                print conz
+                print xx
+                sys.exit()
                 Mass[i] = Mdel[i] * self.m_x(conz) / self.m_x(xx)
         ## Finish when they Converge
         return ans
