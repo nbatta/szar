@@ -13,6 +13,12 @@ from scipy.interpolate import interp1d
 
 import szlibNumbafied as fast
 
+
+def dictFromSection(config,sectionName):
+    del config._sections[sectionName]['__name__']
+    return dict([a, float(x)] for a, x in config._sections[sectionName].iteritems())
+
+
 class Cosmology(object):
     '''
     A wrapper around CAMB that tries to pre-calculate as much as possible
@@ -171,16 +177,19 @@ class Halo_MF:
         N_dzdm = dn_dm[:,1:] * dV_dz[1:] * 4*np.pi
         return N_dzdm
 
-    def N_of_z_SZ(self,z_arr):
+    def N_of_z_SZ(self,z_arr,beam,noise,fileFunc=None):
+
+
         h0 = 70.
         lnYmin = np.log(1e-13)
         dlnY = 0.1
         lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
     
         #M = 10**np.arange(14.0, 15.5, .1)
-        M = 10**np.arange(14.0, 15.5, 0.5)
+        Mexp = np.arange(14.0, 15.4, 0.2)
+        M = 10.**Mexp
         dM = np.gradient(M)
-        rho_crit0m = self.cc.rhoc0om #3. / (8 * np.pi) * (h0 * 1e5)**2 / self.cc.const[G_CGS] * self.cp.c.MPC2CM / self.cp.c.MSUN_CGS * self.cc.om
+        rho_crit0m = self.cc.rhoc0om
         hh = h0/100.
 
         M200 = np.outer(M,np.zeros([len(z_arr)]))
@@ -195,8 +204,12 @@ class Halo_MF:
             M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M/hh,500,z_arr[i])
             dM200[:,i] = np.gradient(M200[:,i])
             for j in xrange(len(M)):
-                SZProf = SZ_Cluster_Model(self.cc,rms_noise = 1.,fwhm=3.0,M=M[j],z=z_arr[i])
-                sigN[j,i] = np.sqrt(SZProf.filter_variance(DA_z[i]))
+                SZProf = SZ_Cluster_Model(self.cc,rms_noise = noise,fwhm=beam,M=M[j],z=z_arr[i])
+                if fileFunc is None:                    
+                    sigN[j,i] = np.sqrt(SZProf.filter_variance(DA_z[i]))
+                else:
+                    sigN[j,i] = np.loadtxt(fileFunc(beam,noise,Mexp[j],z_arr[i]),unpack=True)[-1]
+                    print Mexp[j],z_arr[i]
             
             P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
 

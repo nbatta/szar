@@ -5,15 +5,13 @@ import numpy as np
 from scipy import special
 import matplotlib.pyplot as plt
 import sys, os, time
-from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF
+from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,dictFromSection
 
 from orphics.tools.output import Plotter
 from ConfigParser import SafeConfigParser 
 
-def dictFromSection(config,sectionName):
-    del config._sections[sectionName]['__name__']
-    return dict([a, float(x)] for a, x in config._sections[sectionName].iteritems())
-
+beam = 1.0
+noise = 1.0
 
 iniFile = "input/cosmology.ini"
 Config = SafeConfigParser()
@@ -25,7 +23,7 @@ constDict = dictFromSection(Config,'constants')
 cc = ClusterCosmology(cosmoDict,constDict)
 
 # make an SZ profile example
-SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,rms_noise = 1.,fwhm=1.5,M=5e14,z=0.5 )
+SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,rms_noise = noise,fwhm=beam,M=5e14,z=0.5 )
 zz = 0.5
 MM= 5e14
 print "y_m",SZProfExample.Y_M(MM,zz)
@@ -111,16 +109,20 @@ pl.done("output/filter.png")
 
 # HMF
 
-zmin = 0.2
-zmax = 0.3
-delz = (zmax-zmin)/2.
-zbin_temp = np.arange(zmin,zmax,delz)
+#zmin = 0.2
+#zmax = 0.3
+#delz = (zmax-zmin)/2.
+#zbin_temp = np.arange(zmin,zmax,delz)
+zbin_temp = np.arange(0.1,0.8,0.2)
 zbin = np.insert(zbin_temp,0,0.0)
+print zbin
+
+
 start3 = time.time()
 
 HMF = Halo_MF(clusterCosmology=cc)
 dvdz = HMF.dVdz(zbin)
-dndm = HMF.N_of_z_SZ(zbin)
+dndm = HMF.N_of_z_SZ(zbin,beam,noise,fileFunc = lambda beam,noise,Mexp,z:"output/m"+str(Mexp)+"z"+str(z)+"b"+str(beam)+"n"+str(noise)+".txt")
 
 print "Time for N of z " , time.time() - start3
 
