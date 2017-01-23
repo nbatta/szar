@@ -310,20 +310,6 @@ class SZ_Cluster_Model:
         for ii in xrange(len(ell)):
             ans[ii] = np.sum(thta*special.jv(0,ell[ii]*thta)*y2D_use)*dtht
         return ans
-    
-    def y2D_test(self,tht,thtc):
-        ans = (1. + (tht/thtc)**2)**(-0.5) # beta profile beta = 2/3
-        return ans
-
-    def y2D_tilde_test(self,k,thtc):
-        #thtc = 1. / 60. / (180./np.pi) # rads 
-        dtht = 0.00001
-        thta = np.arange(dtht,100*thtc,dtht)
-        ans = k*0.
-        y2D_use = self.y2D_test(thta,thtc)
-        for ii in xrange(len(k)):
-            ans[ii] = np.sum(thta*special.jv(0,k[ii]*thta/thtc)*y2D_use)*dtht
-        return ans/thtc**2
 
     def noise_func(self,ell):
         
