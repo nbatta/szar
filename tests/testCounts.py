@@ -10,7 +10,7 @@ from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,dictFromSec
 from orphics.tools.output import Plotter
 from ConfigParser import SafeConfigParser 
 
-beam = 1.0
+beam = 1.5
 noise = 1.0
 
 iniFile = "input/cosmology.ini"
@@ -35,6 +35,7 @@ DA_z = results.angular_diameter_distance(zz) * (cc.H0/100.)
 
 
 R500 = SZProfExample.R500
+print R500
 thetc = R500/DA_z
 #dell = 1
 #ells = np.arange(2,20000,dell)
@@ -49,7 +50,12 @@ dell = 100
 ells = np.arange(2,60000,dell)
 nl = np.interp(ells,el,nltemp)
 start = time.time()
-y2dt2= SZProfExample.y2D_tilde_norm(ells,thetc)
+
+
+dtht = 0.0000025
+thta = np.arange(dtht,5.*thetc,dtht)
+
+y2dt2,y2D_use= SZProfExample.y2D_tilde_norm(ells,thetc,thta)
 print "Time for norm ", time.time() - start
 
 

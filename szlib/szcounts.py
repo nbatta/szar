@@ -61,12 +61,13 @@ class ClusterCosmology(Cosmology):
     def __init__(self,paramDict,constDict):
         Cosmology.__init__(self,paramDict,constDict)
         self.om = paramDict['om']
+        self.ol = paramDict['ol']
         self.rhoc0om = self.rho_crit0*self.om
         self.s8 = paramDict['s8']
         
     def E_z(self,z):
         #hubble function
-        ans = self.results.hubble_parameter(z)/self.paramDict['H0']
+        ans = self.results.hubble_parameter(z)/self.paramDict['H0'] # 0.1% different from sqrt(om*(1+z)^3+ol)
         return ans
 
     def rhoc(self,z):
@@ -253,7 +254,8 @@ class SZ_Cluster_Model:
         self.nl = nl
         self.freq_fac = freq_fac
 
-        self.dtht = 0.0000025
+        #self.dtht = 0.0000025
+        self.dtht = 0.00001
 
 
 
@@ -302,14 +304,14 @@ class SZ_Cluster_Model:
         return P2D
     
 
-    def y2D_tilde_norm(self,ell,thtc):
-        dtht = 0.00001
-        thta = np.arange(dtht,25*thtc,dtht)
+    def y2D_tilde_norm(self,ell,thtc,thta):
+        #dtht = 0.00001
+        #thta = np.arange(dtht,25*thtc,dtht)
         ans = ell*0.
         y2D_use = self.y2D_norm(thta/thtc)
         for ii in xrange(len(ell)):
-            ans[ii] = np.sum(thta*special.jv(0,ell[ii]*thta)*y2D_use)*dtht
-        return ans
+            ans[ii] = np.sum(thta*special.jv(0,ell[ii]*thta)*y2D_use)*self.dtht
+        return ans, y2D_use
 
     def noise_func(self,ell):
         
@@ -344,11 +346,11 @@ class SZ_Cluster_Model:
     def filter_variance(self,DAz):
         
         thtc = self.R500/DAz
-        thta = np.arange(self.dtht,5.*thtc,self.dtht)
-        
-        y2dtilde_2 = (self.y2D_tilde_norm(self.ells,thtc))**2
+        thta = np.arange(self.dtht,25.*thtc,self.dtht)
+        ytilde, y2D_use = self.y2D_tilde_norm(self.ells,thtc,thta)
+        y2dtilde_2 = (ytilde)**2
         var = np.sum(self.ells*y2dtilde_2/self.nl)*self.dell*self.freq_fac
-        y2D_use = self.y2D_norm(thta/thtc)
+        #y2D_use = self.y2D_norm(thta/thtc)  ######
         prof_int = 2.*np.pi*(np.sum(y2D_use*thta)*self.dtht)**2
         
         return prof_int/var
