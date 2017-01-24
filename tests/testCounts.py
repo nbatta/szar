@@ -10,9 +10,10 @@ from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,dictFromSec
 from orphics.tools.output import Plotter
 from ConfigParser import SafeConfigParser 
 
-beam = 1.5
-noise = 1.0
-lmax = 8000 
+beam = [1.5]
+noise = [1.0]
+freq = [150.]
+lmax = 10000 
 newMethod = False # filterVariance returns value from the lambda function implementation
 clusterParams = 'AlonsoCluster' # from ini file
 
@@ -29,7 +30,7 @@ cc = ClusterCosmology(cosmoDict,constDict,lmax)
 spec_file = Config.get('general','Clfile')
 
 # make an SZ profile example
-SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,spec_file=spec_file,clusterDict=clusterDict,rms_noise = noise,fwhm=beam,lmax=lmax,M=5e14,z=0.5 )
+SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,spec_file=spec_file,clusterDict=clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lmax=lmax,M=5e14,z=0.5 )
 zz = 0.5
 MM= 5e14
 print "y_m",SZProfExample.Y_M(MM,zz)
