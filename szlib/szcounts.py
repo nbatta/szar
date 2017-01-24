@@ -12,7 +12,7 @@ from orphics.tools.output import Plotter
 from scipy.interpolate import interp1d
 
 import szlibNumbafied as fast
-
+import sys
 
 def dictFromSection(config,sectionName):
     del config._sections[sectionName]['__name__']
@@ -64,14 +64,22 @@ class ClusterCosmology(Cosmology):
         self.ol = paramDict['ol']
         self.rhoc0om = self.rho_crit0*self.om
         self.s8 = paramDict['s8']
-        self.pars.set_accuracy(AccuracyBoost=2.0, lSampleBoost=4.0, lAccuracyBoost=4.0)
-        self.pars.set_for_lmax(lmax=(lmax+500), lens_potential_accuracy=1, max_eta_k=2*(lmax+500))
-        self.cltt =self.results.get_cmb_power_spectra(self.pars)['lensed_scalar'][2:,0]
-        self.ells = np.arange(2,len(self.cltt)+2,1)
-        self.cltt *= 2.*np.pi/self.ells/(self.ells+1.)
-        self.ells = self.ells[self.ells<=lmax]
-        self.cltt = self.cltt[self.ells<=lmax]
-        
+
+        import cPickle as pickle
+        try:
+            self.ells,self.cltt = pickle.load(open("output/cl"+time.strftime('%Y%m%d') +".pkl",'rb'))
+        except:
+            self.pars.set_accuracy(AccuracyBoost=2.0, lSampleBoost=4.0, lAccuracyBoost=4.0)
+            self.pars.set_for_lmax(lmax=(lmax+500), lens_potential_accuracy=1, max_eta_k=2*(lmax+500))
+            self.cltt =self.results.get_cmb_power_spectra(self.pars)['lensed_scalar'][2:,0]
+            self.ells = np.arange(2,len(self.cltt)+2,1)
+            self.cltt *= 2.*np.pi/self.ells/(self.ells+1.)
+            self.ells = self.ells[self.ells<=lmax]
+            self.cltt = self.cltt[self.ells<=lmax] 
+
+            pickle.dump((self.ells,self.cltt) ,open("output/cl"+time.strftime('%Y%m%d') +".pkl",'wb'))
+
+
     def E_z(self,z):
         #hubble function
         ans = self.results.hubble_parameter(z)/self.paramDict['H0'] # 0.1% different from sqrt(om*(1+z)^3+ol)
@@ -236,69 +244,125 @@ class Halo_MF:
 class SZ_Cluster_Model:
     def __init__(self,clusterCosmology,spec_file,P0=8.403,xc=1.177,al=1.05,gm=0.31,bt=5.49,fwhm=1,rms_noise =1, ellmax=8000.,M = 1.e14 ,z = 0.01 ,**options):
         self.cc = clusterCosmology
-        self.P0 = P0
-        self.xc = xc
-        self.al = al
-        self.gm = gm
-        self.bt = bt
+        # self.P0 = P0
+        # self.xc = xc
+        # self.al = al
+        # self.gm = gm
+        # self.bt = bt
         self.fwhm = fwhm
         self.rms_noise = rms_noise
         
-        self.NNR = 1000
-        self.drint = 1e-4
-        self.rad = (np.arange(1.e5) + 1.0)*self.drint #in MPC (max rad is 10 MPC)
-        self.rad2 = self.rad**2.
+        # self.NNR = 1000
+        # self.drint = 1e-4
+        # self.rad = (np.arange(1.e5) + 1.0)*self.drint #in MPC (max rad is 10 MPC)
+        # self.rad2 = self.rad**2.
 
 
-        pl = Plotter(scaleX='log',scaleY='log')
+        # pl = Plotter(scaleX='log',scaleY='log')
 
-        ell,cl = np.loadtxt("input/test_scalCls_new.dat",usecols=[0,1],unpack=True)
-        ell_extra = np.arange(60000)+np.max(ell)+1.
-        cll_extra = np.zeros(60000)
-        ell = np.append(ell,ell_extra)
-        cl = np.append(cl,cll_extra) *2.*np.pi/(ell*(ell+1.))
-        cltot = (cl + self.noise_func(ell)*self.cc.c['TCMBmuK']**2.) / self.cc.c['TCMBmuK']**2.
-        el=ell
-        nltemp = cltot
-        self.dell = 100
-        self.evalells = np.arange(2,60000,self.dell)
-        self.nl = np.interp(self.evalells,el,nltemp)
+        # ell,cl = np.loadtxt("input/test_scalCls_new.dat",usecols=[0,1],unpack=True)
+        # ell_extra = np.arange(60000)+np.max(ell)+1.
+        # cll_extra = np.zeros(60000)
+        # ell = np.append(ell,ell_extra)
+        # cl = np.append(cl,cll_extra) *2.*np.pi/(ell*(ell+1.))
+        # cltot = (cl + self.noise_func(ell)*self.cc.c['TCMBmuK']**2.) / self.cc.c['TCMBmuK']**2.
+        # el=ell
+        # nltemp = cltot
+        # self.dell = 100
+        # self.evalells = np.arange(2,60000,self.dell)
+        # self.nl = np.interp(self.evalells,el,nltemp)
 
-        pl.add(self.evalells,self.nl)
+        # pl.add(self.evalells,self.nl)
 
 
         self.ellmax = ellmax
         cltot = self.cc.cltt+( self.noise_func(self.cc.ells) )
         self.dell = 10
         self.evalells = np.arange(2,ellmax,self.dell)
-        self.nl = interp1d(self.cc.ells,cltot,fill_value=np.inf,bounds_error=False)(self.evalells)
+        self.nl = interp1d(self.cc.ells,cltot,fill_value=np.inf,bounds_error=False)#(self.evalells)
 
 
-        pl.add(self.evalells,self.nl)
-        pl.done("output/noisecomp.png")
+        # pl.add(self.evalells,self.nl)
+        # pl.done("output/noisecomp.png")
 
 
-        freq_fac = (self.f_nu(150.))**2
-        self.freq_fac = freq_fac
+        # freq_fac = (self.f_nu(150.))**2
+        # self.freq_fac = freq_fac
 
-        #self.dtht = 0.0000025
-        self.dtht = 0.00001
+        # #self.dtht = 0.0000025
+        # self.dtht = 0.00001
 
 
 
-        if options.get("Model") == 'BBPS':
-            self.P0 = 7.49
-            self.xc = 0.710
-            self.al = 1.0
-            self.gm = -0.3
-            self.bt = 4.19
+        # if options.get("Model") == 'BBPS':
+        #     self.P0 = 7.49
+        #     self.xc = 0.710
+        #     self.al = 1.0
+        #     self.gm = -0.3
+        #     self.bt = 4.19
 
-        r = np.arange(0.0001,100.,0.0001)
+        # r = np.arange(0.0001,100.,0.0001)
         self.R500 = self.cc.rdel_c(M,z,500.).flatten()[0]
-        self.M = M
-        self.z = z
-        prof = self.Prof(r,M,z)
-        self.profunc = interp1d(r,prof,bounds_error=True)        
+        # self.M = M
+        # self.z = z
+        # prof = self.Prof(r,M,z)
+        # self.profunc = interp1d(r,prof,bounds_error=True)        
+
+        st = time.time()
+        c = 1.156
+        alpha = 1.062
+        beta = 5.4807
+        gamma = 0.3292
+        p = lambda x: 1./(((c*x)**gamma)*((1.+((c*x)**alpha))**((beta-gamma)/alpha)))
+        DAz = self.cc.results.angular_diameter_distance(z) # * (cc.H0/100.)
+        th500 = self.R500/DAz
+        
+        pmaxN = 5.
+        numps = 1000
+
+        pzrange = np.linspace(-pmaxN,pmaxN,numps)
+        g = lambda x: np.trapz(p(np.sqrt(pzrange**2.+x**2.)),pzrange,np.diff(pzrange))
+        print "g(0) ", g(0)
+
+        gxrange = np.linspace(0.,pmaxN,numps)        
+        gint = np.array([g(x) for x in gxrange])
+
+        pl = Plotter()
+        pl.add(gxrange,gint)
+        pl.done("output/gint.png")
+
+        gnorm = 2.*np.pi*(th500**2.)*np.trapz(gxrange*gint,gxrange,np.diff(gxrange))
+        print "gnorm ", gnorm
+        u = lambda th: g(th/th500)/gnorm
+
+        #print u(2.*np.pi/180./60.)
+        numts = 1000
+        thetamax = pmaxN * th500
+        from scipy.special import j0
+        from scipy.integrate import quad
+        
+        thetas = np.linspace(0.,thetamax,numts)
+        uint = np.array([u(t) for t in thetas])
+
+        pl = Plotter()
+        pl.add(thetas,uint)
+        pl.done("output/uint.png")
+
+
+        #y500 = np.trapz(uint*thetas,thetas,np.diff(thetas))*2.*np.pi
+        #print "y500", y500
+        integrand = lambda l: np.trapz(j0(l*thetas)*uint,thetas,np.diff(thetas))
+        #integrand = lambda l: quad(lambda t: j0(l*t)*u(t),0.,thetamax)
+
+        lmax = 8000.
+        ells = np.arange(2.,lmax,10)
+        integrands = np.array([integrand(ell) for ell in ells])
+        varinv = np.trapz((integrands**2.)*ells/self.nl(ells)*2.*np.pi,ells,np.diff(ells))
+        print np.sqrt(1./varinv)
+        print time.time()-st, "  seconds"
+        sys.exit()
+         
+        
     
     def f_nu(self,nu):
         mu = self.cc.c['H_CGS']*(1e9*nu)/(self.cc.c['K_CGS']*self.cc.c['TCMB'])
