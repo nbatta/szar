@@ -12,6 +12,7 @@ from ConfigParser import SafeConfigParser
 
 beam = 1.5
 noise = 1.0
+lmax = 8000
 
 iniFile = "input/cosmology.ini"
 Config = SafeConfigParser()
@@ -20,7 +21,7 @@ Config.read(iniFile)
 
 cosmoDict = dictFromSection(Config,'WMAP9')
 constDict = dictFromSection(Config,'constants')
-cc = ClusterCosmology(cosmoDict,constDict)
+cc = ClusterCosmology(cosmoDict,constDict,lmax=lmax)
 
 spec_file = 'input/test_scalCls_new.dat'
 
@@ -46,27 +47,22 @@ arc = 5.9
 thetc2 = np.deg2rad(arc/2. / 60.)
 print "thetc = ", thetc
 
-el, nltemp, cl = SZProfExample.tot_noise_spec(spec_file)
 
-dell = 100
-ells = np.arange(2,60000,dell)
-nl = np.interp(ells,el,nltemp)
+
 start = time.time()
-
-
 dtht = 0.0000025
 thta = np.arange(dtht,5.*thetc,dtht)
 
-y2dt2,y2D_use= SZProfExample.y2D_tilde_norm(ells,thetc,thta)
+y2dt2,y2D_use= SZProfExample.y2D_tilde_norm(SZProfExample.evalells,thetc,thta)
 print "Time for norm ", time.time() - start
 
 
-pl = Plotter(scaleX='log', scaleY='log')
-pl.add(ells,nl,ls='--')
-pl.add(ells,y2dt2)
-pl.add(ells,y2dt2/nl)
-#plt.loglog(ells,y2dt2_2)
-pl.done("output/ynorm.png")
+# pl = Plotter(scaleX='log', scaleY='log')
+# pl.add(ells,nl,ls='--')
+# pl.add(ells,y2dt2)
+# pl.add(ells,y2dt2/nl)
+# #plt.loglog(ells,y2dt2_2)
+# pl.done("output/ynorm.png")
 
 #FIX
 #fvar = SZProf.filter_variance(thetc)
@@ -84,7 +80,7 @@ filt = 0.0*tht
 
 start2 = time.time()
 for ii in xrange(len(tht)):
-    filt[ii] = np.sum(special.jv(0,ells*tht[ii])*ells*y2dt2/nl)*dell
+    filt[ii] = np.sum(special.jv(0,SZProfExample.evalells*tht[ii])*SZProfExample.evalells*y2dt2/SZProfExample.nl)*SZProfExample.dell
 #    filt2[ii] = np.sum(special.jv(0,ells*tht[ii])*ells*y2dt2_2/nl)
 print "Time for filt ", time.time() - start2
 
@@ -97,7 +93,7 @@ print "Time for filt ", time.time() - start2
 DA_z = results.angular_diameter_distance(zz) * (cc.H0/100.)
 
 start2 = time.time()
-print np.sqrt(SZProfExample.filter_variance(DA_z))
+print "sqrt var " , np.sqrt(SZProfExample.filter_variance(DA_z))
 print "Time for var " , time.time() - start2
 
 pl = Plotter()
@@ -130,7 +126,7 @@ start3 = time.time()
 
 HMF = Halo_MF(clusterCosmology=cc)
 dvdz = HMF.dVdz(zbin)
-dndm = HMF.N_of_z_SZ(zbin,beam,noise,fileFunc = lambda beam,noise,Mexp,z:"data/m"+str(Mexp)+"z"+str(z)+"b"+str(beam)+"n"+str(noise)+".txt")
+dndm = HMF.N_of_z_SZ(zbin,beam,noise,spec_file,fileFunc = lambda beam,noise,Mexp,z:"data/m"+str(Mexp)+"z"+str(z)+"b"+str(beam)+"n"+str(noise)+".txt")
 
 print "Time for N of z " , time.time() - start3
 
