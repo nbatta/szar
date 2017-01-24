@@ -178,7 +178,7 @@ class Halo_MF:
         N_dzdm = dn_dm[:,1:] * dV_dz[1:] * 4*np.pi
         return N_dzdm
 
-    def N_of_z_SZ(self,z_arr,beam,noise,fileFunc=None):
+    def N_of_z_SZ(self,z_arr,beam,noise,spec_file,fileFunc=None):
 
 
         h0 = 70.
@@ -205,7 +205,7 @@ class Halo_MF:
             M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M/hh,500,z_arr[i])
             dM200[:,i] = np.gradient(M200[:,i])
             for j in xrange(len(M)):
-                SZProf = SZ_Cluster_Model(self.cc,rms_noise = noise,fwhm=beam,M=M[j],z=z_arr[i])
+                SZProf = SZ_Cluster_Model(self.cc,spec_file,rms_noise = noise,fwhm=beam,M=M[j],z=z_arr[i])
                 if fileFunc is None:                    
                     sigN[j,i] = np.sqrt(SZProf.filter_variance(DA_z[i]))
                 else:
@@ -349,6 +349,8 @@ class SZ_Cluster_Model:
         thta = np.arange(self.dtht,5.*thtc,self.dtht)  ### Changed 25 to 5 and it didn't change much
         ytilde, y2D_use = self.y2D_tilde_norm(self.ells,thtc,thta)
         y2dtilde_2 = (ytilde)**2
+        print self.ells[70],self.nl[70]
+        #sys.exit()
         var = np.sum(self.ells*y2dtilde_2/self.nl)*self.dell*self.freq_fac
         #y2D_use = self.y2D_norm(thta/thtc)  ######
 

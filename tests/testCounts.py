@@ -22,7 +22,7 @@ cosmoDict = dictFromSection(Config,'WMAP9')
 constDict = dictFromSection(Config,'constants')
 cc = ClusterCosmology(cosmoDict,constDict)
 
-spec_file = 'input/test_scalCls_new.dat'
+spec_file = Config.get('general','Clfile')
 
 # make an SZ profile example
 SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,spec_file=spec_file,rms_noise = noise,fwhm=beam,M=5e14,z=0.5 )
@@ -130,7 +130,7 @@ start3 = time.time()
 
 HMF = Halo_MF(clusterCosmology=cc)
 dvdz = HMF.dVdz(zbin)
-dndm = HMF.N_of_z_SZ(zbin,beam,noise,fileFunc = lambda beam,noise,Mexp,z:"data/m"+str(Mexp)+"z"+str(z)+"b"+str(beam)+"n"+str(noise)+".txt")
+dndm = HMF.N_of_z_SZ(zbin,beam,noise,spec_file,fileFunc = lambda beam,noise,Mexp,z:"data/m"+str(Mexp)+"z"+str(z)+"b"+str(beam)+"n"+str(noise)+".txt")
 
 print "Time for N of z " , time.time() - start3
 
