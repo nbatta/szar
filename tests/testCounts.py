@@ -12,7 +12,11 @@ from ConfigParser import SafeConfigParser
 
 beam = 1.5
 noise = 1.0
-lmax = 8000
+moreElls = True # uses the ell up to 60000 code, so no lmax, and uses cosmology from spec_file. \
+           # Otherwise uses cosmology from internal CAMB call pickled every day.
+lmax = 8000 # doesn't matter if moreElls is True
+newMethod = True # filterVariance returns value from the lambda function implementation
+clusterParams = 'AlonsoCluster' # from ini file
 
 iniFile = "input/cosmology.ini"
 Config = SafeConfigParser()
@@ -21,13 +25,13 @@ Config.read(iniFile)
 
 cosmoDict = dictFromSection(Config,'WMAP9')
 constDict = dictFromSection(Config,'constants')
-clusterDict = dictFromSection(Config,'defaultCluster')
+clusterDict = dictFromSection(Config,clusterParams)
 cc = ClusterCosmology(cosmoDict,constDict,lmax)
 
 spec_file = Config.get('general','Clfile')
 
 # make an SZ profile example
-SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,spec_file=spec_file,clusterDict=clusterDict,rms_noise = noise,fwhm=beam,lmax=lmax,M=5e14,z=0.5 )
+SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,spec_file=spec_file,clusterDict=clusterDict,rms_noise = noise,moreElls=moreElls,fwhm=beam,lmax=lmax,M=5e14,z=0.5 )
 zz = 0.5
 MM= 5e14
 print "y_m",SZProfExample.Y_M(MM,zz)
@@ -70,31 +74,6 @@ pl.add(ells,y2dt2/nl)
 #plt.loglog(ells,y2dt2_2)
 pl.done("output/ynorm.png")
 
-#FIX
-#fvar = SZProf.filter_variance(thetc)
-#print fvar #UNITS!!!!!!! [armin2] dropped a deg to arcmin somewhere
-#print fvar * thetc**2
-
-
-dthttest = np.deg2rad(0.1/60)
-tht = np.arange(dthttest,60*5*dthttest,dthttest)
-#tht2 = tht/2.0
-#dthttest = 0.00001*arc
-#tht = np.arange(dthttest,0.05*arc,dthttest)
-filt = 0.0*tht
-#filt2 = 0.0*tht
-
-start2 = time.time()
-for ii in xrange(len(tht)):
-    filt[ii] = np.sum(special.jv(0,ells*tht[ii])*ells*y2dt2/nl)*dell
-#    filt2[ii] = np.sum(special.jv(0,ells*tht[ii])*ells*y2dt2_2/nl)
-print "Time for filt ", time.time() - start2
-
-
-
-
-#arc = 5.9
-#thetc = np.deg2rad(arc / 60.)
 
 DA_z = results.angular_diameter_distance(zz) * (cc.H0/100.)
 
@@ -104,25 +83,15 @@ print "Time for var " , time.time() - start2
 
 pl = Plotter()
 pl._ax.set_xlim(0,10)
-#plt.plot(tht/thetc,filt/np.max(filt))
 pl.add(np.rad2deg(tht)*60.,filt/np.max(filt),color='black')
-#plt.plot(np.rad2deg(tht*thetc2)*60.,filt2/np.max(filt2))
 pl.add(np.rad2deg(tht)*60.,SZProfExample.y2D_norm(tht/thetc),color="black",ls='--')
-#plt.plot(np.rad2deg(tht)*60.,SZProf.y2D_norm(tht),'--')
-#plt.plot(np.rad2deg(tht)*60.,SZProf.y2D_test(tht,thetc),'--')
 pl.add([0,10],[0,0],color="black",ls='--')
-#xx,yy = np.loadtxt('/Users/nab/Desktop/Projects/Match_filter/JBM_2005.dat',unpack=True)
-#plt.plot(xx,yy,'rx')
 pl.done("output/filter.png")
 
 
 
 # HMF
 
-#zmin = 0.2
-#zmax = 0.3
-#delz = (zmax-zmin)/2.
-#zbin_temp = np.arange(zmin,zmax,delz)
 zbin_temp = np.arange(0.1,0.8,0.2)
 zbin = np.insert(zbin_temp,0,0.0)
 print zbin

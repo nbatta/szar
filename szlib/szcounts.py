@@ -241,7 +241,7 @@ class Halo_MF:
         return N_z
 
 class SZ_Cluster_Model:
-    def __init__(self,clusterCosmology,spec_file,clusterDict,fwhm=1,rms_noise =1, moreElls=False, lmax=8000,M = 1.e14 ,z = 0.01 ,**options):
+    def __init__(self,clusterCosmology,spec_file,clusterDict,fwhm=1,rms_noise =1, moreElls=True, lmax=8000,M = 1.e14 ,z = 0.01 ,**options):
         self.cc = clusterCosmology
         self.P0 = clusterDict['P0']
         self.xc = clusterDict['xc']
@@ -267,7 +267,7 @@ class SZ_Cluster_Model:
         else:
             # NOISE
             cltot = self.cc.cltt+( self.noise_func(self.cc.ells) / self.cc.c['TCMBmuK']**2.)
-            self.dell = 10
+            self.dell = 1
             self.evalells = np.arange(2,lmax,self.dell)
             self.nl = interp1d(self.cc.ells,cltot,fill_value=np.inf,bounds_error=False)(self.evalells)
 
@@ -281,10 +281,14 @@ class SZ_Cluster_Model:
 
 
         # p(x)
-        c = 1.156
-        alpha = 1.062
-        beta = 5.4807
-        gamma = 0.3292
+        c = self.xc
+        alpha = self.al
+        beta = self.bt
+        gamma = self.gm
+        # c = 1.156
+        # alpha = 1.062
+        # beta = 5.4807
+        # gamma = 0.3292
         p = lambda x: 1./(((c*x)**gamma)*((1.+((c*x)**alpha))**((beta-gamma)/alpha)))
 
 
@@ -326,7 +330,7 @@ class SZ_Cluster_Model:
         varinv = np.trapz((integrands**2.)*ells*2.*np.pi/self.nl,ells,np.diff(ells))
         print np.sqrt(1./varinv)
         print time.time()-st, "  seconds"
-        self.varinv = varinv
+        self.var = 1./varinv
 
         
 
@@ -438,7 +442,9 @@ class SZ_Cluster_Model:
         pl.add(el,cl*el**2)
         pl.done("output/noise.png")
 
-    def filter_variance(self,DAz):
+    def filter_variance(self,DAz,newMethod=True):
+
+        if newMethod: return self.var
         
         thtc = self.R500/DAz
         thta = np.arange(self.dtht,5.*thtc,self.dtht)  ### Changed 25 to 5 and it didn't change much
