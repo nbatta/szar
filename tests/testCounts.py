@@ -33,12 +33,26 @@ spec_file = Config.get('general','Clfile')
 SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,spec_file=spec_file,clusterDict=clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lmax=lmax,M=5e14,z=0.5 )
 zz = 0.5
 MM= 5e14
+
+
+print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz))
+print "filtvar " , np.sqrt(SZProfExample.filter_variance(MM,zz))
+
+
+
+
+
+
+
+
+
+
+sys.exit()
 print "y_m",SZProfExample.Y_M(MM,zz)
 #SZProfExample.plot_noise()
 
 results = cc.results
 
-DA_z = results.angular_diameter_distance(zz) * (cc.H0/100.)
 
 
 R500 = SZProfExample.R500
