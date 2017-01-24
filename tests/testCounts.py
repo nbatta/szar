@@ -12,6 +12,7 @@ from ConfigParser import SafeConfigParser
 
 beam = 1.5
 noise = 1.0
+lmax = 8000
 
 iniFile = "input/cosmology.ini"
 Config = SafeConfigParser()
@@ -21,12 +22,12 @@ Config.read(iniFile)
 cosmoDict = dictFromSection(Config,'WMAP9')
 constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,'defaultCluster')
-cc = ClusterCosmology(cosmoDict,constDict)
+cc = ClusterCosmology(cosmoDict,constDict,lmax)
 
 spec_file = Config.get('general','Clfile')
 
 # make an SZ profile example
-SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,spec_file=spec_file,clusterDict=clusterDict,rms_noise = noise,fwhm=beam,M=5e14,z=0.5 )
+SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,spec_file=spec_file,clusterDict=clusterDict,rms_noise = noise,fwhm=beam,lmax=lmax,M=5e14,z=0.5 )
 zz = 0.5
 MM= 5e14
 print "y_m",SZProfExample.Y_M(MM,zz)
