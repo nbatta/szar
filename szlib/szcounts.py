@@ -77,6 +77,7 @@ class ClusterCosmology(Cosmology):
             self.cltt = self.cltt[self.ells<=lmax] 
 
             pickle.dump((self.ells,self.cltt) ,open("output/cl"+time.strftime('%Y%m%d') +".pkl",'wb'))
+        self.clttfunc = interp1d(self.ells,self.cltt,fill_value=0.,bounds_error=False)
 
         
     def E_z(self,z):
@@ -241,7 +242,7 @@ class Halo_MF:
         return N_z
 
 class SZ_Cluster_Model:
-    def __init__(self,clusterCosmology,spec_file,clusterDict,fwhm=1,rms_noise =1, moreElls=True, lmax=8000,M = 1.e14 ,z = 0.01 ,**options):
+    def __init__(self,clusterCosmology,spec_file,clusterDict,fwhm=1,rms_noise =1, lmax=8000,M = 1.e14 ,z = 0.01 ,**options):
         self.cc = clusterCosmology
         self.P0 = clusterDict['P0']
         self.xc = clusterDict['xc']
@@ -250,26 +251,18 @@ class SZ_Cluster_Model:
         self.bt = clusterDict['bt']
         self.fwhm = fwhm
         self.rms_noise = rms_noise
+        
+        freq_fac = (self.f_nu(150.))**2
+        self.freq_fac = freq_fac
 
 
-        if moreElls:
-            ell,cl = np.loadtxt(spec_file,usecols=[0,1],unpack=True)
-            ell_extra = np.arange(60000)+np.max(ell)+1.
-            cll_extra = np.zeros(60000)
-            ell = np.append(ell,ell_extra)
-            cl = np.append(cl,cll_extra) *2.*np.pi/(ell*(ell+1.))
-            cltot = (cl + self.noise_func(ell)) / self.cc.c['TCMBmuK']**2.
-            el=ell
-            nltemp = cltot
-            self.dell = 100
-            self.evalells = np.arange(2,60000,self.dell)
-            self.nl = np.interp(self.evalells,el,nltemp)
-        else:
-            # NOISE
-            cltot = self.cc.cltt+( self.noise_func(self.cc.ells) / self.cc.c['TCMBmuK']**2.)
-            self.dell = 1
-            self.evalells = np.arange(2,lmax,self.dell)
-            self.nl = interp1d(self.cc.ells,cltot,fill_value=np.inf,bounds_error=False)(self.evalells)
+        cltot = self.cc.clttfunc(self.cc.ells)+( self.noise_func(self.cc.ells) / self.cc.c['TCMBmuK']**2.)
+        self.dell = 10
+        self.evalells = np.arange(2,lmax,self.dell)
+        self.nl = interp1d(self.cc.ells,cltot,fill_value=np.inf,bounds_error=False)(self.evalells)
+
+
+            
 
         # R500 in MPc, DAz in MPc, th500 in radians
         self.R500 = self.cc.rdel_c(M,z,500.).flatten()[0]
@@ -327,7 +320,7 @@ class SZ_Cluster_Model:
         integrand = lambda l: np.trapz(j0(l*thetas)*uint*thetas,thetas,np.diff(thetas))
         integrands = np.array([integrand(ell) for ell in ells])
         # varinv = \int dell 2pi ell integrand^2 / nl
-        varinv = np.trapz((integrands**2.)*ells*2.*np.pi/self.nl,ells,np.diff(ells))
+        varinv = np.trapz((integrands**2.)*ells*2.*np.pi/self.nl,ells,np.diff(ells))*self.freq_fac
         print np.sqrt(1./varinv)
         print time.time()-st, "  seconds"
         self.var = 1./varinv
@@ -343,15 +336,6 @@ class SZ_Cluster_Model:
 
 
 
-        self.noisepkg = self.tot_noise_spec(spec_file)
-        el, nltemp, cl = self.noisepkg
-        self.dell = 100
-        ells = np.arange(2,60000,self.dell)
-        nl = np.interp(ells,el,nltemp)
-        freq_fac = (self.f_nu(150.))**2
-        self.ells = ells
-        self.nl = nl
-        self.freq_fac = freq_fac
 
         #self.dtht = 0.0000025
         self.dtht = 0.00001
@@ -416,31 +400,9 @@ class SZ_Cluster_Model:
         
         rms = self.rms_noise * (1./60.)*(np.pi/180.)
         tht_fwhm = np.deg2rad(self.fwhm / 60.)
-        
-        ans = rms**2 * np.exp(tht_fwhm**2*ell**2 / (8.*np.log(2))) ## Add Hasselfield noise knee
+        ans = (rms**2.) * np.exp((tht_fwhm**2.)*(ell**2.) / (8.*np.log(2.))) ## Add Hasselfield noise knee
         return ans
     
-    def tot_noise_spec(self,spec_file):
-
-        ell,cl = np.loadtxt(spec_file,usecols=[0,1],unpack=True)
-        ell_extra = np.arange(60000)+np.max(ell)+1.
-        cll_extra = np.zeros(60000)
-        ell = np.append(ell,ell_extra)
-        cl = np.append(cl,cll_extra) *2.*np.pi/(ell*(ell+1.))
-        
-        cltot = (cl + self.noise_func(ell)) / self.cc.c['TCMBmuK']**2.
-        return ell,cltot,cl
-
-    def plot_noise(self):
-        el, nl, cl = self.noisepkg
-        nl *= self.cc.c['TCMBmuK'] **2
-        pl = Plotter(scaleX='log',scaleY='log')
-        pl._ax.set_xlim(60,8e3)
-        pl._ax.set_ylim(1e-2,1e5)
-        pl.add(el,nl*el**2)
-        pl.add(el,self.noise_func(el)*el**2)
-        pl.add(el,cl*el**2)
-        pl.done("output/noise.png")
 
     def filter_variance(self,DAz,newMethod=True):
 
@@ -448,11 +410,11 @@ class SZ_Cluster_Model:
         
         thtc = self.R500/DAz
         thta = np.arange(self.dtht,5.*thtc,self.dtht)  ### Changed 25 to 5 and it didn't change much
-        ytilde, y2D_use = self.y2D_tilde_norm(self.ells,thtc,thta)
+        ytilde, y2D_use = self.y2D_tilde_norm(self.evalells,thtc,thta)
         y2dtilde_2 = (ytilde)**2
-        print self.ells[70],self.nl[70]
+        print self.evalells[70],self.nl[70]
         #sys.exit()
-        var = np.sum(self.ells*y2dtilde_2/self.nl)*self.dell*self.freq_fac
+        var = np.sum(self.evalells*y2dtilde_2/self.nl)*self.dell*self.freq_fac
         #y2D_use = self.y2D_norm(thta/thtc)  ######
 
         prof_int = 2.*np.pi*(np.sum((y2D_use*thta)[thta < 5*thtc])*self.dtht)**2
