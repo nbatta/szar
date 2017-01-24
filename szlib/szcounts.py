@@ -178,7 +178,7 @@ class Halo_MF:
         N_dzdm = dn_dm[:,1:] * dV_dz[1:] * 4*np.pi
         return N_dzdm
 
-    def N_of_z_SZ(self,z_arr,beam,noise,spec_file,fileFunc=None):
+    def N_of_z_SZ(self,z_arr,beam,noise,spec_file,clusterDict,fileFunc=None):
 
 
         h0 = 70.
@@ -205,7 +205,7 @@ class Halo_MF:
             M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M/hh,500,z_arr[i])
             dM200[:,i] = np.gradient(M200[:,i])
             for j in xrange(len(M)):
-                SZProf = SZ_Cluster_Model(self.cc,spec_file,rms_noise = noise,fwhm=beam,M=M[j],z=z_arr[i])
+                SZProf = SZ_Cluster_Model(self.cc,spec_file,clusterDict,rms_noise = noise,fwhm=beam,M=M[j],z=z_arr[i])
                 if fileFunc is None:                    
                     sigN[j,i] = np.sqrt(SZProf.filter_variance(DA_z[i]))
                 else:
@@ -227,13 +227,13 @@ class Halo_MF:
         return N_z
 
 class SZ_Cluster_Model:
-    def __init__(self,clusterCosmology,spec_file,P0=8.403,xc=1.177,al=1.05,gm=0.31,bt=5.49,fwhm=1,rms_noise =1, M = 1.e14 ,z = 0.01 ,**options):
+    def __init__(self,clusterCosmology,spec_file,clusterDict,fwhm=1,rms_noise =1, M = 1.e14 ,z = 0.01 ,**options):
         self.cc = clusterCosmology
-        self.P0 = P0
-        self.xc = xc
-        self.al = al
-        self.gm = gm
-        self.bt = bt
+        self.P0 = clusterDict['P0']
+        self.xc = clusterDict['xc']
+        self.al = clusterDict['al']
+        self.gm = clusterDict['gm']
+        self.bt = clusterDict['bt']
         self.fwhm = fwhm
         self.rms_noise = rms_noise
         
