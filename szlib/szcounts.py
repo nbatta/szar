@@ -262,7 +262,7 @@ class Halo_MF:
         return N_z
 
 class SZ_Cluster_Model:
-    def __init__(self,clusterCosmology,clusterDict,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000 ,**options):
+    def __init__(self,clusterCosmology,clusterDict,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,dell=10,pmaxN=5,numps=1000,**options):
         self.cc = clusterCosmology
         self.P0 = clusterDict['P0']
         self.xc = clusterDict['xc']
@@ -271,8 +271,8 @@ class SZ_Cluster_Model:
         self.bt = clusterDict['bt']
 
 
-
-        self.dell = 1
+        # build noise object
+        self.dell = 10
         self.nlinv = 0.
         self.evalells = np.arange(2,lmax,self.dell)
         for freq,fwhm,noise in zip(freqs,fwhms,rms_noises):
@@ -285,8 +285,8 @@ class SZ_Cluster_Model:
         self.nl = 1./self.nlinv
 
 
-            
-
+           
+        # build profile for quickvar
         # p(x)
         c = self.xc
         alpha = self.al
@@ -296,12 +296,12 @@ class SZ_Cluster_Model:
 
 
         # g(x) = \int dz p(sqrt(z**2+x**2))
-        self.pmaxN = 5.
-        numps = 1000
-        pzrange = np.linspace(-self.pmaxN,self.pmaxN,numps)
+        pmaxN = pmaxN
+        numps = numps
+        pzrange = np.linspace(-pmaxN,pmaxN,numps)
         self.g = lambda x: np.trapz(p(np.sqrt(pzrange**2.+x**2.)),pzrange,np.diff(pzrange))
-        print "g(0) ", self.g(0)
-        self.gxrange = np.linspace(0.,self.pmaxN,numps)        
+        #print "g(0) ", self.g(0)
+        self.gxrange = np.linspace(0.,pmaxN,numps)        
         self.gint = np.array([self.g(x) for x in self.gxrange])
 
         # pl = Plotter()
@@ -334,7 +334,7 @@ class SZ_Cluster_Model:
 
 
     @timeit
-    def quickVar(self,M,z):
+    def quickVar(self,M,z,tmaxN=5.,numts=1000):
 
 
 
@@ -349,8 +349,7 @@ class SZ_Cluster_Model:
 
         # u(th) = g(th/th500)/gnorm
         u = lambda th: self.g(th/th500)/gnorm
-        numts = 1000
-        thetamax = self.pmaxN * th500
+        thetamax = tmaxN * th500
         thetas = np.linspace(0.,thetamax,numts)
         uint = np.array([u(t) for t in thetas])
 

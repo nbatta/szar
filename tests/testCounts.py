@@ -14,15 +14,34 @@ beam = [1.5]
 noise = [1.0]
 freq = [150.]
 lmax = 10000 
-newMethod = False # filterVariance returns value from the lambda function implementation
-clusterParams = 'AlonsoCluster' # from ini file
+zz = 0.5
+MM= 5e14
+clusterParams = 'LACluster' # from ini file
+
+
+# accuracy params
+#dell=10
+#pmaxN=5
+#numps=1000
+#tmaxN=5
+#numts=1000
+
+dell=1
+pmaxN=25
+numps=5000
+tmaxN=25
+numts=5000
+
+
+
 
 iniFile = "input/cosmology.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
 
-cosmoDict = dictFromSection(Config,'WMAP9')
+cosmoDict = dictFromSection(Config,'LACosmology')
+#cosmoDict = dictFromSection(Config,'WMAP9')
 constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,clusterParams)
 cc = ClusterCosmology(cosmoDict,constDict,lmax)
@@ -30,14 +49,14 @@ cc = ClusterCosmology(cosmoDict,constDict,lmax)
 spec_file = Config.get('general','Clfile')
 
 # make an SZ profile example
-SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,spec_file=spec_file,clusterDict=clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lmax=lmax,M=5e14,z=0.5 )
-zz = 0.5
-MM= 5e14
 
 
-print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz))
+SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,spec_file=spec_file,clusterDict=clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lmax=lmax,M=MM,z=zz,dell=dell,pmaxN=pmaxN,numps=numps)
+
+
+print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts))
 print "filtvar " , np.sqrt(SZProfExample.filter_variance(MM,zz))
-
+print "Y_M ",SZProfExample.Y_M(MM,zz)
 
 
 
