@@ -16,7 +16,7 @@ clusterParams = 'LACluster' # from ini file
 cosmologyName = 'LACosmology' # from ini file
 experimentName = "AdvAct"
 #fileFunc = None
-fileFunc = lambda M,z:"data/"+experimenName+"_m"+str(M)+"z"+str(z)+".txt"
+fileFunc = lambda M,z:"data/"+experimentName+"_m"+str(M)+"z"+str(z)+".txt"
 
 iniFile = "input/params.ini"
 Config = SafeConfigParser()
@@ -81,7 +81,7 @@ print "thetc = ", thetc
 
 # HMF
 
-zbin_temp = np.arange(0.01,2.0,0.05)
+zbin_temp = np.arange(0.05,2.0,0.05)
 zbin = np.insert(zbin_temp,0,0.0)
 #print zbin
 
