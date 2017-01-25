@@ -177,6 +177,7 @@ class Halo_MF:
         return f
     
     def dVdz(self,z_arr):
+        #dV/dzdOmega
         DA_z = self.cc.results.angular_diameter_distance(z_arr)
         dV_dz = DA_z**2 * (1.+z_arr)**2
         for i in xrange (len(z_arr)):
@@ -186,7 +187,7 @@ class Halo_MF:
         return dV_dz
 
     def dn_dM(self,M,z_arr,delta):
-        
+        #Mass Function
         delts = z_arr*0 + delta
         kh, z, pk, s8 = self.pk(z_arr)
         fac = (self.cc.s8/s8[-1])**2 # sigma8 values are in reverse order
@@ -197,7 +198,7 @@ class Halo_MF:
         return dn_dm
     
     def N_of_Mz(self,M,z_arr,delta):
-        
+        # this is DN/dz #For the full sky  
         delts = z_arr*0 + delta
         kh, z, pk, s8 = self.pk(z_arr)
         fac = (self.cc.s8/s8[-1])**2 # sigma8 values are in reverse order
@@ -211,7 +212,7 @@ class Halo_MF:
         return N_dzdm
 
     def N_of_z_SZ(self,z_arr,beams,noises,freqs,clusterDict,fileFunc=None,quick=True,tmaxN=5,numts=1000):
-
+        # this is dN/dV(z)
 
         h0 = 70.
         lnYmin = np.log(1e-13)
