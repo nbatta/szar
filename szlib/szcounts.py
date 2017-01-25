@@ -34,6 +34,8 @@ def dictFromSection(config,sectionName):
     del config._sections[sectionName]['__name__']
     return dict([a, float(x)] for a, x in config._sections[sectionName].iteritems())
 
+def listFromConfig(Config,section,name):
+    return [float(x) for x in Config.get(section,name).split(',')]
 
 class Cosmology(object):
     '''
@@ -216,8 +218,8 @@ class Halo_MF:
         dlnY = 0.1
         lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
     
-        #M = 10**np.arange(14.0, 15.5, .1)
-        Mexp = np.arange(14.0, 15.4, 0.2)
+        Mexp = np.arange(14.0, 15.5, .1)
+        #Mexp = np.arange(14.0, 15.4, 0.2)
         M = 10.**Mexp
         dM = np.gradient(M)
         rho_crit0m = self.cc.rhoc0om
@@ -243,7 +245,9 @@ class Halo_MF:
             for j in xrange(len(M)):
                 try:
                     assert fileFunc is not None
-                    sigN[j,i] = np.loadtxt(fileFunc(Mexp[j],z_arr[i]),unpack=True)[-1]
+                    filename = fileFunc(Mexp[j],z_arr[i])
+                    #print filename
+                    sigN[j,i] = np.loadtxt(filename,unpack=True)[-1]
                 except:
                     print "Calculating S/N because file not found or specified for M=",Mexp[j]," z=",z_arr[i]
                     if quick:

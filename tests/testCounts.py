@@ -5,21 +5,32 @@ import numpy as np
 from scipy import special
 import matplotlib.pyplot as plt
 import sys, os, time
-from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,dictFromSection
+from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,dictFromSection,listFromConfig
 
 from orphics.tools.output import Plotter
 from ConfigParser import SafeConfigParser 
 
-beam = [1.5]
-noise = [1.0]
-freq = [150.]
-lmax = 10000 
 zz = 0.5
 MM = 5.e14
 clusterParams = 'LACluster' # from ini file
 cosmologyName = 'LACosmology' # from ini file
-fileFunc = None
-#fileFunc = lambda M,z:"data/save1"+str(M)+"z"+str(z)+".txt"
+experimentName = "AdvAct"
+#fileFunc = None
+fileFunc = lambda M,z:"data/"+experimenName+"_m"+str(M)+"z"+str(z)+".txt"
+
+iniFile = "input/params.ini"
+Config = SafeConfigParser()
+Config.optionxform=str
+Config.read(iniFile)
+
+
+beam = listFromConfig(Config,experimentName,'beams')
+noise = listFromConfig(Config,experimentName,'noises')
+freq = listFromConfig(Config,experimentName,'freqs')
+lmax = int(Config.getfloat(experimentName,'lmax'))
+fsky = Config.getfloat(experimentName,'fsky')
+
+
 
 # accuracy params
 dell=10
@@ -37,10 +48,6 @@ numts=1000
 
 
 
-iniFile = "input/cosmology.ini"
-Config = SafeConfigParser()
-Config.optionxform=str
-Config.read(iniFile)
 
 cosmoDict = dictFromSection(Config,cosmologyName)
 #cosmoDict = dictFromSection(Config,'WMAP9')
@@ -51,7 +58,7 @@ cc = ClusterCosmology(cosmoDict,constDict,lmax)
 # make an SZ profile example
 
 
-SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lmax=lmax,M=MM,z=zz,dell=dell,pmaxN=pmaxN,numps=numps)
+SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lmax=lmax,dell=dell,pmaxN=pmaxN,numps=numps)
 
 
 print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts))
@@ -74,9 +81,9 @@ print "thetc = ", thetc
 
 # HMF
 
-zbin_temp = np.arange(0.1,2.0,0.1)
+zbin_temp = np.arange(0.01,2.0,0.05)
 zbin = np.insert(zbin_temp,0,0.0)
-print zbin
+#print zbin
 
 
 start3 = time.time()
@@ -92,7 +99,7 @@ pl = Plotter()
 pl.add(zbin[1:], dndm * dvdz[1:])
 pl.done("output/dndm.png")
 
-print "Total number of clusters ", np.trapz(dndm * dvdz[1:],zbin[1:],np.diff(zbin[1:]))
+print "Total number of clusters ", np.trapz(dndm * dvdz[1:],zbin[1:],np.diff(zbin[1:]))*4.*np.pi*fsky
 
 #np.savetxt('output/dndm_dVdz_1muK_3_0arc.txt',np.transpose([zbin[1:],dndm,dvdz[1:]]))
 
