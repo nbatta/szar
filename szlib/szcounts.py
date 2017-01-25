@@ -212,7 +212,7 @@ class Halo_MF:
         return N_dzdm
 
     def N_of_z_SZ(self,z_arr,beams,noises,freqs,clusterDict,fileFunc=None,quick=True,tmaxN=5,numts=1000):
-        # this is dN/dV(z)
+        # this is dn/dV(z)
 
         h0 = 70.
         lnYmin = np.log(1e-13)
@@ -271,6 +271,73 @@ class Halo_MF:
         #N_z = np.dot(dN_dzdm,np.transpose(P_func[:,1:]*dM200[:,1:]))
 
         return N_z
+
+    def N_of_zm_SZ(self,z_arr,beams,noises,freqs,clusterDict,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+        # this is d^2N/dzdm                                                                                                                                 
+        h0 = 70.
+        lnYmin = np.log(1e-13)
+        dlnY = 0.1
+        lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
+
+        Mexp = np.arange(14.0, 15.5, .1)
+
+        M = 10.**Mexp
+        dM = np.gradient(M)
+        rho_crit0m = self.cc.rhoc0om
+        hh = h0/100.
+
+        M200 = np.outer(M,np.zeros([len(z_arr)]))
+        dM200 = np.outer(M,np.zeros([len(z_arr)]))
+        P_func = np.outer(M,np.zeros([len(z_arr)]))
+        sigN = np.outer(M,np.zeros([len(z_arr)]))
+        M_arr =  np.outer(M,np.ones([len(z_arr)]))
+        dN_dzdm =  np.outer(M,np.ones([len(z_arr)-1]))
+
+        DA_z = self.cc.results.angular_diameter_distance(z_arr) * (self.cc.H0/100.)
+
+        SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs)
+
+        for ii in xrange (len(z_arr)-1):
+            i = ii + 1
+            M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M/hh,500,z_arr[i])
+            dM200[:,i] = np.gradient(M200[:,i])
+            for j in xrange(len(M)):
+                try:
+                    assert fileFunc is not None
+                    filename = fileFunc(Mexp[j],z_arr[i])
+                    print filename
+                    sigN[j,i] = np.loadtxt(filename,unpack=True)[-1]
+                except:
+                    print "Calculating S/N because file not found or specified for M=",Mexp[j]," z=",z_arr[i]
+                    if quick:
+                        var = SZProf.quickVar(M[j],z_arr[i],tmaxN,numts)
+                    else:
+                        var = SZProf.filter_variance(M[j],z_arr[i])
+                    sigN[j,i] = np.sqrt(var)
+                print Mexp[j],z_arr[i]
+
+            P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
+
+        dn_dzdm = self.dn_dM(M200,z_arr,200.)
+        dV_dz = self.dVdz(z_arr)
+        dN_dzdm = dn_dzdm[:,1:]*P_func[:,1:]* dV_dz[1:]
+        
+        return dN_dzdm
+
+    def Delta_lnM(self,z_arr,beams,noises,freqs,clusterDict,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+        
+        dN_dzdM = self.N_of_zm_SZ(z_arr,beams,noises,freqs,clusterDict,fileFunc=None,quick=True,tmaxN=5,numts=1000)
+        #FIX these options filefunc etc
+        Err_table_WL = 1. #READ IN FILE
+        Err_table_CMB = 1. #READ IN FILE
+        
+        Err_mz_WL =  1. #Interpolate the tables above onto the our grid 
+        Err_mz_CMB = 1. #Interpolate the tables above onto the our grid
+
+        Err_mz_WL /= np.sqrt(dN_dzdM)
+        Err_mz_CMB /= np.sqrt(dN_dzdM)
+        
+        return Err_mz_WL, Err_mz_CMB #Interpolate the tables above onto the our grid 
 
 class SZ_Cluster_Model:
     def __init__(self,clusterCosmology,clusterDict,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,dell=10,pmaxN=5,numps=1000,**options):
