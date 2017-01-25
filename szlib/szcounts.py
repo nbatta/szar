@@ -245,7 +245,7 @@ class Halo_MF:
                     assert fileFunc is not None
                     sigN[j,i] = np.loadtxt(fileFunc(Mexp[j],z_arr[i]),unpack=True)[-1]
                 except:
-                    print "file not found or specified for M=",Mexp[j]," z=",z_arr[i]
+                    print "Calculating S/N because file not found or specified for M=",Mexp[j]," z=",z_arr[i]
                     if quick:
                         var = SZProf.quickVar(M[j],z_arr[i],tmaxN,numts)
                     else:

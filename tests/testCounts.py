@@ -74,7 +74,7 @@ print "thetc = ", thetc
 
 # HMF
 
-zbin_temp = np.arange(0.1,0.8,0.2)
+zbin_temp = np.arange(0.1,2.0,0.1)
 zbin = np.insert(zbin_temp,0,0.0)
 print zbin
 
@@ -91,6 +91,8 @@ print "Time for N of z " , time.time() - start3
 pl = Plotter()
 pl.add(zbin[1:], dndm * dvdz[1:])
 pl.done("output/dndm.png")
+
+print "Total number of clusters ", np.trapz(dndm * dvdz[1:],zbin[1:],np.diff(zbin[1:]))
 
 #np.savetxt('output/dndm_dVdz_1muK_3_0arc.txt',np.transpose([zbin[1:],dndm,dvdz[1:]]))
 
