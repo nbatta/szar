@@ -15,22 +15,24 @@ noise = [1.0]
 freq = [150.]
 lmax = 10000 
 zz = 0.5
-MM= 5e14
+MM = 5.e14
 clusterParams = 'LACluster' # from ini file
-
+cosmologyName = 'LACosmology' # from ini file
+fileFunc = None
+#fileFunc = lambda M,z:"data/save1"+str(M)+"z"+str(z)+".txt"
 
 # accuracy params
-#dell=10
-#pmaxN=5
-#numps=1000
-#tmaxN=5
-#numts=1000
+dell=10
+pmaxN=5
+numps=1000
+tmaxN=5
+numts=1000
 
-dell=1
-pmaxN=25
-numps=5000
-tmaxN=25
-numts=5000
+# dell=1
+# pmaxN=25
+# numps=10000
+# tmaxN=25
+# numts=10000
 
 
 
@@ -40,64 +42,33 @@ Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
 
-cosmoDict = dictFromSection(Config,'LACosmology')
+cosmoDict = dictFromSection(Config,cosmologyName)
 #cosmoDict = dictFromSection(Config,'WMAP9')
 constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,clusterParams)
 cc = ClusterCosmology(cosmoDict,constDict,lmax)
 
-spec_file = Config.get('general','Clfile')
-
 # make an SZ profile example
 
 
-SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,spec_file=spec_file,clusterDict=clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lmax=lmax,M=MM,z=zz,dell=dell,pmaxN=pmaxN,numps=numps)
+SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lmax=lmax,M=MM,z=zz,dell=dell,pmaxN=pmaxN,numps=numps)
 
 
 print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts))
 print "filtvar " , np.sqrt(SZProfExample.filter_variance(MM,zz))
-print "Y_M ",SZProfExample.Y_M(MM,zz)
 
 
 
 
 
-
-
-
-
-sys.exit()
 print "y_m",SZProfExample.Y_M(MM,zz)
-#SZProfExample.plot_noise()
-
-results = cc.results
 
 
-
-R500 = SZProfExample.R500
+R500 = cc.rdel_c(MM,zz,500.).flatten()[0]
 print R500
-thetc = R500/DA_z
-#dell = 1
-#ells = np.arange(2,20000,dell)
-arc = 5.9
-#thetc = np.deg2rad(arc / 60.)
-thetc2 = np.deg2rad(arc/2. / 60.)
+DAz = cc.results.angular_diameter_distance(zz) * (cc.H0/100.) 
+thetc = R500/DAz
 print "thetc = ", thetc
-
-
-
-DA_z = results.angular_diameter_distance(zz) * (cc.H0/100.)
-
-start2 = time.time()
-print np.sqrt(SZProfExample.filter_variance(DA_z,newMethod=newMethod))
-print "Time for var " , time.time() - start2
-
-pl = Plotter()
-pl._ax.set_xlim(0,10)
-pl.add(np.rad2deg(tht)*60.,filt/np.max(filt),color='black')
-pl.add(np.rad2deg(tht)*60.,SZProfExample.y2D_norm(tht/thetc),color="black",ls='--')
-pl.add([0,10],[0,0],color="black",ls='--')
-pl.done("output/filter.png")
 
 
 
@@ -112,7 +83,7 @@ start3 = time.time()
 
 HMF = Halo_MF(clusterCosmology=cc)
 dvdz = HMF.dVdz(zbin)
-dndm = HMF.N_of_z_SZ(zbin,beam,noise,spec_file,clusterDict,fileFunc = lambda beam,noise,Mexp,z:"data/m"+str(Mexp)+"z"+str(z)+"b"+str(beam)+"n"+str(noise)+".txt")
+dndm = HMF.N_of_z_SZ(zbin,beam,noise,freq,clusterDict,fileFunc)
 
 print "Time for N of z " , time.time() - start3
 

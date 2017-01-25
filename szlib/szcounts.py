@@ -208,7 +208,7 @@ class Halo_MF:
         N_dzdm = dn_dm[:,1:] * dV_dz[1:] * 4*np.pi
         return N_dzdm
 
-    def N_of_z_SZ(self,z_arr,beams,noises,freqs,clusterDict,fileFunc=None):
+    def N_of_z_SZ(self,z_arr,beams,noises,freqs,clusterDict,fileFunc=None,quick=True,tmaxN=5,numts=1000):
 
 
         h0 = 70.
@@ -241,11 +241,17 @@ class Halo_MF:
             M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M/hh,500,z_arr[i])
             dM200[:,i] = np.gradient(M200[:,i])
             for j in xrange(len(M)):
-                if fileFunc is None:                    
-                    sigN[j,i] = np.sqrt(SZProf.filter_variance(M[j],z_arr[i]))
-                else:
-                    sigN[j,i] = np.loadtxt(fileFunc(beam,noise,Mexp[j],z_arr[i]),unpack=True)[-1]
-                    print Mexp[j],z_arr[i]
+                try:
+                    assert fileFunc is not None
+                    sigN[j,i] = np.loadtxt(fileFunc(Mexp[j],z_arr[i]),unpack=True)[-1]
+                except:
+                    print "file not found or specified for M=",Mexp[j]," z=",z_arr[i]
+                    if quick:
+                        var = SZProf.quickVar(M[j],z_arr[i],tmaxN,numts)
+                    else:
+                        var = SZProf.filter_variance(M[j],z_arr[i])
+                    sigN[j,i] = np.sqrt(var)
+                print Mexp[j],z_arr[i]
             
             P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
 
@@ -340,9 +346,9 @@ class SZ_Cluster_Model:
 
 
         # R500 in MPc, DAz in MPc, th500 in radians
-        self.R500 = self.cc.rdel_c(M,z,500.).flatten()[0] # R500 in Mpc/h
-        DAz = self.cc.results.angular_diameter_distance(z) * (self.cc.H0/100.)
-        th500 = self.R500/DAz
+        R500 = self.cc.rdel_c(M,z,500.).flatten()[0] # R500 in Mpc/h
+        DAz = self.cc.results.angular_diameter_distance(z) * (self.cc.H0/100.) 
+        th500 = R500/DAz
 
         # gnorm = 2pi th500^2  \int dx x g(x)
         gnorm = 2.*np.pi*(th500**2.)*np.trapz(self.gxrange*self.gint,self.gxrange,np.diff(self.gxrange))
@@ -377,22 +383,22 @@ class SZ_Cluster_Model:
             ans = self.P0 * (xx/self.xc)**self.gm / (1 + (xx/self.xc)**self.al)**self.bt
         return ans
     
-    def Prof(self,r,M,z):
-        R500 = self.R500
+    def Prof(self,r,M,z,R500):
+        R500 = R500
         xx = r / R500
         M_fac = M / (3e14) * (100./70.)
         P500 = 1.65e-3 * (100./70.)**2 * M_fac**(2./3.) * self.cc.E_z(z) #keV cm^3
         ans = P500 * self.GNFW(xx)
         return ans
     
-    def y2D_norm(self,M,z,tht):
+    def y2D_norm(self,M,z,tht,R500):
 
         r = np.arange(0.0001,100.,0.0001)
-        prof = self.Prof(r,M,z)
+        prof = self.Prof(r,M,z,R500)
         profunc = interp1d(r,prof,bounds_error=True)        
 
 
-        thtr5002 = (tht*self.R500)**2.
+        thtr5002 = (tht*R500)**2.
         P2D = tht * 0.0
         for ii in xrange(len(tht)):
             rint = np.sqrt(self.rad2 + thtr5002[ii])
@@ -403,9 +409,9 @@ class SZ_Cluster_Model:
         return P2D
     
 
-    def y2D_tilde_norm(self,M,z,ell,thtc,thta):
+    def y2D_tilde_norm(self,M,z,ell,thtc,thta,R500):
         ans = ell*0.
-        y2D_use = self.y2D_norm(M,z,thta/thtc)
+        y2D_use = self.y2D_norm(M,z,thta/thtc,R500)
         for ii in xrange(len(ell)):
             ans[ii] = np.sum(thta*special.jv(0,ell[ii]*thta)*y2D_use)*self.dtht
         return ans, y2D_use
@@ -426,7 +432,7 @@ class SZ_Cluster_Model:
         
         thtc = R500/DAz
         thta = np.arange(self.dtht,5.*thtc,self.dtht)  ### Changed 25 to 5 and it didn't change much
-        ytilde, y2D_use = self.y2D_tilde_norm(M,z,self.evalells,thtc,thta)
+        ytilde, y2D_use = self.y2D_tilde_norm(M,z,self.evalells,thtc,thta,R500)
         y2dtilde_2 = (ytilde)**2
         var = np.sum(self.evalells*y2dtilde_2/self.nl)*self.dell#*self.freq_fac
 
