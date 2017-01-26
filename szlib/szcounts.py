@@ -414,7 +414,8 @@ class SZ_Cluster_Model:
         self.gm = clusterDict['gm']
         self.bt = clusterDict['bt']
 
-
+        self.scaling = self.cc.paramDict
+        
         # build noise object
         self.dell = 10
         self.nlinv = 0.
@@ -582,13 +583,13 @@ class SZ_Cluster_Model:
     def Y_M(self,MM,zz):
         DA_z = self.cc.results.angular_diameter_distance(zz) * (self.cc.H0/100.)
         
-        Y_star = 2.42e-10 #sterads
+        Y_star = self.scaling['Y_star'] #= 2.42e-10 #sterads
         #dropped h70 factor
-        alpha_ym = 1.79
-        b_ym = 0.8
-        beta_ym = 0.66
-        
-        ans = Y_star*((b_ym)*MM/ 1e14)**alpha_ym *(DA_z/100.)**(-2.) * self.cc.E_z(zz) ** beta_ym
+        alpha_ym = self.scaling['alpha_ym'] #1.79
+        b_ym = self.scaling['b_ym'] #0.8
+        beta_ym = self.scaling['beta_ym'] #= 0.66
+        gamma_ym = self.scaling['gamma_ym']        
+        ans = Y_star*((b_ym)*MM/ 1e14)**alpha_ym *(DA_z/100.)**(-2.) * self.cc.E_z(zz) ** (2./3.) * (1. + zz)**gamma_ym
         #print (0.01/DA_z)**2
         return ans
     
