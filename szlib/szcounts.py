@@ -53,6 +53,7 @@ class Cosmology(object):
         self.c['TCMBmuK'] = self.c['TCMB'] * 1.0e6
 
         self.H0 = cosmo['H0']
+        self.h = self.H0/100.
         try:
             self.omch2 = cosmo['omch2']
         except:
