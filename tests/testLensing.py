@@ -1,3 +1,4 @@
+import sys
 import matplotlib
 matplotlib.use('Agg')
 import camb
@@ -5,13 +6,20 @@ import numpy as np
 from scipy import special
 import matplotlib.pyplot as plt
 import sys, os, time
-from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,dictFromSection,listFromConfig,timeit
+from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,dictFromSection,listFromConfig
+from orphics.tools.stats import timeit
 
 from orphics.tools.output import Plotter
 from ConfigParser import SafeConfigParser 
 
+import liteMap as lm
+import orphics.analysis.flatMaps as fmaps
 
-#def quickNl(beam,noise,
+from orphics.tools.cmb import loadTheorySpectraFromCAMB
+from orphics.theory.quadEstTheory import NlGenerator
+
+from szlib.lensing import GRFGen
+
 
 
 
@@ -40,12 +48,61 @@ constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,clusterParams)
 cc = ClusterCosmology(cosmoDict,constDict,lmax)
 
+
+
+ell = cc.ells
+Cell = cc.cltt
+
+
+
+
+
+
+
+
+cambRoot = "/astro/u/msyriac/repos/cmb-lensing-projections/data/TheorySpectra/ell28k_highacc"
+gradCut = None
+halo = False
+beam = 1.0
+noise = 1.0
+tellmin = 2
+tellmax = 3000
+
+pellmin = 2
+pellmax = 3000
+
+deg = 50.
+px = 0.5
+
+bin_edges = np.arange(10,3000,10)
+
+theory = loadTheorySpectraFromCAMB(cambRoot,unlensedEqualsLensed=False,useTotal=False,lpad=9000)
+arc = deg*60.
+lmap = lm.makeEmptyCEATemplate(raSizeDeg=arc/60., decSizeDeg=arc/60.,pixScaleXarcmin=px,pixScaleYarcmin=px)
+myNls = NlGenerator(lmap,theory,bin_edges,gradCut=None)
+
+
+ls,Nls = myNls.getNl(beam,noise,tellmin,tellmax,pellmin,pellmax,polComb='TT')
+
+pl = Plotter(scaleY='log')
+pl.add(ls,Nls)
+pl.done("output/nls.png")
+
+
+sys.exit()
+
+
+
+
+
+
+
+
+
 from szlib.lensing import kappa
 
 print kappa(cc,MM,3.2,zz,1.0)
 
-import liteMap as lm
-import orphics.analysis.flatMaps as fmaps
 
 arc = 20.
 px = 0.01
@@ -53,17 +110,7 @@ px = 0.01
 
 lmap = lm.makeEmptyCEATemplate(raSizeDeg=arc/60., decSizeDeg=arc/60.,pixScaleXarcmin=px,pixScaleYarcmin=px)
 from szlib.lensing import GRFGen
-ell = cc.ells
-Cell = cc.cltt
 
-N = 2048
-lmap = lm.getEmptyMapWithDifferentDims(lmap,N,N)
-generator = GRFGen(lmap,ell,Cell)
-cmb = generator.getMap()
-pl = Plotter()
-pl.plot2d(cmb)
-pl.done("output/cmbForNick.png")
-sys.exit()
 
 
 

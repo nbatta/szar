@@ -16,7 +16,8 @@ from scipy.interpolate import splrep,splev
 
 class GRFGen(object):
 
-    def __init__(self,templateLiteMap,ell,Cell,bufferFactor=1):
+    def __init__(self,templateLiteMap,ell,Cell,bufferFactor=1,TCMB=2.725e6):
+        # Cell is dimensionless
 
         self.lxMap,self.lyMap,self.modLMap,self.thetaMap,self.lx,self.ly = fmaps.getFTAttributesFromLiteMap(templateLiteMap)
 
@@ -34,7 +35,7 @@ class GRFGen(object):
         imgPart  = np.zeros([Ny,Nx])
 
 
-        s = splrep(ell,Cell,k=3)
+        s = splrep(ell,Cell*(TCMB**2.),k=3) # maps will be uK fluctuations about zero
 
         ll = np.ravel(self.modLMap)
         kk = splev(ll,s)
