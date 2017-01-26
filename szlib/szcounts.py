@@ -620,3 +620,18 @@ class SZ_Cluster_Model:
         for ii in xrange(len(MM)):
             ans[ii] = np.sum(P_Y[ii,:]*sig_thresh[ii,:])
         return ans
+
+    def gaussian(self,xx, mu, sig):
+        return np.exp(-1.*(x - mu)**2 / (2. * sig**2.))
+
+    def q_prob (self,q_arr,lnY,sigma_N):
+        #Gaussian error probablity for SZ S/N
+        Y = np.exp(lnY)
+        ans = self.gaussian(q_arr,Y/sigma_N,1)        
+        return ans
+
+    def Mwl_prob (self,Mwl,M,Merr):
+        #Gaussian error probablity for weak lensing mass 
+        ans = self.gaussian(Mwl,M,Merr)
+        return ans
+
