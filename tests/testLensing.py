@@ -12,7 +12,7 @@ from orphics.tools.stats import timeit
 from orphics.tools.output import Plotter
 from ConfigParser import SafeConfigParser 
 
-import liteMap as lm
+import flipper.liteMap as lm
 import orphics.analysis.flatMaps as fmaps
 
 from orphics.tools.cmb import loadTheorySpectraFromCAMB
@@ -60,18 +60,18 @@ Cell = cc.cltt
 
 
 
-cambRoot = "/astro/u/msyriac/repos/cmb-lensing-projections/data/TheorySpectra/ell28k_highacc"
+cambRoot = "data/ell28k_highacc"
 gradCut = None
 halo = False
-beam = 1.0
-noise = 1.0
+beam = 7.0
+noise = 27.0
 tellmin = 2
 tellmax = 3000
 
 pellmin = 2
 pellmax = 3000
 
-deg = 50.
+deg = 10.
 px = 0.5
 
 bin_edges = np.arange(10,3000,10)
@@ -79,14 +79,39 @@ bin_edges = np.arange(10,3000,10)
 theory = loadTheorySpectraFromCAMB(cambRoot,unlensedEqualsLensed=False,useTotal=False,lpad=9000)
 arc = deg*60.
 lmap = lm.makeEmptyCEATemplate(raSizeDeg=arc/60., decSizeDeg=arc/60.,pixScaleXarcmin=px,pixScaleYarcmin=px)
+print lmap.data.shape
 myNls = NlGenerator(lmap,theory,bin_edges,gradCut=None)
 
+myNls.updateNoise(beam,noise,tellmin,tellmax,pellmin,pellmax)
 
-ls,Nls = myNls.getNl(beam,noise,tellmin,tellmax,pellmin,pellmax,polComb='TT')
+polCombList = ['TT','EE','ET','TE','EB','TB']
+colorList = ['red','blue','green','cyan','orange','purple']
+ellkk = np.arange(2,9000,1)
+Clkk = theory.gCl("kk",ellkk)    
 
-pl = Plotter(scaleY='log')
-pl.add(ls,Nls)
-pl.done("output/nls.png")
+
+pl = Plotter(scaleY='log',scaleX='log')
+pl.add(ellkk,4.*Clkk/2./np.pi)
+
+# CHECK THAT NORM MATCHES HU/OK
+for polComb,col in zip(polCombList,colorList):
+    ls,Nls = myNls.getNl(polComb='TT')
+    try:
+        huFile = '/astro/u/msyriac/repos/cmb-lensing-projections/data/NoiseCurvesKK/hu_'+polComb.lower()+'.csv'
+        huell,hunl = np.loadtxt(huFile,unpack=True,delimiter=',')
+    except:
+        huFile = '/astro/u/msyriac/repos/cmb-lensing-projections/data/NoiseCurvesKK/hu_'+polComb[::-1].lower()+'.csv'
+        huell,hunl = np.loadtxt(huFile,unpack=True,delimiter=',')
+
+
+    pl.add(ls,4.*Nls/2./np.pi,color=col)
+    pl.add(huell,hunl,ls='--',color=col)
+
+
+pl.done("tests/output/testbin.png")
+
+
+
 
 
 sys.exit()

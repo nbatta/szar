@@ -3,7 +3,7 @@ from orphics.theory.quadEstTheory import QuadNorm
 import orphics.analysis.flatMaps as fmaps 
 import numpy as np
 from astLib import astWCS, astCoords
-import liteMap as lm
+import flipper.liteMap as lm
 from orphics.tools.output import Plotter
 from orphics.tools.stats import binInAnnuli
 from szlib.szcounts import timeit
