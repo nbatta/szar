@@ -381,7 +381,7 @@ class Halo_MF:
         N_z = np.zeros(len(z_arr) - 1)
         N_tot_z = np.zeros(len(z_arr) - 1)
         for i in xrange (len(z_arr) - 1):
-            N_z[i] = np.sum(dn_dzdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1] / (HSC_mass[:,i]**2 + alpha_ym**2 * (sigN[j,i+1]/YM[j,i+1])**2))
+            N_z[i] = np.sum(dn_dzdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1] / (HSC_mass[:,i]**2 + alpha_ym**2 * (sigN[:,i+1]/YM[:,i+1])**2))
             N_tot_z[i] = np.sum(dn_dzdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1])
         err_WL_mass = 4.*np.pi* (1400./42000.)*np.sum(N_z*dV_dz[1:])*0.05
         Ntot = 4.*np.pi* (1400./42000.)*np.sum(N_tot_z*dV_dz[1:])*0.05
