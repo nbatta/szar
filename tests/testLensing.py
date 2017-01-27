@@ -173,8 +173,8 @@ for prof in profiles:
     Likelihood = lambda x: np.exp(-0.5*fchisq(prof,siginv,thprof,amp=x))
     Likes = np.array([Likelihood(x) for x in amplitudeRange])
     LikeTot += L
-Likes = Likes / (Likes.sum()*width) #normalize
-    #ampBest,ampErr = cfit(norm.pdf,amplitudeRange,Likes,p0=[1.0,0.5])[0]
+    Likes = Likes / (Likes.sum()*width) #normalize
+    ampBest,ampErr = cfit(norm.pdf,amplitudeRange,Likes,p0=[1.0,0.5])[0]
 
     amplist.append(ampBest)
 
