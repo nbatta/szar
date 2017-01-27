@@ -12,7 +12,7 @@ from ConfigParser import SafeConfigParser
 
 clusterParams = 'LACluster' # from ini file
 cosmologyName = 'LACosmology' # from ini file
-experimentName = "AdvAct"
+experimentName = "SO7m"
 #fileFunc = None
 fileFunc = lambda M,z:"data/"+experimentName+"_m"+str(M)+"z"+str(z)+".txt"
 
@@ -26,6 +26,8 @@ beam = listFromConfig(Config,experimentName,'beams')
 noise = listFromConfig(Config,experimentName,'noises')
 freq = listFromConfig(Config,experimentName,'freqs')
 lmax = int(Config.getfloat(experimentName,'lmax'))
+lknee = Config.getfloat(experimentName,'lknee')
+alpha = Config.getfloat(experimentName,'alpha')
 fsky = Config.getfloat(experimentName,'fsky')
 
 cosmoDict = dictFromSection(Config,cosmologyName)
@@ -38,7 +40,7 @@ zbin = np.insert(zbin_temp,0,0.0)
 
 HMF = Halo_MF(clusterCosmology=cc)
 
-errs,Ntot = HMF.Mass_err(zbin,beam,noise,freq,clusterDict,fileFunc)
+errs,Ntot = HMF.Mass_err(zbin,beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
 
 print np.sqrt(errs)
 print Ntot
