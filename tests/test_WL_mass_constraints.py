@@ -33,7 +33,7 @@ constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,clusterParams)
 cc = ClusterCosmology(cosmoDict,constDict,lmax)
 
-zbin_temp = np.arange(0.1,1.0,0.05)
+zbin_temp = np.arange(0.1,2.01,0.05)
 zbin = np.insert(zbin_temp,0,0.0)
 
 HMF = Halo_MF(clusterCosmology=cc)

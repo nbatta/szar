@@ -332,7 +332,7 @@ class Halo_MF:
         dlnY = 0.1
         lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
 
-        Mexp = np.arange(13.5, 15.0, .1)
+        Mexp = np.arange(13.5, 15.71, .1)
 
         M = 10.**Mexp
         dM = np.gradient(M)
@@ -346,7 +346,7 @@ class Halo_MF:
         YM   =  np.outer(M,np.ones([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
 
-        HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z1.txt',unpack=True)
+        HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z2.txt',unpack=True)
         HSC_mass = np.transpose(HSC_mass)
 
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * (self.cc.H0/100.)
@@ -528,6 +528,22 @@ class SZ_Cluster_Model:
         M_fac = M / (3e14) * (100./70.)
         P500 = 1.65e-3 * (100./70.)**2 * M_fac**(2./3.) * self.cc.E_z(z) #keV cm^3
         ans = P500 * self.GNFW(xx)
+        return ans
+
+    def Prof_tilde(self,ell,M,z):
+        dr = 0.01
+        pars = camb.CAMBparams()
+        pars.set_cosmology(H0=cp.h0, ombh2=cp.ob*(cp.h0/100.)**2, omch2=(cp.om - cp.ob)*(cp.h0/100.)**2,)    
+        results = camb.get_background(pars)
+        DA_z = results.angular_diameter_distance(z) #* (70./100.)
+        R500 = HP.rdel_c(M,z,500)
+        rr = np.arange(dr,R500*5.0,dr)
+        #intgrl = ell *0.0
+        #for ii in xrange(len(ell)):
+        #    intgrl[ii] = np.sum(self.Prof(rr,M,z)*rr**2*np.sinc(ell[ii]*rr/DA_z)) * dr
+        intgrl = np.sum(self.Prof(rr,M,z)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
+        ans = 4.0*np.pi/DA_z**2 * intgrl
+        ans *= c.SIGMA_T/(c.ME*c.C**2)*c.MPC2CM*c.eV_2_erg*1000.0
         return ans
     
     def y2D_norm(self,M,z,tht,R500):
