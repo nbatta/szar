@@ -211,7 +211,7 @@ class Halo_MF:
         N_dzdm = dn_dm[:,1:] * dV_dz[1:] * 4*np.pi
         return N_dzdm
 
-    def N_of_z_SZ(self,z_arr,beams,noises,freqs,clusterDict,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+    def N_of_z_SZ(self,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is dn/dV(z)
 
         h0 = 70.
@@ -235,7 +235,7 @@ class Halo_MF:
 
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * (self.cc.H0/100.)
 
-        SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs)
+        SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lknee=lknee,alpha=alpha)
 
 
 
@@ -272,7 +272,7 @@ class Halo_MF:
 
         return N_z
 
-    def N_of_zm_SZ(self,z_arr,beams,noises,freqs,clusterDict,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+    def N_of_zm_SZ(self,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is d^2N/dzdm 
         h0 = 70.
         lnYmin = np.log(1e-13)
@@ -295,7 +295,7 @@ class Halo_MF:
 
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * (self.cc.H0/100.)
 
-        SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs)
+        SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lknee=lknee,alpha=alpha)
 
         for ii in xrange (len(z_arr)-1):
             i = ii + 1
@@ -324,7 +324,7 @@ class Halo_MF:
         
         return dN_dzdm
 
-    def Mass_err (self,z_arr,beams,noises,freqs,clusterDict,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+    def Mass_err (self,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is TEMP WL MASS ERROR
         alpha_ym = 1.79
         h0 = 70.
@@ -351,7 +351,7 @@ class Halo_MF:
 
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * (self.cc.H0/100.)
 
-        SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs)
+        SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lknee=lknee,alpha=alpha)
 
         for ii in xrange (len(z_arr)-1):
             i = ii + 1
@@ -406,7 +406,7 @@ class Halo_MF:
         return Err_mz_WL, Err_mz_CMB #Interpolate the tables above onto the our grid 
 
 class SZ_Cluster_Model:
-    def __init__(self,clusterCosmology,clusterDict,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,dell=10,pmaxN=5,numps=1000,**options):
+    def __init__(self,clusterCosmology,clusterDict,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1.,dell=10,pmaxN=5,numps=1000,**options):
         self.cc = clusterCosmology
         self.P0 = clusterDict['P0']
         self.xc = clusterDict['xc']
@@ -424,7 +424,7 @@ class SZ_Cluster_Model:
             freq_fac = (self.f_nu(freq))**2
 
 
-            nells = self.cc.clttfunc(self.evalells)+( self.noise_func(self.evalells,fwhm,noise) / self.cc.c['TCMBmuK']**2.)
+            nells = self.cc.clttfunc(self.evalells)+( self.noise_func(self.evalells,fwhm,noise,lknee,alpha) / self.cc.c['TCMBmuK']**2.)
             self.nlinv += (freq_fac)/nells
 
         self.nl = 1./self.nlinv
@@ -571,10 +571,11 @@ class SZ_Cluster_Model:
             ans[ii] = np.sum(thta*special.jv(0,ell[ii]*thta)*y2D_use)*self.dtht
         return ans, y2D_use
 
-    def noise_func(self,ell,fwhm,rms_noise):        
+    def noise_func(self,ell,fwhm,rms_noise,lknee=0.,alpha=0.):
+        atmFactor = (lknee/ell)**(-alpha)
         rms = rms_noise * (1./60.)*(np.pi/180.)
         tht_fwhm = np.deg2rad(fwhm / 60.)
-        ans = (rms**2.) * np.exp((tht_fwhm**2.)*(ell**2.) / (8.*np.log(2.))) ## Add Hasselfield noise knee
+        ans = (atmFactor+1.) * (rms**2.) * np.exp((tht_fwhm**2.)*(ell**2.) / (8.*np.log(2.))) ## Add Hasselfield noise knee
         return ans
     
     @timeit

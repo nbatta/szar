@@ -28,6 +28,8 @@ beam = listFromConfig(Config,experimentName,'beams')
 noise = listFromConfig(Config,experimentName,'noises')
 freq = listFromConfig(Config,experimentName,'freqs')
 lmax = int(Config.getfloat(experimentName,'lmax'))
+lknee = Config.getfloat(experimentName,'lknee')
+alpha = Config.getfloat(experimentName,'alpha')
 fsky = Config.getfloat(experimentName,'fsky')
 
 
@@ -58,7 +60,7 @@ cc = ClusterCosmology(cosmoDict,constDict,lmax)
 # make an SZ profile example
 
 
-SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lmax=lmax,dell=dell,pmaxN=pmaxN,numps=numps)
+SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lmax=lmax,lknee=lknee,alpha=alpha,dell=dell,pmaxN=pmaxN,numps=numps)
 
 
 print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts))
@@ -90,7 +92,7 @@ start3 = time.time()
 
 HMF = Halo_MF(clusterCosmology=cc)
 dvdz = HMF.dVdz(zbin)
-dndm = HMF.N_of_z_SZ(zbin,beam,noise,freq,clusterDict,fileFunc)
+dndm = HMF.N_of_z_SZ(zbin,beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
 
 print "Time for N of z " , time.time() - start3
 
