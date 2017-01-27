@@ -12,7 +12,7 @@ from ConfigParser import SafeConfigParser
 
 clusterParams = 'LACluster' # from ini file
 cosmologyName = 'LACosmology' # from ini file
-experimentName = "SO7m"
+experimentName = "SO7m_No270"
 #fileFunc = None
 fileFunc = lambda M,z:"data/"+experimentName+"_m"+str(M)+"z"+str(z)+".txt"
 

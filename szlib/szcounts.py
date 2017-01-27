@@ -250,13 +250,13 @@ class Halo_MF:
                     print filename
                     sigN[j,i] = np.loadtxt(filename,unpack=True)[-1]
                 except:
-                    print "Calculating S/N because file not found or specified for M=",Mexp[j]," z=",z_arr[i]
+                    #print "Calculating S/N because file not found or specified for M=",Mexp[j]," z=",z_arr[i]
                     if quick:
                         var = SZProf.quickVar(M[j],z_arr[i],tmaxN,numts)
                     else:
                         var = SZProf.filter_variance(M[j],z_arr[i])
                     sigN[j,i] = np.sqrt(var)
-                print Mexp[j],z_arr[i]
+                #print Mexp[j],z_arr[i]
             
             P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
 
@@ -308,13 +308,13 @@ class Halo_MF:
                     print filename
                     sigN[j,i] = np.loadtxt(filename,unpack=True)[-1]
                 except:
-                    print "Calculating S/N because file not found or specified for M=",Mexp[j]," z=",z_arr[i]
+                    #print "Calculating S/N because file not found or specified for M=",Mexp[j]," z=",z_arr[i]
                     if quick:
                         var = SZProf.quickVar(M[j],z_arr[i],tmaxN,numts)
                     else:
                         var = SZProf.filter_variance(M[j],z_arr[i])
                     sigN[j,i] = np.sqrt(var)
-                print Mexp[j],z_arr[i]
+                #print Mexp[j],z_arr[i]
 
             P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
 
