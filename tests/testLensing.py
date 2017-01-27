@@ -37,6 +37,15 @@ saveId = "test"
 nsigma = 8.
 zz = 0.7
 MM = 2.e14
+# overdensity = 180.
+# critical = False
+# atClusterZ = False
+
+overdensity = 500.
+critical = True
+atClusterZ = True
+
+
 N = 1000
 numSims = 10
 
@@ -85,16 +94,16 @@ halo = True
 
 beamX = 1.0
 beamY = 1.0
-noiseTX = 0.1
-noisePX = 0.14
-noiseTY = 0.1
-noisePY = 0.14
+noiseTX = 10.0
+noisePX = 14.14
+noiseTY = 10.0
+noisePY = 14.14
 tellmin = 2
 tellmax = 8000
 gradCut = 2000
 pellmin = 2
 pellmax = 8000
-polComb = 'EB'
+polComb = 'TT'
 kmin = 100
 
 
@@ -157,7 +166,7 @@ pl.done("output/"+saveId+"nl.png")
 bin_width = beamY
 
 
-dlndm = getDLnMCMB(ls,Nls,cc,MM,zz,concentration,arcStamp,pxStamp,arc_upto,bin_width=beamY,expectedSN=expectedSN,Nclusters=N,numSims=numSims,saveId="test",numPoints=1000,nsigma=nsigma)
+dlndm = getDLnMCMB(ls,Nls,cc,MM,zz,concentration,arcStamp,pxStamp,arc_upto,bin_width=beamY,expectedSN=expectedSN,Nclusters=N,numSims=numSims,saveId="test",numPoints=1000,nsigma=nsigma,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ)
 
 print "S/N " , 1./dlndm
 
