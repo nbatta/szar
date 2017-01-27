@@ -3,11 +3,13 @@ import sys
 import numpy as np
 import time
 
-zlist = np.arange(0.01,2.0,0.01)
+#zlist = np.arange(0.01,2.0,0.01)
+zlist = np.arange(0.1,2.0,0.1)
 print "starting " , len(zlist),  " jobs."
 for z in zlist:
 
-    cmd = "quick_wq.sh python scripts/gridMZ.py "+str(z)+" & "
+    #cmd = "quick_wq.sh python scripts/gridMZ.py "+str(z)+" & "
+    cmd = "quick_wq.sh python scripts/gridMZLens.py "+str(z)+" & "
     print cmd
     os.system(cmd)
     time.sleep(0.3)

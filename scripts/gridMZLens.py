@@ -25,15 +25,12 @@ from alhazen.halos import NFWkappa,getDLnMCMB,predictSN
 
 
 
+z = float(sys.argv[1])
+    
 
-saveId = "test"
+saveId = "AdvACTCMBLensingWhiteNoise150GhzTTOnly"
+
 nsigma = 8.
-zz = 0.7
-MM = 2.e14
-log10Moverh = np.log10(MM)
-# overdensity = 180.
-# critical = False
-# atClusterZ = False
 
 overdensity = 500.
 critical = True
@@ -45,7 +42,6 @@ numSims = 30
 
 concentration = 3.2
 arcStamp = 30.
-#pxStamp = 0.2
 pxStamp = 0.1
 arc_upto = 10.
 
@@ -71,68 +67,22 @@ gradCut = 2000
 halo = True
 
 
-# beamX = 3.0
-# beamY = 3.0
-# noiseTX = 1.0
-# noisePX = 1.414
-# noiseTY = 1.0
-# noisePY = 1.414
-# tellmin = 200
-# tellmax = 5000
-# gradCut = 2000
-# pellmin = 200
-# pellmax = 3000
-# polComb = 'EE'
-# kmin = 100
-
-
-beamX = 1.0
-beamY = 1.0
-noiseTX = 10.0
-noisePX = 14.14
-noiseTY = 10.0
-noisePY = 14.14
-tellmin = 2
-tellmax = 8000
+beamX = 1.5
+beamY = 1.5
+noiseTX = 6.9
+noisePX = np.sqrt(2.)*noiseTX
+noiseTY = 6.9
+noisePY = np.sqrt(2.)*noiseTY
+tellmin = 300
+tellmax = 3000
 gradCut = 2000
-pellmin = 2
-pellmax = 8000
+pellmin = 300
+pellmax = 5000
 polComb = 'TT'
 kmin = 100
 
 
-# beamX = 1.5
-# beamY = 1.5
-# noiseTX = 12.0
-# noisePX = 14.14
-# noiseTY = 12.0
-# noisePY = 14.14
-# tellmin = 2
-# tellmax = 6000
-# gradCut = 2000
-# pellmin = 2
-# pellmax = 8000
-# polComb = 'TT'
-# kmin = 100
-
-
-# beamX = 7.0
-# beamY = 7.0
-# noiseTX = 27.0
-# noisePX = 14.14
-# noiseTY = 27.0
-# noisePY = 14.14
-# tellmin = 2
-# tellmax = 3000
-# gradCut = 2000
-# pellmin = 2
-# pellmax = 3000
-# polComb = 'TB'
-# kmin = 100
-
-
 kmax = getMax(polComb,tellmax,pellmax)
-
 
 
 expectedSN = predictSN(polComb,noiseTY,noisePY,N,MM)
@@ -160,8 +110,11 @@ pl.done("output/"+saveId+"nl.png")
 bin_width = beamY
 
 
-dlndm = getDLnMCMB(ls,Nls,cc,log10Moverh,zz,concentration,arcStamp,pxStamp,arc_upto,bin_width=beamY,expectedSN=expectedSN,Nclusters=N,numSims=numSims,saveId="test",numPoints=1000,nsigma=nsigma,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ)
+Mexps = np.arange(14.0,15.7,0.1)
 
-print "S/N " , 1./dlndm
+for log10Moverh in Ms:
+    dlndm = getDLnMCMB(ls,Nls,cc,log10Moverh,z,concentration,arcStamp,pxStamp,arc_upto,bin_width=beamY,expectedSN=expectedSN,Nclusters=N,numSims=numSims,saveId=saveId,numPoints=1000,nsigma=nsigma,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ)
+
+    print "S/N " , 1./dlndm
 
 
