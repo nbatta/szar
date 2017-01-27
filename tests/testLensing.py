@@ -57,35 +57,39 @@ Cell = cc.cltt
 
 
 
-
+stepfilter_ellmax = 8000
 
 
 cambRoot = "data/ell28k_highacc"
 gradCut = None
-halo = False
-beam = 7.0
-noise = 27.0
-tellmin = 2
-tellmax = 3000
+halo = True
+beamX = 1.5
+beamY = 1.5
+noiseT = 1.0
+noiseP = 1.414
+tellmin = 100
+tellmax = 8000
+gradCut = 2000
 
-pellmin = 2
-pellmax = 3000
+pellmin = 100
+pellmax = 8000
+polComb = 'EB'
 
 deg = 10.
 px = 0.5
+arc = deg*60.
 
-bin_edges = np.arange(10,3000,10)
+bin_edges = np.arange(100,8000,10)
 
 theory = loadTheorySpectraFromCAMB(cambRoot,unlensedEqualsLensed=False,useTotal=False,lpad=9000)
-arc = deg*60.
 lmap = lm.makeEmptyCEATemplate(raSizeDeg=arc/60., decSizeDeg=arc/60.,pixScaleXarcmin=px,pixScaleYarcmin=px)
 print lmap.data.shape
-myNls = NlGenerator(lmap,theory,bin_edges,gradCut=None)
+myNls = NlGenerator(lmap,theory,bin_edges,gradCut=gradCut)
 
-myNls.updateNoise(beam,noise,tellmin,tellmax,pellmin,pellmax)
 
-polCombList = ['TT','EE','ET','TE','EB','TB']
-colorList = ['red','blue','green','cyan','orange','purple']
+myNls.updateNoise(beamX,noiseT,noiseP,tellmin,tellmax,pellmin,pellmax,beamY=beamY)
+ls,Nls = myNls.getNl(polComb=polComb,halo=halo)
+
 ellkk = np.arange(2,9000,1)
 Clkk = theory.gCl("kk",ellkk)    
 
@@ -93,29 +97,9 @@ Clkk = theory.gCl("kk",ellkk)
 pl = Plotter(scaleY='log',scaleX='log')
 pl.add(ellkk,4.*Clkk/2./np.pi)
 
-# CHECK THAT NORM MATCHES HU/OK
-for polComb,col in zip(polCombList,colorList):
-    ls,Nls = myNls.getNl(polComb='TT')
-    try:
-        huFile = '/astro/u/msyriac/repos/cmb-lensing-projections/data/NoiseCurvesKK/hu_'+polComb.lower()+'.csv'
-        huell,hunl = np.loadtxt(huFile,unpack=True,delimiter=',')
-    except:
-        huFile = '/astro/u/msyriac/repos/cmb-lensing-projections/data/NoiseCurvesKK/hu_'+polComb[::-1].lower()+'.csv'
-        huell,hunl = np.loadtxt(huFile,unpack=True,delimiter=',')
-
-
-    pl.add(ls,4.*Nls/2./np.pi,color=col)
-    pl.add(huell,hunl,ls='--',color=col)
-
-
-pl.done("tests/output/testbin.png")
-
-
-
-
-
-sys.exit()
-
+pl.add(ls,4.*Nls/2./np.pi)
+pl.legendOn(loc='lower left',labsize=10)
+pl.done("output/nl.png")
 
 
 
@@ -127,75 +111,79 @@ sys.exit()
 from szlib.lensing import kappa
 
 print kappa(cc,MM,3.2,zz,1.0)
-
-
-arc = 20.
-px = 0.01
-
-
+arc = 30.
+px = 0.1
 lmap = lm.makeEmptyCEATemplate(raSizeDeg=arc/60., decSizeDeg=arc/60.,pixScaleXarcmin=px,pixScaleYarcmin=px)
-from szlib.lensing import GRFGen
 
-
-
-
-#@timeit
-def quickStamp(size,px,ell,Cell):
-    lmap = lm.makeEmptyCEATemplate(raSizeDeg=size/60., decSizeDeg=size/60.,pixScaleXarcmin=px,pixScaleYarcmin=px)
-    lmap.fillWithGaussianRandomField(ell,Cell,bufferFactor = 1)
-    return lmap.data
 
 xMap,yMap,modRMap,xx,xy = fmaps.getRealAttributes(lmap)
 lxMap,lyMap,modLMap,thetaMap,lx,ly = fmaps.getFTAttributesFromLiteMap(lmap)
 
 kappaMap = kappa(cc,MM,3.2,zz,modRMap*180.*60./np.pi)
-kappaMap = fmaps.stepFunctionFilterLiteMap(kappaMap,modLMap,6000)
+finetheta = np.arange(0.01,10.,0.01)
+finekappa = kappa(cc,MM,3.2,zz,finetheta)
+kappaMap = fmaps.stepFunctionFilterLiteMap(kappaMap,modLMap,stepfilter_ellmax)
 
-ell = cc.ells
-Cell = cc.cltt
 
-cmb = quickStamp(arc,px,ell,Cell)
-
+centers, thprof = binner.bin(kappaMap)
 
 
 from szlib.lensing import GRFGen
+generator = GRFGen(lmap,ls,Nls)
 
-generator = GRFGen(lmap,ell,Cell)
-#cmb = quickStamp(arc,px,ell,Cell)
-#cmb2 = generator.getMap()
+from orphics.tools.stats import bin2D,getStats,fchisq
+bin_edges = np.arange(0.,10.,1.0)
+binner = bin2D(modRMap*180.*60./np.pi, bin_edges)
 
-
-
-@timeit
-def testOld(N,arc,px,ell,Cell):
-    for i in xrange(N):
-        cmb = quickStamp(arc,px,ell,Cell)
-
+N = 100
 
 @timeit
-def testNew(N,gen):
-    for i in xrange(N):
-        cmb = gen.getMap()
+def getProfiles(N):
+    profiles = []
+    for i in range(N):
+        noise = generator.getMap(stepFilterEll=stepfilter_ellmax)
+        stamp = kappaMap + noise
+        
+        centers, profile = binner.bin(stamp)
+        
+        profiles.append(profile)
+    return profiles
 
-
-testOld(50,arc,px,ell,Cell)
-testNew(50,generator)
-    
-
-pl = Plotter()
-pl.plot2d(cmb)
-pl.done("output/cmb.png")
-
-pl = Plotter()
-pl.plot2d(cmb2)
-pl.done("output/cmb2.png")
-
-
-pl = Plotter()
-pl.plot2d(modRMap)
-pl.done("output/rmap.png")
 
 pl = Plotter()
 pl.plot2d(kappaMap)
-pl.done("output/kmap.png")
+pl.done("output/kappa.png")
 
+
+profiles = getProfiles(N)
+stats = getStats(profiles)
+pl = Plotter()
+pl.add(centers,thprof,lw=2,color='black')
+pl.add(finetheta,finekappa,lw=2,color='black',ls="--")
+pl.addErr(centers,stats['mean'],yerr=stats['errmean'],lw=2)
+pl._ax.set_ylim(-0.01,0.3)
+pl.done("output/profile.png")
+
+
+amplitudeRange = np.arange(-1.,2.,0.01)
+width = amplitudeRange[1]-amplitudeRange[0]
+amplist = []
+print "Fitting amplitudes..."
+for prof in profiles:
+    Likelihood = lambda x: np.exp(-0.5*fchisq(prof,siginv,thprof,amp=x))
+    Likes = np.array([Likelihood(x) for x in amplitudeRange])
+    LikeTot += L
+Likes = Likes / (Likes.sum()*width) #normalize
+    #ampBest,ampErr = cfit(norm.pdf,amplitudeRange,Likes,p0=[1.0,0.5])[0]
+
+    amplist.append(ampBest)
+
+
+
+# siginv = np.linalg.pinv(cov[:len(thetas),:len(thetas)])
+# #print siginv
+# #print radmeans[:len(thetas)]
+# b = np.dot(siginv,radmeans[:len(thetas)])
+# chisq = np.dot(radmeans[:len(thetas)],b)
+
+# print np.sqrt(chisq*Nclus/Nsupp)

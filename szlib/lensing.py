@@ -16,7 +16,7 @@ from scipy.interpolate import splrep,splev
 
 class GRFGen(object):
 
-    def __init__(self,templateLiteMap,ell,Cell,bufferFactor=1,TCMB=2.725e6):
+    def __init__(self,templateLiteMap,ell,Cell,bufferFactor=1):
         # Cell is dimensionless
 
         self.lxMap,self.lyMap,self.modLMap,self.thetaMap,self.lx,self.ly = fmaps.getFTAttributesFromLiteMap(templateLiteMap)
@@ -35,7 +35,7 @@ class GRFGen(object):
         imgPart  = np.zeros([Ny,Nx])
 
 
-        s = splrep(ell,Cell*(TCMB**2.),k=3) # maps will be uK fluctuations about zero
+        s = splrep(ell,Cell,k=3) # maps will be uK fluctuations about zero
 
         ll = np.ravel(self.modLMap)
         kk = splev(ll,s)
@@ -47,7 +47,7 @@ class GRFGen(object):
         self.sqp = np.sqrt(p)
 
     #@timeit
-    def getMap(self):
+    def getMap(self,stepFilterEll=None):
         """
         Generates a GRF from an input power spectrum specified as ell, Cell 
         BufferFactor =1 means the map will be periodic boundary function
@@ -63,12 +63,17 @@ class GRFGen(object):
 
 
         kMap = realPart+1.j*imgPart
+        
+        if stepFilterEll is not None:
+            kMap[self.modLMap>stepFilterEll]=0.
+
+
 
         data = np.real(ifft2(kMap)) 
 
         data = data[(self.b-1)/2*self.Ny:(self.b+1)/2*self.Ny,(self.b-1)/2*self.Nx:(self.b+1)/2*self.Nx]
 
-        return data
+        return data - data.mean()
 
 # class cmblensCluster(object):
 
