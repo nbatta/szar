@@ -11,25 +11,14 @@ from Tinker_MF import tinker_params
 
 from orphics.tools.output import Plotter
 from orphics.theory.cosmology import Cosmology
+from orphics.tools.stats import timeit
 from scipy.interpolate import interp1d
 
 import szlib.szlibNumbafied as fast
 from scipy.special import j0
-from scipy.integrate import quad
 
 
-def timeit(method):
 
-    def timed(*args, **kw):
-        ts = time.time()
-        result = method(*args, **kw)
-        te = time.time()
-
-        print '%r %2.2f sec' % \
-              (method.__name__,te-ts)
-        return result
-
-    return timed
 
 def dictFromSection(config,sectionName):
     del config._sections[sectionName]['__name__']
