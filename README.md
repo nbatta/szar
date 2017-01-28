@@ -12,12 +12,18 @@ otherwise
 
 ```pip install .```
 
-## A Dependency
+## Three non-trivial dependencies
 
-I'm changing some of the plotting so that it uses a wrapper from this library
+Map manipulation
+https://github.com/msyriac/flipper
+
+Map manipulation, statistics, cosmology theory and plotting
 https://github.com/msyriac/orphics
 
-It should install and work out of the box with the instructions there.
+Gravitational lensing theory and analysis
+https://github.com/msyriac/alhazen
+
+All three can be installed using the `pip` command found in any of their READMEs.
 
 ## Test
 
