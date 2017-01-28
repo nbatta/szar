@@ -28,7 +28,7 @@ from alhazen.halos import NFWkappa,getDLnMCMB,predictSN
 z = float(sys.argv[1])
     
 
-saveId = "AdvACTCMBLensingWhiteNoise150GhzTTOnly"
+saveId = "AdvACTCMBLensingWhiteNoise150GhzTTOnlyCoarse"
 
 nsigma = 8.
 
@@ -42,7 +42,7 @@ numSims = 30
 
 concentration = 3.2
 arcStamp = 30.
-pxStamp = 0.1
+pxStamp = 0.5
 arc_upto = 10.
 
 
@@ -85,8 +85,6 @@ kmin = 100
 kmax = getMax(polComb,tellmax,pellmax)
 
 
-expectedSN = predictSN(polComb,noiseTY,noisePY,N,MM)
-print "Rough S/N ", expectedSN
 
 # Make a CMB Noise Curve
 deg = 10.
@@ -112,7 +110,11 @@ bin_width = beamY
 
 Mexps = np.arange(14.0,15.7,0.1)
 
-for log10Moverh in Ms:
+for log10Moverh in Mexps:
+    MM = 10.**log10Moverh
+    expectedSN = predictSN(polComb,noiseTY,noisePY,N,MM)
+    print "Rough S/N ", expectedSN
+
     dlndm = getDLnMCMB(ls,Nls,cc,log10Moverh,z,concentration,arcStamp,pxStamp,arc_upto,bin_width=beamY,expectedSN=expectedSN,Nclusters=N,numSims=numSims,saveId=saveId,numPoints=1000,nsigma=nsigma,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ)
 
     print "S/N " , 1./dlndm
