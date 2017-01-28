@@ -23,7 +23,7 @@ https://github.com/msyriac/orphics
 Gravitational lensing theory and analysis
 https://github.com/msyriac/alhazen
 
-All three can be installed using a single `pip` command found in any of their READMEs.
+All three can be installed using the `pip` command found in any of their READMEs.
 
 ## Test
 
