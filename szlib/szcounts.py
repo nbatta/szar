@@ -168,7 +168,6 @@ class Halo_MF:
     def N_of_z_SZ(self,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is dn/dV(z)
 
-        h0 = 70.
         lnYmin = np.log(1e-13)
         dlnY = 0.1
         lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
@@ -178,7 +177,7 @@ class Halo_MF:
         M = 10.**Mexp
         dM = np.gradient(M)
         rho_crit0m = self.cc.rhoc0om
-        hh = h0/100.
+        hh = self.cc.H0/100.
 
         M200 = np.outer(M,np.zeros([len(z_arr)]))
         dM200 = np.outer(M,np.zeros([len(z_arr)]))
@@ -187,7 +186,7 @@ class Halo_MF:
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
 
 
-        DA_z = self.cc.results.angular_diameter_distance(z_arr) * (self.cc.H0/100.)
+        DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
 
         SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lknee=lknee,alpha=alpha)
 
@@ -228,7 +227,6 @@ class Halo_MF:
 
     def N_of_mz_SZ(self,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is d^2N/dzdm 
-        h0 = 70.
         lnYmin = np.log(1e-13)
         dlnY = 0.1
         lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
@@ -238,7 +236,7 @@ class Halo_MF:
         M = 10.**Mexp
         dM = np.gradient(M)
         rho_crit0m = self.cc.rhoc0om
-        hh = h0/100.
+        hh = self.cc.H0/100.
 
         M200 = np.outer(M,np.zeros([len(z_arr)]))
         dM200 = np.outer(M,np.zeros([len(z_arr)]))
@@ -247,7 +245,7 @@ class Halo_MF:
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
         dN_dzdm =  np.outer(M,np.ones([len(z_arr)-1]))
 
-        DA_z = self.cc.results.angular_diameter_distance(z_arr) * (self.cc.H0/100.)
+        DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
 
         SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lknee=lknee,alpha=alpha)
 
@@ -281,7 +279,6 @@ class Halo_MF:
     def Mass_err (self,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is TEMP WL MASS ERROR
         alpha_ym = 1.79
-        h0 = 70.
         lnYmin = np.log(1e-13)
         dlnY = 0.1
         lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
@@ -291,7 +288,7 @@ class Halo_MF:
         M = 10.**Mexp
         dM = np.gradient(M)
         rho_crit0m = self.cc.rhoc0om
-        hh = h0/100.
+        hh = self.cc.H0/100.
 
         M200 = np.outer(M,np.zeros([len(z_arr)]))
         dM200 = np.outer(M,np.zeros([len(z_arr)]))
@@ -303,7 +300,70 @@ class Halo_MF:
         HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z2.txt',unpack=True)
         HSC_mass = np.transpose(HSC_mass)
 
-        DA_z = self.cc.results.angular_diameter_distance(z_arr) * (self.cc.H0/100.)
+        DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
+
+        SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lknee=lknee,alpha=alpha)
+
+        for ii in xrange (len(z_arr)-1):
+            i = ii + 1
+            M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M/hh,500,z_arr[i])
+            dM200[:,i] = np.gradient(M200[:,i])
+            for j in xrange(len(M)):
+                try:
+                    assert fileFunc is not None
+                    filename = fileFunc(Mexp[j],z_arr[i])
+                    print filename
+                    sigN[j,i] = np.loadtxt(filename,unpack=True)[-1]
+                except:
+                    print "Calculating S/N because file not found or specified for M=",Mexp[j]," z=",z_arr[i]
+                    if quick:
+                        var = SZProf.quickVar(M[j],z_arr[i],tmaxN,numts)
+                    else:
+                        var = SZProf.filter_variance(M[j],z_arr[i])
+                    sigN[j,i] = np.sqrt(var)
+                    YM[j,i] = SZProf.Y_M(M[j],z_arr[i])
+                print Mexp[j],z_arr[i]
+
+            P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
+
+        dn_dVdm = self.dn_dM(M200,z_arr,200.)
+        dV_dz = self.dVdz(z_arr)
+
+        N_z = np.zeros(len(z_arr) - 1)
+        N_tot_z = np.zeros(len(z_arr) - 1)
+        for i in xrange (len(z_arr) - 1):
+            N_z[i] = np.sum(dn_dVdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1] / (HSC_mass[:,i]**2 + alpha_ym**2 * (sigN[:,i+1]/YM[:,i+1])**2))
+            N_tot_z[i] = np.sum(dn_dVdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1])
+        err_WL_mass = 4.*np.pi* (1400./42000.)*np.sum(N_z*dV_dz[1:])*0.05
+        Ntot = 4.*np.pi* (1400./42000.)*np.sum(N_tot_z*dV_dz[1:])*0.05
+
+        return 1./err_WL_mass,Ntot
+
+    def N_of_mqz_SZ (self,z_arr,m_arr,q_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+        # this is 3D grid for fisher matrix 
+        alpha_ym = 1.79
+        lnYmin = np.log(1e-13)
+        dlnY = 0.1
+        lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
+
+        Mexp = np.arange(13.5, 15.71, .1)
+
+        M = 10.**Mexp
+        dM = np.gradient(M)
+        rho_crit0m = self.cc.rhoc0om
+        hh = self.cc.H0/100.
+
+        M200 = np.outer(M,np.zeros([len(z_arr)]))
+        dM200 = np.outer(M,np.zeros([len(z_arr)]))
+        P_func = np.outer(M,np.zeros([len(z_arr)]))
+        sigN = np.outer(M,np.zeros([len(z_arr)]))
+        YM   =  np.outer(M,np.ones([len(z_arr)]))
+        M_arr =  np.outer(M,np.ones([len(z_arr)]))
+
+        HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z2.txt',unpack=True)
+        HSC_mass = np.transpose(HSC_mass)
+
+        DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
 
         SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lknee=lknee,alpha=alpha)
 
