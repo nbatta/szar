@@ -11,25 +11,14 @@ from Tinker_MF import tinker_params
 
 from orphics.tools.output import Plotter
 from orphics.theory.cosmology import Cosmology
+from orphics.tools.stats import timeit
 from scipy.interpolate import interp1d
 
 import szlib.szlibNumbafied as fast
 from scipy.special import j0
-from scipy.integrate import quad
 
 
-def timeit(method):
 
-    def timed(*args, **kw):
-        ts = time.time()
-        result = method(*args, **kw)
-        te = time.time()
-
-        print '%r %2.2f sec' % \
-              (method.__name__,te-ts)
-        return result
-
-    return timed
 
 def dictFromSection(config,sectionName):
     del config._sections[sectionName]['__name__']
@@ -237,7 +226,7 @@ class Halo_MF:
 
         return N_z
 
-    def N_of_zm_SZ(self,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+    def N_of_mz_SZ(self,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is d^2N/dzdm 
         h0 = 70.
         lnYmin = np.log(1e-13)
@@ -283,11 +272,11 @@ class Halo_MF:
 
             P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
 
-        dn_dzdm = self.dn_dM(M200,z_arr,200.)
+        dn_dVdm = self.dn_dM(M200,z_arr,200.)
         dV_dz = self.dVdz(z_arr)
-        dN_dzdm = dn_dzdm[:,1:]*P_func[:,1:]* dV_dz[1:]
+        dN_dzdm = dn_dVdm[:,1:]*P_func[:,1:]* dV_dz[1:]
         
-        return dN_dzdm
+        return dN_dzdm,dM200[:,0]
 
     def Mass_err (self,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is TEMP WL MASS ERROR
@@ -340,14 +329,14 @@ class Halo_MF:
 
             P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
 
-        dn_dzdm = self.dn_dM(M200,z_arr,200.)
+        dn_dVdm = self.dn_dM(M200,z_arr,200.)
         dV_dz = self.dVdz(z_arr)
 
         N_z = np.zeros(len(z_arr) - 1)
         N_tot_z = np.zeros(len(z_arr) - 1)
         for i in xrange (len(z_arr) - 1):
-            N_z[i] = np.sum(dn_dzdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1] / (HSC_mass[:,i]**2 + alpha_ym**2 * (sigN[:,i+1]/YM[:,i+1])**2))
-            N_tot_z[i] = np.sum(dn_dzdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1])
+            N_z[i] = np.sum(dn_dVdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1] / (HSC_mass[:,i]**2 + alpha_ym**2 * (sigN[:,i+1]/YM[:,i+1])**2))
+            N_tot_z[i] = np.sum(dn_dVdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1])
         err_WL_mass = 4.*np.pi* (1400./42000.)*np.sum(N_z*dV_dz[1:])*0.05
         Ntot = 4.*np.pi* (1400./42000.)*np.sum(N_tot_z*dV_dz[1:])*0.05
 
@@ -357,7 +346,7 @@ class Halo_MF:
 
     def Delta_lnM(self,z_arr,beams,noises,freqs,clusterDict,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         
-        dN_dzdM = self.N_of_zm_SZ(z_arr,beams,noises,freqs,clusterDict,fileFunc=None,quick=True,tmaxN=5,numts=1000)
+        dN_dzdM,dM = self.N_of_mz_SZ(z_arr,beams,noises,freqs,clusterDict,fileFunc=None,quick=True,tmaxN=5,numts=1000)
         #FIX these options filefunc etc
         Err_table_WL = 1. #READ IN FILE
         Err_table_CMB = 1. #READ IN FILE
