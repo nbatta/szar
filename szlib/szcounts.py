@@ -13,12 +13,10 @@ from orphics.tools.output import Plotter
 from orphics.theory.cosmology import Cosmology
 from orphics.tools.stats import timeit
 from scipy.interpolate import interp1d
+from orphics.analysis.flatMaps import interpolateGrid
 
 import szlib.szlibNumbafied as fast
 from scipy.special import j0
-
-
-
 
 def dictFromSection(config,sectionName):
     del config._sections[sectionName]['__name__']
@@ -289,6 +287,7 @@ class Halo_MF:
         dM = np.gradient(M)
         rho_crit0m = self.cc.rhoc0om
         hh = self.cc.H0/100.
+        #hh = 0.7
 
         M200 = np.outer(M,np.zeros([len(z_arr)]))
         dM200 = np.outer(M,np.zeros([len(z_arr)]))
@@ -299,6 +298,24 @@ class Halo_MF:
 
         HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z2.txt',unpack=True)
         HSC_mass = np.transpose(HSC_mass)
+
+        CMB_halo = np.loadtxt('data/AdvACTCMBLensingWhiteNoise150GhzTTOnly.dat',unpack=True)
+        CMB_halo *= np.sqrt(1000.)
+        CMB_halo = np.transpose(CMB_halo)
+
+        mhalo = np.arange(14.0,15.7,0.05)
+        zhalo = np.arange(0.1,2.0,0.05)
+
+        #print np.shape(CMB_halo), np.shape(mhalo), np.shape(zhalo)
+        #print self.cc.H0/100.
+
+        CMB_mass = interpolateGrid(CMB_halo,mhalo,zhalo,np.log10(M) ,z_arr[1:])
+
+        #print np.shape(CMB_mass), np.shape(M), np.shape(z_arr), np.shape(HSC_mass)
+
+        mass_err = 1./(np.sqrt((1./HSC_mass)**2 + (1./CMB_mass)**2))
+
+#        print HSC_mass[7,:], CMB_mass[7,:], mass_err[7,:], M[7]
 
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
 
@@ -332,7 +349,7 @@ class Halo_MF:
         N_z = np.zeros(len(z_arr) - 1)
         N_tot_z = np.zeros(len(z_arr) - 1)
         for i in xrange (len(z_arr) - 1):
-            N_z[i] = np.sum(dn_dVdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1] / (HSC_mass[:,i]**2 + alpha_ym**2 * (sigN[:,i+1]/YM[:,i+1])**2))
+            N_z[i] = np.sum(dn_dVdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1] / (mass_err[:,i]**2 + alpha_ym**2 * (sigN[:,i+1]/YM[:,i+1])**2))
             N_tot_z[i] = np.sum(dn_dVdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1])
         err_WL_mass = 4.*np.pi* (1400./42000.)*np.sum(N_z*dV_dz[1:])*0.05
         Ntot = 4.*np.pi* (1400./42000.)*np.sum(N_tot_z*dV_dz[1:])*0.05
