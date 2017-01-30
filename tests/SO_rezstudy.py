@@ -17,8 +17,10 @@ cosmologyName = 'LACosmology' # from ini file
 
 #fileFunc = None
 fileFunc = lambda M,z:"data/"+experimentName+"_m"+str(M)+"z"+str(z)+".txt"
+#experimentName = ["AdvACT"]
 #experimentName = ["S45m","S46m","S47m"]
-experimentName = ["SO5m","SO6m","SO7m"]#,"SO5m_No270","SO6m_No270","SO7m_No270"]
+#experimentName = ["SO5m","SO6m","SO7m"]#,"SO5m_No270","SO6m_No270","SO7m_No270"]
+experimentName = ["SO7m"]
 
 for ii in xrange(len(experimentName)):
 
@@ -59,15 +61,18 @@ for ii in xrange(len(experimentName)):
 
     zbin_temp = np.arange(0.05,2.0,0.05)
     zbin = np.insert(zbin_temp,0,0.0)
-
+    qbin = np.arange(np.log(5),np.log(500),0.1) 
+    mbin = np.arange(13.5, 15.71, .05)
     start3 = time.time()
 
     HMF = Halo_MF(clusterCosmology=cc)
     dvdz = HMF.dVdz(zbin)
     #dndm = HMF.N_of_z_SZ(zbin,beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
-    dNdmdz,dm = HMF.N_of_mz_SZ(zbin,beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
+    #dNdmdz,dm = HMF.N_of_mz_SZ(zbin,beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
+    ans = HMF.N_of_mqz_SZ(zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
 
     print "Time for N of z " , time.time() - start3
+    print np.max(ans)
 
     #pl = Plotter()
     #pl.add(zbin[1:], dndm * dvdz[1:])
@@ -75,9 +80,11 @@ for ii in xrange(len(experimentName)):
 
     #print "Total number of clusters ", np.trapz(dndm * dvdz[1:],zbin[1:],np.diff(zbin[1:]))*4.*np.pi*fsky
 
+    np.save('output/dN_dzmq'+experimentName[ii],ans)
+
 #    np.savetxt('output/dN_dz_'+experimentName[ii]+'.txt',np.transpose([zbin[1:],dndm,dvdz[1:]])) 
-    np.savetxt('output/dN_dmdz_'+experimentName[ii]+'.txt',np.transpose(dNdmdz)) 
-    np.savetxt('output/dN_dmdz_zbins_'+experimentName[ii]+'.txt',np.transpose([zbin[1:],dvdz[1:]]))
-    np.savetxt('output/dN_dmdz_mbins_'+experimentName[ii]+'.txt',dm) 
+#    np.savetxt('output/dN_dmdz_'+experimentName[ii]+'.txt',np.transpose(dNdmdz)) 
+#    np.savetxt('output/dN_dmdz_zbins_'+experimentName[ii]+'.txt',np.transpose([zbin[1:],dvdz[1:]]))
+#    np.savetxt('output/dN_dmdz_mbins_'+experimentName[ii]+'.txt',dm) 
 #np.savetxt('output/dndm_dVdz_1muK_3_0arc.txt',np.transpose([zbin[1:],dndm,dvdz[1:]]))
 

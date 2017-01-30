@@ -257,7 +257,7 @@ class Halo_MF:
 
     def Mass_err (self,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is TEMP WL MASS ERROR
-        alpha_ym = 1.79
+        alpha_ym = self.cc.paramDict['alpha_ym'] #1.79   
         lnYmin = np.log(1e-13)
         dlnY = 0.1
         lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
@@ -287,16 +287,9 @@ class Halo_MF:
         mhalo = np.arange(14.0,15.7,0.05)
         zhalo = np.arange(0.1,2.0,0.05)
 
-        #print np.shape(CMB_halo), np.shape(mhalo), np.shape(zhalo)
-        #print self.cc.H0/100.
-
         CMB_mass = interpolateGrid(CMB_halo,mhalo,zhalo,np.log10(M) ,z_arr[1:])
 
-        #print np.shape(CMB_mass), np.shape(M), np.shape(z_arr), np.shape(HSC_mass)
-
         mass_err = 1./(np.sqrt((1./HSC_mass)**2 + (1./CMB_mass)**2))
-
-#        print HSC_mass[7,:], CMB_mass[7,:], mass_err[7,:], M[7]
 
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
 
@@ -320,6 +313,7 @@ class Halo_MF:
                         var = SZProf.filter_variance(M[j],z_arr[i])
                     sigN[j,i] = np.sqrt(var)
                     YM[j,i] = SZProf.Y_M(M[j],z_arr[i])
+                        
                 print Mexp[j],z_arr[i]
 
             P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
@@ -337,15 +331,14 @@ class Halo_MF:
 
         return 1./err_WL_mass,Ntot
 
-    def N_of_mqz_SZ (self,z_arr,m_arr,q_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+    def N_of_mqz_SZ (self,z_arr,m_wl,q_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is 3D grid for fisher matrix 
-        alpha_ym = 1.79
-        lnYmin = np.log(1e-13)
+        lnYmin = np.log(1e-14)
         dlnY = 0.1
-        lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
-
+        lnY = np.arange(lnYmin,lnYmin+13.,dlnY)
+        
         Mexp = np.arange(13.5, 15.71, .1)
-
+        
         M = 10.**Mexp
         dM = np.gradient(M)
         rho_crit0m = self.cc.rhoc0om
@@ -353,17 +346,28 @@ class Halo_MF:
 
         M200 = np.outer(M,np.zeros([len(z_arr)]))
         dM200 = np.outer(M,np.zeros([len(z_arr)]))
-        P_func = np.outer(M,np.zeros([len(z_arr)]))
         sigN = np.outer(M,np.zeros([len(z_arr)]))
         YM   =  np.outer(M,np.ones([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
+        #P_func_test = np.outer(M,np.zeros([len(z_arr)]))
+        P_func = np.zeros([len(M),len(z_arr)-1,len(q_arr)])
+        dNdzmq = np.zeros([len(m_wl),len(z_arr)-1,len(q_arr)])
+        dNdzmq2 = np.zeros([len(m_wl),len(z_arr)-1,len(q_arr)])
 
         HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z2.txt',unpack=True)
         HSC_mass = np.transpose(HSC_mass)
 
+        mass_err = HSC_mass#1./(np.sqrt((1./HSC_mass)**2 + (1./CMB_mass)**2))
+        
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
-
+        
         SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lknee=lknee,alpha=alpha)
+        
+#        for i in xrange (4):
+#            for kk in xrange(4):
+#                for jj in xrange(4):
+#                    print SZProf.Mwl_prob(np.exp(m_wl[jj]),M_arr[:,i+1],mass_err[:,i])
+
 
         for ii in xrange (len(z_arr)-1):
             i = ii + 1
@@ -383,24 +387,29 @@ class Halo_MF:
                         var = SZProf.filter_variance(M[j],z_arr[i])
                     sigN[j,i] = np.sqrt(var)
                     YM[j,i] = SZProf.Y_M(M[j],z_arr[i])
-                print Mexp[j],z_arr[i]
 
-            P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
+                print Mexp[j],z_arr[i]
+            #P_func_test[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
+            for kk in xrange(len(q_arr)):
+                P_func[:,ii,kk] = SZProf.P_of_qn (lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr[kk])*dlnY
+
+            #print "PFUNC", np.max(P_func[:,i,:]),np.max(P_func_test[:,i])
+            #print "PFUNC", P_func[:,i,0]
 
         dn_dVdm = self.dn_dM(M200,z_arr,200.)
         dV_dz = self.dVdz(z_arr)
 
-        N_z = np.zeros(len(z_arr) - 1)
-        N_tot_z = np.zeros(len(z_arr) - 1)
-        for i in xrange (len(z_arr) - 1):
-            N_z[i] = np.sum(dn_dVdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1] / (HSC_mass[:,i]**2 + alpha_ym**2 * (sigN[:,i+1]/YM[:,i+1])**2))
-            N_tot_z[i] = np.sum(dn_dVdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1])
-        err_WL_mass = 4.*np.pi* (1400./42000.)*np.sum(N_z*dV_dz[1:])*0.05
-        Ntot = 4.*np.pi* (1400./42000.)*np.sum(N_tot_z*dV_dz[1:])*0.05
+        for kk in xrange(len(q_arr)):
+            for jj in xrange(len(m_wl)):
+                for i in xrange (len(z_arr) - 1):
+                    dNdzmq[jj,i,kk] = np.sum(dn_dVdm[:,i+1]*P_func[:,i,kk]*dM200[:,i+1]*SZProf.Mwl_prob(10**(m_wl[jj]),M_arr[:,i+1],mass_err[:,i]))
+                    dNdzmq[jj,i,kk] *= dV_dz[i+1]*4.*np.pi
+                    #print np.max(SZProf.Mwl_prob(np.exp(m_wl[jj]),M_arr[:,i+1],mass_err[:,i])*P_func[:,i+1,kk]),dNdzmq[jj,i,kk],np.sum(dn_dVdm[:,i+1]*dM200[:,i+1]),dV_dz[i+1]
+                #dNdzmq[jj,:,kk] *= dV_dz[1:] * 0.05 * 4.*np.pi* (1400./42000.)
+                #print dNdzmq[jj,:,kk], dV_dz[1:]
+                #dNdzmq2[jj,:,kk] *= dV_dz[1:] * 0.05 * 4.*np.pi
 
-        return 1./err_WL_mass,Ntot
-
-
+        return dNdzmq
 
     def Delta_lnM(self,z_arr,beams,noises,freqs,clusterDict,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         
@@ -630,17 +639,18 @@ class SZ_Cluster_Model:
         return ans
     
     def P_of_Y (self,lnY,MM,zz):
-        sig = 0.127  
+        Ysig = self.scaling['Ysig'] #0.127  
+
         Y = np.exp(lnY)
         Ma = np.outer(MM,np.ones(len(Y[0,:])))
         numer = -1.*np.log(Y/self.Y_M(Ma,zz))**2
-        ans = 1/(sig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*sig))
+        ans = 1./(Ysig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*Ysig))
         return ans
     
     def P_of_q (self,lnY,MM,zz,sigma_N):
         lnYa = np.outer(np.ones(len(MM)),lnY)
         
-        DA_z = self.cc.results.angular_diameter_distance(zz) * (self.cc.H0/100.)
+        #DA_z = self.cc.results.angular_diameter_distance(zz) * (self.cc.H0/100.)
         
         sig_thresh = self.Y_erf(np.exp(lnYa),sigma_N)
         P_Y = self.P_of_Y(lnYa,MM, zz)
@@ -650,17 +660,32 @@ class SZ_Cluster_Model:
             ans[ii] = np.sum(P_Y[ii,:]*sig_thresh[ii,:])
         return ans
 
+    def P_of_qn (self,lnY,MM,zz,sigma_N,qarr):
+        lnYa = np.outer(np.ones(len(MM)),lnY)
+        #dY = np.outer(np.ones(len(MM)),np.gradient(np.exp(lnY)))
+        
+        #DA_z = self.cc.results.angular_diameter_distance(zz) * (self.cc.H0/100.)
+        
+        sig_thresh = self.q_prob(qarr,lnYa,sigma_N)
+        P_Y = self.P_of_Y(lnYa,MM, zz)
+
+        ans = MM*0.0
+        for ii in xrange(len(MM)):
+            ans[ii] = np.sum(P_Y[ii,:]*sig_thresh[ii,:])
+        return ans
+
     def gaussian(self,xx, mu, sig):
-        return np.exp(-1.*(x - mu)**2 / (2. * sig**2.))
+        return 1./(sig * np.sqrt(2*np.pi)) * np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
 
     def q_prob (self,q_arr,lnY,sigma_N):
         #Gaussian error probablity for SZ S/N
+        sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
         Y = np.exp(lnY)
-        ans = self.gaussian(q_arr,Y/sigma_N,1)        
+        ans = self.gaussian(q_arr,Y/sigma_Na,1.)        
         return ans
 
     def Mwl_prob (self,Mwl,M,Merr):
         #Gaussian error probablity for weak lensing mass 
-        ans = self.gaussian(Mwl,M,Merr)
+        ans = self.gaussian(Mwl,M,Merr*M)
         return ans
 
