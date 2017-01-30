@@ -4,7 +4,8 @@ import numpy as np
 import time
 
 #zlist = np.arange(0.01,2.0,0.01)
-zlist = np.arange(0.1,2.0,0.1)
+#zlist = np.arange(0.1,2.0,0.1)
+zlist = np.arange(0.05,2.05,0.05)
 print "starting " , len(zlist),  " jobs."
 for z in zlist:
 

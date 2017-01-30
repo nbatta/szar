@@ -18,35 +18,16 @@ from orphics.analysis.flatMaps import interpolateGrid
 import szlib.szlibNumbafied as fast
 from scipy.special import j0
 
-def dictFromSection(config,sectionName):
-    del config._sections[sectionName]['__name__']
-    return dict([a, float(x)] for a, x in config._sections[sectionName].iteritems())
-
-def listFromConfig(Config,section,name):
-    return [float(x) for x in Config.get(section,name).split(',')]
 
 
 class ClusterCosmology(Cosmology):
     def __init__(self,paramDict,constDict,lmax):
-        Cosmology.__init__(self,paramDict,constDict)
+        Cosmology.__init__(self,paramDict,constDict,lmax)
         self.om = paramDict['om']
         self.ol = paramDict['ol']
         self.rhoc0om = self.rho_crit0*self.om
         self.s8 = paramDict['s8']
 
-        try:
-            self.ells,self.cltt = pickle.load(open("output/cl"+time.strftime('%Y%m%d') +".pkl",'rb'))
-        except:
-            self.pars.set_accuracy(AccuracyBoost=2.0, lSampleBoost=4.0, lAccuracyBoost=4.0)
-            self.pars.set_for_lmax(lmax=(lmax+500), lens_potential_accuracy=1, max_eta_k=2*(lmax+500))
-            self.cltt =self.results.get_cmb_power_spectra(self.pars)['lensed_scalar'][2:,0]
-            self.ells = np.arange(2,len(self.cltt)+2,1)
-            self.cltt *= 2.*np.pi/self.ells/(self.ells+1.)
-            self.ells = self.ells[self.ells<=lmax]
-            self.cltt = self.cltt[self.ells<=lmax] 
-
-            pickle.dump((self.ells,self.cltt) ,open("output/cl"+time.strftime('%Y%m%d') +".pkl",'wb'))
-        self.clttfunc = interp1d(self.ells,self.cltt,fill_value=0.,bounds_error=False)
 
         
     def E_z(self,z):

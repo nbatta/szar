@@ -6,9 +6,9 @@ import numpy as np
 from scipy import special
 import matplotlib.pyplot as plt
 import sys, os, time
-from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,dictFromSection,listFromConfig
+from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF
 
-from orphics.tools.output import Plotter
+from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 
 import flipper.liteMap as lm

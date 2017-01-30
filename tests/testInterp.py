@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 from orphics.analysis.flatMaps import interpolateGrid
 import numpy as np
 
@@ -19,7 +21,7 @@ pl = Plotter()
 pl.plot2d(inGrid)
 pl.done("output/ingrid.png")
 
-outM = np.arange(14.0,15.7,0.001)
+outM = np.arange(13.5,15.71,0.001)
 outZ = np.arange(0.05,2.0,0.001)
 
 print "outMshape " ,outM.shape

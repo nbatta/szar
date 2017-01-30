@@ -22,13 +22,14 @@ from pyfftw.interfaces.scipy_fftpack import fft2
 from pyfftw.interfaces.scipy_fftpack import ifft2
 
 from alhazen.halos import NFWkappa,getDLnMCMB,predictSN
+from alhazen.halos import NFWMatchedFilterSN
 
 
 
 z = float(sys.argv[1])
     
 
-saveId = "AdvACTCMBLensingWhiteNoise150GhzTTOnlyCoarse"
+saveId = "AdvACTCMBLensingWhiteNoise150GhzTTOnly_MF_N1"
 
 nsigma = 8.
 
@@ -42,7 +43,7 @@ numSims = 30
 
 concentration = 3.2
 arcStamp = 30.
-pxStamp = 0.5
+pxStamp = 0.1
 arc_upto = 10.
 
 
@@ -108,15 +109,21 @@ pl.done("output/"+saveId+"nl.png")
 bin_width = beamY
 
 
-Mexps = np.arange(14.0,15.7,0.1)
+Mexps = np.arange(14.0,15.7,0.05)
+#Mexps = np.arange(14.0,15.7,0.1)
+#Mexps = np.arange(14.05,15.75,0.1)
 
 for log10Moverh in Mexps:
     MM = 10.**log10Moverh
-    expectedSN = predictSN(polComb,noiseTY,noisePY,N,MM)
-    print "Rough S/N ", expectedSN
+    #expectedSN = predictSN(polComb,noiseTY,noisePY,N,MM)
+    #print "Rough S/N ", expectedSN
 
-    dlndm = getDLnMCMB(ls,Nls,cc,log10Moverh,z,concentration,arcStamp,pxStamp,arc_upto,bin_width=beamY,expectedSN=expectedSN,Nclusters=N,numSims=numSims,saveId=saveId,numPoints=1000,nsigma=nsigma,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ)
+    #dlndm = getDLnMCMB(ls,Nls,cc,log10Moverh,z,concentration,arcStamp,pxStamp,arc_upto,bin_width=beamY,expectedSN=expectedSN,Nclusters=N,numSims=numSims,saveId=saveId,numPoints=1000,nsigma=nsigma,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ)
 
-    print "S/N " , 1./dlndm
+    sn = NFWMatchedFilterSN(cc,log10Moverh,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=saveId)
+
+
+    #print "S/N " , 1./dlndm
+    print "S/N " , sn
 
 
