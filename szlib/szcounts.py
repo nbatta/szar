@@ -658,11 +658,12 @@ class SZ_Cluster_Model:
         return ans
     
     def P_of_Y (self,lnY,MM,zz):
-        sig = 0.127  
+        Ysig = self.scaling['Ysig'] #0.127  
+
         Y = np.exp(lnY)
         Ma = np.outer(MM,np.ones(len(Y[0,:])))
         numer = -1.*np.log(Y/self.Y_M(Ma,zz))**2
-        ans = 1./(sig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*sig))
+        ans = 1./(Ysig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*Ysig))
         return ans
     
     def P_of_q (self,lnY,MM,zz,sigma_N):
