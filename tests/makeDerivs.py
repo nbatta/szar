@@ -1,7 +1,7 @@
-
+import numpy as np
 import orphics.tools.io as io
 from ConfigParser import SafeConfigParser 
-import sys
+import sys, time
 from szlib.szcounts import ClusterCosmology,Halo_MF
 from ConfigParser import SafeConfigParser
 
@@ -53,10 +53,10 @@ mbin = np.arange(13.5, 15.71, .05)
 start3 = time.time()
 
 HMFup = Halo_MF(clusterCosmology=ccUp)
-dN_dmqz_up = HMFup.N_of_mqz_SZ(zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
+dN_dmqz_up = HMFup.N_of_mqz_SZ(zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha)
 
 HMFdn = Halo_MF(clusterCosmology=ccDn)
-dN_dmqz_dn = HMFup.N_of_mqz_SZ(zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
+dN_dmqz_dn = HMFup.N_of_mqz_SZ(zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha)
 
 print "Time for N of z " , time.time() - start3
 
