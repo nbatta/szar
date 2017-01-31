@@ -2,7 +2,8 @@
 import orphics.tools.io as io
 from ConfigParser import SafeConfigParser 
 import sys
-
+from szlib.szcounts import ClusterCosmology,Halo_MF
+from ConfigParser import SafeConfigParser
 
 paramName = sys.argv[1]
 key = paramName
@@ -14,45 +15,51 @@ Config.optionxform=str
 Config.read(iniFile)
 
 cosmologyName = 'LACosmology' # from ini file
+clusterParams = 'LACluster' # from ini file   
 cosmoListDict = io.dictOfListsFromSection(Config,cosmologyName)
+constDict = io.dictFromSection(Config,'constants')
+clusterDict = io.dictFromSection(Config,clusterParams)
 
-experimentName = ""
+experimentName = "AdvAct"
 
 saveId = experimentName + cosmologyName
-
-
-
-
-upDict = cosmoDict.copy()
-dnDict = cosmoDict.copy()
+upDict = cosmoListDict.copy()
+dnDict = cosmoListDict.copy()
 
 try:
-    upDict[key] = cosmoListDect[key][0] + cosmoListDect[key][1]
-    dnDict[key] = cosmoListDect[key][0] - cosmoListDect[key][1]
+    upDict[key] = cosmoListDict[key][0] + cosmoListDict[key][1]/2.
+    dnDict[key] = cosmoListDict[key][0] - cosmoListDict[key][1]/2.
 except:
     print "No step size specified for ", key
     sys.exit()    
     
-
-
-ccUp = ClusterCosmology(upDict,constDict,lmax)
-ccDn = ClusterCosmology(dnDict,constDict,lmax)
-
-
-beam = listFromConfig(Config,experimentName,'beams')
-noise = listFromConfig(Config,experimentName,'noises')
-freq = listFromConfig(Config,experimentName,'freqs')
+beam = io.listFromConfig(Config,experimentName,'beams')
+noise = io.listFromConfig(Config,experimentName,'noises')
+freq = io.listFromConfig(Config,experimentName,'freqs')
 lmax = int(Config.getfloat(experimentName,'lmax'))
 lknee = Config.getfloat(experimentName,'lknee')
 alpha = Config.getfloat(experimentName,'alpha')
 fsky = Config.getfloat(experimentName,'fsky')
 
+ccUp = ClusterCosmology(upDict,constDict,lmax)
+ccDn = ClusterCosmology(dnDict,constDict,lmax)
 
-Nmup = getNmzq(ccUp,experiment)
-Nmdn = getNmzq(ccDn,experiment)
+zbin_temp = np.arange(0.05,2.0,0.05)
+zbin = np.insert(zbin_temp,0,0.0)
+qbin = np.arange(np.log(5),np.log(500),0.1)
+mbin = np.arange(13.5, 15.71, .05)
 
+start3 = time.time()
 
-np.save("data/"+saveId+"_"+key+"_up.dat",Nmup)
-np.save("data/"+saveId+"_"+key+"_dn.dat",Nmdn)
+HMFup = Halo_MF(clusterCosmology=ccUp)
+dN_dmqz_up = HMFup.N_of_mqz_SZ(zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
+
+HMFdn = Halo_MF(clusterCosmology=ccDn)
+dN_dmqz_dn = HMFup.N_of_mqz_SZ(zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
+
+print "Time for N of z " , time.time() - start3
+
+np.save("data/dN_dzmq"+saveId+"_"+key+"_up.dat",dN_dmqz_up)
+np.save("data/dN_dzmq"+saveId+"_"+key+"_dn.dat",dN_dmqz_dn)
 
                
