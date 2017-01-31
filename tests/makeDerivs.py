@@ -17,14 +17,15 @@ Config.read(iniFile)
 cosmologyName = 'LACosmology' # from ini file
 clusterParams = 'LACluster' # from ini file   
 cosmoListDict = io.dictOfListsFromSection(Config,cosmologyName)
+cosmoDict = io.dictFromSection(Config,cosmologyName)
 constDict = io.dictFromSection(Config,'constants')
 clusterDict = io.dictFromSection(Config,clusterParams)
 
 experimentName = "AdvAct"
 
 saveId = experimentName + cosmologyName
-upDict = cosmoListDict.copy()
-dnDict = cosmoListDict.copy()
+upDict = cosmoDict.copy()
+dnDict = cosmoDict.copy()
 
 try:
     upDict[key] = cosmoListDict[key][0] + cosmoListDict[key][1]/2.
