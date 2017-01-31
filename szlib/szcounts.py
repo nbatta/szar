@@ -37,7 +37,7 @@ class ClusterCosmology(Cosmology):
 
     def rhoc(self,z):
         #critical density as a function of z
-        ans = self.rho_crit0*self.E_z(z)**2.
+        ans = self.rho_crit0H100*self.E_z(z)**2.
         return ans
 
     def rdel_c(self,M,z,delta):
