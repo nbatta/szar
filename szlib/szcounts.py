@@ -23,10 +23,10 @@ from scipy.special import j0
 class ClusterCosmology(Cosmology):
     def __init__(self,paramDict,constDict,lmax):
         Cosmology.__init__(self,paramDict,constDict,lmax)
-        self.om = paramDict['om']
-        self.ol = paramDict['ol']
-        self.rhoc0om = self.rho_crit0*self.om
-        self.s8 = paramDict['s8']
+        #self.om = paramDict['om']
+        #self.ol = paramDict['ol']
+        self.rhoc0om = self.rho_crit0H100*self.om
+        #self.s8 = paramDict['s8']
 
 
         
@@ -123,8 +123,8 @@ class Halo_MF:
         #Mass Function
         delts = z_arr*0 + delta
         kh, z, pk, s8 = self.pk(z_arr)
-        fac = (self.cc.s8/s8[-1])**2 # sigma8 values are in reverse order
-        pk *= fac
+        #fac = (self.cc.s8/s8[-1])**2 # sigma8 values are in reverse order
+        #pk *= fac
     
         dn_dlnm = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts,kh,pk[:,:],'comoving')
         dn_dm = dn_dlnm/M
@@ -134,8 +134,8 @@ class Halo_MF:
         # this is DN/dz #For the full sky  
         delts = z_arr*0 + delta
         kh, z, pk, s8 = self.pk(z_arr)
-        fac = (self.cc.s8/s8[-1])**2 # sigma8 values are in reverse order
-        pk *= fac
+        #fac = (self.cc.s8/s8[-1])**2 # sigma8 values are in reverse order
+        #pk *= fac
     
         dn_dlnm = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts,kh,pk[:,:],'comoving')
         dn_dm = dn_dlnm/M
