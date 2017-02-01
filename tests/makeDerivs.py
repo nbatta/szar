@@ -20,7 +20,7 @@ cosmoDict = io.dictFromSection(Config,cosmologyName)
 constDict = io.dictFromSection(Config,'constants')
 clusterDict = io.dictFromSection(Config,clusterParams)
 
-experimentName = "AdvAct"
+experimentName = "LAExp"
 
 saveId = experimentName + cosmologyName
 upDict = cosmoDict.copy()
