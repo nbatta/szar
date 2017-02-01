@@ -331,7 +331,7 @@ class Halo_MF:
 
         return 1./err_WL_mass,Ntot
 
-    def N_of_mqz_SZ (self,z_arr,m_wl,q_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+    def N_of_mqz_SZ (self,mass_err,z_arr,m_wl,q_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is 3D grid for fisher matrix 
         lnYmin = np.log(1e-14)
         dlnY = 0.1
@@ -354,10 +354,10 @@ class Halo_MF:
         dNdzmq = np.zeros([len(m_wl),len(z_arr)-1,len(q_arr)])
         dNdzmq2 = np.zeros([len(m_wl),len(z_arr)-1,len(q_arr)])
 
-        HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z2.txt',unpack=True)
-        HSC_mass = np.transpose(HSC_mass)
+        # HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z2.txt',unpack=True)
+        # HSC_mass = np.transpose(HSC_mass)
 
-        mass_err = HSC_mass#1./(np.sqrt((1./HSC_mass)**2 + (1./CMB_mass)**2))
+        # mass_err = HSC_mass#1./(np.sqrt((1./HSC_mass)**2 + (1./CMB_mass)**2))
         
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
         

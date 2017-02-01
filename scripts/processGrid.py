@@ -8,9 +8,11 @@ import numpy as np
 #mrange = np.arange(14.0,15.4,0.2)
 #zrange = np.arange(0.1,0.8,0.2)
 
-saveId = "AdvACTCMBLensingWhiteNoise150GhzTTOnly_MF_N1"
-mrange = np.arange(14.0,15.7,0.05)
+saveId = "LAExp_MF_N1"
+mrange = np.arange(12.5,15.5,0.05)+0.05
 zrange = np.arange(0.05,2.05,0.05)
+#mrange = np.arange(14.0,15.7,0.05)
+#zrange = np.arange(0.05,2.05,0.05)
 
 
 mgrid = np.zeros((len(mrange),len(zrange)))

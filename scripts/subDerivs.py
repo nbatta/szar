@@ -8,7 +8,7 @@ paramList =  ['H0','ombh2','omch2','As','ns','mnu','b_ym','alpha_ym','Ysig','gam
 
 for p in paramList:
 
-    cmd = "python tests/makeDerivs.py "+str(p)+" > Logfiles/Log_"+str(p)+".log 2>&1 & "
+    cmd = "python tests/makeDerivs.py "+str(p)+" > Logfiles/Log_"+str(p)+".log 2>&1 &"
     print cmd
     os.system(cmd)
     time.sleep(0.3)
