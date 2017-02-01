@@ -6,9 +6,9 @@ import numpy as np
 from scipy import special
 import matplotlib.pyplot as plt
 import sys, os, time
-from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,dictFromSection,listFromConfig
+from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF
 
-from orphics.tools.output import Plotter
+from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 
 import flipper.liteMap as lm
@@ -29,7 +29,8 @@ from alhazen.halos import NFWMatchedFilterSN
 z = float(sys.argv[1])
     
 
-saveId = "AdvACTCMBLensingWhiteNoise150GhzTTOnly_MF_N1"
+#saveId = "AdvACTCMBLensingWhiteNoise150GhzTTOnly_MF_N1"
+saveId = "LAExp_MF_N1"
 
 nsigma = 8.
 
@@ -61,55 +62,77 @@ cosmoDict = dictFromSection(Config,cosmologyName)
 constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,clusterParams)
 cc = ClusterCosmology(cosmoDict,constDict,lmax)
-
+theory = cc.theory
 
 cambRoot = "data/ell28k_highacc"
 gradCut = 2000
 halo = True
 
 
-beamX = 1.5
-beamY = 1.5
-noiseTX = 6.9
-noisePX = np.sqrt(2.)*noiseTX
-noiseTY = 6.9
-noisePY = np.sqrt(2.)*noiseTY
-tellmin = 300
-tellmax = 3000
-gradCut = 2000
-pellmin = 300
-pellmax = 5000
-polComb = 'TT'
-kmin = 100
+# beamX = 1.5
+# beamY = 1.5
+# noiseTX = 6.9
+# noisePX = np.sqrt(2.)*noiseTX
+# noiseTY = 6.9
+# noisePY = np.sqrt(2.)*noiseTY
+# tellmin = 300
+# tellmax = 3000
+# gradCut = 2000
+# pellmin = 300
+# pellmax = 5000
+# polComb = 'TT'
 
 
-kmax = getMax(polComb,tellmax,pellmax)
+#ls2,Nls2 = np.loadtxt("../alhazen/data/bigDump/ell28_gradCut_2000_polComb_EB_beamY_3.0_noiseY_0.8_grad_sameGrad_tellminY_200_pellminY_50_kmin_40_deg_10.0_px_0.2.txt",unpack=True)
+
+ls,Nls = np.loadtxt("data/LA_pol_Nl.txt",unpack=True,delimiter=",")
+kmax = 8000
+
+# beamX = 1.5
+# beamY = 1.5
+# noiseTX = 6.9
+# noisePX = np.sqrt(2.)*noiseTX
+# noiseTY = 6.9
+# noisePY = np.sqrt(2.)*noiseTY
+# tellmin = 300
+# tellmax = 3000
+# gradCut = 2000
+# pellmin = 300
+# pellmax = 5000
+# polComb = 'EB'
+
+
+# kmin = 100
+
+
+# kmax = getMax(polComb,tellmax,pellmax)
 
 
 
-# Make a CMB Noise Curve
-deg = 10.
-px = 0.5
-dell = 10
-bin_edges = np.arange(kmin,kmax,dell)+dell
-theory = loadTheorySpectraFromCAMB(cambRoot,unlensedEqualsLensed=False,useTotal=False,lpad=9000)
-lmap = lm.makeEmptyCEATemplate(raSizeDeg=deg, decSizeDeg=deg,pixScaleXarcmin=px,pixScaleYarcmin=px)
-myNls = NlGenerator(lmap,theory,bin_edges,gradCut=gradCut)
-myNls.updateNoise(beamX,noiseTX,noisePX,tellmin,tellmax,pellmin,pellmax,beamY=beamY,noiseTY=noiseTY,noisePY=noisePY)
-ls,Nls = myNls.getNl(polComb=polComb,halo=halo)
+# # Make a CMB Noise Curve
+# deg = 10.
+# px = 0.5
+# dell = 10
+# bin_edges = np.arange(kmin,kmax,dell)+dell
+# theory = loadTheorySpectraFromCAMB(cambRoot,unlensedEqualsLensed=False,useTotal=False,lpad=9000)
+# lmap = lm.makeEmptyCEATemplate(raSizeDeg=deg, decSizeDeg=deg,pixScaleXarcmin=px,pixScaleYarcmin=px)
+# myNls = NlGenerator(lmap,theory,bin_edges,gradCut=gradCut)
+# myNls.updateNoise(beamX,noiseTX,noisePX,tellmin,tellmax,pellmin,pellmax,beamY=beamY,noiseTY=noiseTY,noisePY=noisePY)
+# ls,Nls = myNls.getNl(polComb=polComb,halo=halo)
 
-ellkk = np.arange(2,9000,1)
-Clkk = theory.gCl("kk",ellkk)    
-pl = Plotter(scaleY='log',scaleX='log')
-pl.add(ellkk,4.*Clkk/2./np.pi)
-pl.add(ls,4.*Nls/2./np.pi)
-pl.legendOn(loc='lower left',labsize=10)
-pl.done("output/"+saveId+"nl.png")
+# ellkk = np.arange(2,9000,1)
+# Clkk = theory.gCl("kk",ellkk)    
+# pl = Plotter(scaleY='log',scaleX='log')
+# pl.add(ellkk,4.*Clkk/2./np.pi)
+# pl.add(ls,4.*Nls/2./np.pi)
+# pl.add(ls2,4.*Nls2/2./np.pi,ls="--")
+# pl.legendOn(loc='lower left',labsize=10)
+# pl.done("output/"+saveId+"nl.png")
 
-bin_width = beamY
+#bin_width = beamY
 
 
-Mexps = np.arange(14.0,15.7,0.05)
+Mexps = np.arange(12.5,15.5,0.05)+0.05
 #Mexps = np.arange(14.0,15.7,0.1)
 #Mexps = np.arange(14.05,15.75,0.1)
 

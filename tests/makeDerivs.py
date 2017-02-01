@@ -1,7 +1,6 @@
-
+import numpy as np
 import orphics.tools.io as io
-from ConfigParser import SafeConfigParser 
-import sys
+import sys, time
 from szlib.szcounts import ClusterCosmology,Halo_MF
 from ConfigParser import SafeConfigParser
 
@@ -21,7 +20,7 @@ cosmoDict = io.dictFromSection(Config,cosmologyName)
 constDict = io.dictFromSection(Config,'constants')
 clusterDict = io.dictFromSection(Config,clusterParams)
 
-experimentName = "AdvAct"
+experimentName = "LAExp"
 
 saveId = experimentName + cosmologyName
 upDict = cosmoDict.copy()
@@ -33,7 +32,10 @@ try:
 except:
     print "No step size specified for ", key
     sys.exit()    
-    
+
+print upDict[key]
+print dnDict[key]
+
 beam = io.listFromConfig(Config,experimentName,'beams')
 noise = io.listFromConfig(Config,experimentName,'noises')
 freq = io.listFromConfig(Config,experimentName,'freqs')
@@ -41,6 +43,10 @@ lmax = int(Config.getfloat(experimentName,'lmax'))
 lknee = Config.getfloat(experimentName,'lknee')
 alpha = Config.getfloat(experimentName,'alpha')
 fsky = Config.getfloat(experimentName,'fsky')
+
+mass_err_file = Config.get(experimentName,'mass_err')
+mass_err = np.loadtxt(mass_err_file)
+
 
 ccUp = ClusterCosmology(upDict,constDict,lmax)
 ccDn = ClusterCosmology(dnDict,constDict,lmax)
@@ -53,14 +59,14 @@ mbin = np.arange(13.5, 15.71, .05)
 start3 = time.time()
 
 HMFup = Halo_MF(clusterCosmology=ccUp)
-dN_dmqz_up = HMFup.N_of_mqz_SZ(zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
+dN_dmqz_up = HMFup.N_of_mqz_SZ(mass_err,zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha)
 
 HMFdn = Halo_MF(clusterCosmology=ccDn)
-dN_dmqz_dn = HMFup.N_of_mqz_SZ(zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
+dN_dmqz_dn = HMFdn.N_of_mqz_SZ(mass_err,zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha)
 
 print "Time for N of z " , time.time() - start3
 
-np.save("data/dN_dzmq"+saveId+"_"+key+"_up.dat",dN_dmqz_up)
-np.save("data/dN_dzmq"+saveId+"_"+key+"_dn.dat",dN_dmqz_dn)
+np.save("data/dN_dzmq"+saveId+"_"+key+"_up",dN_dmqz_up)
+np.save("data/dN_dzmq"+saveId+"_"+key+"_dn",dN_dmqz_dn)
 
                

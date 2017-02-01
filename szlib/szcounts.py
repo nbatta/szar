@@ -331,7 +331,7 @@ class Halo_MF:
 
         return 1./err_WL_mass,Ntot
 
-    def N_of_mqz_SZ (self,z_arr,m_wl,q_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+    def N_of_mqz_SZ (self,mass_err,z_arr,m_wl,q_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is 3D grid for fisher matrix 
         lnYmin = np.log(1e-14)
         dlnY = 0.1
@@ -354,13 +354,15 @@ class Halo_MF:
         dNdzmq = np.zeros([len(m_wl),len(z_arr)-1,len(q_arr)])
         dNdzmq2 = np.zeros([len(m_wl),len(z_arr)-1,len(q_arr)])
 
-        HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z2.txt',unpack=True)
-        HSC_mass = np.transpose(HSC_mass)
+        # HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z2.txt',unpack=True)
+        # HSC_mass = np.transpose(HSC_mass)
 
-        mass_err = HSC_mass#1./(np.sqrt((1./HSC_mass)**2 + (1./CMB_mass)**2))
+        # mass_err = HSC_mass#1./(np.sqrt((1./HSC_mass)**2 + (1./CMB_mass)**2))
         
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
         
+        print self.cc.paramDict['b_ym']
+
         SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lknee=lknee,alpha=alpha)
         
 #        for i in xrange (4):
@@ -627,7 +629,9 @@ class SZ_Cluster_Model:
         b_ym = self.scaling['b_ym'] #0.8
         beta_ym = self.scaling['beta_ym'] #= 0.66
         gamma_ym = self.scaling['gamma_ym']        
-        ans = Y_star*((b_ym)*MM/ 1e14)**alpha_ym *(DA_z/100.)**(-2.) * self.cc.E_z(zz) ** (2./3.) * (1. + zz)**gamma_ym
+        beta_fac = np.exp(beta_ym*(np.log(MM/1e14))**2)
+        ans = Y_star*((b_ym)*MM/ 1e14)**alpha_ym *(DA_z/100.)**(-2.) * beta_fac * self.cc.E_z(zz) ** (2./3.) * (1. + zz)**gamma_ym
+
         #print (0.01/DA_z)**2
         return ans
     
@@ -668,7 +672,6 @@ class SZ_Cluster_Model:
         
         sig_thresh = self.q_prob(qarr,lnYa,sigma_N)
         P_Y = self.P_of_Y(lnYa,MM, zz)
-
         ans = MM*0.0
         for ii in xrange(len(MM)):
             ans[ii] = np.sum(P_Y[ii,:]*sig_thresh[ii,:])
