@@ -68,20 +68,20 @@ for ii in xrange(len(experimentName)):
 
     HMF = Halo_MF(clusterCosmology=cc)
     dvdz = HMF.dVdz(zbin)
-    #dndm = HMF.N_of_z_SZ(zbin,beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
+    dndm = HMF.N_of_z_SZ(zbin,beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
     #dNdmdz,dm = HMF.N_of_mz_SZ(zbin,beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
-    ans = HMF.N_of_mqz_SZ(zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
+    #ans = HMF.N_of_mqz_SZ(zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
 
     print "Time for N of z " , time.time() - start3
-    print np.max(ans)
+    #print np.max(ans)
 
     #pl = Plotter()
     #pl.add(zbin[1:], dndm * dvdz[1:])
     #pl.done("output/dndm"+experimentName[ii]+".png")
 
-    #print "Total number of clusters ", np.trapz(dndm * dvdz[1:],zbin[1:],np.diff(zbin[1:]))*4.*np.pi*fsky
+    print "Total number of clusters ", np.trapz(dndm * dvdz[1:],zbin[1:],np.diff(zbin[1:]))*4.*np.pi*fsky
 
-    np.save('output/dN_dzmq'+experimentName[ii]+cosmologyName,ans)
+    #np.save('output/dN_dzmq'+experimentName[ii]+cosmologyName,ans)
 
 #    np.savetxt('output/dN_dz_'+experimentName[ii]+'.txt',np.transpose([zbin[1:],dndm,dvdz[1:]])) 
 #    np.savetxt('output/dN_dmdz_'+experimentName[ii]+'.txt',np.transpose(dNdmdz)) 
