@@ -629,7 +629,8 @@ class SZ_Cluster_Model:
         b_ym = self.scaling['b_ym'] #0.8
         beta_ym = self.scaling['beta_ym'] #= 0.66
         gamma_ym = self.scaling['gamma_ym']        
-        ans = Y_star*((b_ym)*MM/ 1e14)**alpha_ym *(DA_z/100.)**(-2.) * self.cc.E_z(zz) ** (2./3.) * (1. + zz)**gamma_ym
+        beta_fac = np.exp(beta_ym*(np.log(MM/1e14))**2)
+        ans = Y_star*((b_ym)*MM/ 1e14)**alpha_ym *(DA_z/100.)**(-2.) * beta_fac * self.cc.E_z(zz) ** (2./3.) * (1. + zz)**gamma_ym
 
         #print (0.01/DA_z)**2
         return ans
