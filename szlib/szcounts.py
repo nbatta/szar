@@ -361,6 +361,8 @@ class Halo_MF:
         
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
         
+        print self.cc.paramDict['b_ym']
+
         SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lknee=lknee,alpha=alpha)
         
 #        for i in xrange (4):
@@ -628,6 +630,7 @@ class SZ_Cluster_Model:
         beta_ym = self.scaling['beta_ym'] #= 0.66
         gamma_ym = self.scaling['gamma_ym']        
         ans = Y_star*((b_ym)*MM/ 1e14)**alpha_ym *(DA_z/100.)**(-2.) * self.cc.E_z(zz) ** (2./3.) * (1. + zz)**gamma_ym
+
         #print (0.01/DA_z)**2
         return ans
     
@@ -668,7 +671,6 @@ class SZ_Cluster_Model:
         
         sig_thresh = self.q_prob(qarr,lnYa,sigma_N)
         P_Y = self.P_of_Y(lnYa,MM, zz)
-
         ans = MM*0.0
         for ii in xrange(len(MM)):
             ans[ii] = np.sum(P_Y[ii,:]*sig_thresh[ii,:])

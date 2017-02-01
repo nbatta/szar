@@ -1,6 +1,5 @@
 import numpy as np
 import orphics.tools.io as io
-from ConfigParser import SafeConfigParser 
 import sys, time
 from szlib.szcounts import ClusterCosmology,Halo_MF
 from ConfigParser import SafeConfigParser
@@ -33,7 +32,10 @@ try:
 except:
     print "No step size specified for ", key
     sys.exit()    
-    
+
+print upDict[key]
+print dnDict[key]
+
 beam = io.listFromConfig(Config,experimentName,'beams')
 noise = io.listFromConfig(Config,experimentName,'noises')
 freq = io.listFromConfig(Config,experimentName,'freqs')
@@ -56,11 +58,11 @@ HMFup = Halo_MF(clusterCosmology=ccUp)
 dN_dmqz_up = HMFup.N_of_mqz_SZ(zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha)
 
 HMFdn = Halo_MF(clusterCosmology=ccDn)
-dN_dmqz_dn = HMFup.N_of_mqz_SZ(zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha)
+dN_dmqz_dn = HMFdn.N_of_mqz_SZ(zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha)
 
 print "Time for N of z " , time.time() - start3
 
-np.save("data/dN_dzmq"+saveId+"_"+key+"_up.dat",dN_dmqz_up)
-np.save("data/dN_dzmq"+saveId+"_"+key+"_dn.dat",dN_dmqz_dn)
+np.save("data/dN_dzmq"+saveId+"_"+key+"_up",dN_dmqz_up)
+np.save("data/dN_dzmq"+saveId+"_"+key+"_dn",dN_dmqz_dn)
 
                
