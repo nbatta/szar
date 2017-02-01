@@ -81,7 +81,7 @@ for ii in xrange(len(experimentName)):
 
     #print "Total number of clusters ", np.trapz(dndm * dvdz[1:],zbin[1:],np.diff(zbin[1:]))*4.*np.pi*fsky
 
-    np.save('output/dN_dzmq'+experimentName[ii],ans)
+    np.save('output/dN_dzmq'+experimentName[ii]+cosmologyName,ans)
 
 #    np.savetxt('output/dN_dz_'+experimentName[ii]+'.txt',np.transpose([zbin[1:],dndm,dvdz[1:]])) 
 #    np.savetxt('output/dN_dmdz_'+experimentName[ii]+'.txt',np.transpose(dNdmdz)) 
