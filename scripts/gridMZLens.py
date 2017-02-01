@@ -32,17 +32,17 @@ z = float(sys.argv[1])
 #saveId = "AdvACTCMBLensingWhiteNoise150GhzTTOnly_MF_N1"
 saveId = "LAExp_MF_N1"
 
-nsigma = 8.
+# nsigma = 8.
 
 overdensity = 500.
 critical = True
 atClusterZ = True
 
 
-N = 1000
-numSims = 30
+# N = 1000
+# numSims = 30
 
-concentration = 3.2
+concentration = 1.18
 arcStamp = 30.
 pxStamp = 0.1
 arc_upto = 10.
@@ -83,7 +83,7 @@ halo = True
 # polComb = 'TT'
 
 
-#ls2,Nls2 = np.loadtxt("../alhazen/data/bigDump/ell28_gradCut_2000_polComb_EB_beamY_3.0_noiseY_0.8_grad_sameGrad_tellminY_200_pellminY_50_kmin_40_deg_10.0_px_0.2.txt",unpack=True)
+# ls2,Nls2 = np.loadtxt("../alhazen/data/bigDump/ell28_gradCut_2000_polComb_EB_beamY_3.0_noiseY_0.8_grad_sameGrad_tellminY_200_pellminY_50_kmin_40_deg_10.0_px_0.2_delens_1.0.txt",unpack=True)
 
 ls,Nls = np.loadtxt("data/LA_pol_Nl.txt",unpack=True,delimiter=",")
 kmax = 8000
@@ -138,6 +138,7 @@ Mexps = np.arange(12.5,15.5,0.05)+0.05
 
 for log10Moverh in Mexps:
     MM = 10.**log10Moverh
+
     #expectedSN = predictSN(polComb,noiseTY,noisePY,N,MM)
     #print "Rough S/N ", expectedSN
 
@@ -146,7 +147,6 @@ for log10Moverh in Mexps:
     sn = NFWMatchedFilterSN(cc,log10Moverh,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=saveId)
 
 
-    #print "S/N " , 1./dlndm
-    print "S/N " , sn
+    print log10Moverh, "S/N " , sn
 
 

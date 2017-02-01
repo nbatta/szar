@@ -337,7 +337,8 @@ class Halo_MF:
         dlnY = 0.1
         lnY = np.arange(lnYmin,lnYmin+13.,dlnY)
         
-        Mexp = np.arange(13.5, 15.71, .1)
+        #Mexp = np.arange(13.5, 15.71, .1)
+        Mexp = m_wl
         
         M = 10.**Mexp
         dM = np.gradient(M)
@@ -526,6 +527,8 @@ class SZ_Cluster_Model:
         integrand = lambda l: np.trapz(j0(l*thetas)*uint*thetas,thetas,np.diff(thetas))
         integrands = np.array([integrand(ell) for ell in ells])
 
+
+
         # varinv = \int dell 2pi ell integrand^2 / nl
         varinv = np.trapz((integrands**2.)*ells*2.*np.pi/self.nl,ells,np.diff(ells))
         var = 1./varinv
@@ -595,7 +598,10 @@ class SZ_Cluster_Model:
         return ans, y2D_use
 
     def noise_func(self,ell,fwhm,rms_noise,lknee=0.,alpha=0.):
-        atmFactor = (lknee/ell)**(-alpha)
+        if lknee>1.e-3:
+            atmFactor = (lknee/ell)**(-alpha)
+        else:
+            atmFactor = 0.
         rms = rms_noise * (1./60.)*(np.pi/180.)
         tht_fwhm = np.deg2rad(fwhm / 60.)
         ans = (atmFactor+1.) * (rms**2.) * np.exp((tht_fwhm**2.)*(ell**2.) / (8.*np.log(2.))) ## Add Hasselfield noise knee
