@@ -9,9 +9,11 @@ from orphics.analysis.flatMaps import interpolateGrid
 #mrange = np.arange(14.0,15.4,0.2)
 #zrange = np.arange(0.1,0.8,0.2)
 
-saveId = "LAExp_MF_N1"
+saveId = "LAExp_MF_CV_N1"
+#mrange = np.arange(12.5,15.5,0.1)+0.1
 mrange = np.arange(12.5,15.5,0.05)+0.05
-zrange = np.arange(0.05,3.05,0.05)
+zrange = np.arange(0.,3.0,0.05)+0.05
+#zrange = np.arange(0.1,3.0,0.1)+0.1
 #mrange = np.arange(14.0,15.7,0.05)
 #zrange = np.arange(0.05,2.05,0.05)
 

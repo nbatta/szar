@@ -30,7 +30,7 @@ z = float(sys.argv[1])
     
 
 #saveId = "AdvACTCMBLensingWhiteNoise150GhzTTOnly_MF_N1"
-saveId = "LAExp_MF_N1"
+saveId = "LAExp_MF_CV_N1"
 
 # nsigma = 8.
 
@@ -125,11 +125,14 @@ kmax = 8000
 # pl = Plotter(scaleY='log',scaleX='log')
 # pl.add(ellkk,4.*Clkk/2./np.pi)
 # pl.add(ls,4.*Nls/2./np.pi)
-# pl.add(ls2,4.*Nls2/2./np.pi,ls="--")
+# # pl.add(ls2,4.*Nls2/2./np.pi,ls="--")
 # pl.legendOn(loc='lower left',labsize=10)
 # pl.done("output/"+saveId+"nl.png")
+# sys.exit()
 
 #bin_width = beamY
+Clkk = theory.gCl("kk",ls)
+Nls = Nls + Clkk
 
 
 Mexps = np.arange(12.5,15.5,0.05)+0.05
