@@ -20,7 +20,7 @@ cosmoDict = io.dictFromSection(Config,cosmologyName)
 constDict = io.dictFromSection(Config,'constants')
 clusterDict = io.dictFromSection(Config,clusterParams)
 
-experimentName = "AdvAct"
+experimentName = "LAExp"
 
 saveId = experimentName + cosmologyName
 upDict = cosmoDict.copy()
@@ -56,7 +56,7 @@ zbin_temp = np.arange(0.05,2.05,0.05)
 
 #zbin_temp = np.arange(0.05,2.0,0.05)
 zbin = np.insert(zbin_temp,0,0.0)
-qbin = np.arange(np.log(5),np.log(500),0.1)
+qbin = np.arange(np.log(5),np.log(500),0.08)
 #mbin = np.arange(13.5, 15.71, .05)
 
 start3 = time.time()

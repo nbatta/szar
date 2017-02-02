@@ -362,7 +362,7 @@ class Halo_MF:
         
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
         
-        print self.cc.paramDict['b_ym']
+        #print self.cc.paramDict['b_ym']
 
         SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lknee=lknee,alpha=alpha)
         
