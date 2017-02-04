@@ -164,7 +164,7 @@ class Halo_MF:
         dM200 = np.outer(M,np.zeros([len(z_arr)]))
         P_func = np.outer(M,np.zeros([len(z_arr)]))
         sigN = np.outer(M,np.zeros([len(z_arr)]))
-        M_arr =  np.outer(M,np.ones([len(z_arr)]))
+        M_arr =  np.outer(M,np.ones([len(z_arr)]))/hh
 
 
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
@@ -223,7 +223,7 @@ class Halo_MF:
         dM200 = np.outer(M,np.zeros([len(z_arr)]))
         P_func = np.outer(M,np.zeros([len(z_arr)]))
         sigN = np.outer(M,np.zeros([len(z_arr)]))
-        M_arr =  np.outer(M,np.ones([len(z_arr)]))
+        M_arr =  np.outer(M,np.ones([len(z_arr)]))/hh
         dN_dzdm =  np.outer(M,np.ones([len(z_arr)-1]))
 
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
@@ -277,7 +277,7 @@ class Halo_MF:
         P_func = np.outer(M,np.zeros([len(z_arr)]))
         sigN = np.outer(M,np.zeros([len(z_arr)]))
         YM   =  np.outer(M,np.ones([len(z_arr)]))
-        M_arr =  np.outer(M,np.ones([len(z_arr)]))
+        M_arr =  np.outer(M,np.ones([len(z_arr)]))/hh
 
         #HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z2.txt',unpack=True)
         #HSC_mass = np.transpose(HSC_mass)
@@ -351,7 +351,7 @@ class Halo_MF:
         dM200 = np.outer(M,np.zeros([len(z_arr)]))
         sigN = np.outer(M,np.zeros([len(z_arr)]))
         YM   =  np.outer(M,np.ones([len(z_arr)]))
-        M_arr =  np.outer(M,np.ones([len(z_arr)]))
+        M_arr =  np.outer(M,np.ones([len(z_arr)]))/hh
         #P_func_test = np.outer(M,np.zeros([len(z_arr)]))
         P_func = np.zeros([len(M),len(z_arr)-1,len(q_arr)])
         dNdzmq = np.zeros([len(m_wl),len(z_arr)-1,len(q_arr)])
@@ -644,7 +644,7 @@ class SZ_Cluster_Model:
         return ans
     
     def Y_erf(self,Y_true,sigma_N):
-        q = 5.
+        q = 6.
         sigma_Na = np.outer(sigma_N,np.ones(len(Y_true[0,:])))
         
         ans = 0.5 * (1. + special.erf((Y_true - q*sigma_Na)/(np.sqrt(2.)*sigma_Na)))

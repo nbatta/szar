@@ -15,11 +15,12 @@ zz = 0.5
 MM = 5.e14
 clusterParams = 'LACluster' # from ini file
 cosmologyName = 'LACosmology' # from ini file
+#cosmologyName = 'WMAP9' # from ini file
 
 #fileFunc = None
 fileFunc = lambda M,z:"data/"+experimentName+"_m"+str(M)+"z"+str(z)+".txt"
-#experimentName = ["AdvAct"]
-experimentName = ["ActS16"]
+experimentName = ["AdvAct"]
+#experimentName = ["ActS16"]
 #experimentName = ["S45m","S46m","S47m"]
 #experimentName = ["SO5m","SO6m","SO7m"]#,"SO5m_No270","SO6m_No270","SO7m_No270"]
 #experimentName = ["S47m"]
