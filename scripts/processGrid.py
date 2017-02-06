@@ -9,9 +9,9 @@ from orphics.analysis.flatMaps import interpolateGrid
 #mrange = np.arange(14.0,15.4,0.2)
 #zrange = np.arange(0.1,0.8,0.2)
 
-saveId = "LAExp_MF_CV_N1"
+saveId = "ACTPolS1516"
 #mrange = np.arange(12.5,15.5,0.1)+0.1
-mrange = np.arange(12.5,15.5,0.05)+0.05
+mrange = np.arange(13.5,15.5,0.05)+0.05
 zrange = np.arange(0.,3.0,0.05)+0.05
 #zrange = np.arange(0.1,3.0,0.1)+0.1
 #mrange = np.arange(14.0,15.7,0.05)
@@ -43,8 +43,9 @@ zfrange = np.arange(0.01,3.01,0.01)
 finegrid = interpolateGrid(np.nan_to_num(mgrid),mrange,zrange,mfrange ,zfrange)
 
 #finegrid = mgrid
+pgrid = np.rot90(1./finegrid)
 
 from orphics.tools.output import Plotter
-pl = Plotter()
-pl.plot2d(np.rot90(1./finegrid),extent=[12.5,15.5,0.05,3.0],levels=[1.0,2.0,3.0,5.0])
+pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
+pl.plot2d(pgrid,extent=[13.5,15.5,0.05,3.0],levels=[1.0,3.0,5.0],labsize=14)
 pl.done("output/mgrid.png")
