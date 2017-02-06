@@ -132,7 +132,7 @@ kmax = 8000
 #bin_width = beamY
 
 
-Mexps = np.arange(12.5,15.5,0.05)+0.05
+Mexps = np.arange(14.5,15.5,0.05)+0.05
 #Mexps = np.arange(14.0,15.7,0.1)
 #Mexps = np.arange(14.05,15.75,0.1)
 
