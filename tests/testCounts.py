@@ -13,9 +13,9 @@ zz = 0.5
 MM = 5.e14
 clusterParams = 'LACluster' # from ini file
 cosmologyName = 'LACosmology' # from ini file
-experimentName = "AdvAct"
-#fileFunc = None
-fileFunc = lambda M,z:"data/"+experimentName+"_m"+str(M)+"z"+str(z)+".txt"
+experimentName = "LAExp"
+fileFunc = None
+#fileFunc = lambda M,z:"data/"+experimentName+"_m"+str(M)+"z"+str(z)+".txt"
 
 iniFile = "input/params.ini"
 Config = SafeConfigParser()
@@ -63,7 +63,7 @@ SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms
 
 
 print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts))
-print "filtvar " , np.sqrt(SZProfExample.filter_variance(MM,zz))
+#print "filtvar " , np.sqrt(SZProfExample.filter_variance(MM,zz))
 
 
 
@@ -82,7 +82,7 @@ print "thetc = ", thetc
 
 # HMF
 
-zbin_temp = np.arange(0.05,2.0,0.05)
+zbin_temp = np.arange(0.1,2.0,0.1)
 zbin = np.insert(zbin_temp,0,0.0)
 #print zbin
 

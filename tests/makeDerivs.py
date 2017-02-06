@@ -51,10 +51,13 @@ mass_err = np.loadtxt(mass_err_file)
 ccUp = ClusterCosmology(upDict,constDict,lmax)
 ccDn = ClusterCosmology(dnDict,constDict,lmax)
 
-zbin_temp = np.arange(0.05,2.0,0.05)
+mbin = np.arange(12.5,15.5,0.05)+0.05
+zbin_temp = np.arange(0.05,2.05,0.05)
+
+#zbin_temp = np.arange(0.05,2.0,0.05)
 zbin = np.insert(zbin_temp,0,0.0)
-qbin = np.arange(np.log(5),np.log(500),0.1)
-mbin = np.arange(13.5, 15.71, .05)
+qbin = np.arange(np.log(5),np.log(500),0.08)
+#mbin = np.arange(13.5, 15.71, .05)
 
 start3 = time.time()
 

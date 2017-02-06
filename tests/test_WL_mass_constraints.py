@@ -5,14 +5,14 @@ import numpy as np
 from scipy import special
 import matplotlib.pyplot as plt
 import sys, os, time
-from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,dictFromSection,listFromConfig
+from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF
+from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 
-from orphics.tools.output import Plotter
 from ConfigParser import SafeConfigParser
 
 clusterParams = 'LACluster' # from ini file
 cosmologyName = 'LACosmology' # from ini file
-experimentName = "AdvACT"
+experimentName = "AdvAct"
 #fileFunc = None
 fileFunc = lambda M,z:"data/"+experimentName+"_m"+str(M)+"z"+str(z)+".txt"
 
@@ -35,12 +35,15 @@ constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,clusterParams)
 cc = ClusterCosmology(cosmoDict,constDict,lmax)
 
+mass_err_file = Config.get(experimentName,'mass_err')
+mass_err = np.loadtxt(mass_err_file)
+
 zbin_temp = np.arange(0.1,2.01,0.05)
 zbin = np.insert(zbin_temp,0,0.0)
 
 HMF = Halo_MF(clusterCosmology=cc)
 
-errs,Ntot = HMF.Mass_err(zbin,beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
+errs,Ntot = HMF.Mass_err(mass_err,zbin,beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
 
 print np.sqrt(errs)
 print Ntot
