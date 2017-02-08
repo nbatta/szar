@@ -264,8 +264,8 @@ class Halo_MF:
         dlnY = 0.1
         lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
 
-        Mexp = np.arange(13.5, 15.71, .1)
-
+        #Mexp = np.arange(13.5, 15.71, .1)
+        Mexp = np.arange(12.5,15.5,0.05)+0.05 
         M = 10.**Mexp
         dM = np.gradient(M)
         rho_crit0m = self.cc.rhoc0om
@@ -644,7 +644,7 @@ class SZ_Cluster_Model:
         return ans
     
     def Y_erf(self,Y_true,sigma_N):
-        q = 6.
+        q = 5.
         sigma_Na = np.outer(sigma_N,np.ones(len(Y_true[0,:])))
         
         ans = 0.5 * (1. + special.erf((Y_true - q*sigma_Na)/(np.sqrt(2.)*sigma_Na)))
