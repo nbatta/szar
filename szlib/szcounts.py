@@ -23,10 +23,7 @@ from scipy.special import j0
 class ClusterCosmology(Cosmology):
     def __init__(self,paramDict,constDict,lmax):
         Cosmology.__init__(self,paramDict,constDict,lmax)
-        #self.om = paramDict['om']
-        #self.ol = paramDict['ol']
         self.rhoc0om = self.rho_crit0H100*self.om
-        #self.s8 = paramDict['s8']
 
 
         
