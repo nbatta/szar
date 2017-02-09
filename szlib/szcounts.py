@@ -509,6 +509,7 @@ class SZ_Cluster_Model:
 
         # R500 in MPc, DAz in MPc, th500 in radians
         R500 = self.cc.rdel_c(M,z,500.).flatten()[0] # R500 in Mpc/h
+        print R500
         DAz = self.cc.results.angular_diameter_distance(z) * (self.cc.H0/100.) 
         th500 = R500/DAz
 
