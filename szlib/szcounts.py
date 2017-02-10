@@ -18,6 +18,10 @@ from orphics.analysis.flatMaps import interpolateGrid
 import szlib.szlibNumbafied as fast
 from scipy.special import j0
 
+def f_nu(cc,nu):
+    mu = cc.c['H_CGS']*(1e9*nu)/(cc.c['K_CGS']*cc.c['TCMB'])
+    ans = mu*coth(mu/2.0) - 4.0
+    return np.float(ans)
 
 
 class ClusterCosmology(Cosmology):
@@ -444,7 +448,7 @@ class SZ_Cluster_Model:
         self.nlinv = 0.
         self.evalells = np.arange(2,lmax,self.dell)
         for freq,fwhm,noise in zip(freqs,fwhms,rms_noises):
-            freq_fac = (self.f_nu(freq))**2
+            freq_fac = (f_nu(self.cc,freq))**2
 
 
             nells = self.cc.clttfunc(self.evalells)+( self.noise_func(self.evalells,fwhm,noise,lknee,alpha) / self.cc.c['TCMBmuK']**2.)
@@ -537,10 +541,6 @@ class SZ_Cluster_Model:
 
 
     
-    def f_nu(self,nu):
-        mu = self.cc.c['H_CGS']*(1e9*nu)/(self.cc.c['K_CGS']*self.cc.c['TCMB'])
-        ans = mu*coth(mu/2.0) - 4.0
-        return np.float(ans)
     
     def GNFW(self,xx,**options):
         ans = self.P0 / ((xx*self.xc)**self.gm * (1 + (xx*self.xc)**self.al)**((self.bt-self.gm)/self.al))
