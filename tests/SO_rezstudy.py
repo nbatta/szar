@@ -23,7 +23,7 @@ fileFunc = lambda M,z:"data/"+experimentName+"_m"+str(M)+"z"+str(z)+".txt"
 #experimentName = ["ActS16"]
 #experimentName = ["S45m","S46m","S47m"]
 #experimentName = ["SO5m","SO6m","SO7m"]#,"SO5m_No270","SO6m_No270","SO7m_No270"]
-experimentName = ["S47m"]
+experimentName = ["S45m"]
 
 for ii in xrange(len(experimentName)):
 
@@ -72,7 +72,7 @@ for ii in xrange(len(experimentName)):
     zbin_temp = np.arange(0.05,2.0,0.05)
     zbin = np.insert(zbin_temp,0,0.0)
     qbin = np.arange(np.log(5),np.log(500),0.08) 
-    mbin = np.arange(13.5, 15.71, .05)
+    mbin = np.arange(13.5, 15.71, .10)
     start3 = time.time()
 
     HMF = Halo_MF(clusterCosmology=cc)

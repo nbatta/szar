@@ -30,8 +30,8 @@ constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,clusterParams)
 cc = ClusterCosmology(cosmoDict,constDict,lmax)
 
-zz = 0.2
-MM = 1e14 #M/h
+zz = 0.5
+MM = 5e14 #M/h
 
 SZ = SZ_Cluster_Model(cc,clusterDict,lmax=lmax )
 
@@ -42,14 +42,12 @@ print np.sqrt(var)#, np.sqrt(var2)
 print SZ.Y_M(MM,zz)
 
 print "S/N", SZ.Y_M(MM,zz)/np.sqrt(var)
-print SZ.f_nu(freq[0])
+#print SZ.f_nu(freq[0])
 #print SZ.f_nu_test(freq[0])
 
 ells = np.arange(2,6000,10)
 
 nl = SZ.nl#(ells,beam[0],noise[0])
 
-
-
-np.savetxt('/Users/nab/Desktop/Projects/SO_forecasts/test_noise.txt',np.transpose([ells,nl]))
+#np.savetxt('/Users/nab/Desktop/Projects/SO_forecasts/test_noise.txt',np.transpose([ells,nl]))
 
