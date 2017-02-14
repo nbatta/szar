@@ -49,7 +49,7 @@ class BattagliaSims(object):
                 temp = np.fromfile(file=fd, dtype=np.float32)
             data = np.reshape(temp,(self.NumClust,4))
 
-            self.trueM500overh[snap] = data[:,2]*1.e10
+            self.trueM500overh[snap] = data[:,2]*1.e10 # Msun
             self.trueR500overh[snap] = data[:,3]*(1.+self.snapToZ(snapNum))/1.e3 # physical Kpc -> comoving Mpc R500
 
     def mapReader(self,plotRel=False):
@@ -64,7 +64,7 @@ class BattagliaSims(object):
             expMs = []
             for massIndex in range(self.NumClust)[:numMax]:
 
-                maps, z, totMassMap, szMap, projM500, trueM500, trueR500 = self.getMaps(snap,massIndex)
+                maps, z, kappa, szMap, projM500, trueM500, trueR500, pixScaleX, pixScaleY = self.getMaps(snap,massIndex)
 
                 print "true M500 " , "{:.2E}".format(trueM500)
 
@@ -86,7 +86,7 @@ class BattagliaSims(object):
             pl.done("output/dep.png")
 
 
-    def getMaps(self,snap,massIndex,freqGHz=150.):
+    def getMaps(self,snap,massIndex,freqGHz=150.,sourceZ=1100.):
 
         PIX = 2048
 
@@ -104,6 +104,10 @@ class BattagliaSims(object):
         pixWidthArcmin = widthArcmin/PIX
 
         areaPixKpc2 = (pixWidthArcmin*comovingMpc*1.e3*np.pi/180./60.)**2.#areaKpc2(pixWidthArcmin)
+        # areaPixKpc2_test = (stampWidthMpc/PIX*1.e3)**2.#areaKpc2(pixWidthArcmin)
+        # print areaPixKpc2, areaPixKpc2_test
+
+        sys.exit()
 
         maps = {}
         for filen,tag in zip([fileDM,fileStar,fileGas,fileY],["dm","stars","gas","y"]):
@@ -148,4 +152,15 @@ class BattagliaSims(object):
         freqfac = f_nu(self.cc,freqGHz)
         print freqfac
         szMapuK = maps['y']*freqfac*self.TCMB
-        return maps, z, totMass, szMapuK, projectedM500, trueM500, trueR500
+
+        cmbZ = sourceZ
+        comL  = self.cc.results.comoving_radial_distance(z) 
+        comS  = self.cc.results.comoving_radial_distance(cmbZ) 
+        comLS = comS-comL
+
+        const12 = 9.571e-20 # 2G/c^2 in Mpc / solar mass 
+        sigmaCr = comS/np.pi/const12/comLS/comL/1e6 # Msolar/kpc2
+
+        kappa = totMass/sigmaCr # not sure if totMass needs to be rescaled?
+
+        return maps, z, kappa, szMapuK, projectedM500, trueM500, trueR500, t.pixScaleX, t.pixScaleY
