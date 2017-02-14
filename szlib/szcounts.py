@@ -525,7 +525,7 @@ class SZ_Cluster_Model:
         print R500
         DAz = self.cc.results.angular_diameter_distance(z) * (self.cc.H0/100.) 
         th500 = R500/DAz
-
+        print "t500", th500 
         # gnorm = 2pi th500^2  \int dx x g(x)
         gnorm = 2.*np.pi*(th500**2.)*np.trapz(self.gxrange*self.gint,self.gxrange,np.diff(self.gxrange))
 
@@ -548,9 +548,6 @@ class SZ_Cluster_Model:
 
         return var
 
-
-    
-    
     def GNFW(self,xx,**options):
         ans = self.P0 / ((xx*self.xc)**self.gm * (1 + (xx*self.xc)**self.al)**((self.bt-self.gm)/self.al))
         if options.get("Model") == 'BBPS':
