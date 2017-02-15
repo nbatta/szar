@@ -349,7 +349,7 @@ class Halo_MF:
         hh = self.cc.H0/100.
 
         M200 = np.outer(M,np.zeros([len(z_arr)]))
-        dM200 = np.outer(M,np.zeros([len(z_arr)]))
+        #dM200 = np.outer(M,np.zeros([len(z_arr)]))
         sigN = np.outer(M,np.zeros([len(z_arr)]))
         YM   =  np.outer(M,np.ones([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
@@ -378,7 +378,7 @@ class Halo_MF:
         for ii in xrange (len(z_arr)-1):
             i = ii + 1
             M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M,500,z_arr[i])
-            dM200[:,i] = np.gradient(M200[:,i])
+            #dM200[:,i] = np.gradient(M200[:,i])
             for j in xrange(len(M)):
                 try:
                     assert fileFunc is not None
@@ -408,7 +408,7 @@ class Halo_MF:
         for kk in xrange(len(q_arr)):
             for jj in xrange(len(m_wl)):
                 for i in xrange (len(z_arr) - 1):
-                    dNdzmq[jj,i,kk] = np.sum(dn_dVdm[:,i+1]*P_func[:,i,kk]*dM200[:,i+1]*SZProf.Mwl_prob(10**(m_wl[jj]),M_arr[:,i+1],mass_err[:,i]))
+                    dNdzmq[jj,i,kk] = np.trapz(dn_dVdm[:,i+1]*P_func[:,i,kk]*SZProf.Mwl_prob(10**(m_wl[jj]),M_arr[:,i+1],mass_err[:,i]),M200[:,i+1],np.diff(M200[:,i+1]))
                     dNdzmq[jj,i,kk] *= dV_dz[i+1]*4.*np.pi
                     #print np.max(SZProf.Mwl_prob(np.exp(m_wl[jj]),M_arr[:,i+1],mass_err[:,i])*P_func[:,i+1,kk]),dNdzmq[jj,i,kk],np.sum(dn_dVdm[:,i+1]*dM200[:,i+1]),dV_dz[i+1]
                 #dNdzmq[jj,:,kk] *= dV_dz[1:] * 0.05 * 4.*np.pi* (1400./42000.)
