@@ -1,8 +1,6 @@
-import matplotlib
-matplotlib.use('Agg')
 import camb
 import numpy as np
-from scipy import special
+
 import matplotlib.pyplot as plt
 import sys, os, time
 from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF
@@ -11,11 +9,8 @@ from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser
 
 clusterParams = 'LACluster' # from ini file
-cosmologyName = 'LACosmology' # from ini file
-experimentName = "ActS16"
-#fileFunc = None
-fileFunc = lambda M,z:"data/"+experimentName+"_m"+str(M)+"z"+str(z)+".txt"
-
+cosmologyName = 'LACosmology' # from ini file 
+experimentName = "LATest"
 
 iniFile = "input/params.ini"
 Config = SafeConfigParser()
@@ -35,20 +30,24 @@ constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,clusterParams)
 cc = ClusterCosmology(cosmoDict,constDict,lmax)
 
-mass_err_file = Config.get(experimentName,'mass_err')
-mass_err = np.loadtxt(mass_err_file)
+zz = 0.5
+MM = 5e14 #M/h
 
-zbin_temp = np.arange(0.1,2.01,0.05)
-zbin = np.insert(zbin_temp,0,0.0)
+SZ = SZ_Cluster_Model(cc,clusterDict,lmax=lmax )
 
-HMF = Halo_MF(clusterCosmology=cc)
+var = SZ.quickVar(MM,zz)
+var2 = SZ.filter_variance(MM,zz)
 
-errs,Ntot = HMF.Mass_err(mass_err,zbin,beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
+print np.sqrt(var), np.sqrt(var2)
+print SZ.Y_M(MM,zz)
 
-print np.sqrt(errs)
-print Ntot
+print "S/N", SZ.Y_M(MM,zz)/np.sqrt(var)
+#print SZ.f_nu(freq[0])
+#print SZ.f_nu_test(freq[0])
 
-#HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z1.txt',unpack=True)
-#HSC_mass = np.transpose(HSC_mass)
+ells = np.arange(2,6000,10)
 
-#print np.shape(HSC_mass), np.shape(dndzdm)
+nl = SZ.nl#(ells,beam[0],noise[0])
+
+#np.savetxt('/Users/nab/Desktop/Projects/SO_forecasts/test_noise.txt',np.transpose([ells,nl]))
+
