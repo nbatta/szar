@@ -146,7 +146,7 @@ class Halo_MF:
         dlnY = 0.1
         lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
     
-        Mexp = np.arange(13.5, 15.71, .1)
+        Mexp = np.arange(12.5, 15.71, .1)
         #Mexp = np.arange(14.0, 15.4, 0.2)
         rho_crit0m = self.cc.rhoc0om
         hh = self.cc.H0/100
@@ -155,7 +155,7 @@ class Halo_MF:
         dM = np.gradient(M)
 
         M200 = np.outer(M,np.zeros([len(z_arr)]))
-        dM200 = np.outer(M[1:],np.zeros([len(z_arr)]))
+        #dM200 = np.outer(M[1:],np.zeros([len(z_arr)]))
         P_func = np.outer(M,np.zeros([len(z_arr)]))
         sigN = np.outer(M,np.zeros([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
@@ -169,7 +169,7 @@ class Halo_MF:
             i = ii + 1
             M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M,500,z_arr[i])
             #dM200[:,i] = np.gradient(M200[:,i])
-            dM200[:,i] = np.diff(M200[:,i])
+            #dM200[:,i] = np.diff(M200[:,i])
             for j in xrange(len(M)):
                 try:
                     assert fileFunc is not None
@@ -193,7 +193,7 @@ class Halo_MF:
         #print dn_dzdm
         N_z = np.zeros(len(z_arr) - 1)
         for i in xrange (len(z_arr) - 1):
-            N_z[i] = np.trapz(dn_dzdm[:,i+1]*P_func[:,i+1],M200[:,i+1],dM200[:,i+1])
+            N_z[i] = np.trapz(dn_dzdm[:,i+1]*P_func[:,i+1],M200[:,i+1],np.diff(M200[:,i+1]))
 
         #N_z = np.dot(dN_dzdm,np.transpose(P_func[:,1:]*dM200[:,1:]))
 
@@ -604,7 +604,7 @@ class SZ_Cluster_Model:
         y2dtilde_2 = (ytilde)**2
         var = np.sum(self.evalells*y2dtilde_2/self.nl)*self.dell#*self.freq_fac
 
-        prof_int = 2.*np.pi*(np.sum((y2D_use*thta)[thta < 5*thtc])*self.dtht)**2
+        prof_int = 2.*np.pi*(np.sum((y2D_use*thta)[thta < 1.*thtc])*self.dtht)**2
         
         return prof_int/var
     

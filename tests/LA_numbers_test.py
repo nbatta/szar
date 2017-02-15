@@ -36,9 +36,9 @@ MM = 5e14 #M/h
 SZ = SZ_Cluster_Model(cc,clusterDict,lmax=lmax )
 
 var = SZ.quickVar(MM,zz)
-#var2 = SZ.filter_variance(MM,zz)
+var2 = SZ.filter_variance(MM,zz)
 
-print np.sqrt(var)#, np.sqrt(var2)
+print np.sqrt(var), np.sqrt(var2)
 print SZ.Y_M(MM,zz)
 
 print "S/N", SZ.Y_M(MM,zz)/np.sqrt(var)
