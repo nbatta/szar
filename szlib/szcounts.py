@@ -154,7 +154,7 @@ class Halo_MF:
         dlnY = 0.1
         lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
     
-        Mexp = np.arange(13.5, 15.71, .1)
+        Mexp = np.arange(12.5, 15.71, .1)
         #Mexp = np.arange(14.0, 15.4, 0.2)
         rho_crit0m = self.cc.rhoc0om
         hh = self.cc.H0/100
@@ -612,7 +612,7 @@ class SZ_Cluster_Model:
         y2dtilde_2 = (ytilde)**2
         var = np.sum(self.evalells*y2dtilde_2/self.nl)*self.dell#*self.freq_fac
 
-        prof_int = 2.*np.pi*(np.sum((y2D_use*thta)[thta < 5*thtc])*self.dtht)**2
+        prof_int = 2.*np.pi*(np.sum((y2D_use*thta)[thta < 1.*thtc])*self.dtht)**2
         
         return prof_int/var
     
