@@ -163,7 +163,7 @@ class Halo_MF:
         dM = np.gradient(M)
 
         M200 = np.outer(M,np.zeros([len(z_arr)]))
-        dM200 = np.outer(M,np.zeros([len(z_arr)]))
+        dM200 = np.outer(M[1:],np.zeros([len(z_arr)]))
         P_func = np.outer(M,np.zeros([len(z_arr)]))
         sigN = np.outer(M,np.zeros([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
@@ -176,7 +176,8 @@ class Halo_MF:
         for ii in xrange (len(z_arr)-1):
             i = ii + 1
             M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M,500,z_arr[i])
-            dM200[:,i] = np.gradient(M200[:,i])
+            #dM200[:,i] = np.gradient(M200[:,i])
+            dM200[:,i] = np.diff(M200[:,i])
             for j in xrange(len(M)):
                 try:
                     assert fileFunc is not None
@@ -192,7 +193,7 @@ class Halo_MF:
                     sigN[j,i] = np.sqrt(var)
                 #print Mexp[j],z_arr[i]
             
-            P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
+            P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])#*dlnY
 
         #print P_func
         #dN_dzdm = self.N_of_Mz(M200,z_arr,200.)
@@ -200,7 +201,7 @@ class Halo_MF:
         #print dn_dzdm
         N_z = np.zeros(len(z_arr) - 1)
         for i in xrange (len(z_arr) - 1):
-            N_z[i] = np.sum(dn_dzdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1])
+            N_z[i] = np.trapz(dn_dzdm[:,i+1]*P_func[:,i+1],M200[:,i+1],dM200[:,i+1])
 
         #N_z = np.dot(dN_dzdm,np.transpose(P_func[:,1:]*dM200[:,1:]))
 
@@ -396,7 +397,7 @@ class Halo_MF:
                 print Mexp[j],z_arr[i]
             #P_func_test[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
             for kk in xrange(len(q_arr)):
-                P_func[:,ii,kk] = SZProf.P_of_qn (lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr[kk])*dlnY
+                P_func[:,ii,kk] = SZProf.P_of_qn (lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr[kk])
 
             #print "PFUNC", np.max(P_func[:,i,:]),np.max(P_func_test[:,i])
             #print "PFUNC", P_func[:,i,0]
@@ -632,7 +633,7 @@ class SZ_Cluster_Model:
         return ans
     
     def Y_erf(self,Y_true,sigma_N):
-        q = 5.
+        q = 6.
         sigma_Na = np.outer(sigma_N,np.ones(len(Y_true[0,:])))
         
         ans = 0.5 * (1. + special.erf((Y_true - q*sigma_Na)/(np.sqrt(2.)*sigma_Na)))
@@ -657,7 +658,7 @@ class SZ_Cluster_Model:
 
         ans = MM*0.0
         for ii in xrange(len(MM)):
-            ans[ii] = np.sum(P_Y[ii,:]*sig_thresh[ii,:])
+            ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
         return ans
 
     def P_of_qn (self,lnY,MM,zz,sigma_N,qarr):
@@ -670,7 +671,7 @@ class SZ_Cluster_Model:
         P_Y = self.P_of_Y(lnYa,MM, zz)
         ans = MM*0.0
         for ii in xrange(len(MM)):
-            ans[ii] = np.sum(P_Y[ii,:]*sig_thresh[ii,:])
+            ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
         return ans
 
     def gaussian(self,xx, mu, sig):
