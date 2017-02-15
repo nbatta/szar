@@ -65,7 +65,6 @@ SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms
 print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts))
 print "filtvar " , np.sqrt(SZProfExample.filter_variance(MM,zz))
 
-sys.exit()
 
 
 
@@ -76,6 +75,9 @@ print "y_m",SZProfExample.Y_M(MM,zz)
 
 R500 = cc.rdel_c(MM,zz,500.).flatten()[0]
 print R500
+print cc.rhoc(0)
+print cc.rhoc(zz)
+sys.exit()
 DAz = cc.results.angular_diameter_distance(zz) * (cc.H0/100.) 
 thetc = R500/DAz
 print "thetc = ", thetc
