@@ -418,7 +418,7 @@ class Halo_MF:
         return dNdzmq
 
 class SZ_Cluster_Model:
-    def __init__(self,clusterCosmology,clusterDict,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1.,dell=10,pmaxN=5,numps=1000,**options):
+    def __init__(self,clusterCosmology,clusterDict,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1.,dell=10,pmaxN=5,numps=1000,nMax=1,**options):
         self.cc = clusterCosmology
         self.P0 = clusterDict['P0']
         self.xc = clusterDict['xc']
@@ -467,7 +467,7 @@ class SZ_Cluster_Model:
         pzrange = np.linspace(-pmaxN,pmaxN,numps)
         self.g = lambda x: np.trapz(p(np.sqrt(pzrange**2.+x**2.)),pzrange,np.diff(pzrange))
         #print "g(0) ", self.g(0)
-        self.gxrange = np.linspace(0.,pmaxN,numps)        
+        self.gxrange = np.linspace(0.,nMax,numps)        
         self.gint = np.array([self.g(x) for x in self.gxrange])
 
         # pl = Plotter()
