@@ -133,17 +133,9 @@ class Halo_MF:
         return dn_dm
     
     def N_of_Mz(self,M,z_arr,delta):
-        # this is DN/dz #For the full sky  
-        delts = z_arr*0 + delta
-        kh, z, pk, s8 = self.pk(z_arr)
-        #fac = (self.cc.s8/s8[-1])**2 # sigma8 values are in reverse order
-        #pk *= fac
-    
-
-        dn_dlnm = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts,kh,pk[:,:],'comoving')
-        dn_dm = dn_dlnm/M
-        dV_dz = self.dVdz(z_arr)
         
+        dn_dm = self.dn_dM(M,z_arr,delta)
+        dV_dz = self.dVdz(z_arr)
         N_dzdm = dn_dm[:,1:] * dV_dz[1:] * 4*np.pi
         return N_dzdm
 
