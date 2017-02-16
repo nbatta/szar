@@ -638,13 +638,29 @@ class SZ_Cluster_Model:
         beta_ym = self.scaling['beta_ym'] #= 0.66
         gamma_ym = self.scaling['gamma_ym']        
         beta_fac = np.exp(beta_ym*(np.log(MM/1e14))**2)
+        #print beta_fac
         ans = Y_star*((b_ym)*MM/ 1e14)**alpha_ym *(DA_z/100.)**(-2.) * beta_fac * self.cc.E_z(zz) ** (2./3.) * (1. + zz)**gamma_ym
 
         #print (0.01/DA_z)**2
         return ans
+
+    def Y_M_test(self,MM,zz):
+        DA_z = self.cc.results.angular_diameter_distance(zz) 
+        Y_star = 0.6456
+        alpha_ym = 1.79                                                                                        
+        b_ym = 0.8                                                                                                 
+        beta_ym = 0.66666                                                                                       
+        gamma_ym = 0 
+        beta_fac = 1.
+        ans = Y_star*((b_ym)*MM/(self.cc.H0/100.)/6e14)**alpha_ym *(1e-4/DA_z**2) * beta_fac * self.cc.E_z(zz) ** (2./3.) * (1. + zz)**gamma_ym
+        #print (0.01/DA_z)**2
+        return ans
+
+
+
     
     def Y_erf(self,Y_true,sigma_N):
-        q = 6.
+        q = 5.
         sigma_Na = np.outer(sigma_N,np.ones(len(Y_true[0,:])))
         
         ans = 0.5 * (1. + special.erf((Y_true - q*sigma_Na)/(np.sqrt(2.)*sigma_Na)))

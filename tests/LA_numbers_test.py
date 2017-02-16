@@ -39,7 +39,8 @@ var = SZ.quickVar(MM,zz)
 var2 = SZ.filter_variance(MM,zz)
 
 print np.sqrt(var), np.sqrt(var2)
-print SZ.Y_M(MM,zz)
+print "LA", SZ.Y_M(MM,zz)
+print "Planck", SZ.Y_M_test(MM,zz)
 
 print "S/N", SZ.Y_M(MM,zz)/np.sqrt(var)
 #print SZ.f_nu(freq[0])
