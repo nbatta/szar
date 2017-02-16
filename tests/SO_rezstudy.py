@@ -78,6 +78,7 @@ for ii in xrange(len(experimentName)):
     HMF = Halo_MF(clusterCosmology=cc)
     dvdz = HMF.dVdz(zbin)
     dndm = HMF.N_of_z_SZ(zbin,beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
+    dndm2 = HMF.N_of_z(zbin)
     #dNdmdz,dm = HMF.N_of_mz_SZ(zbin,beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
     #ans = HMF.N_of_mqz_SZ(mass_err,zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
 
@@ -89,6 +90,7 @@ for ii in xrange(len(experimentName)):
     #pl.done("output/dndm"+experimentName[ii]+".png")
 
     print "Total number of clusters ", np.trapz(dndm * dvdz[1:],zbin[1:],np.diff(zbin[1:]))*4.*np.pi*fsky
+    print "Total number of clusters possible", np.trapz(dndm2,zbin[1:],np.diff(zbin[1:]))*4.*np.pi*fsky
 
     #np.save('output/dN_dzmq'+experimentName[ii]+cosmologyName,ans)
 

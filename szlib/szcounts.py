@@ -136,8 +136,27 @@ class Halo_MF:
         
         dn_dm = self.dn_dM(M,z_arr,delta)
         dV_dz = self.dVdz(z_arr)
-        N_dzdm = dn_dm[:,1:] * dV_dz[1:] * 4*np.pi
+        N_dzdm = dn_dm[:,1:] * dV_dz[1:]
         return N_dzdm
+
+    def N_of_z(self,z_arr):
+
+        Mexp = np.arange(13.5, 15.71, .1)
+        M = 10.**Mexp
+        M200 = np.outer(M,np.zeros([len(z_arr)]))
+
+        for ii in xrange (len(z_arr)-1):
+            i = ii + 1
+            M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M,500,z_arr[i])
+
+        dn_dzdm = self.N_of_Mz(M200,z_arr,200.)
+        #print dn_dzdm      
+
+        N_z = np.zeros(len(z_arr) - 1)
+        for i in xrange (len(z_arr) - 1):
+            N_z[i] = np.trapz(dn_dzdm[:,i],M200[:,i+1],np.diff(M200[:,i+1]))
+
+        return N_z
 
     def N_of_z_SZ(self,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is dn/dV(z)
