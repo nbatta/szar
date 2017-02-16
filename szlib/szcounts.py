@@ -660,7 +660,7 @@ class SZ_Cluster_Model:
 
     
     def Y_erf(self,Y_true,sigma_N):
-        q = 6.
+        q = 5.
         sigma_Na = np.outer(sigma_N,np.ones(len(Y_true[0,:])))
         
         ans = 0.5 * (1. + special.erf((Y_true - q*sigma_Na)/(np.sqrt(2.)*sigma_Na)))
@@ -671,7 +671,7 @@ class SZ_Cluster_Model:
 
         Y = np.exp(lnY)
         Ma = np.outer(MM,np.ones(len(Y[0,:])))
-        numer = -1.*np.log(Y/self.Y_M(Ma,zz))**2
+        numer = -1.*(np.log(Y/self.Y_M(Ma,zz)))**2
         ans = 1./(Ysig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*Ysig))
         return ans
     
