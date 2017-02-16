@@ -660,7 +660,7 @@ class SZ_Cluster_Model:
 
     
     def Y_erf(self,Y_true,sigma_N):
-        q = 5.
+        q = 6.
         sigma_Na = np.outer(sigma_N,np.ones(len(Y_true[0,:])))
         
         ans = 0.5 * (1. + special.erf((Y_true - q*sigma_Na)/(np.sqrt(2.)*sigma_Na)))

@@ -30,8 +30,8 @@ constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,clusterParams)
 cc = ClusterCosmology(cosmoDict,constDict,lmax)
 
-zz = 0.5
-MM = 5e14 #M/h
+zz = 0.14
+MM = 0.8*3e14 #M/h
 
 SZ = SZ_Cluster_Model(cc,clusterDict,lmax=lmax )
 
