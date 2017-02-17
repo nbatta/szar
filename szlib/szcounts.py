@@ -450,11 +450,14 @@ class SZ_Cluster_Model:
 
             nells = self.cc.clttfunc(self.evalells)+( self.noise_func(self.evalells,fwhm,noise,lknee,alpha) / self.cc.c['TCMBmuK']**2.)
             self.nlinv2 += (freq_fac)/nells
+
             nells += (self.rad_ps(self.evalells,freq,freq) + self.cib_p(self.evalells,freq,freq) + \
-                      self.cib_c(self.evalells,freq,freq)) / self.cc.c['TCMBmuK']**2. / ((self.evalells+1.)*self.evalells) * 2.* np.pi 
+                      self.cib_c(self.evalells,freq,freq) + self.ksz_temp(self.evalells)) \
+                      / self.cc.c['TCMBmuK']**2. / ((self.evalells+1.)*self.evalells) * 2.* np.pi 
+
             self.nlinv += (freq_fac)/nells
         self.nl = 1./self.nlinv
-        self.nl2 = 1./self.nlinv2
+        self.nl2 = 1./self.nlinv2  
 
         # ls = self.evalells
         # pl = Plotter(scaleY='log')
@@ -652,7 +655,13 @@ class SZ_Cluster_Model:
  
         ans = self.cc.c['A_cibc'] * (ell/self.cc.c['ell0sec']) ** (2.-self.cc.c['n_cib']) * mu1 * mu2 / mu0**2
         return ans
-    
+
+    def ksz_temp(self,ell):
+        el,ksz = np.loadtxt('input/ksz_BBPS.txt',unpack=True)
+        elp,kszp = np.loadtxt('input/ksz_p_BBPS.txt',unpack=True)
+        ans = np.interp(ell,el,ksz) * (1.65/1.5) + np.interp(ell,elp,kszp)
+        return ans
+
     @timeit
     def filter_variance(self,M,z):
 
@@ -704,7 +713,7 @@ class SZ_Cluster_Model:
 
     
     def Y_erf(self,Y_true,sigma_N):
-        q = 5.
+        q = 6.
         sigma_Na = np.outer(sigma_N,np.ones(len(Y_true[0,:])))
         
         ans = 0.5 * (1. + special.erf((Y_true - q*sigma_Na)/(np.sqrt(2.)*sigma_Na)))
