@@ -49,6 +49,26 @@ print "S/N", SZ.Y_M(MM,zz)/np.sqrt(var)
 ells = np.arange(2,6000,10)
 
 nl = SZ.nl#(ells,beam[0],noise[0])
+nl2 = SZ.nl2#(ells,beam[0],noise[0])
+
+cibp = SZ.cib_p(ells,freq[0],freq[0])
+cibc = SZ.cib_c(ells,freq[0],freq[0])
+rps  = SZ.rad_ps(ells,freq[0],freq[0])
+
+
+#print nl*(ells+1.)*ells/ (2.* np.pi) * constDict['TCMBmuK']**2
+
+
+pl = Plotter()                                                                                                          
+pl.add(ells,nl/nl2)
+#pl.add(ells,nl*(ells+1.)*ells/ (2.* np.pi) * constDict['TCMBmuK']**2)
+#pl.add(ells,cibp )#/ ((ells+1.)*ells) * 2.* np.pi)
+#pl.add(ells,cibc )#/ ((ells+1.)*ells) * 2.* np.pi)
+#pl.add(ells,rps )#/ ((ells+1.)*ells) * 2.* np.pi)
+pl.done("output/secondaries_nl_ratio.png")
+#pl.done("output/secondaries_dunkley.png")
+
+
 
 #np.savetxt('/Users/nab/Desktop/Projects/SO_forecasts/test_noise.txt',np.transpose([ells,nl]))
 

@@ -442,15 +442,19 @@ class SZ_Cluster_Model:
         # build noise object
         self.dell = 10
         self.nlinv = 0.
+        self.nlinv2 = 0.
         self.evalells = np.arange(2,lmax,self.dell)
         for freq,fwhm,noise in zip(freqs,fwhms,rms_noises):
             freq_fac = (f_nu(self.cc,freq))**2
 
 
             nells = self.cc.clttfunc(self.evalells)+( self.noise_func(self.evalells,fwhm,noise,lknee,alpha) / self.cc.c['TCMBmuK']**2.)
+            self.nlinv2 += (freq_fac)/nells
+            nells += (self.rad_ps(self.evalells,freq,freq) + self.cib_p(self.evalells,freq,freq) + \
+                      self.cib_c(self.evalells,freq,freq)) / self.cc.c['TCMBmuK']**2. / ((self.evalells+1.)*self.evalells) * 2.* np.pi 
             self.nlinv += (freq_fac)/nells
-
         self.nl = 1./self.nlinv
+        self.nl2 = 1./self.nlinv2
 
         # ls = self.evalells
         # pl = Plotter(scaleY='log')
@@ -607,6 +611,46 @@ class SZ_Cluster_Model:
         rms = rms_noise * (1./60.)*(np.pi/180.)
         tht_fwhm = np.deg2rad(fwhm / 60.)
         ans = (atmFactor+1.) * (rms**2.) * np.exp((tht_fwhm**2.)*(ell**2.) / (8.*np.log(2.))) ## Add Hasselfield noise knee
+        return ans
+
+    def g_nu(self,nu):
+        beta = (nu*1e9) * self.cc.c['H_CGS'] / (self.cc.c['K_CGS']*self.cc.c['TCMB'])
+        ans = 2.* self.cc.c['H_CGS']**2 * (nu*1e9)**4 / (self.cc.c['C']**2 *self.cc.c['K_CGS'] * self.cc.c['TCMB']**2) \
+            * np.exp(beta) * 1. / (np.exp(beta) - 1.)**2
+        return ans
+
+    def B_nu(self,Td,nu):
+        beta = (nu*1e9) * self.cc.c['H_CGS'] / (self.cc.c['K_CGS']*Td)
+        ans = 2.* self.cc.c['H_CGS'] * nu**3 / (self.cc.c['C'])**2 / (np.exp(beta) - 1.)
+        return ans
+
+    def rad_ps(self,ell,nu1,nu2):
+        ans = self.cc.c['A_ps'] * (ell/self.cc.c['ell0sec']) ** 2 * (nu1*nu2/self.cc.c['nu0']**2) ** self.cc.c['al_ps'] \
+            * self.g_nu(nu1) * self.g_nu(nu2) / (self.g_nu(self.cc.c['nu0']))**2
+        return ans 
+    
+    def res_gal(self,ell,nu1,nu2):
+        ans = cc.c['A_g'] * (ell/cc.c['ell0sec']) ** cc.c['n_g'] * (nu1*nu2/cc.c['nu0']**2) ** cc.c['al_g'] \
+            * self.g_nu(nu1) * self.g_nu(nu2) / (self.g_nu(cc.c['nu0']))**2
+        return ans 
+    
+    def cib_p(self,ell,nu1,nu2):
+
+        mu1 = nu1**self.cc.c['al_cib']*self.B_nu(self.cc.c['Td'],nu1) * self.g_nu(nu1)
+        mu2 = nu2**self.cc.c['al_cib']*self.B_nu(self.cc.c['Td'],nu2) * self.g_nu(nu2)
+        mu0 = self.cc.c['nu0']**self.cc.c['al_cib']*self.B_nu(self.cc.c['Td'],self.cc.c['nu0']) \
+            * self.g_nu(self.cc.c['nu0'])
+
+        ans = self.cc.c['A_cibp'] * (ell/self.cc.c['ell0sec']) ** 2.0 * mu1 * mu2 / mu0**2
+        return ans
+
+    def cib_c(self,ell,nu1,nu2):
+        mu1 = nu1**self.cc.c['al_cib']*self.B_nu(self.cc.c['Td'],nu1) * self.g_nu(nu1)
+        mu2 = nu2**self.cc.c['al_cib']*self.B_nu(self.cc.c['Td'],nu2) * self.g_nu(nu2)
+        mu0 = self.cc.c['nu0']**self.cc.c['al_cib']*self.B_nu(self.cc.c['Td'],self.cc.c['nu0']) \
+            * self.g_nu(self.cc.c['nu0'])
+ 
+        ans = self.cc.c['A_cibc'] * (ell/self.cc.c['ell0sec']) ** (2.-self.cc.c['n_cib']) * mu1 * mu2 / mu0**2
         return ans
     
     @timeit
