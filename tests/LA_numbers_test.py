@@ -46,6 +46,15 @@ print "S/N", SZ.Y_M(MM,zz)/np.sqrt(var)
 #print SZ.f_nu(freq[0])
 #print SZ.f_nu_test(freq[0])
 
+lnYmin = np.log(1e-13)
+dlnY = 0.1
+lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
+
+print SZ.P_of_q(lnY,np.array([0,MM]),zz,np.sqrt(var))
+print SZ.P_of_qn(lnY,np.array([0,MM]),zz,np.sqrt(var),5)
+print SZ.P_of_qn(lnY,np.array([0,MM]),zz,np.sqrt(var),6)
+print SZ.P_of_qn(lnY,np.array([0,MM]),zz,np.sqrt(var),7)
+
 ells = np.arange(2,6000,10)
 
 nl = SZ.nl#(ells,beam[0],noise[0])
@@ -54,6 +63,8 @@ nl2 = SZ.nl2#(ells,beam[0],noise[0])
 cibp = SZ.cib_p(ells,freq[0],freq[0])
 cibc = SZ.cib_c(ells,freq[0],freq[0])
 rps  = SZ.rad_ps(ells,freq[0],freq[0])
+
+
 
 
 #print nl*(ells+1.)*ells/ (2.* np.pi) * constDict['TCMBmuK']**2
