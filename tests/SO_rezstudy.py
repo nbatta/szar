@@ -19,7 +19,7 @@ cosmologyName = 'LACosmology' # from ini file
 
 #fileFunc = None
 fileFunc = lambda M,z:"data/"+experimentName+"_m"+str(M)+"z"+str(z)+".txt"
-experimentName = ["S46m"]
+experimentName = ["S45m"]
 #experimentName = ["ActS16"]
 #experimentName = ["S45m","S46m","S47m"]
 #experimentName = ["SO5m","SO6m","SO7m"]#,"SO5m_No270","SO6m_No270","SO7m_No270"]
@@ -72,7 +72,7 @@ for ii in xrange(len(experimentName)):
     zbin_temp = np.arange(0.05,2.0,0.05)
     zbin = np.insert(zbin_temp,0,0.0)
     #qbin = np.arange(np.log(6),np.log(500),0.08)
-    qbin = np.arange(np.log(6),np.log(8),0.08)
+    qbin = np.arange(np.log(6),np.log(500),0.08)
     mbin = np.arange(13.5, 15.71, .10)
     start3 = time.time()
 
@@ -85,7 +85,7 @@ for ii in xrange(len(experimentName)):
 
     print "Time for N of z " , time.time() - start3
 
-    #np.save('output/dN_dzmq'+experimentName[ii]+cosmologyName,ans)
+    np.save('output/dN_dzmq'+experimentName[ii]+cosmologyName,ans)
     print np.max(ans)
 
     #pl = Plotter()
