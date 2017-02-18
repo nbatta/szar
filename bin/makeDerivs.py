@@ -113,11 +113,11 @@ elif rank%2==0:
     passParams[myParam] = fparams[myParam] - stepSizes[myParam]/2.
     upDown = "_down"
 
-
-cc = ClusterCosmology(passParams,constDict,lmax)
-HMF = Halo_MF(clusterCosmology=cc)
-dN_dmqz = HMFup.N_of_mqz_SZ(lndM,zrange,mexprange,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha)
-saveId = expName + "_" + calName
-np.save("data/dN_dzmq_"+saveId+"_"+myParam+upDown,dN_dmqz)
+print rank,myParam,upDown
+# cc = ClusterCosmology(passParams,constDict,lmax)
+# HMF = Halo_MF(clusterCosmology=cc)
+# dN_dmqz = HMFup.N_of_mqz_SZ(lndM,zrange,mexprange,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha)
+# saveId = expName + "_" + calName
+# np.save("data/dN_dzmq_"+saveId+"_"+myParam+upDown,dN_dmqz)
 
     
