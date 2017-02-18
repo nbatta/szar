@@ -24,7 +24,8 @@ calibration error over mass.
 
 from mpi4py import MPI
 from szlib.szcounts import ClusterCosmology,Halo_MF
-
+import numpy as np
+    
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -41,7 +42,6 @@ if rank==0:
     import sys
     from ConfigParser import SafeConfigParser 
     import cPickle as pickle
-    import numpy as np
 
     inParamList = sys.argv[1].split(',')
     expName = sys.argv[2]
@@ -90,6 +90,14 @@ if rank==0:
     suffix = Config.get('general','suffix')
     # load the mass calibration grid
     mexprange, zrange, lndM = pickle.load(open(calFile,"rb"))
+
+    mexprange = np.arange(13.5,15.7,0.5)
+    zrange = np.arange(0.05,3.0,0.5)
+    lndM,dummy = np.meshgrid(mexprange,zrange) 
+
+    lndM = lndM.T
+
+
     zrange = np.insert(zrange,0,0.0)
     saveId = expName + "_" + calName + "_" + suffix
 
@@ -156,23 +164,45 @@ passParams = fparams.copy()
 
 
 # If boss, do the fiducial. If odd rank, the minion is doing an "up" job, else doing a "down" job
-if rank ==0:
-    myParam = "fid"
-    upDown = ""
+if rank==0:
+    pass
 elif rank%2==1:
     myParam = inParamList[myParamIndex]
     passParams[myParam] = fparams[myParam] + stepSizes[myParam]/2.
-    upDown = "_up"
-
 elif rank%2==0:
     myParam = inParamList[myParamIndex]
     passParams[myParam] = fparams[myParam] - stepSizes[myParam]/2.
-    upDown = "_down"
 
-print rank,myParam,upDown
+
+
 cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(clusterCosmology=cc)
 dN_dmqz = HMF.N_of_mqz_SZ(lndM,zrange,mexprange,qbins,beam,noise,freq,clusterDict,lknee,alpha)
-np.save("data/dN_dzmq_"+saveId+"_"+myParam+upDown,dN_dmqz)
+
+if rank==0: 
+    np.save("data/N_dzmq_"+saveId+"_fid",dN_dmqz)
+    dUps = {}
+    dDns = {}
+
+    print "Waiting for ups and downs..."
+    for i in range(1,numcores):
+        data = np.empty(dN_dmqz.shape, dtype=np.float64)
+        comm.Recv(data, source=i, tag=77)
+        myParamIndex = (i+1)/2-1
+        if i%2==1:
+            dUps[inParamList[myParamIndex]] = data.copy()
+        elif i%2==0:
+            dDns[inParamList[myParamIndex]] = data.copy()
+
+    for param in inParamList:
+        dN = (dUps[param]-dDns[param])/stepSizes[param]
+        np.save("data/dN_dzmq_"+saveId+"_"+param,dN)
+        
+else:
+    data = dN_dmqz.astype(np.float64)
+    comm.Send(data, dest=0, tag=77)
+
+
+
 
     

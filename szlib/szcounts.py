@@ -345,73 +345,43 @@ class Halo_MF:
 
         return 1./err_WL_mass,Ntot
 
-    def N_of_mqz_SZ (self,mass_err,z_arr,m_wl,q_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+    def N_of_mqz_SZ (self,mass_err,z_arr,m_wl,q_arr,beams,noises,freqs,clusterDict,lknee,alpha,tmaxN=5,numts=1000):
         # this is 3D grid for fisher matrix 
         lnYmin = np.log(1e-14)
         dlnY = 0.1
         lnY = np.arange(lnYmin,lnYmin+13.,dlnY)
         
-        #Mexp = np.arange(13.5, 15.71, .1)
         Mexp = m_wl
         
         M = 10.**Mexp
-        dM = np.gradient(M)
         rho_crit0m = self.cc.rhoc0om
         hh = self.cc.H0/100.
 
         M200 = np.outer(M,np.zeros([len(z_arr)]))
-        dM200 = np.outer(M,np.zeros([len(z_arr)]))
         sigN = np.outer(M,np.zeros([len(z_arr)]))
         YM   =  np.outer(M,np.ones([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
-        #P_func_test = np.outer(M,np.zeros([len(z_arr)]))
         P_func = np.zeros([len(M),len(z_arr)-1,len(q_arr)])
         dNdzmq = np.zeros([len(m_wl),len(z_arr)-1,len(q_arr)])
-        dNdzmq2 = np.zeros([len(m_wl),len(z_arr)-1,len(q_arr)])
 
-        # HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z2.txt',unpack=True)
-        # HSC_mass = np.transpose(HSC_mass)
-
-        # mass_err = HSC_mass#1./(np.sqrt((1./HSC_mass)**2 + (1./CMB_mass)**2))
         
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
-        
-        #print self.cc.paramDict['b_ym']
 
         SZProf = SZ_Cluster_Model(self.cc,clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lknee=lknee,alpha=alpha)
         
-#        for i in xrange (4):
-#            for kk in xrange(4):
-#                for jj in xrange(4):
-#                    print SZProf.Mwl_prob(np.exp(m_wl[jj]),M_arr[:,i+1],mass_err[:,i])
-
 
         for ii in xrange (len(z_arr)-1):
             i = ii + 1
             M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M,500,z_arr[i])
-            dM200[:,i] = np.gradient(M200[:,i])
+            print z_arr[i]
             for j in xrange(len(M)):
-                try:
-                    assert fileFunc is not None
-                    filename = fileFunc(Mexp[j],z_arr[i])
-                    print filename
-                    sigN[j,i] = np.loadtxt(filename,unpack=True)[-1]
-                except:
-                    print "Calculating S/N because file not found or specified for M=",Mexp[j]," z=",z_arr[i]
-                    if quick:
-                        var = SZProf.quickVar(M[j],z_arr[i],tmaxN,numts)
-                    else:
-                        var = SZProf.filter_variance(M[j],z_arr[i])
-                    sigN[j,i] = np.sqrt(var)
-                    YM[j,i] = SZProf.Y_M(M[j],z_arr[i])
+                var = SZProf.quickVar(M[j],z_arr[i],tmaxN,numts)
+                sigN[j,i] = np.sqrt(var)
+                YM[j,i] = SZProf.Y_M(M[j],z_arr[i])
 
-                print Mexp[j],z_arr[i]
-            #P_func_test[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
+                #print Mexp[j],z_arr[i]
             for kk in xrange(len(q_arr)):
                 P_func[:,ii,kk] = SZProf.P_of_qn (lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr[kk])
-
-            #print "PFUNC", np.max(P_func[:,i,:]),np.max(P_func_test[:,i])
-            #print "PFUNC", P_func[:,i,0]
 
         dn_dVdm = self.dn_dM(M200,z_arr,200.)
         dV_dz = self.dVdz(z_arr)
@@ -419,14 +389,9 @@ class Halo_MF:
         for kk in xrange(len(q_arr)):
             for jj in xrange(len(m_wl)):
                 for i in xrange (len(z_arr) - 1):
-                    #dNdzmq[jj,i,kk] = np.sum(dn_dVdm[:,i+1]*P_func[:,i,kk]*dM200[:,i+1]*SZProf.Mwl_prob(10**(m_wl[jj]),M_arr[:,i+1],mass_err[:,i]))
-                    dNdzmq[jj,i,kk] = np.trapz(dn_dVdm[:,i+1]*P_func[:,i,kk]*SZProf.Mwl_prob(10**(m_wl[jj]),M_arr[:,i+1],mass_err[:,i]),M200[:,i+1],np.diff(M200[:,i+1]))
-                    dNdzmq[jj,i,kk] *= dV_dz[i+1]*4.*np.pi
-                    #print np.max(SZProf.Mwl_prob(np.exp(m_wl[jj]),M_arr[:,i+1],mass_err[:,i])*P_func[:,i+1,kk]),dNdzmq[jj,i,kk],np.sum(dn_dVdm[:,i+1]*dM200[:,i+1]),dV_dz[i+1]
-                #dNdzmq[jj,:,kk] *= dV_dz[1:] * 0.05 * 4.*np.pi* (1400./42000.)
-                #print dNdzmq[jj,:,kk], dV_dz[1:]
-                #dNdzmq2[jj,:,kk] *= dV_dz[1:] * 0.05 * 4.*np.pi
-
+                    dM = np.diff(M200[:,i+1])
+                    dNdzmq[jj,i,kk] = np.trapz(dn_dVdm[:,i+1]*P_func[:,i,kk]*SZProf.Mwl_prob(10**(m_wl[jj]),M_arr[:,i+1],mass_err[:,i]),M200[:,i+1],dM) * dV_dz[i+1]*4.*np.pi
+                   
         return dNdzmq
 
 class SZ_Cluster_Model:
@@ -518,7 +483,7 @@ class SZ_Cluster_Model:
             self.bt = 4.19
 
 
-    @timeit
+    #@timeit
     def quickVar(self,M,z,tmaxN=5.,numts=1000):
 
 
