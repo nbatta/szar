@@ -21,7 +21,7 @@ if rank==0:
     calName = sys.argv[2]
 
 
-    iniFile = "input/pipelineMakeDerivs.ini"
+    iniFile = "input/pipeline.ini"
     Config = SafeConfigParser()
     Config.optionxform=str
     Config.read(iniFile)
@@ -95,11 +95,11 @@ if rank==0:
     Nlmvinv = 0.
     from scipy.interpolate import interp1d
 
-    # from orphics.tools.io import Plotter
-    # ellkk = np.arange(2,9000,1)
-    # Clkk = theory.gCl("kk",ellkk)    
-    # pl = Plotter(scaleY='log',scaleX='log')
-    # pl.add(ellkk,4.*Clkk/2./np.pi)
+    from orphics.tools.io import Plotter
+    ellkk = np.arange(2,9000,1)
+    Clkk = theory.gCl("kk",ellkk)    
+    pl = Plotter(scaleY='log',scaleX='log')
+    pl.add(ellkk,4.*Clkk/2./np.pi)
 
 
     for polComb in pols:
@@ -107,16 +107,18 @@ if rank==0:
         nlfunc = interp1d(ls,Nls,bounds_error=False,fill_value=np.inf)
         Nleval = nlfunc(bin_edges)
         Nlmvinv += np.nan_to_num(1./Nleval)
-        # pl.add(ls,4.*Nls/2./np.pi,label=polComb)
+        pl.add(ls,4.*Nls/2./np.pi,label=polComb)
 
     Nlmv = np.nan_to_num(1./Nlmvinv)
-    ls = bin_edges
-    Nls = Nlmv
+    ls = bin_edges[1:-1]
+    Nls = Nlmv[1:-1]
 
-    # pl.add(ls,4.*Nls/2./np.pi,ls="--")
-    # pl.legendOn(loc='lower left',labsize=10)
-    # pl.done("output/nl.png")
-    # ls,Nls = np.loadtxt("data/LA_pol_Nl.txt",unpack=True,delimiter=",")
+    pl.add(ls,4.*Nls/2./np.pi,ls="--")
+    pl.legendOn(loc='lower left',labsize=10)
+    pl.done("output/Nl_"+expName+calName+".png")
+    #ls,Nls = np.loadtxt("data/LA_pol_Nl.txt",unpack=True,delimiter=",")
+    # print ls,Nls
+    # np.savetxt("output/nlsave.txt",np.vstack((ls,Nls)).transpose())
 
     constDict = dictFromSection(Config,'constants')
 
@@ -137,6 +139,8 @@ fparams = comm.bcast(fparams, root = 0)
 constDict = comm.bcast(constDict, root = 0)
 if rank==0: print "Broadcasted."
 
+
+# print ls,Nls
 cc = ClusterCosmology(fparams,constDict,clTTFixFile=None,skipCls=True)
 
 numms = mgrid.size
@@ -173,7 +177,8 @@ for index in mySplit:
     critical = True
     atClusterZ = True
     concentration = 1.18
-    MerrGrid[mindex,zindex] = 1./NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None)
+    MerrGrid[mindex,zindex] = 1./NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None)#,verbose=True)
+    #print mass,z,1./MerrGrid[mindex,zindex]
 
 
 

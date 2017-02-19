@@ -51,7 +51,7 @@ if rank==0:
     # Let's read in all parameters that can be varied by looking
     # for those that have step sizes specified. All the others
     # only have fiducials.
-    iniFile = "input/pipelineMakeDerivs.ini"
+    iniFile = "input/pipeline.ini"
     Config = SafeConfigParser()
     Config.optionxform=str
     Config.read(iniFile)
@@ -91,11 +91,10 @@ if rank==0:
     # load the mass calibration grid
     mexprange, zrange, lndM = pickle.load(open(calFile,"rb"))
 
-    mexprange = np.arange(13.5,15.7,0.5)
-    zrange = np.arange(0.05,3.0,0.5)
-    lndM,dummy = np.meshgrid(mexprange,zrange) 
-
-    lndM = lndM.T
+    # mexprange = np.arange(13.5,15.7,0.5)
+    # zrange = np.arange(0.05,3.0,0.5)
+    # lndM,dummy = np.meshgrid(mexprange,zrange) 
+    # lndM = lndM.T
 
 
     zrange = np.insert(zrange,0,0.0)
