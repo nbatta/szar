@@ -107,8 +107,8 @@ if rank==0:
     beam = listFromConfig(Config,expName,'beams')
     noise = listFromConfig(Config,expName,'noises')
     freq = listFromConfig(Config,expName,'freqs')
-    lknee = Config.getfloat(expName,'lknee')
-    alpha = Config.getfloat(expName,'alpha')
+    lknee = listFromConfig(Config,expName,'lknee')[0]
+    alpha = listFromConfig(Config,expName,'alpha')[0]
 
     clttfile = Config.get('general','clttfile')
 
