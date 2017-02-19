@@ -46,44 +46,42 @@ Fisher = np.zeros((numParams,numParams))
 paramCombs = itertools.combinations_with_replacement(paramList,2)
 
 N_fid = np.load("data/N_dzmq_"+saveId+"_fid"+".npy")
-#Fellnoq = np.trapz(N_fid,qbins,axis=2)
-Fellnoq = np.sum(N_fid[:,:,1:]*dq,axis=2)
-
-print dm.shape
-#Fellnom = np.trapz(Fellnoq.T,10**mgrid,axis=1)
-Fellnom = np.sum(Fellnoq[1:,:].T*dm,axis=1)
+Fellnoq = np.trapz(N_fid,qbins,axis=2)
+Fellnom = np.trapz(Fellnoq.T,10**mgrid,axis=1)
 pl = Plotter()
 pl.add(zgrid,Fellnom)
 pl.done("output/nz.png")
-#N = np.trapz(Fellnom.T,zgrid)
-N = np.sum(Fellnom[1:]*dz)
-print N
-#sys.exit()
+N = np.trapz(Fellnom.T,zgrid)
+print "Total number of clusters: ", N
 
 for param1,param2 in paramCombs:
     if param1=='tau' or param2=='tau': continue
+    if param1=='As' or param2=='As': continue
     dN1 = np.load("data/dN_dzmq_"+saveId+"_"+param1+".npy")
     dN2 = np.load("data/dN_dzmq_"+saveId+"_"+param2+".npy")
     i = paramList.index(param1)
     j = paramList.index(param2)
 
-    FellBlock = np.nan_to_num(dN1*dN2/N_fid)
+    assert not(np.any(np.isnan(dN1)))
+    assert not(np.any(np.isnan(dN2)))
+    assert not(np.any(np.isnan(N_fid)))
+
+
+    FellBlock = dN1*dN2*np.nan_to_num(1./N_fid)
     Fellnoq = np.trapz(FellBlock,dx=dq,axis=2)
     Fellnoz = np.trapz(Fellnoq,dx=dz,axis=1)
     Fell = np.trapz(Fellnoz,dx=dm)
     
-    # if param1=='H0':
-    #     pl = Plotter()
-    #     pl.plot2d(dN1[:,:,63])
-    #     pl.done("output/dslice.png")
-
        
     Fisher[i,j] = Fell
     Fisher[j,i] = Fell    
 
 
-print Fisher.shape
+pl = Plotter()
+pl.plot2d(Fisher)
+pl.done("output/fisher.png")
+#print Fisher.shape
 print Fisher
-# Finv = np.linalg.inv(Fisher)
-# print np.sqrt(np.diagonal(Finv))
+Finv = np.linalg.inv(Fisher)
+print np.sqrt(np.diagonal(Finv))
 
