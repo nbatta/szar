@@ -26,7 +26,6 @@ if rank==0:
     Config.optionxform=str
     Config.read(iniFile)
 
-    saveName = Config.get(calName,'saveName')
     fparams = {}   
     for (key, val) in Config.items('params'):
         if ',' in val:
@@ -92,7 +91,6 @@ if rank==0:
         Nleach[polComb] = (ls,Nls)
         kmaxes.append(kmax)
 
-    print kmaxes
     bin_edges = np.arange(kmin,max(kmaxes),dell)+dell
     Nlmvinv = 0.
     from scipy.interpolate import interp1d
@@ -191,4 +189,4 @@ else:
         
 
     import cPickle as pickle
-    pickle.dump((mgrid,zgrid,MerrGrid),open("data/"+saveName+".pkl",'wb'))
+    pickle.dump((mgrid,zgrid,MerrGrid),open("data/"+expName+calName+".pkl",'wb'))

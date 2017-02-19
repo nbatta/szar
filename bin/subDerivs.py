@@ -3,9 +3,9 @@ import os
 
 numParams = 12
 numCores = 2*numParams+1
-expList = ['SO-5m']#,'SO-6m','SO-7m','S4-5m','S4-6m','S4-7m']
-#calList = ['CMBAll','CMBPol','OWL1','OWL2','CMBAllOWL1','CMBAllOWL2','CMBPolOWL1','CMBPolOWL2']
-calList = ['testCal']
+expList = ['SO-5m','SO-6m','SO-7m','S4-5m','S4-6m','S4-7m']
+calList = ['CMBAll','CMBPol']#,'OWL1','OWL2','CMBAllOWL1','CMBAllOWL2','CMBPolOWL1','CMBPolOWL2']
+#calList = ['testCal']
 
 for exp in expList:
 
