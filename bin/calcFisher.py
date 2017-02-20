@@ -7,32 +7,26 @@ import numpy as np
 import sys
 from orphics.tools.io import dictFromSection, listFromConfig
 from orphics.tools.io import Plotter
+import matplotlib.pyplot as plt
 
-def getTotN(Nmqz,mgrid,zgrid,qbins):
-
+def getTotN(Nmqz,mgrid,zgrid,qbins,returnNz=False):
+    """Get total number of clusters given N/DmDqDz
+    and the corresponding log10(mass), z and q grids
+    """
     Fellnoq = np.trapz(Nmqz,qbins,axis=2)
-    Fellnom = np.trapz(Fellnoq.T,10**mgrid,axis=1)
-    # pl = Plotter()
-    # pl.add(zgrid,Fellnom)
-    # pl.done("output/nz.png")
-    N = np.trapz(Fellnom.T,zgrid)
-    return N
+    Nofz = np.trapz(Fellnoq.T,10**mgrid,axis=1)
+    N = np.trapz(Nofz.T,zgrid)
+    if returnNz:
+        return N,Nofz
+    else:
+        return N
 
-
-def debin(Nmqz,mgrid,zgrid,qbins):
-
-    dm = np.diff(10**mgrid).reshape((Nmqz.shape[0]-1,1,1))
-    dq = np.diff(qbins).reshape((1,1,Nmqz.shape[2]-1))
-    dz = np.diff(zgrid).reshape((1,Nmqz.shape[1]-1,1))
-    N = Nmqz[:-1,:-1,:-1] * dm *dq *dz
-    
-
-    return N
 
 
 
 expName = sys.argv[1]
 calName = sys.argv[2]
+saveName = sys.argv[3]
 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
@@ -57,30 +51,33 @@ dq = np.diff(qbins)
 
 zmax = Config.getfloat('general','zmax')
 fsky = Config.getfloat(expName,'fsky')
+
+# get mass and z grids
 ms = listFromConfig(Config,calName,'mexprange')
 mgrid = np.arange(ms[0],ms[1],ms[2])
 zs = listFromConfig(Config,calName,'zrange')
 zgrid = np.arange(zs[0],zs[1],zs[2])
-
 zgrid = zgrid[zgrid<zmax]
 zlen = zgrid.size
-
 dm = np.diff(10**mgrid)
 dz = np.diff(zgrid)
 
-
+# Fisher params
 paramList = Config.get('fisher','paramList').split(',')
 numParams = len(paramList)
 Fisher = np.zeros((numParams,numParams))
 paramCombs = itertools.combinations_with_replacement(paramList,2)
 
+# Fiducial number counts
 N_fid = np.load("data/N_dzmq_"+saveId+"_fid"+".npy")
 N_fid = N_fid[:,:zlen,:]*fsky
 print "Total number of clusters: ", getTotN(N_fid,mgrid,zgrid,qbins)
 
+# Planck and BAO Fishers
 planckFile = Config.get('fisher','planckFile')
 baoFile = Config.get('fisher','baoFile')
 
+# Number of non-SZ params (params that will be in Planck/BAO)
 numCosmo = Config.getint('fisher','numCosmo')
 numLeft = len(paramList) - numCosmo
 fisherPlanck = 0.
@@ -99,7 +96,7 @@ if baoFile!='':
         fisherBAO = np.loadtxt(baoFile,delimiter=',')
     fisherBAO = np.pad(fisherBAO,pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.)
 
-
+# Populate Fisher
 for param1,param2 in paramCombs:
     if param1=='tau' or param2=='tau': continue
     dN1 = np.load("data/dN_dzmq_"+saveId+"_"+param1+".npy")
@@ -115,11 +112,6 @@ for param1,param2 in paramCombs:
     assert not(np.any(np.isnan(dN2)))
     assert not(np.any(np.isnan(N_fid)))
 
-    # if param1=='w0':
-    #     Nup = np.load("data/dNup_dzmq_"+saveId+"_"+param1+".npy")
-    #     Ndn = np.load("data/dNdn_dzmq_"+saveId+"_"+param1+".npy")
-    #     print "Total number of clusters: ", getTotN(Nup,mgrid,zgrid,qbins)
-    #     print "Total number of clusters: ", getTotN(Ndn,mgrid,zgrid,qbins)
 
     with np.errstate(divide='ignore'):
         FellBlock = dN1*dN2*np.nan_to_num(1./N_fid)
@@ -132,10 +124,11 @@ for param1,param2 in paramCombs:
     Fisher[i,j] = Fell
     Fisher[j,i] = Fell    
 
-Fisher += fisherPlanck
-Fisher += fisherBAO
 
-Finv = np.linalg.inv(Fisher)
+FisherTot = Fisher + fisherPlanck
+FisherTot += fisherBAO
+
+Finv = np.linalg.inv(FisherTot)
 
 
 errs = np.sqrt(np.diagonal(Finv))
@@ -153,3 +146,7 @@ try:
 except:
     pass
 
+
+
+
+pickle.dump((paramList,FisherTot),open("data/savedFisher_"+saveId+"_"+saveName+".pkl",'wb'))

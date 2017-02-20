@@ -1,5 +1,6 @@
 import matplotlib
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import sys
 import cPickle as pickle
 import numpy as np
@@ -19,7 +20,11 @@ zmins = []
 zmaxes = []
 dms = []
 dzs = []
-for gridFile in gridList:
+
+from orphics.tools.output import Plotter
+pl = Plotter(labelX="$z$",labelY="S/N per cluster",ftsize=14)
+
+for gridFile,ls,lab in zip(gridList,['-','--'],['CMB lensing','optical lensing']):
 
     filen = "data/"+gridFile+".pkl"
     
@@ -39,12 +44,19 @@ for gridFile in gridList:
     dms.append(min(np.diff(mexpgrid)))
     dzs.append(min(np.diff(zgrid)))
 
+    sngrid = 1./errgrid
     
-    # from orphics.tools.output import Plotter
-    # pgrid = np.rot90(1./errgrid)
+    # pgrid = np.rot90(sngrid)
     # pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
     # pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],levels=[1.0,3.0,5.0],labsize=14)
     # pl.done("output/"+gridFile+".png")
+
+    pl.add(zgrid,sngrid[np.where(np.isclose(mexpgrid,14.0)),:].ravel(),ls=ls,label=lab+" 10^14 Msol/h")
+    pl.add(zgrid,sngrid[np.where(np.isclose(mexpgrid,14.3)),:].ravel(),ls=ls,label=lab+" 10^14.3 Msol/h")
+    pl.add(zgrid,sngrid[np.where(np.isclose(mexpgrid,14.5)),:].ravel(),ls=ls,label=lab+" 10^14.5 Msol/h")
+    pl.add(zgrid,sngrid[np.where(np.isclose(mexpgrid,14.7)),:].ravel(),ls=ls,label=lab+" 10^14.7 Msol/h")
+    plt.gca().set_color_cycle(None)
+
 
 
 outmgrid = np.arange(min(mmins),max(mmaxes),min(dms))
@@ -62,34 +74,44 @@ for key in grids:
     zmin = outzgrid[0]
     zmax = outzgrid[-1]
 
-    from orphics.tools.output import Plotter
-    pgrid = np.rot90(1./outerrgrid)
-    pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
-    pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],levels=[1.0,3.0,5.0],labsize=14)
-    pl.done("output/"+key+".png")
+    # from orphics.tools.output import Plotter
+    # pgrid = np.rot90(1./outerrgrid)
+    # pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
+    # pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],levels=[1.0,3.0,5.0],labsize=14)
+    # pl.done("output/"+key+".png")
 
 
     jointgridsqinv += (1./outerrgrid**2.)
 
 
 jointgrid = np.sqrt(1./jointgridsqinv)
+
+# sngrid = 1./jointgrid
+# lab = "joint"
+# pl.add(outzgrid,sngrid[np.where(np.isclose(outmgrid,14.0)),:].ravel(),ls=ls,label=lab+" 10^14 Msol/h")
+# pl.add(outzgrid,sngrid[np.where(np.isclose(outmgrid,14.3)),:].ravel(),ls=ls,label=lab+" 10^14.3 Msol/h")
+# pl.add(outzgrid,sngrid[np.where(np.isclose(outmgrid,14.5)),:].ravel(),ls=ls,label=lab+" 10^14.5 Msol/h")
+# pl.add(outzgrid,sngrid[np.where(np.isclose(outmgrid,14.7)),:].ravel(),ls=ls,label=lab+" 10^14.7 Msol/h")
+
+pl.legendOn(loc='upper right',labsize=8)
+pl.done("output/slice.png")
+
+
 from orphics.tools.output import Plotter
 pgrid = np.rot90(1./jointgrid)
 pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
 pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],levels=[1.0,3.0,5.0],labsize=14)
 pl.done("output/joint.png")
 
-tmgrid = np.arange(mmin,mmax,0.5)
-tzgrid = np.arange(zmin,zmax,0.5)
+# tmgrid = np.arange(mmin,mmax,0.5)
+# tzgrid = np.arange(zmin,zmax,0.5)
+# coarsegrid = interpolateGrid(jointgrid,outmgrid,outzgrid,tmgrid,tzgrid,regular=False,kind="cubic",bounds_error=False,fill_value=np.inf)
+
+# from orphics.tools.output import Plotter
+# pgrid = np.rot90(1./coarsegrid)
+# pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
+# pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],levels=[1.0,3.0,5.0],labsize=14)
+# pl.done("output/coarse.png")
 
 
-coarsegrid = interpolateGrid(jointgrid,outmgrid,outzgrid,tmgrid,tzgrid,regular=False,kind="cubic",bounds_error=False,fill_value=np.inf)
-
-from orphics.tools.output import Plotter
-pgrid = np.rot90(1./coarsegrid)
-pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
-pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],levels=[1.0,3.0,5.0],labsize=14)
-pl.done("output/coarse.png")
-
-
-pickle.dump((tmgrid,tzgrid,coarsegrid),open("data/testGrid.pkl",'wb'))
+# pickle.dump((tmgrid,tzgrid,coarsegrid),open("data/testGrid.pkl",'wb'))
