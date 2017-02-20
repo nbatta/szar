@@ -55,30 +55,18 @@ else:
     raise ValueError
 dq = np.diff(qbins)
 
+zmax = Config.getfloat('general','zmax')
+fsky = Config.getfloat(expName,'fsky')
 ms = listFromConfig(Config,calName,'mexprange')
 mgrid = np.arange(ms[0],ms[1],ms[2])
 zs = listFromConfig(Config,calName,'zrange')
 zgrid = np.arange(zs[0],zs[1],zs[2])
 
+zgrid = zgrid[zgrid<zmax]
+zlen = zgrid.size
+
 dm = np.diff(10**mgrid)
 dz = np.diff(zgrid)
-
-
-paramList = [] # the parameters that can be varied
-fparams = {}   # the 
-stepSizes = {}
-for (key, val) in Config.items('params'):
-    if ',' in val:
-        param, step = val.split(',')
-        paramList.append(key)
-        fparams[key] = float(param)
-        stepSizes[key] = float(step)
-    else:
-        fparams[key] = float(val)
-
-
-
-
 
 
 paramList = Config.get('fisher','paramList').split(',')
@@ -87,72 +75,68 @@ Fisher = np.zeros((numParams,numParams))
 paramCombs = itertools.combinations_with_replacement(paramList,2)
 
 N_fid = np.load("data/N_dzmq_"+saveId+"_fid"+".npy")
-print getTotN(N_fid,mgrid,zgrid,qbins)
-print N_fid.shape
-#N_fid = debin(N_fid,mgrid,zgrid,qbins)
+N_fid = N_fid[:,:zlen,:]*fsky
+print "Total number of clusters: ", getTotN(N_fid,mgrid,zgrid,qbins)
 
-fisherPlanck = np.loadtxt("data/Feb18_FisherMat_Planck_tau0.01_lens_fsky0.6.csv")
+planckFile = Config.get('fisher','planckFile')
+baoFile = Config.get('fisher','baoFile')
+
+numCosmo = Config.getint('fisher','numCosmo')
+numLeft = len(paramList) - numCosmo
+fisherPlanck = 0.
+if planckFile!='':
+    try:
+        fisherPlanck = np.loadtxt(planckFile)
+    except:
+        fisherPlanck = np.loadtxt(planckFile,delimiter=',')
+    fisherPlanck = np.pad(fisherPlanck,pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.)
+
+fisherBAO = 0.
+if baoFile!='':
+    try:
+        fisherBAO = np.loadtxt(baoFile)
+    except:
+        fisherBAO = np.loadtxt(baoFile,delimiter=',')
+    fisherBAO = np.pad(fisherBAO,pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.)
+
 
 for param1,param2 in paramCombs:
     if param1=='tau' or param2=='tau': continue
     dN1 = np.load("data/dN_dzmq_"+saveId+"_"+param1+".npy")
     dN2 = np.load("data/dN_dzmq_"+saveId+"_"+param2+".npy")
-
-
-    # N1up = np.load("data/dNup_dzmq_"+saveId+"_"+param1+".npy")
-    # N1dn = np.load("data/dNdn_dzmq_"+saveId+"_"+param1+".npy")
-    # N2up = np.load("data/dNup_dzmq_"+saveId+"_"+param2+".npy")
-    # N2dn = np.load("data/dNdn_dzmq_"+saveId+"_"+param2+".npy")
-
-    # N1up = debin(N1up,mgrid,zgrid,qbins)
-    # N2up = debin(N2up,mgrid,zgrid,qbins)
-    # N1dn = debin(N1dn,mgrid,zgrid,qbins)
-    # N2dn = debin(N2dn,mgrid,zgrid,qbins)
-
-    # dN1 = (N1up-N1dn)/stepSizes[param1]
-    # dN2 = (N2up-N2dn)/stepSizes[param2]
+    dN1 = dN1[:,:zlen,:]*fsky
+    dN2 = dN2[:,:zlen,:]*fsky
 
     i = paramList.index(param1)
     j = paramList.index(param2)
 
 
-    # if i==j:
-    #     print param1, getTotN(N1up,mgrid,zgrid,qbins)
-    #     print param1, getTotN(N1dn,mgrid,zgrid,qbins)
-
     assert not(np.any(np.isnan(dN1)))
     assert not(np.any(np.isnan(dN2)))
     assert not(np.any(np.isnan(N_fid)))
 
-    #Fell = np.nansum(dN1*dN2/N_fid)
-    #Fell = np.sum(dN1*dN2*np.nan_to_num(1./N_fid))
+    # if param1=='w0':
+    #     Nup = np.load("data/dNup_dzmq_"+saveId+"_"+param1+".npy")
+    #     Ndn = np.load("data/dNdn_dzmq_"+saveId+"_"+param1+".npy")
+    #     print "Total number of clusters: ", getTotN(Nup,mgrid,zgrid,qbins)
+    #     print "Total number of clusters: ", getTotN(Ndn,mgrid,zgrid,qbins)
 
-    FellBlock = dN1*dN2*np.nan_to_num(1./N_fid)
+    with np.errstate(divide='ignore'):
+        FellBlock = dN1*dN2*np.nan_to_num(1./N_fid)
     Fellnoq = np.trapz(FellBlock,qbins,axis=2)
     Fellnoz = np.trapz(Fellnoq,zgrid,axis=1)
     Fell = np.trapz(Fellnoz,10**mgrid)
 
-    # Fell = getTotN(dN1*dN2*np.nan_to_num(1./N_fid),mgrid,zgrid,qbins)
-
-    # Fellnoq = FellBlock.sum(axis=2)
-    # Fellnoz = Fellnoq.sum(axis=1)
-    # Fell = Fellnoz.sum()
     
        
     Fisher[i,j] = Fell
     Fisher[j,i] = Fell    
 
-fisherPlanck = np.pad(fisherPlanck,pad_width=((0,5),(0,5)),mode="constant",constant_values=0.)
-#print fisherPlanck
 Fisher += fisherPlanck
+Fisher += fisherBAO
 
-#print Fisher.shape
-#print Fisher
 Finv = np.linalg.inv(Fisher)
 
-# pl = Plotter()
-# pl.plot2d(Finv)
-# pl.done("output/fisher.png")
 
 errs = np.sqrt(np.diagonal(Finv))
 errDict = {}
@@ -160,5 +144,12 @@ for i,param in enumerate(paramList):
     errDict[param] = errs[i]
 
 
-print "Mnu 1-sigma : ", errDict['mnu']*1000 , " meV"
+try:
+    print "Mnu 1-sigma : "+ str(errDict['mnu']*1000) + " meV"
+except:
+    pass
+try:
+    print "w 1-sigma : "+ str(errDict['w0']*100.) +" %"
+except:
+    pass
 
