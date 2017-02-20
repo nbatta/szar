@@ -63,7 +63,7 @@ start3 = time.time()
 
 HMFup = Halo_MF(clusterCosmology=ccUp)
 dN_dmqz_up = HMFup.N_of_mqz_SZ(mass_err,zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha)
-
+print dN_dmqz_up.sum()
 HMFdn = Halo_MF(clusterCosmology=ccDn)
 dN_dmqz_dn = HMFdn.N_of_mqz_SZ(mass_err,zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha)
 
