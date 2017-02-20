@@ -51,7 +51,7 @@ if rank==0:
     # Let's read in all parameters that can be varied by looking
     # for those that have step sizes specified. All the others
     # only have fiducials.
-    iniFile = "input/pipelineMakeDerivs.ini"
+    iniFile = "input/pipeline.ini"
     Config = SafeConfigParser()
     Config.optionxform=str
     Config.read(iniFile)
@@ -91,11 +91,10 @@ if rank==0:
     # load the mass calibration grid
     mexprange, zrange, lndM = pickle.load(open(calFile,"rb"))
 
-    mexprange = np.arange(13.5,15.7,0.5)
-    zrange = np.arange(0.05,3.0,0.5)
-    lndM,dummy = np.meshgrid(mexprange,zrange) 
-
-    lndM = lndM.T
+    # mexprange = np.arange(13.5,15.7,0.5)
+    # zrange = np.arange(0.05,3.0,0.5)
+    # lndM,dummy = np.meshgrid(mexprange,zrange) 
+    # lndM = lndM.T
 
 
     zrange = np.insert(zrange,0,0.0)
@@ -174,7 +173,7 @@ elif rank%2==0:
     passParams[myParam] = fparams[myParam] - stepSizes[myParam]/2.
 
 
-
+if rank!=0: print rank,myParam,fparams[myParam],passParams[myParam]
 cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(clusterCosmology=cc)
 dN_dmqz = HMF.N_of_mqz_SZ(lndM,zrange,mexprange,qbins,beam,noise,freq,clusterDict,lknee,alpha)
@@ -196,6 +195,8 @@ if rank==0:
 
     for param in inParamList:
         dN = (dUps[param]-dDns[param])/stepSizes[param]
+        np.save("data/dNup_dzmq_"+saveId+"_"+param,dUps[param])
+        np.save("data/dNdn_dzmq_"+saveId+"_"+param,dDns[param])
         np.save("data/dN_dzmq_"+saveId+"_"+param,dN)
         
 else:
