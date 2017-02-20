@@ -173,7 +173,7 @@ elif rank%2==0:
     passParams[myParam] = fparams[myParam] - stepSizes[myParam]/2.
 
 
-
+if rank!=0: print rank,myParam,fparams[myParam],passParams[myParam]
 cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(clusterCosmology=cc)
 dN_dmqz = HMF.N_of_mqz_SZ(lndM,zrange,mexprange,qbins,beam,noise,freq,clusterDict,lknee,alpha)
@@ -195,6 +195,8 @@ if rank==0:
 
     for param in inParamList:
         dN = (dUps[param]-dDns[param])/stepSizes[param]
+        np.save("data/dNup_dzmq_"+saveId+"_"+param,dUps[param])
+        np.save("data/dNdn_dzmq_"+saveId+"_"+param,dDns[param])
         np.save("data/dN_dzmq_"+saveId+"_"+param,dN)
         
 else:

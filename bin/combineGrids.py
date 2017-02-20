@@ -78,3 +78,18 @@ pgrid = np.rot90(1./jointgrid)
 pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
 pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],levels=[1.0,3.0,5.0],labsize=14)
 pl.done("output/joint.png")
+
+tmgrid = np.arange(mmin,mmax,0.5)
+tzgrid = np.arange(zmin,zmax,0.5)
+
+
+coarsegrid = interpolateGrid(jointgrid,outmgrid,outzgrid,tmgrid,tzgrid,regular=False,kind="cubic",bounds_error=False,fill_value=np.inf)
+
+from orphics.tools.output import Plotter
+pgrid = np.rot90(1./coarsegrid)
+pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
+pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],levels=[1.0,3.0,5.0],labsize=14)
+pl.done("output/coarse.png")
+
+
+pickle.dump((tmgrid,tzgrid,coarsegrid),open("data/testGrid.pkl",'wb'))
