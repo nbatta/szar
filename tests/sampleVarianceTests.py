@@ -23,6 +23,5 @@ zrange = np.arange(0.05,1.0,0.1)
 
 sv = SampleVariance(cc,mrange,zrange)
 hb = sv.haloBias()
-print hb.shape
 
-sv.sample_variance_overNsquared(fsky=0.5,lmax=2000)
+sv.sample_variance_overNsquared(fsky=0.5,lmax=500)

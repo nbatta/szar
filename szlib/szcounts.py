@@ -23,25 +23,20 @@ from scipy.special import j0
 
 class SampleVariance(object):
     @timeit
-    def __init__(self,cc,Mexprange,z_arr):
+    def __init__(self,cc,Mexprange,z_arr,lmax=1000):
 
         hmf = Halo_MF(cc)
         self.cc = cc
         self.kh, self.z, self.pk, self.s8 = hmf.pk(z_arr)
         self.Mexp = Mexprange
         self.chis = self.cc.results.comoving_radial_distance(z_arr)
+        self.zs = z_arr
 
-        pl = Plotter(scaleY='log',scaleX='log')
-        pl.add(self.kh,self.pk[0,:])
-        pl.add(self.kh,self.pk[-1,:])
-        pl.done("output/pk.png")
         
         self.PofElls = []
         for i,chi in enumerate(self.chis):
-            print chi
             pfunc = interp1d(self.kh,self.pk[i,:])
-            self.PofElls.append(lambda ell: pfunc(ell/chi))
-            # print self.PofElls[i](1000)
+            self.PofElls.append(lambda ell,chi: pfunc(ell/chi))
         
 
     def haloBias(self):
@@ -56,7 +51,7 @@ class SampleVariance(object):
         return 1. + ((ac*dc**2./sigsq-1.)/dc) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
 
     @timeit
-    def sample_variance_overNsquared(self,fsky,lmax=1000):
+    def sample_variance_overNsquared(self,fsky):
         import healpy as hp
         frac = 1.-fsky
         nsides_allowed = 2**np.arange(5,13,1)
@@ -66,23 +61,20 @@ class SampleVariance(object):
 
         hpmap = np.ones(npix)/(1.-frac)
         hpmap[:int(npix*frac)] = 0
-        alms = hp.map2alm(hpmap)
+        alms_original = hp.map2alm(hpmap)
 
+        
         ellrange  = np.arange(2,lmax,1)
-        for i,(chi,dchi) in enumerate(zip(self.chis,np.diff(self.chis))):
-            Pl = self.PofElls[i](ellrange)
-            #print Pl
+        dchis = np.diff(self.chis)
+        
+        for i,(chi,dchi) in enumerate(zip(self.chis,dchis)):
+            Pl = self.PofElls[i](ellrange,chi)
             Pl = np.insert(Pl,0,0)
             Pl = np.insert(Pl,0,0)
-            hp.almxfl(alms,np.sqrt(Pl),inplace=True)
-
+            alms = hp.almxfl(alms_original.copy(),np.sqrt(Pl))
             power = (alms*alms.conjugate()).real/chi/chi/dchi
-            print power.sum()
-        #print hpmap.mean(),power.sum()*(1.-frac)/4./np.pi
 
 
-
-        print nside_min
 
 
 def f_nu(cc,nu):
