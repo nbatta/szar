@@ -683,7 +683,8 @@ class SZ_Cluster_Model:
         return ans
     
     def P_of_Y (self,lnY,MM,zz):
-        Ysig = self.scaling['Ysig'] #0.127  
+        Ysig = self.scaling['Ysig'] #0.127 
+        #Ysig = self.scaling['Ysig'] * (1. + zz)**self.scaling['gammaYsig'] * (MM/(self.cc.H0/100.)/6e14)**self.scaling['betaYsig']
 
         Y = np.exp(lnY)
         Ma = np.outer(MM,np.ones(len(Y[0,:])))
