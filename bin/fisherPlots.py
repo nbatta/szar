@@ -33,12 +33,27 @@ for (key, val) in Config.items('params'):
 
 
 
-owlfisher = getFisher("SO-6m","owl1","planck_mwcdm",paramList)
-cmbfisher = getFisher("SO-6m","CMB_all","planck_mwcdm",paramList)
+#owlfisher1 = getFisher("SO-7m","owl1","planck_mwcdm",paramList)
+#owlfisher52 = getFisher("SO-5m","owl2","planck_mwcdm",paramList)
+#cmbfisher5cvl = getFisher("SO-5m","CMB_all","planck_mwcdm_cvltau",paramList)
+cmbfisher5 = getFisher("SO-5m-noatm","CMB_all","planck_mwcdm",paramList)
+cmbfisher6 = getFisher("SO-6m-noatm","CMB_all","planck_mwcdm",paramList)
+cmbfisher7 = getFisher("SO-7m-noatm","CMB_all","planck_mwcdm",paramList)
+#cmbfisher47 = getFisher("S4-7m","CMB_all","planck_mwcdm",paramList)
+#cmbfisher7so = getFisher("SO-7m","CMB_all","planck_mwcdm",paramList)
 
 
 fplots = FisherPlots(paramList,paramLatexList,fparams)
-fplots.addFisher('owl',owlfisher)
-fplots.addFisher('cmb',cmbfisher)
+#fplots.addFisher('owl52',owlfisher52)
+fplots.addFisher('cmb5',cmbfisher5)
+fplots.addFisher('cmb6',cmbfisher6)
+fplots.addFisher('cmb7',cmbfisher7)
+#fplots.addFisher('cmb47',cmbfisher47)
+#fplots.addFisher('cmb7so',cmbfisher7so)
 #fplots.trianglePlot(['H0','mnu','w'],['planckS4OWLClusters','planckS4CMBClusters'],['-','--'])
-fplots.plotPair(['mnu','w0'],['owl','cmb'],cols=['red','blue'],lss=['-','--'],labels=['owl','cmb'],saveFile="output/test.png")
+#fplots.plotPair(['mnu','w0'],['cmb5','cmb6','cmb7'],labels=['SO-5m','SO-6m','SO-7m'],saveFile="output/test.png")
+#fplots.plotPair(['mnu','w0'],['cmb5','cmb7'],labels=['S4-5m','S4-7m'],saveFile="output/test.png")
+#fplots.plotPair(['mnu','w0'],['owl2','cmb7'],labels=['LSST z<2','S4-7m'],saveFile="output/owlcmb2.png")
+#fplots.plotPair(['mnu','w0'],['owl52','cmb5'],labels=['SO-5m + LSST','SO-5m + internal \n (CMB halo lensing)'],saveFile="output/soint.png")
+#fplots.plotPair(['mnu','w0'],['cmb5','cmb6','cmb7'],labels=['SO-5m internal','SO-6m internal','SO-7m internal'],saveFile="output/sores_cvltau.png")
+fplots.plotPair(['mnu','w0'],['cmb5','cmb6','cmb7'],labels=['SO-5m no-atm','SO-m + internal'],saveFile="output/socomp.png")

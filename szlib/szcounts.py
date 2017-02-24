@@ -8,6 +8,7 @@ import cPickle as pickle
 
 from Tinker_MF import dn_dlogM
 from Tinker_MF import tinker_params
+import Tinker_MF as tinker
 
 from orphics.tools.output import Plotter
 from orphics.theory.cosmology import Cosmology
@@ -18,6 +19,65 @@ from orphics.analysis.flatMaps import interpolateGrid
 import szlib.szlibNumbafied as fast
 from scipy.special import j0
 
+
+
+class SampleVariance(object):
+    @timeit
+    def __init__(self,cc,Mexprange,z_arr):
+
+        hmf = Halo_MF(cc)
+        self.cc = cc
+        self.kh, self.z, self.pk, self.s8 = hmf.pk(z_arr)
+        self.Mexp = Mexprange
+        self.chis = self.cc.results.comoving_radial_distance(z_arr)
+        
+        self.PofElls = []
+        for i,chi in enumerate(self.chis):
+            pfunc = interp1d(self.kh,self.pk[i,:])
+            self.PofElls.append(lambda ell: pfunc(ell/chi))
+            # print self.PofElls[i](1000)
+        
+
+    def haloBias(self):
+        ac = 0.75
+        pc = 0.3
+        dc = 1.69
+
+        R = tinker.radius_from_mass(10**self.Mexp, self.cc.rhoc0om)
+        sigsq = tinker.sigma_sq_integral(R, self.pk[:,:], self.kh)
+
+
+        return 1. + ((ac*dc**2./sigsq-1.)/dc) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
+
+    @timeit
+    def sample_variance_overNsquared(self,fsky,lmax=1000):
+        import healpy as hp
+        frac = 1.-fsky
+        nsides_allowed = 2**np.arange(5,13,1)
+        nside_min = int((lmax+1.)/3.)
+        nside = nsides_allowed[nsides_allowed>nside_min][0]
+        npix = 12*nside**2
+
+        hpmap = np.ones(npix)/(1.-frac)
+        hpmap[:int(npix*frac)] = 0
+        alms = hp.map2alm(hpmap)
+
+        ellrange  = np.arange(2,lmax,1)
+        for i,(chi,dchi) in enumerate(zip(self.chis,np.diff(self.chis))):
+            Pl = self.PofElls[i](ellrange)
+            Pl = np.insert(Pl,0,0)
+            Pl = np.insert(Pl,0,0)
+            hp.almxfl(alms,np.sqrt(Pl),inplace=True)
+
+            power = (alms*alms.conjugate()).real/chi/chi/dchi
+            print power.sum()
+        #print hpmap.mean(),power.sum()*(1.-frac)/4./np.pi
+
+
+
+        print nside_min
+
+
 def f_nu(cc,nu):
     mu = cc.c['H_CGS']*(1e9*nu)/(cc.c['K_CGS']*cc.c['TCMB'])
     ans = mu*coth(mu/2.0) - 4.0
@@ -25,8 +85,8 @@ def f_nu(cc,nu):
 
 
 class ClusterCosmology(Cosmology):
-    def __init__(self,paramDict,constDict,lmax=None,clTTFixFile=None,skipCls=False):
-        Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls)
+    def __init__(self,paramDict,constDict,lmax=None,clTTFixFile=None,skipCls=False,pickling=False):
+        Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls,pickling)
         self.rhoc0om = self.rho_crit0H100*self.om
 
 

@@ -138,6 +138,12 @@ for i,param in enumerate(paramList):
 
 
 try:
+    print "(1-b) 1-sigma : "+ str(errDict['b_ym']*100./0.8) + " %"
+except:
+    pass
+
+
+try:
     print "Mnu 1-sigma : "+ str(errDict['mnu']*1000) + " meV"
 except:
     pass

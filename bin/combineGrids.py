@@ -94,7 +94,7 @@ jointgrid = np.sqrt(1./jointgridsqinv)
 # pl.add(outzgrid,sngrid[np.where(np.isclose(outmgrid,14.7)),:].ravel(),ls=ls,label=lab+" 10^14.7 Msol/h")
 
 pl.legendOn(loc='upper right',labsize=8)
-pl.done("output/slice.png")
+pl.done("output/slice.pdf")
 
 
 from orphics.tools.output import Plotter
