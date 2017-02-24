@@ -6,7 +6,7 @@ numParams = 1
 numCores = 2*numParams+1
 expList = ['SO-5m-noatm','SO-6m-noatm','SO-7m-noatm']#,'S4-5m','S4-6m','S4-7m']
 #expList = ['AdvAct']
-calList = ['owl2']#,'owl1']
+calList = ['owl2']#'owl1']
 
 for exp in expList:
 

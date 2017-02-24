@@ -30,9 +30,15 @@ class SampleVariance(object):
         self.kh, self.z, self.pk, self.s8 = hmf.pk(z_arr)
         self.Mexp = Mexprange
         self.chis = self.cc.results.comoving_radial_distance(z_arr)
+
+        pl = Plotter(scaleY='log',scaleX='log')
+        pl.add(self.kh,self.pk[0,:])
+        pl.add(self.kh,self.pk[-1,:])
+        pl.done("output/pk.png")
         
         self.PofElls = []
         for i,chi in enumerate(self.chis):
+            print chi
             pfunc = interp1d(self.kh,self.pk[i,:])
             self.PofElls.append(lambda ell: pfunc(ell/chi))
             # print self.PofElls[i](1000)
@@ -65,6 +71,7 @@ class SampleVariance(object):
         ellrange  = np.arange(2,lmax,1)
         for i,(chi,dchi) in enumerate(zip(self.chis,np.diff(self.chis))):
             Pl = self.PofElls[i](ellrange)
+            #print Pl
             Pl = np.insert(Pl,0,0)
             Pl = np.insert(Pl,0,0)
             hp.almxfl(alms,np.sqrt(Pl),inplace=True)
