@@ -24,10 +24,9 @@ from scipy.special import j0
 class SampleVariance(object):
     @timeit
     def __init__(self,cc,Mexprange,z_arr,lmax=1000):
-
         hmf = Halo_MF(cc)
         self.cc = cc
-        self.kh, self.z, self.pk, self.s8 = hmf.pk(z_arr)
+        self.kh, self.pk = hmf.pk(z_arr)
         self.Mexp = Mexprange
         self.chis = self.cc.results.comoving_radial_distance(z_arr)
         self.zs = z_arr
@@ -36,7 +35,7 @@ class SampleVariance(object):
         self.PofElls = []
         for i,chi in enumerate(self.chis):
             pfunc = interp1d(self.kh,self.pk[i,:])
-            self.PofElls.append(lambda ell,chi: pfunc(ell/chi))
+            self.PofElls.append(lambda ell,chi: pfunc(ell*self.cc.h/chi))
         
 
     def haloBias(self):
@@ -73,7 +72,7 @@ class SampleVariance(object):
             Pl = np.insert(Pl,0,0)
             alms = hp.almxfl(alms_original.copy(),np.sqrt(Pl))
             power = (alms*alms.conjugate()).real/chi/chi/dchi
-
+            print power.sum()
 
 
 
@@ -121,21 +120,32 @@ class ClusterCosmology(Cosmology):
 
     
 class Halo_MF:
-    def __init__(self,clusterCosmology):
+    def __init__(self,clusterCosmology,overRidePowerSpectra=None):
         self.cc = clusterCosmology
+        self.override = overRidePowerSpectra
 
+    @timeit
     def pk(self,z_arr):
-        #Using CAMB to get p of k
-        
-        
+        if self.override is not None:
+            cambOutFile = lambda z: override+"_matterpower_"+str(z)+".dat"
+            for i,z in enumerate(z_arr):
+                kh_camb,P_camb = np.loadtxt(override(z),unpack=True)
+                if i==0:
+                    pk = np.zeros((z_arr.size,kh_camb.size))
+                pk[i,:] = P_camb
+
+            return kh_camb,pk
+        #Using pyCAMB to get p of k
+
         self.cc.pars.set_matter_power(redshifts=z_arr, kmax=11.0)
         self.cc.pars.Transfer.high_precision = True
         
         self.cc.pars.NonLinear = model.NonLinear_none
         self.cc.results = camb.get_results(self.cc.pars)
         kh2, z2, pk2 = self.cc.results.get_matter_power_spectrum(minkh=2e-5, maxkh=11, npoints = 200,)
-        s8 = np.array(self.cc.results.get_sigma8())
-        return kh2, z2, pk2, s8
+        # s8 = np.array(self.cc.results.get_sigma8())
+        #return kh2, z2, pk2, s8
+        return kh2, pk2
     
     def Halo_Tinker_test(self):
         
@@ -150,7 +160,8 @@ class Halo_MF:
         start = time.clock()
         
         #get p of k and s8 
-        kh, z, pk, s8 = self.pk(z_arr)
+        #kh, z, pk, s8 = self.pk(z_arr)
+        kh, pk = self.pk(z_arr)
         # dn_dlogM from tinker
         N = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts,kh,pk[:1,:])
         N_8 = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts_8,kh,pk[:1,:])
@@ -182,10 +193,11 @@ class Halo_MF:
     def dn_dM(self,M,z_arr,delta):
         #Mass Function
         delts = z_arr*0 + delta
-        kh, z, pk, s8 = self.pk(z_arr)
+        #kh, z, pk, s8 = self.pk(z_arr)
+        kh, pk = self.pk(z_arr)
         #fac = (self.cc.s8/s8[-1])**2 # sigma8 values are in reverse order
         #pk *= fac
-        print "s8", np.max(s8)
+        # print "s8", np.max(s8)
     
         dn_dlnm = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts,kh,pk[:,:],'comoving')
         dn_dm = dn_dlnm/M

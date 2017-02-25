@@ -23,5 +23,8 @@ zrange = np.arange(0.05,1.0,0.1)
 
 sv = SampleVariance(cc,mrange,zrange)
 hb = sv.haloBias()
-
-sv.sample_variance_overNsquared(fsky=0.5,lmax=500)
+print hb
+pl = Plotter()
+pl.plot2d(hb)
+pl.done("output/hb.png")
+#sv.sample_variance_overNsquared(fsky=0.5,lmax=500)

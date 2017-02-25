@@ -121,6 +121,8 @@ if rank==0:
     else:
         raise ValueError
 
+    massMultiplier = Config.getfloat('general','mass_calib_factor')
+
 else:
     inParamList = None
     stepSizes = None
@@ -138,6 +140,7 @@ else:
     freq = None
     lknee = None
     alpha = None
+    massMultiplier = None
 
 if rank==0: print "Broadcasting..."
 inParamList = comm.bcast(inParamList, root = 0)
@@ -156,6 +159,7 @@ noise = comm.bcast(noise, root = 0)
 freq = comm.bcast(freq, root = 0)
 lknee = comm.bcast(lknee, root = 0)
 alpha = comm.bcast(alpha, root = 0)
+massMultiplier = comm.bcast(massMultiplier, root = 0)
 if rank==0: print "Broadcasted."
 
 myParamIndex = (rank+1)/2-1
@@ -176,7 +180,7 @@ elif rank%2==0:
 if rank!=0: print rank,myParam,fparams[myParam],passParams[myParam]
 cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(clusterCosmology=cc)
-dN_dmqz = HMF.N_of_mqz_SZ(lndM,zrange,mexprange,qbins,beam,noise,freq,clusterDict,lknee,alpha)
+dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,zrange,mexprange,qbins,beam,noise,freq,clusterDict,lknee,alpha)
 
 if rank==0: 
     np.save("data/N_dzmq_"+saveId+"_fid",dN_dmqz)
