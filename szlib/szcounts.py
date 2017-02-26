@@ -19,7 +19,19 @@ from orphics.analysis.flatMaps import interpolateGrid
 import szlib.szlibNumbafied as fast
 from scipy.special import j0
 
+def haloBias(Mexp,rhoc0m,kh,pk):
+    ac = 0.75
+    pc = 0.3
+    dc = 1.69
 
+    R = tinker.radius_from_mass(10**Mexp, rhoc0om)
+    sigsq = tinker.sigma_sq_integral(R, pk[:,:], kh)
+
+
+    return 1. + ((ac*dc**2./sigsq-1.)/dc) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
+
+def sampleVarianceOverNsquare(cc,Mexprange,z_arr,lmax=1000):
+    
 
 class SampleVariance(object):
     @timeit
@@ -120,16 +132,16 @@ class ClusterCosmology(Cosmology):
 
     
 class Halo_MF:
-    def __init__(self,clusterCosmology,overRidePowerSpectra=None):
+    def __init__(self,clusterCosmology,overridePowerSpectra=None):
         self.cc = clusterCosmology
-        self.override = overRidePowerSpectra
+        self.override = overridePowerSpectra
 
     @timeit
     def pk(self,z_arr):
         if self.override is not None:
-            cambOutFile = lambda z: override+"_matterpower_"+str(z)+".dat"
+            cambOutFile = lambda z: self.override+"_matterpower_"+str(z)+".dat"
             for i,z in enumerate(z_arr):
-                kh_camb,P_camb = np.loadtxt(override(z),unpack=True)
+                kh_camb,P_camb = np.loadtxt(cambOutFile(z),unpack=True)
                 if i==0:
                     pk = np.zeros((z_arr.size,kh_camb.size))
                 pk[i,:] = P_camb
@@ -259,8 +271,6 @@ class Halo_MF:
         for ii in xrange (len(z_arr)-1):
             i = ii + 1
             M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M,500,z_arr[i])
-            #dM200[:,i] = np.gradient(M200[:,i])
-            #dM200[:,i] = np.diff(M200[:,i])
             for j in xrange(len(M)):
                 try:
                     assert fileFunc is not None

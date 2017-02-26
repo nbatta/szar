@@ -79,6 +79,7 @@ baoFile = Config.get('fisher','baoFile')
 
 # Number of non-SZ params (params that will be in Planck/BAO)
 numCosmo = Config.getint('fisher','numCosmo')
+#padCosmo = Config.getint('fisher','padCosmo')
 numLeft = len(paramList) - numCosmo
 fisherPlanck = 0.
 if planckFile!='':

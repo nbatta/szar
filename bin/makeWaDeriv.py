@@ -46,23 +46,19 @@ if rank==0:
     expName = sys.argv[1]
     calName = sys.argv[2]
     calFile = sys.argv[3]
+    powerFile = sys.argv[4]
+    stepSize = float(sys.argv[5])
 
-    # Let's read in all parameters that can be varied by looking
-    # for those that have step sizes specified. All the others
-    # only have fiducials.
     iniFile = "input/pipeline.ini"
     Config = SafeConfigParser()
     Config.optionxform=str
     Config.read(iniFile)
 
-    paramList = [] # the parameters that can be varied
-    fparams = {}   # the 
+    fparams = {} 
     for (key, val) in Config.items('params'):
         if ',' in val:
             param, step = val.split(',')
-            paramList.append(key)
             fparams[key] = float(param)
-            stepSizes[key] = float(step)
         else:
             fparams[key] = float(val)
 
@@ -104,8 +100,6 @@ if rank==0:
     massMultiplier = Config.getfloat('general','mass_calib_factor')
 
 else:
-    inParamList = None
-    stepSizes = None
     fparams = None
     mexprange = None
     zrange = None
@@ -121,10 +115,9 @@ else:
     lknee = None
     alpha = None
     massMultiplier = None
+    powerFile = None
 
 if rank==0: print "Broadcasting..."
-inParamList = comm.bcast(inParamList, root = 0)
-stepSizes = comm.bcast(stepSizes, root = 0)
 fparams = comm.bcast(fparams, root = 0)
 mexprange = comm.bcast(mexprange, root = 0)
 zrange = comm.bcast(zrange, root = 0)
@@ -140,50 +133,42 @@ freq = comm.bcast(freq, root = 0)
 lknee = comm.bcast(lknee, root = 0)
 alpha = comm.bcast(alpha, root = 0)
 massMultiplier = comm.bcast(massMultiplier, root = 0)
+powerFile = comm.bcast(powerFile, root = 0)
 if rank==0: print "Broadcasted."
 
-myParamIndex = (rank+1)/2-1
 passParams = fparams.copy()
 
 
 # If boss, do the fiducial. If odd rank, the minion is doing an "up" job, else doing a "down" job
 if rank==0:
-    pass
+    override = None
 elif rank%2==1:
-    myParam = inParamList[myParamIndex]
-    passParams[myParam] = fparams[myParam] + stepSizes[myParam]/2.
+    override = powerFile + "Up"
 elif rank%2==0:
-    myParam = inParamList[myParamIndex]
-    passParams[myParam] = fparams[myParam] - stepSizes[myParam]/2.
+    override = powerFile + "Dn"
 
-
-if rank!=0: print rank,myParam,fparams[myParam],passParams[myParam]
-cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
-HMF = Halo_MF(clusterCosmology=cc)
-dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,zrange,mexprange,qbins,beam,noise,freq,clusterDict,lknee,alpha)
+    
 
 if rank==0: 
-    np.save("data/N_dzmq_"+saveId+"_fid",dN_dmqz)
-    dUps = {}
-    dDns = {}
 
     print "Waiting for ups and downs..."
     for i in range(1,numcores):
-        data = np.empty(dN_dmqz.shape, dtype=np.float64)
+        data = np.empty((mexprange.size,zrange.size-1,qbins.size), dtype=np.float64)
         comm.Recv(data, source=i, tag=77)
-        myParamIndex = (i+1)/2-1
         if i%2==1:
-            dUps[inParamList[myParamIndex]] = data.copy()
+            dUps = data.copy()
         elif i%2==0:
-            dDns[inParamList[myParamIndex]] = data.copy()
+            dDns = data.copy()
 
-    for param in inParamList:
-        dN = (dUps[param]-dDns[param])/stepSizes[param]
-        np.save("data/dNup_dzmq_"+saveId+"_"+param,dUps[param])
-        np.save("data/dNdn_dzmq_"+saveId+"_"+param,dDns[param])
-        np.save("data/dN_dzmq_"+saveId+"_"+param,dN)
+    dN = (dUps-dDns)/stepSize
+    np.save("data/dNup_dzmq_"+saveId+"_wa",dUps)
+    np.save("data/dNdn_dzmq_"+saveId+"_wa",dDns)
+    np.save("data/dN_dzmq_"+saveId+"_wa",dN)
         
 else:
+    cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
+    HMF = Halo_MF(clusterCosmology=cc,overridePowerSpectra=override)
+    dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,zrange,mexprange,qbins,beam,noise,freq,clusterDict,lknee,alpha)
     data = dN_dmqz.astype(np.float64)
     comm.Send(data, dest=0, tag=77)
 
