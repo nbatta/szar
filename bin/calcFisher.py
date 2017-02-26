@@ -26,7 +26,7 @@ def getTotN(Nmqz,mgrid,zgrid,qbins,returnNz=False):
 
 expName = sys.argv[1]
 calName = sys.argv[2]
-saveName = sys.argv[3]
+fishName = sys.argv[3]
 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
@@ -63,7 +63,9 @@ dm = np.diff(10**mgrid)
 dz = np.diff(zgrid)
 
 # Fisher params
-paramList = Config.get('fisher','paramList').split(',')
+fishSection = 'fisher-'+fishName
+paramList = Config.get(fishSection,'paramList').split(',')
+saveName = Config.get(fishSection,'saveSuffix')
 numParams = len(paramList)
 Fisher = np.zeros((numParams,numParams))
 paramCombs = itertools.combinations_with_replacement(paramList,2)
@@ -74,12 +76,14 @@ N_fid = N_fid[:,:zlen,:]*fsky
 print "Total number of clusters: ", getTotN(N_fid,mgrid,zgrid,qbins)
 
 # Planck and BAO Fishers
-planckFile = Config.get('fisher','planckFile')
-baoFile = Config.get('fisher','baoFile')
+planckFile = Config.get(fishSection,'planckFile')
+try:
+    baoFile = Config.get(fishSection,'baoFile')
+except:
+    baoFile = ''
 
 # Number of non-SZ params (params that will be in Planck/BAO)
-numCosmo = Config.getint('fisher','numCosmo')
-#padCosmo = Config.getint('fisher','padCosmo')
+numCosmo = Config.getint(fishSection,'numCosmo')
 numLeft = len(paramList) - numCosmo
 fisherPlanck = 0.
 if planckFile!='':

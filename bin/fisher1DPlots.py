@@ -3,6 +3,7 @@ matplotlib.use('Agg')
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle
 import sys
+import numpy as np
 
 from orphics.tools.io import FisherPlots
 
@@ -31,14 +32,16 @@ for (key, val) in Config.items('params'):
     fparams[key] = float(param)
 
 
-#noatm = ""
-noatm = "-noatm"
+noatm = ""
+#noatm = "-noatm"
 
 #cal = "CMB_all"
 cal = "owl2"
 
-cosmoFisher = "planck_mwcdm"
+cosmoFisher = "planck_mcdm"#_cvltau"
 derivSet = "wstep"
+
+paramName = "mnu"
 
 cmbfisher3 = getFisher("S4-3m"+noatm,cal,cosmoFisher,paramList,derivSet)
 cmbfisher5 = getFisher("S4-5m"+noatm,cal,cosmoFisher,paramList,derivSet)
@@ -47,8 +50,13 @@ cmbfisher7 = getFisher("S4-7m"+noatm,cal,cosmoFisher,paramList,derivSet)
 
 
 fplots = FisherPlots(paramList,paramLatexList,fparams)
-fplots.addFisher('cmb3',cmbfisher3)
-fplots.addFisher('cmb5',cmbfisher5)
-fplots.addFisher('cmb6',cmbfisher6)
-fplots.addFisher('cmb7',cmbfisher7)
-fplots.plotPair(['mnu','w0'],['cmb3','cmb5','cmb6','cmb7'],labels=['S4-3m','S4-5m','S4-6m','S4-7m'],saveFile="/gpfs01/astro/www/msyriac/s4resatm_"+cal+noatm+"_"+cosmoFisher+"_"+derivSet+".png")
+fplots.addFisher('S4-3m',cmbfisher3)
+fplots.addFisher('S4-5m',cmbfisher5)
+fplots.addFisher('S4-6m',cmbfisher6)
+fplots.addFisher('S4-7m',cmbfisher7)
+
+listFishers = ['S4-3m','S4-5m','S4-6m','S4-7m']
+
+width = 0.1
+fplots.plot1d(paramName,np.arange(0.06-width,0.06+width,0.001),listFishers,labels=listFishers,saveFile="/gpfs01/astro/www/msyriac/s41dmnu_"+cal+noatm+"_"+cosmoFisher+"_"+derivSet+".png")
+
