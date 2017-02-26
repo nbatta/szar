@@ -108,6 +108,11 @@ for param1,param2 in paramCombs:
     i = paramList.index(param1)
     j = paramList.index(param2)
 
+    if param1=='wa':
+        Nup = np.load("data/dNup_dzmq_"+saveId+"_"+param1+".npy")
+        Ndn = np.load("data/dNdn_dzmq_"+saveId+"_"+param1+".npy")
+        print getTotN(Nup,mgrid,zgrid,qbins)
+        print getTotN(Ndn,mgrid,zgrid,qbins)
 
     assert not(np.any(np.isnan(dN1)))
     assert not(np.any(np.isnan(dN2)))
@@ -149,7 +154,11 @@ try:
 except:
     pass
 try:
-    print "w 1-sigma : "+ str(errDict['w0']*100.) +" %"
+    print "w0 1-sigma : "+ str(errDict['w0']*100.) +" %"
+except:
+    pass
+try:
+    print "wa 1-sigma : "+ str(errDict['wa']) 
 except:
     pass
 
