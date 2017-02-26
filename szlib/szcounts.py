@@ -31,6 +31,18 @@ def haloBias(Mexp,rhoc0m,kh,pk):
     return 1. + ((ac*dc**2./sigsq-1.)/dc) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
 
 def sampleVarianceOverNsquare(cc,Mexprange,z_arr,lmax=1000):
+    hmf = Halo_MF(cc)
+    self.cc = cc
+    self.kh, self.pk = hmf.pk(z_arr)
+    self.Mexp = Mexprange
+    self.chis = self.cc.results.comoving_radial_distance(z_arr)
+    self.zs = z_arr
+
+
+    self.PofElls = []
+    for i,chi in enumerate(self.chis):
+        pfunc = interp1d(self.kh,self.pk[i,:])
+        self.PofElls.append(lambda ell,chi: pfunc(ell*self.cc.h/chi))
     
 
 class SampleVariance(object):
