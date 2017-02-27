@@ -23,8 +23,18 @@ Config.optionxform=str
 Config.read(iniFile)
 
 
-paramList = Config.get('fisher','paramList').split(',')
-paramLatexList = Config.get('fisher','paramLatexList').split(',')
+fishSection = "mnu-w"
+noatm = ""
+#noatm = "-noatm"
+#cal = "CMB_all"
+#cal = "owl2"
+derivSet = "wstep"
+
+
+cosmoFisher = Config.get('fisher-'+fishSection,'saveSuffix')
+
+paramList = Config.get('fisher-'+fishSection,'paramList').split(',')
+paramLatexList = Config.get('fisher-'+fishSection,'paramLatexList').split(',')
 fparams = {} 
 for (key, val) in Config.items('params'):
     param = val.split(',')[0]
@@ -32,32 +42,26 @@ for (key, val) in Config.items('params'):
 
 
 
-#owlfisher1 = getFisher("SO-7m","owl1","planck_mwcdm",paramList)
-#owlfisher52 = getFisher("SO-5m","owl2","planck_mwcdm",paramList)
-#cmbfisher5cvl = getFisher("SO-5m","CMB_all","planck_mwcdm_cvltau",paramList)
-#cmbfisher5 = getFisher("SO-5m-noatm","CMB_all","planck_mwcdm",paramList)
-#cmbfisher6 = getFisher("SO-6m-noatm","CMB_all","planck_mwcdm",paramList)
-#cmbfisher7 = getFisher("SO-7m-noatm","CMB_all","planck_mwcdm",paramList)
-cmbfisher5 = getFisher("SO-5m-noatm","CMB_all","planck_mwcdm",paramList,"wstep")
-cmbfisher52x = getFisher("SO-5m-noatm","CMB_all","planck_mwcdm",paramList,"wstep2x")
-# cmbfisher6 = getFisher("SO-6m-noatm","owl2","planck_mwcdm",paramList)
-# cmbfisher7 = getFisher("SO-7m-noatm","owl2","planck_mwcdm",paramList)
-#cmbfisher47 = getFisher("S4-7m","CMB_all","planck_mwcdm",paramList)
-#cmbfisher7so = getFisher("SO-7m","CMB_all","planck_mwcdm",paramList)
+"""RES STUDY"""
+# cmbfisher3 = getFisher("S4-3m"+noatm,cal,cosmoFisher,paramList,derivSet)
+# cmbfisher5 = getFisher("S4-5m"+noatm,cal,cosmoFisher,paramList,derivSet)
+# cmbfisher6 = getFisher("S4-6m"+noatm,cal,cosmoFisher,paramList,derivSet)
+# cmbfisher7 = getFisher("S4-7m"+noatm,cal,cosmoFisher,paramList,derivSet)
+# fplots = FisherPlots(paramList,paramLatexList,fparams)
+# fplots.addFisher('cmb3',cmbfisher3)
+# fplots.addFisher('cmb5',cmbfisher5)
+# fplots.addFisher('cmb6',cmbfisher6)
+# fplots.addFisher('cmb7',cmbfisher7)
+# fplots.plotPair(['mnu','w0'],['cmb3','cmb5','cmb6','cmb7'],labels=['S4-3m','S4-5m','S4-6m','S4-7m'],saveFile="/gpfs01/astro/www/msyriac/s4resatm_"+cal+noatm+"_"+cosmoFisher+"_"+derivSet+".png")
 
-
+"""OWL"""
+res = "7m"
+owl2 = getFisher("S4-"+res+noatm,"owl2",cosmoFisher,paramList,derivSet)
+owl1 = getFisher("S4-"+res+noatm,"owl1",cosmoFisher,paramList,derivSet)
 fplots = FisherPlots(paramList,paramLatexList,fparams)
-#fplots.addFisher('owl52',owlfisher52)
-fplots.addFisher('cmb5',cmbfisher5)
-fplots.addFisher('cmb52x',cmbfisher52x)
-#fplots.addFisher('cmb6',cmbfisher6)
-#fplots.addFisher('cmb7',cmbfisher7)
-#fplots.addFisher('cmb47',cmbfisher47)
-#fplots.addFisher('cmb7so',cmbfisher7so)
-#fplots.trianglePlot(['H0','mnu','w'],['planckS4OWLClusters','planckS4CMBClusters'],['-','--'])
-#fplots.plotPair(['mnu','w0'],['cmb5','cmb6','cmb7'],labels=['SO-5m','SO-6m','SO-7m'],saveFile="output/test.png")
-#fplots.plotPair(['mnu','w0'],['cmb5','cmb7'],labels=['S4-5m','S4-7m'],saveFile="output/test.png")
-#fplots.plotPair(['mnu','w0'],['owl2','cmb7'],labels=['LSST z<2','S4-7m'],saveFile="output/owlcmb2.png")
-#fplots.plotPair(['mnu','w0'],['owl52','cmb5'],labels=['SO-5m + LSST','SO-5m + internal \n (CMB halo lensing)'],saveFile="output/soint.png")
-#fplots.plotPair(['mnu','w0'],['cmb5','cmb6','cmb7'],labels=['SO-5m internal','SO-6m internal','SO-7m internal'],saveFile="output/sores_cvltau.png")
-fplots.plotPair(['mnu','w0'],['cmb5','cmb52x'],labels=['SO-5m no-atm','SO-5m 2x mass error'],saveFile="output/socomp2x.png")
+fplots.addFisher('S4-'+res+'-owl2',owl2)
+fplots.addFisher('S4-'+res+'-owl1',owl1)
+listFishers = ['S4-'+res+'-owl2','S4-'+res+'-owl1']
+labFishers = ['S4-'+res+' + LSST-like ($z<2$)','S4-'+res+' + LSST-like ($z<1$)']
+
+fplots.plotPair(['mnu','w0'],listFishers,labels=labFishers,saveFile="/gpfs01/astro/www/msyriac/s42d_mnuw0_OWL"+res+"_"+noatm+"_"+cosmoFisher+"_"+derivSet+".png")

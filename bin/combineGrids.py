@@ -22,7 +22,7 @@ dms = []
 dzs = []
 
 from orphics.tools.output import Plotter
-pl = Plotter(labelX="$z$",labelY="S/N per cluster",ftsize=14)
+#pl = Plotter(labelX="$z$",labelY="S/N per cluster",ftsize=14)
 
 for gridFile,ls,lab in zip(gridList,['-','--'],['CMB lensing','optical lensing']):
 
@@ -46,18 +46,18 @@ for gridFile,ls,lab in zip(gridList,['-','--'],['CMB lensing','optical lensing']
 
     sngrid = 1./errgrid
     
-    # pgrid = np.rot90(sngrid)
-    # pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
-    # pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],levels=[1.0,3.0,5.0],labsize=14)
-    # pl.done("output/"+gridFile+".png")
+    pgrid = np.rot90(sngrid)
+    pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
+    pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],levels=[3.0,5.0],labsize=14,aspect="auto")
+    pl.done("output/"+gridFile+".png")
 
-    pl.add(zgrid,sngrid[np.where(np.isclose(mexpgrid,14.0)),:].ravel(),ls=ls,label=lab+" 10^14 Msol/h")
-    pl.add(zgrid,sngrid[np.where(np.isclose(mexpgrid,14.3)),:].ravel(),ls=ls,label=lab+" 10^14.3 Msol/h")
-    pl.add(zgrid,sngrid[np.where(np.isclose(mexpgrid,14.5)),:].ravel(),ls=ls,label=lab+" 10^14.5 Msol/h")
-    pl.add(zgrid,sngrid[np.where(np.isclose(mexpgrid,14.7)),:].ravel(),ls=ls,label=lab+" 10^14.7 Msol/h")
-    plt.gca().set_color_cycle(None)
+    # pl.add(zgrid,sngrid[np.where(np.isclose(mexpgrid,14.0)),:].ravel(),ls=ls,label=lab+" 10^14 Msol/h")
+    # pl.add(zgrid,sngrid[np.where(np.isclose(mexpgrid,14.3)),:].ravel(),ls=ls,label=lab+" 10^14.3 Msol/h")
+    # pl.add(zgrid,sngrid[np.where(np.isclose(mexpgrid,14.5)),:].ravel(),ls=ls,label=lab+" 10^14.5 Msol/h")
+    # pl.add(zgrid,sngrid[np.where(np.isclose(mexpgrid,14.7)),:].ravel(),ls=ls,label=lab+" 10^14.7 Msol/h")
+    # plt.gca().set_color_cycle(None)
 
-
+sys.exit()
 
 outmgrid = np.arange(min(mmins),max(mmaxes),min(dms))
 outzgrid = np.arange(min(zmins),max(zmaxes),min(dzs))
