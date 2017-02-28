@@ -109,6 +109,7 @@ def f_nu(cc,nu):
 
 class ClusterCosmology(Cosmology):
     def __init__(self,paramDict,constDict,lmax=None,clTTFixFile=None,skipCls=False,pickling=False):
+        #Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls)
         Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls,pickling)
         self.rhoc0om = self.rho_crit0H100*self.om
 
