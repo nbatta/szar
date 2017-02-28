@@ -68,6 +68,7 @@ class SampleVariance(object):
         dc = 1.69
 
         R = tinker.radius_from_mass(10**self.Mexp, self.cc.rhoc0om)
+        R = np.resize(R,(self.Mexp.size,self.pk[:,0].size))
         sigsq = tinker.sigma_sq_integral(R, self.pk[:,:], self.kh)
 
 

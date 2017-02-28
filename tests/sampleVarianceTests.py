@@ -19,7 +19,7 @@ clusterDict = dictFromSection(Config,clusterParams)
 cc = ClusterCosmology(cosmoDict,constDict,lmax,pickling=True)
 
 mrange = np.arange(14.,15.,0.1)
-zrange = np.arange(0.05,1.0,0.1)
+zrange = np.arange(0.05,1.0,0.05)
 
 sv = SampleVariance(cc,mrange,zrange)
 hb = sv.haloBias()
