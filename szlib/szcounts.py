@@ -109,11 +109,8 @@ def f_nu(cc,nu):
 
 class ClusterCosmology(Cosmology):
     def __init__(self,paramDict,constDict,lmax=None,clTTFixFile=None,skipCls=False,pickling=False):
-        #Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls)
         Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls,pickling)
         self.rhoc0om = self.rho_crit0H100*self.om
-
-
         
     def E_z(self,z):
         #hubble function
@@ -135,16 +132,12 @@ class ClusterCosmology(Cosmology):
         #spherical overdensity radius w.r.t. the mean matter density
         return fast.rdel_m(M,z,delta,self.rhoc0om)
 
-
     def Mass_con_del_2_del_mean200(self,Mdel,delta,z):
         #Mass conversion critical to mean overdensity, needed because the Tinker Mass function uses mean matter
         rhocz = self.rhoc(z)
         ERRTOL = self.c['ERRTOL']        
         return fast.Mass_con_del_2_del_mean200(Mdel,delta,z,rhocz,self.rhoc0om,ERRTOL)
 
-
-
-    
 class Halo_MF:
     def __init__(self,clusterCosmology,overridePowerSpectra=None,multiplyZ=(0,1)):
         self.cc = clusterCosmology
@@ -189,19 +182,12 @@ class Halo_MF:
         delts_8 = z_arr*0 + 800.
         delts_32 = z_arr*0 + 3200.
     
-        # start timer
-        start = time.clock()
-        
         #get p of k and s8 
-        #kh, z, pk, s8 = self.pk(z_arr)
         kh, pk = self.pk(z_arr)
         # dn_dlogM from tinker
         N = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts,kh,pk[:1,:])
         N_8 = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts_8,kh,pk[:1,:])
         N_32 = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts_32,kh,pk[:1,:])
-        
-        elapsed1 = (time.clock() - start)
-        #print elapsed1 
         
         #plot tinker values
         pl = Plotter()
@@ -219,7 +205,6 @@ class Halo_MF:
         dV_dz = DA_z**2 * (1.+z_arr)**2
         for i in xrange (len(z_arr)):
             dV_dz[i] /= (self.cc.results.h_of_z(z_arr[i]))
-        #print (results.h_of_z(z_arr[i])),z_arr[i],100. * 1e5/2.99792458e10*hh
         dV_dz *= (self.cc.H0/100.)**3. # was h0
         return dV_dz
 
