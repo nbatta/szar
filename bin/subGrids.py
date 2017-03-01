@@ -2,15 +2,15 @@ import time
 import os
 
 
-#expList = ['SO-5m','SO-6m','SO-7m','S4-5m','S4-6m','S4-7m']
-expList = ['S4-5m-noatm','S4-6m-noatm','S4-7m-noatm']
+expList = ['SO-3m','SO-5m','SO-6m','SO-7m','S4-3m','S4-5m','S4-6m','S4-7m']
+#expList = ['S4-5m-noatm','S4-6m-noatm','S4-7m-noatm']
 #expList = ['AdvAct']
-calList = ['CMB_pol']#,'CMB_pol']#,'OWL1','OWL2','CMBAllOWL1','CMBAllOWL2','CMBPolOWL1','CMBPolOWL#expList = ['SO-6m','SO-7m','S4-5m','S4-6m','S4-7m']
+calList = ['CMB_all_coarse','CMB_pol_coarse']#,'CMB_pol']#,'OWL1','OWL2','CMBAllOWL1','CMBAllOWL2','CMBPolOWL1','CMBPolOWL#expList = ['SO-6m','SO-7m','S4-5m','S4-6m','S4-7m']
 #calList = ['CMB_all_nodelens','CMB_pol_nodelens','CMB_all','CMB_pol']#,'OWL1','OWL2','CMBAllOWL1','CMBAllOWL2','CMBPolOWL1','CMBPolOWL2']
 #expList = ['S4-7m']
 #calList = ['CMB_all']#,'OWL1','OWL2','CMBAllOWL1','CMBAllOWL2','CMBPolOWL1','CMBPolOWL2']
 
-numCores = 93
+numCores = 31
 
 for exp in expList:
     for cal in calList:
