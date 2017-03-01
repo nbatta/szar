@@ -146,33 +146,39 @@ class ClusterCosmology(Cosmology):
 
     
 class Halo_MF:
-    def __init__(self,clusterCosmology,overridePowerSpectra=None):
+    def __init__(self,clusterCosmology,overridePowerSpectra=None,multiplyZ=(0,1)):
         self.cc = clusterCosmology
         self.override = overridePowerSpectra
+        self.multiplyZ = multiplyZ
 
     @timeit
-    def pk(self,z_arr):
+    def pk(self,z_arr,multiplyZ=None,useStored=False):
+        if multiplyZ is None: multiplyZ = self.multiplyZ
+        multIndex, multVal = multiplyZ 
+        assert multIndex>=0
+        assert multIndex<z_arr.size
         if self.override is not None:
             cambOutFile = lambda z: self.override+"_matterpower_"+str(z)+".dat"
             for i,z in enumerate(z_arr):
                 kh_camb,P_camb = np.loadtxt(cambOutFile(z),unpack=True)
                 if i==0:
                     pk = np.zeros((z_arr.size,kh_camb.size))
-                pk[i,:] = P_camb
+        else:
+            #Using pyCAMB to get p of k
 
-            return kh_camb,pk
-        
-        #Using pyCAMB to get p of k
+            self.cc.pars.set_matter_power(redshifts=z_arr, kmax=11.0)
+            self.cc.pars.Transfer.high_precision = True
+            
+            self.cc.pars.NonLinear = model.NonLinear_none
+            self.cc.results = camb.get_results(self.cc.pars)
+            #kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=2e-5, maxkh=11, npoints = 200,)
+            kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=1e-4, maxkh=11, npoints = 200)
 
-        self.cc.pars.set_matter_power(redshifts=z_arr, kmax=11.0)
-        self.cc.pars.Transfer.high_precision = True
-        
-        self.cc.pars.NonLinear = model.NonLinear_none
-        self.cc.results = camb.get_results(self.cc.pars)
-        kh2, z2, pk2 = self.cc.results.get_matter_power_spectrum(minkh=2e-5, maxkh=11, npoints = 200,)
-        # s8 = np.array(self.cc.results.get_sigma8())
-        #return kh2, z2, pk2, s8
-        return kh2, pk2
+
+        pk[multIndex,:] = multVal*P_camb
+
+
+        return kh, pk
     
     def Halo_Tinker_test(self):
         

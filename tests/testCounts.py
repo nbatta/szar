@@ -14,10 +14,9 @@ MM = 5.e14
 clusterParams = 'LACluster' # from ini file
 cosmologyName = 'LACosmology' # from ini file
 experimentName = "LATest"
-fileFunc = None
-#fileFunc = lambda M,z:"data/"+experimentName+"_m"+str(M)+"z"+str(z)+".txt"
 
-iniFile = "input/params.ini"
+#iniFile = "input/params.ini"
+iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
@@ -77,7 +76,7 @@ R500 = cc.rdel_c(MM,zz,500.).flatten()[0]
 print R500
 print cc.rhoc(0)
 print cc.rhoc(zz)
-sys.exit()
+#sys.exit()
 DAz = cc.results.angular_diameter_distance(zz) * (cc.H0/100.) 
 thetc = R500/DAz
 print "thetc = ", thetc
