@@ -33,7 +33,7 @@ def haloBias(Mexp,rhoc0m,kh,pk):
 def sampleVarianceOverNsquare(cc,Mexprange,z_arr,lmax=1000):
     hmf = Halo_MF(cc)
     self.cc = cc
-    self.kh, self.pk = hmf.pk(z_arr)
+    self.kh, self.pk = hmf.kh, hmf.pk #pk(z_arr)
     self.Mexp = Mexprange
     self.chis = self.cc.results.comoving_radial_distance(z_arr)
     self.zs = z_arr
@@ -50,7 +50,7 @@ class SampleVariance(object):
     def __init__(self,cc,Mexprange,z_arr,lmax=1000):
         hmf = Halo_MF(cc)
         self.cc = cc
-        self.kh, self.pk = hmf.pk(z_arr)
+        self.kh, self.pk = hmf.kh, hmf.pk #hmf.pk(z_arr)
         self.Mexp = Mexprange
         self.chis = self.cc.results.comoving_radial_distance(z_arr)
         self.zs = z_arr
@@ -139,39 +139,30 @@ class ClusterCosmology(Cosmology):
         return fast.Mass_con_del_2_del_mean200(Mdel,delta,z,rhocz,self.rhoc0om,ERRTOL)
 
 class Halo_MF:
-    def __init__(self,clusterCosmology,overridePowerSpectra=None,multiplyZ=(0,1)):
+    def __init__(self,clusterCosmology,zcenters,kh=None,powerZK=None,kmin=2e-5,kmax=11.,knum=200):
         self.cc = clusterCosmology
-        self.override = overridePowerSpectra
-        self.multiplyZ = multiplyZ
+        self.zarr = zcenters
+        self._initPk(kh,powerZK,kmin,kmax,knum)
+        self.DAz = self.cc.results.angular_diameter_distance(z_arr)        
 
-    @timeit
-    def pk(self,z_arr,multiplyZ=None,useStored=False):
-        if multiplyZ is None: multiplyZ = self.multiplyZ
-        multIndex, multVal = multiplyZ 
-        assert multIndex>=0
-        assert multIndex<z_arr.size
-        if self.override is not None:
-            cambOutFile = lambda z: self.override+"_matterpower_"+str(z)+".dat"
-            for i,z in enumerate(z_arr):
-                kh_camb,P_camb = np.loadtxt(cambOutFile(z),unpack=True)
-                if i==0:
-                    pk = np.zeros((z_arr.size,kh_camb.size))
-        else:
-            #Using pyCAMB to get p of k
+    def _pk(self,zarr,kmin=2e-5,kmax=11.,knum=200):
+        self.cc.pars.set_matter_power(redshifts=zarr, kmax=self.kmax)
+        self.cc.pars.Transfer.high_precision = True
+        
+        self.cc.pars.NonLinear = model.NonLinear_none
+        self.cc.results = camb.get_results(self.cc.pars)
+        kh, z, powerZK = self.cc.results.get_matter_power_spectrum(minkh=kmin, maxkh=kmax, npoints = knum)
+        #kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=1e-4, maxkh=11, npoints = 200)
+        return kh, powerZK
 
-            self.cc.pars.set_matter_power(redshifts=z_arr, kmax=11.0)
-            self.cc.pars.Transfer.high_precision = True
-            
-            self.cc.pars.NonLinear = model.NonLinear_none
-            self.cc.results = camb.get_results(self.cc.pars)
-            #kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=2e-5, maxkh=11, npoints = 200,)
-            kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=1e-4, maxkh=11, npoints = 200)
+    def _initPk(self,kh,powerZK,kmin,kmax,knum):
+        
+        if powerZK is None:
+            kh, powerZK = self._pk(self.zarr,kmin,kmax,knum)
 
+        self.kh = kh
+        self.pk = powerZK
 
-        pk[multIndex,:] = multVal*P_camb
-
-
-        return kh, pk
     
     def Halo_Tinker_test(self):
         
@@ -183,7 +174,7 @@ class Halo_MF:
         delts_32 = z_arr*0 + 3200.
     
         #get p of k and s8 
-        kh, pk = self.pk(z_arr)
+        kh, pk = self._pk(z_arr)
         # dn_dlogM from tinker
         N = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts,kh,pk[:1,:])
         N_8 = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts_8,kh,pk[:1,:])
@@ -201,7 +192,7 @@ class Halo_MF:
     
     def dVdz(self,z_arr):
         #dV/dzdOmega
-        DA_z = self.cc.results.angular_diameter_distance(z_arr)
+        DA_z = self.DAz 
         dV_dz = DA_z**2 * (1.+z_arr)**2
         for i in xrange (len(z_arr)):
             dV_dz[i] /= (self.cc.results.h_of_z(z_arr[i]))
@@ -210,14 +201,8 @@ class Halo_MF:
 
     def dn_dM(self,M,z_arr,delta):
         #Mass Function
-        delts = z_arr*0 + delta
-        #kh, z, pk, s8 = self.pk(z_arr)
-        kh, pk = self.pk(z_arr)
-        #fac = (self.cc.s8/s8[-1])**2 # sigma8 values are in reverse order
-        #pk *= fac
-        # print "s8", np.max(s8)
-    
-        dn_dlnm = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts,kh,pk[:,:],'comoving')
+        delts = z_arr*0. + delta
+        dn_dlnm = dn_dlogM(M,z_arr,self.cc.rhoc0om,delts,self.kh,self.pk,'comoving')
         dn_dm = dn_dlnm/M
         return dn_dm
     
