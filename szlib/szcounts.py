@@ -156,6 +156,7 @@ class Halo_MF:
         self._initdVdz(self.zarr)
 
         M = 10.**Mexp
+        self.Mexp = Mexp
         self.M = M
         self.M200 = np.outer(M,np.zeros([len(self.zarr)]))
 
@@ -207,7 +208,7 @@ class Halo_MF:
         N_dzdm = dn_dm[:,1:] * dV_dz[1:]
         return N_dzdm
 
-    def N_of_z(self,fsky):
+    def N_of_z(self):
         # dN/dz(z) = 4pi fsky \int dm dN/dzdmdOmega
         
 
@@ -219,11 +220,38 @@ class Halo_MF:
         for i in xrange (len(z_arr) - 1):
             N_z[i] = np.trapz(dn_dzdm[:,i],self.M200[:,i+1],np.diff(self.M200[:,i+1]))
 
-        return N_z*4.*np.pi*fsky
+        return N_z*4.*np.pi
+
+    @timeit
+    def updateSNGrid(self,pre_sigN=None,pre_YM=None,tmaxN=5,numts=1000):
+        zs = self.zarr
+        M = self.M
+
+        
+        if pre_sigN is None:
+            sigN = np.outer(M,np.zeros([len(zs)]))
+        else:
+            sigN = pre_sigN
+
+        if pre_YM is None:
+            YM = np.outer(M,np.zeros([len(zs)]))
+        else:
+            YM = pre_YM
+
+        if (pre_sigN is None) or (pre_YM is None):
+            for ii in xrange(len(zs)):
+                i = ii + 1
+                for j in xrange(len(M)):
+                    if pre_sigN is None: 
+                        var = self.quickVar(M[j],zs[i],tmaxN,numts)
+                        sigN[j,i] = np.sqrt(var)
+                    if pre_YM is None: YM[j,i] = self.Y_M(M[j],zs[i])
 
 
+        return sigN,YM
 
-    def N_of_z_SZ(self,fsky,SZCluster,tmaxN=5,numts=1000):
+
+    def N_of_z_SZ(self,SZCluster,tmaxN=5,numts=1000):
         # this is dN/dz(z) with selection
 
         z_arr = self.zarr
@@ -236,7 +264,7 @@ class Halo_MF:
             N_z[i] = np.trapz(dn_dzdm[:,i+1]*P_func[:,i+1],self.M200[:,i+1],np.diff(self.M200[:,i+1]))
 
 
-        return N_z* self.dVdz[1:]*4.*np.pi*fsky
+        return N_z* self.dVdz[1:]*4.*np.pi
 
 
     def Mass_err (self,fsky,mass_err,SZCluster,tmaxN=5,numts=1000):
@@ -258,25 +286,26 @@ class Halo_MF:
 
         return 1./err_WL_mass,Ntot
 
-    def N_of_mqz_SZ (self,mass_err,q_arr,beams,noises,freqs,clusterDict,lknee,alpha,tmaxN=5,numts=1000):
+    def N_of_mqz_SZ (self,mass_err,q_arr,SZCluster,tmaxN=5,numts=1000):
         # this is 3D grid for fisher matrix 
 
         z_arr = self.zarr
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
         dNdzmq = np.zeros([len(self.M),len(z_arr)-1,len(q_arr)])
 
-        
+        m_wl = self.Mexp
+
         P_func,YM = SZCluster.Pfunc(self.M,self.M200,self.zarr,tmaxN,numts,doYM=True)
 
-        dn_dVdm = self.dn_dM(M200,z_arr,200.)
+        dn_dVdm = self.dn_dM(self.M200,z_arr,200.)
         dV_dz = self.dVdz
 
         # \int dm  dn/dzdm 
         for kk in xrange(len(q_arr)):
             for jj in xrange(len(m_wl)):
                 for i in xrange (len(z_arr) - 1):
-                    dM = np.diff(M200[:,i+1])
-                    dNdzmq[jj,i,kk] = np.trapz(dn_dVdm[:,i+1]*P_func[:,i,kk]*SZProf.Mwl_prob(10**(m_wl[jj]),M_arr[:,i+1],mass_err[:,i]),M200[:,i+1],dM) * dV_dz[i+1]*4.*np.pi
+                    dM = np.diff(self.M200[:,i+1])
+                    dNdzmq[jj,i,kk] = np.trapz(dn_dVdm[:,i+1]*P_func[:,i,kk]*SZCluster.Mwl_prob(10**(m_wl[jj]),M_arr[:,i+1],mass_err[:,i]),self.M200[:,i+1],dM) * dV_dz[i+1]*4.*np.pi
                    
         return dNdzmq
 
@@ -399,8 +428,9 @@ class SZ_Cluster_Model:
         ans = self.P0 / ((xx*self.xc)**self.gm * (1 + (xx*self.xc)**self.al)**((self.bt-self.gm)/self.al))
         return ans
 
-    @timeit
-    def Pfunc(self,M,M200,z_arr,tmaxN=5,numts=1000,doYM=False):
+
+
+    def Pfunc(self,sigN,YM):
 
         lnYmin = np.log(1e-14)
         dlnY = 0.1
@@ -414,27 +444,17 @@ class SZ_Cluster_Model:
         hh = self.cc.H0/100
 
         P_func = np.outer(M,np.zeros([len(z_arr)]))
-        sigN = np.outer(M,np.zeros([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
-        if doYM: YM   =  np.outer(M,np.ones([len(z_arr)]))
 
 
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
 
 
         for ii in xrange (len(z_arr)-1):
-            i = ii + 1
-            for j in xrange(len(M)):
-                var = self.quickVar(M[j],z_arr[i],tmaxN,numts)
-                sigN[j,i] = np.sqrt(var)
-                if doYM: YM[j,i] = SZProf.Y_M(M[j],z_arr[i])
-                
-            P_func[:,i] = self.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])#*dlnY
+            i = ii + 1               
+            P_func[:,i] = self.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])
 
-        if doYM: 
-            return P_func,YM
-        else:
-            return P_func
+        return P_func
     
     def Prof(self,r,M,z,R500):
         R500 = R500
@@ -594,8 +614,6 @@ class SZ_Cluster_Model:
     def P_of_q (self,lnY,MM,zz,sigma_N):
         lnYa = np.outer(np.ones(len(MM)),lnY)
         
-        #DA_z = self.cc.results.angular_diameter_distance(zz) * (self.cc.H0/100.)
-        
         sig_thresh = self.Y_erf(np.exp(lnYa),sigma_N)
         P_Y = self.P_of_Y(lnYa,MM, zz)
 
@@ -606,9 +624,6 @@ class SZ_Cluster_Model:
 
     def P_of_qn (self,lnY,MM,zz,sigma_N,qarr):
         lnYa = np.outer(np.ones(len(MM)),lnY)
-        #dY = np.outer(np.ones(len(MM)),np.gradient(np.exp(lnY)))
-        
-        #DA_z = self.cc.results.angular_diameter_distance(zz) * (self.cc.H0/100.)
         
         sig_thresh = self.q_prob(qarr,lnYa,sigma_N)
         P_Y = self.P_of_Y(lnYa,MM, zz)
