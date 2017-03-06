@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline as iuSpline
+np.seterr(divide='ignore', invalid='ignore')
 
 # Tinker stuff
 tinker_data = np.transpose([[float(x) for x in line.split()]
@@ -102,7 +103,7 @@ def top_hatf(kR):
     * This is called many times and costs a lot of runtime.
     * For small values, use Taylor series.
     """
-    out = (3*(np.sin(kR) - (kR)*np.cos(kR)))/((kR)**3)
+    out = np.nan_to_num(3*(np.sin(kR) - (kR)*np.cos(kR)))/((kR)**3)
     out[kR<.1] = top_hatf_poly(kR[kR<.1])
     return out
 
