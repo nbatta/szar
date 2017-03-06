@@ -5,7 +5,7 @@ import numpy as np
 from scipy import special
 import matplotlib.pyplot as plt
 import sys, os, time
-from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF
+from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,getTotN
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle
@@ -41,11 +41,11 @@ mfile = "data/S4-7mCMB_all.pkl"
 minrange, zinrange, lndM = pickle.load(open(mfile,'rb'))
 
 
-zs = np.arange(0.5,3.0,0.2)
-Mexp = np.arange(13.5,15.7,0.5)
+# zs = np.arange(0.5,3.0,0.5)
+# Mexp = np.arange(13.5,15.7,0.5)
 
-# zs = np.arange(0.1,3.0,0.1)
-# Mexp = np.arange(13.0,15.7,0.2)
+zs = np.arange(0.1,3.0,0.1)
+Mexp = np.arange(13.0,15.7,0.1)
 
 outmerr = interpolateGrid(lndM,minrange,zinrange,Mexp,zs,regular=False,kind="cubic",bounds_error=False,fill_value=np.inf)
 
@@ -68,10 +68,22 @@ pl.add(zs,N1)
 pl.add(zs,N2)
 
 
-pl.done("output/Ns.png")
 
 
 sn,ntot = hmf.Mass_err(fsky,outmerr,SZProf)
 
 print sn
 print ntot
+
+
+q_arr = np.logspace(np.log10(6.),np.log10(500.),40)
+dnqmz = hmf.N_of_mqz_SZ(outmerr,q_arr,SZProf)
+
+
+N,Nofz = getTotN(dnqmz,10**Mexp,zs,q_arr,returnNz=True)
+
+print N
+
+pl.add(zs,Nofz)
+
+pl.done("output/Ns.png")

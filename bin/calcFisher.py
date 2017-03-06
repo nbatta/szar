@@ -9,18 +9,7 @@ from orphics.tools.io import dictFromSection, listFromConfig
 from orphics.tools.io import Plotter
 import matplotlib.pyplot as plt
 
-def getTotN(Nmqz,mgrid,zgrid,qbins,returnNz=False):
-    """Get total number of clusters given N/DmDqDz
-    and the corresponding log10(mass), z and q grids
-    """
-    Fellnoq = np.trapz(Nmqz,qbins,axis=2)
-    Nofz = np.trapz(Fellnoq.T,10**mgrid,axis=1)
-    N = np.trapz(Nofz.T,zgrid)
-    if returnNz:
-        return N,Nofz
-    else:
-        return N
-
+from szlib.szcounts import getTotN
 
 
 
