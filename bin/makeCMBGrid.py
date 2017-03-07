@@ -43,6 +43,14 @@ if rank==0:
     doLens = not(args.skipLens)
     doSZ = not(args.skipSZ)
 
+    print expName
+    print gridName
+    print lensName
+    print doLens
+    print doSZ
+
+    if doLens: assert lensName!=""
+
     sys.exit()
 
 
