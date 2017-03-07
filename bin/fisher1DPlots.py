@@ -12,7 +12,13 @@ def getFisher(expName,calName,saveName,inParamList,suffix):
     saveId = expName + "_" + calName + "_" + suffix
 
     paramList,FisherTot = pickle.load(open("data/savedFisher_"+saveId+"_"+saveName+".pkl",'rb'))
-    assert paramList==inParamList
+    try:
+        assert paramList==inParamList
+    except:
+        print expName, calName, saveName, suffix
+        print paramList
+        print inParamList
+        sys.exit()
     return FisherTot
 
 
@@ -23,28 +29,28 @@ Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
 
-fishSection = "mnu-notau"
-#noatm = ""
-noatm = "-noatm"
+fishSection = "w"
+noatm = ""
+#noatm = "-noatm"
 cal = "CMB_all"
 #cal = "owl2"
 derivSet = "wstep"
 
-paramName = "mnu"
-width = 0.1
-paramCent = 0.06
-paramStep = 0.001
-startPoint = 0.
-xMultiplier = 1000.
-labelSuffix = " $(meV)$"
-
-# paramName = "w0"
+# paramName = "mnu"
 # width = 0.1
-# paramCent = -1.
+# paramCent = 0.06
 # paramStep = 0.001
-# startPoint = paramCent-width
-# xMultiplier = 1.
-# labelSuffix = ""
+# startPoint = 0.
+# xMultiplier = 1000.
+# labelSuffix = " $(meV)$"
+
+paramName = "w0"
+width = 0.1
+paramCent = -1.
+paramStep = 0.001
+startPoint = paramCent-width
+xMultiplier = 1.
+labelSuffix = ""
 
 cosmoFisher = Config.get('fisher-'+fishSection,'saveSuffix')
 
@@ -67,7 +73,7 @@ fplots.addFisher('S4-5m',cmbfisher5)
 fplots.addFisher('S4-6m',cmbfisher6)
 fplots.addFisher('S4-7m',cmbfisher7)
 listFishers = ['S4-3m','S4-5m','S4-6m','S4-7m']
-fplots.plot1d(paramName,np.arange(startPoint,paramCent+width,paramStep),listFishers,labels=listFishers,saveFile="/gpfs01/astro/www/msyriac/s4Probe1d"+paramName+"_"+cal+noatm+"_"+cosmoFisher+"_"+derivSet+".png",xmultiplier=xMultiplier,labelXSuffix=labelSuffix)
+fplots.plot1d(paramName,np.arange(startPoint,paramCent+width,paramStep),listFishers,labels=listFishers,saveFile="/gpfs01/astro/www/msyriac/s4Probe1d"+fishSection+"_"+paramName+"_"+cal+noatm+"_"+cosmoFisher+"_"+derivSet+".png",xmultiplier=xMultiplier,labelXSuffix=labelSuffix)
 
 """OWL"""
 # res = "7m"
