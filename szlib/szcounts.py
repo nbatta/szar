@@ -312,7 +312,7 @@ class Halo_MF:
 
         m_wl = self.Mexp
 
-        if self.sigN is None: self.updateSNGrid(SZCluster)
+        if self.sigN is None: self.updateSigN(SZCluster)
         P_func = SZCluster.Pfunc_qarr(self.sigN.copy(),self.M,self.zarr,q_arr)
         
 
