@@ -60,60 +60,28 @@ def sampleVarianceOverNsquare(cc,Mexprange,z_arr,lmax=1000):
         pfunc = interp1d(self.kh,self.pk[i,:])
         self.PofElls.append(lambda ell,chi: pfunc(ell*self.cc.h/chi))
     
+    import healpy as hp
+    frac = 1.-fsky
+    nsides_allowed = 2**np.arange(5,13,1)
+    nside_min = int((lmax+1.)/3.)
+    nside = nsides_allowed[nsides_allowed>nside_min][0]
+    npix = 12*nside**2
 
-class SampleVariance(object):
-    @timeit
-    def __init__(self,cc,Mexprange,z_arr,lmax=1000):
-        hmf = Halo_MF(cc)
-        self.cc = cc
-        self.kh, self.pk = hmf.kh, hmf.pk #hmf.pk(z_arr)
-        self.Mexp = Mexprange
-        self.chis = self.cc.results.comoving_radial_distance(z_arr)
-        self.zs = z_arr
-
-        
-        self.PofElls = []
-        for i,chi in enumerate(self.chis):
-            pfunc = interp1d(self.kh,self.pk[i,:])
-            self.PofElls.append(lambda ell,chi: pfunc(ell*self.cc.h/chi))
-        
-
-    def haloBias(self):
-        ac = 0.75
-        pc = 0.3
-        dc = 1.69
-
-        R = tinker.radius_from_mass(10**self.Mexp, self.cc.rhoc0om)
-        R = np.resize(R,(self.Mexp.size,self.pk[:,0].size))
-        sigsq = tinker.sigma_sq_integral(R, self.pk[:,:], self.kh)
+    hpmap = np.ones(npix)/(1.-frac)
+    hpmap[:int(npix*frac)] = 0
+    alms_original = hp.map2alm(hpmap)
 
 
-        return 1. + ((ac*dc**2./sigsq-1.)/dc) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
+    ellrange  = np.arange(2,lmax,1)
+    dchis = np.diff(self.chis)
 
-    @timeit
-    def sample_variance_overNsquared(self,fsky):
-        import healpy as hp
-        frac = 1.-fsky
-        nsides_allowed = 2**np.arange(5,13,1)
-        nside_min = int((lmax+1.)/3.)
-        nside = nsides_allowed[nsides_allowed>nside_min][0]
-        npix = 12*nside**2
-
-        hpmap = np.ones(npix)/(1.-frac)
-        hpmap[:int(npix*frac)] = 0
-        alms_original = hp.map2alm(hpmap)
-
-        
-        ellrange  = np.arange(2,lmax,1)
-        dchis = np.diff(self.chis)
-        
-        for i,(chi,dchi) in enumerate(zip(self.chis,dchis)):
-            Pl = self.PofElls[i](ellrange,chi)
-            Pl = np.insert(Pl,0,0)
-            Pl = np.insert(Pl,0,0)
-            alms = hp.almxfl(alms_original.copy(),np.sqrt(Pl))
-            power = (alms*alms.conjugate()).real/chi/chi/dchi
-            print power.sum()
+    for i,(chi,dchi) in enumerate(zip(self.chis,dchis)):
+        Pl = self.PofElls[i](ellrange,chi)
+        Pl = np.insert(Pl,0,0)
+        Pl = np.insert(Pl,0,0)
+        alms = hp.almxfl(alms_original.copy(),np.sqrt(Pl))
+        power = (alms*alms.conjugate()).real/chi/chi/dchi
+        print power.sum()
 
 
 
@@ -157,6 +125,11 @@ class ClusterCosmology(Cosmology):
 class Halo_MF:
 
     def __init__(self,clusterCosmology,Mexp,zcenters,kh=None,powerZK=None,kmin=1e-4,kmax=11.,knum=200):
+
+        # update self.sigN (20 mins) and self.Pfunc if changing experiment
+        # update self.cc or self.pk if changing cosmology
+        # update self.Pfunc if changing scaling relation parameters
+
         self.cc = clusterCosmology
 
 
@@ -168,6 +141,8 @@ class Halo_MF:
 
         self.sigN = None
         self.YM = None
+        self.P_func_qarr = None
+        self.P_func = None
 
         M = 10.**Mexp
         self.Mexp = Mexp
@@ -178,11 +153,6 @@ class Halo_MF:
         for i in xrange(self.zarr.size):
             self.M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M,500,self.zarr[i])
 
-
-        # from orphics.tools.io import Plotter
-        # pl = Plotter()
-        # pl.plot2d(self.M200)
-        # pl.done("output/debug.png")
 
     def _pk(self,zarr,kmin,kmax,knum):
         self.cc.pars.set_matter_power(redshifts=zarr, kmax=kmax)
@@ -265,13 +235,21 @@ class Halo_MF:
         self.YM = YM
 
 
+    def updatePfunc(self):
+         self.Pfunc = SZCluster.Pfunc(self.sigN.copy(),self.M,self.zarr)
+
+    def updatePfunc_qarr(self):
+        print "Calculating P_func_qarr. This takes a while..."
+        self.P_func_qarr = SZCluster.Pfunc_qarr(self.sigN.copy(),self.M,self.zarr,q_arr)
+
     def N_of_z_SZ(self,SZCluster):
         # this is dN/dz(z) with selection
 
         z_arr = self.zarr
         
         if self.sigN is None: self.updateSigN(SZCluster)
-        P_func = SZCluster.Pfunc(self.sigN,self.M,self.zarr)
+        if self.P_func is None: self.updatePfunc()
+        P_func = self.P_func
 
         dn_dzdm = self.dn_dM(self.M200,200.)
         N_z = np.zeros(z_arr.size)
@@ -288,7 +266,8 @@ class Halo_MF:
 
         if self.sigN is None: self.updateSigN(SZCluster)
         if self.YM is None: self.updateYM(SZCluster)
-        P_func = SZCluster.Pfunc(self.sigN,self.M,self.zarr)
+        if self.P_func is None: self.updatePfunc()
+        P_func = self.P_func
 
         dn_dVdm = self.dn_dM(self.M200,200.)
         dV_dz = self.dVdz
@@ -313,8 +292,8 @@ class Halo_MF:
         m_wl = self.Mexp
 
         if self.sigN is None: self.updateSigN(SZCluster)
-        P_func = SZCluster.Pfunc_qarr(self.sigN.copy(),self.M,self.zarr,q_arr)
-        
+        if self.P_func_qarr is None: self.updatePfunc_qarr()
+        P_func = self.P_func_qarr
 
         dn_dVdm = self.dn_dM(self.M200,200.)
         dV_dz = self.dVdz
@@ -401,6 +380,8 @@ class SZ_Cluster_Model:
         self.gxrange = np.linspace(0.,nMax,numps)        
         self.gint = np.array([self.g(x) for x in self.gxrange])
 
+        self.gnorm_pre = np.trapz(self.gxrange*self.gint,self.gxrange,)
+
         # pl = Plotter()
         # pl.add(gxrange,gint)
         # pl.done("output/gint.png")
@@ -416,13 +397,6 @@ class SZ_Cluster_Model:
 
 
 
-
-        #self.dtht = 0.0000025
-        self.dtht = 0.00001
-
-
-
-    #@timeit
     def quickVar(self,M,z,tmaxN=5.,numts=1000):
 
 
@@ -430,12 +404,10 @@ class SZ_Cluster_Model:
 
         # R500 in MPc, DAz in MPc, th500 in radians
         R500 = self.cc.rdel_c(M,z,500.).flatten()[0] # R500 in Mpc/h
-        #print R500
         DAz = self.cc.results.angular_diameter_distance(z) * (self.cc.H0/100.) 
         th500 = R500/DAz
-        #print "t500", th500 
         # gnorm = 2pi th500^2  \int dx x g(x)
-        gnorm = 2.*np.pi*(th500**2.)*np.trapz(self.gxrange*self.gint,self.gxrange,np.diff(self.gxrange))
+        gnorm = 2.*np.pi*(th500**2.)*self.gnorm_pre 
 
         # u(th) = g(th/th500)/gnorm
         u = lambda th: self.g(th/th500)/gnorm
@@ -456,6 +428,42 @@ class SZ_Cluster_Model:
 
         return var
 
+
+    @timeit
+    def quickVar_ufunc(self,M,z,tmaxN=5.,numts=1000):
+
+
+
+
+        # R500 in MPc, DAz in MPc, th500 in radians
+        R500 = self.cc.rdel_c(M,z,500.).flatten()#[0] # R500 in Mpc/h
+        print R500
+        DAz = self.cc.results.angular_diameter_distance(z) * (self.cc.H0/100.) 
+        th500 = R500/DAz
+        # gnorm = 2pi th500^2  \int dx x g(x)
+        gnorm = 2.*np.pi*(th500**2.)*self.gnorm_pre 
+
+        # u(th) = g(th/th500)/gnorm
+        u = lambda th: self.g(th/th500)/gnorm
+        thetamax = tmaxN * th500
+        thetas = np.linspace(0.,thetamax,numts)
+        uint = np.array([u(t) for t in thetas])
+
+        # \int dtheta theta j0(ell*theta) u(theta)
+        ells = self.evalells
+        integrand = lambda l: np.trapz(j0(l*thetas)*uint*thetas,thetas,np.diff(thetas))
+        integrands = np.array([integrand(ell) for ell in ells])
+
+
+
+        # varinv = \int dell 2pi ell integrand^2 / nl
+        varinv = np.trapz((integrands**2.)*ells*2.*np.pi/self.nl,ells,np.diff(ells))
+        var = 1./varinv
+
+        return var
+
+
+
     def GNFW(self,xx):
         ans = self.P0 / ((xx*self.xc)**self.gm * (1 + (xx*self.xc)**self.al)**((self.bt-self.gm)/self.al))
         return ans
@@ -465,14 +473,8 @@ class SZ_Cluster_Model:
 
         lnY = self.lnY
 
-        rho_crit0m = self.cc.rhoc0om
-        hh = self.cc.H0/100
-
         P_func = np.outer(M,np.zeros([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
-
-
-        DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
 
 
         for i in xrange(z_arr.size):
@@ -480,7 +482,7 @@ class SZ_Cluster_Model:
 
         return P_func
 
-
+    @timeit
     def Pfunc_qarr(self,sigN,M,z_arr,q_arr):
 
         lnY = self.lnY
@@ -498,51 +500,6 @@ class SZ_Cluster_Model:
         return P_func
 
     
-    def Prof(self,r,M,z,R500):
-        R500 = R500
-        xx = r / R500
-        M_fac = M / (3e14) * (100./70.)
-        P500 = 1.65e-3 * (100./70.)**2 * M_fac**(2./3.) * self.cc.E_z(z) #keV cm^3
-        ans = P500 * self.GNFW(xx)
-        return ans
-
-    def Prof_tilde(self,ell,M,z):
-        dr = 0.01
-        pars = camb.CAMBparams()
-        pars.set_cosmology(H0=cp.h0, ombh2=cp.ob*(cp.h0/100.)**2, omch2=(cp.om - cp.ob)*(cp.h0/100.)**2,)    
-        results = camb.get_background(pars)
-        DA_z = results.angular_diameter_distance(z) #* (70./100.)
-        R500 = HP.rdel_c(M,z,500)
-        rr = np.arange(dr,R500*5.0,dr)
-        intgrl = np.sum(self.Prof(rr,M,z)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
-        ans = 4.0*np.pi/DA_z**2 * intgrl
-        ans *= c.SIGMA_T/(c.ME*c.C**2)*c.MPC2CM*c.eV_2_erg*1000.0
-        return ans
-    
-    def y2D_norm(self,M,z,tht,R500):
-
-        r = np.arange(0.0001,100.,0.0001)
-        prof = self.Prof(r,M,z,R500)
-        profunc = interp1d(r,prof,bounds_error=True)        
-
-
-        thtr5002 = (tht*R500)**2.
-        P2D = tht * 0.0
-        for ii in xrange(len(tht)):
-            rint = np.sqrt(self.rad2 + thtr5002[ii])
-            P2D[ii] = np.sum(profunc(rint))
-            
-        P2D *= 2.*self.drint
-        P2D /= P2D[0]
-        return P2D
-    
-
-    def y2D_tilde_norm(self,M,z,ell,thtc,thta,R500):
-        ans = ell*0.
-        y2D_use = self.y2D_norm(M,z,thta/thtc,R500)
-        for ii in xrange(len(ell)):
-            ans[ii] = np.sum(thta*special.jv(0,ell[ii]*thta)*y2D_use)*self.dtht
-        return ans, y2D_use
 
     def noise_func(self,ell,fwhm,rms_noise,lknee=0.,alpha=0.):
         if lknee>1.e-3:
@@ -600,24 +557,6 @@ class SZ_Cluster_Model:
         ans = np.interp(ell,el,ksz) * (1.65/1.5) + np.interp(ell,elp,kszp)
         return ans
 
-    @timeit
-    def filter_variance(self,M,z):
-
-
-        R500 = self.cc.rdel_c(M,z,500.).flatten()[0]
-        DAz = self.cc.results.angular_diameter_distance(z) * (self.cc.H0/100.)
-
-        
-        thtc = R500/DAz
-        thta = np.arange(self.dtht,5.*thtc,self.dtht)  ### Changed 25 to 5 and it didn't change much
-        ytilde, y2D_use = self.y2D_tilde_norm(M,z,self.evalells,thtc,thta,R500)
-        y2dtilde_2 = (ytilde)**2
-        var = np.sum(self.evalells*y2dtilde_2/self.nl)*self.dell#*self.freq_fac
-
-        prof_int = 2.*np.pi*(np.sum((y2D_use*thta)[thta < 1.*thtc])*self.dtht)**2
-        
-        return prof_int/var
-    
     
     def Y_M(self,MM,zz):
         DA_z = self.cc.results.angular_diameter_distance(zz) * (self.cc.H0/100.)
@@ -651,7 +590,7 @@ class SZ_Cluster_Model:
         ans = 1./(Ysig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*Ysig**2))
         return ans
     
-    def P_of_q (self,lnY,MM,zz,sigma_N):
+    def P_of_q(self,lnY,MM,zz,sigma_N):
         lnYa = np.outer(np.ones(len(MM)),lnY)
         
         sig_thresh = self.Y_erf(np.exp(lnYa),sigma_N)
@@ -662,7 +601,7 @@ class SZ_Cluster_Model:
             ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
         return ans
 
-    def P_of_qn (self,lnY,MM,zz,sigma_N,qarr):
+    def P_of_qn(self,lnY,MM,zz,sigma_N,qarr):
         lnYa = np.outer(np.ones(len(MM)),lnY)
         
         sig_thresh = self.q_prob(qarr,lnYa,sigma_N)
@@ -686,3 +625,27 @@ class SZ_Cluster_Model:
         ans = gaussian(Mwl,M,Merr*M)
         return ans
 
+    def Prof(self,r,M,z,R500):
+        R500 = R500
+        xx = r / R500
+        M_fac = M / (3e14) * (100./70.)
+        P500 = 1.65e-3 * (100./70.)**2 * M_fac**(2./3.) * self.cc.E_z(z) #keV cm^3
+        ans = P500 * self.GNFW(xx)
+        return ans
+
+    def Prof_tilde(self,ell,M,z):
+        dr = 0.01
+        pars = camb.CAMBparams()
+        pars.set_cosmology(H0=cp.h0, ombh2=cp.ob*(cp.h0/100.)**2, omch2=(cp.om - cp.ob)*(cp.h0/100.)**2,)    
+        results = camb.get_background(pars)
+        DA_z = results.angular_diameter_distance(z) #* (70./100.)
+        R500 = HP.rdel_c(M,z,500)
+        rr = np.arange(dr,R500*5.0,dr)
+        #intgrl = ell *0.0
+        #for ii in xrange(len(ell)):
+        #    intgrl[ii] = np.sum(self.Prof(rr,M,z)*rr**2*np.sinc(ell[ii]*rr/DA_z)) * dr
+        intgrl = np.sum(self.Prof(rr,M,z)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
+        ans = 4.0*np.pi/DA_z**2 * intgrl
+        ans *= c.SIGMA_T/(c.ME*c.C**2)*c.MPC2CM*c.eV_2_erg*1000.0
+        return ans
+    

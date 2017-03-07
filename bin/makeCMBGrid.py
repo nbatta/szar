@@ -17,6 +17,35 @@ if rank==0:
     from ConfigParser import SafeConfigParser 
     import cPickle as pickle
 
+
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Make an M,z grid using MPI. Currently implements CMB lensing \
+    matched filter and SZ variance.')
+    parser.add_argument('expName', type=str,help='The name of the experiment in input/pipeline.ini')
+    parser.add_argument('gridName', type=str,help='The name of the grid in input/pipeline.ini')
+    parser.add_argument('lensName', nargs='?',type=str,help='The name of the CMB lensing calibration in input/pipeline.ini. Not required if using --skip-lensing option.',default="")
+    parser.add_argument('--skip-lensing', dest='skipLens', action='store_const',
+                        const=True, default=False,
+                        help='Skip CMB lensing matched filter.')
+
+    parser.add_argument('--skip-sz', dest='skipSZ', action='store_const',
+                        const=True, default=False,
+                        help='Skip SZ variance.')
+
+    args = parser.parse_args()
+
+
+    expName = args.expName
+    gridName = args.gridName
+    lensName = args.lensName
+
+    doLens = not(args.skipLens)
+    doSZ = not(args.skipSZ)
+
+    sys.exit()
+
+
     expName = sys.argv[1]
     calName = sys.argv[2]
 

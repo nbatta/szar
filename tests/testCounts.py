@@ -63,6 +63,12 @@ cc = ClusterCosmology(cosmoDict,constDict,clTTFixFile = "data/cltt_lensed_Feb18.
 SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lmax=lmax,lknee=lknee,alpha=alpha,dell=dell,pmaxN=pmaxN,numps=numps)
 
 
+MM = 10**np.linspace(13.,14.,5)
+print SZProfExample.quickVar_ufunc(MM,zz,tmaxN=tmaxN,numts=numts)
+
+sys.exit()
+
+
 print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts))
 print "filtvar " , np.sqrt(SZProfExample.filter_variance(MM,zz))
 
