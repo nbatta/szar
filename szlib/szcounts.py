@@ -156,7 +156,6 @@ class ClusterCosmology(Cosmology):
 
 class Halo_MF:
 
-    @timeit
     def __init__(self,clusterCosmology,Mexp,zcenters,kh=None,powerZK=None,kmin=2e-5,kmax=11.,knum=200):
         self.cc = clusterCosmology
 
@@ -235,39 +234,28 @@ class Halo_MF:
         return N_z*4.*np.pi
 
     @timeit
-    def updateSigN(self,SZCluster,pre_sigN=None,tmaxN=5,numts=1000):
+    def updateSigN(self,SZCluster,tmaxN=5,numts=1000):
         zs = self.zarr
         M = self.M
 
-        
-        if pre_sigN is None:
-            sigN = self.zeroTemplate.copy()
-        else:
-            sigN = pre_sigN.copy()
+        print "Calculating variance grid. This is slow..."
 
+        sigN = self.zeroTemplate.copy()
 
-        if (pre_sigN is None):
-            for i in xrange(zs.size):
-                for j in xrange(M.size):
-                    if pre_sigN is None: 
-                        var = SZCluster.quickVar(M[j],zs[i],tmaxN,numts)
-                        sigN[j,i] = np.sqrt(var)
+        for i in xrange(zs.size):
+            for j in xrange(M.size):
+                var = SZCluster.quickVar(M[j],zs[i],tmaxN,numts)
+                sigN[j,i] = np.sqrt(var)
+                        
 
+        self.sigN = sigN.copy()
 
-        self.sigN = sigN
-
-    @timeit
-    def updateYM(self,SZCluster,pre_YM=None):
+    def updateYM(self,SZCluster):
         zs = self.zarr
         M = self.M
 
-        
-
-        if (pre_YM is None):
-            YM = self.zeroTemplate.copy()
-        else:
-            self.YM = pre_YM.copy()
-            return
+        YM = self.zeroTemplate
+            
 
         for i in xrange(zs.size):
             for j in xrange(M.size):
@@ -469,7 +457,6 @@ class SZ_Cluster_Model:
         return ans
 
 
-    @timeit
     def Pfunc(self,sigN,M,z_arr):
 
         lnY = self.lnY
@@ -490,7 +477,6 @@ class SZ_Cluster_Model:
         return P_func
 
 
-    @timeit
     def Pfunc_qarr(self,sigN,M,z_arr,q_arr):
 
         lnY = self.lnY
