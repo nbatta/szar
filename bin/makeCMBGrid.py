@@ -49,7 +49,8 @@ if rank==0:
     print doLens
     print doSZ
 
-    if doLens: assert lensName!=""
+    if doLens: assert lensName!="", "ERROR: You didn't specify a lensName. If you don't want to do lensing, \
+    add --skip-lensing."
 
     sys.exit()
 
