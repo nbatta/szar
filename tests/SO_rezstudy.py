@@ -20,8 +20,8 @@ cosmologyName = 'LACosmology' # from ini file
 #fileFunc = None
 fileFunc = lambda M,z:"data/"+experimentName+"_m"+str(M)+"z"+str(z)+".txt"
 #experimentName = ["AdvAct","S45m","S46m","S47m"]
-experimentName = ["S43m"]
-#experimentName = ["S45m","S46m","S47m"]
+#experimentName = ["S43m"]
+experimentName = ["S45m","S46m","S47m"]
 #experimentName = ["SO5m","SO6m","SO7m"]#,"SO5m_No270","SO6m_No270","SO7m_No270"]
 #experimentName = ["S45m"]
 
@@ -69,7 +69,7 @@ for ii in xrange(len(experimentName)):
 
     #zbin = np.insert(zbin_temp,0,0.0)
     #qbin = np.arange(np.log(5),np.log(500),0.08)
-    zbin_temp = np.arange(0.05,2.0,0.05)
+    zbin_temp = np.arange(0.05,3.0,0.05)
     zbin = np.insert(zbin_temp,0,0.0)
     #qbin = np.arange(np.log(6),np.log(500),0.08)
     qbin = np.arange(np.log(6),np.log(500),0.08)
@@ -95,7 +95,7 @@ for ii in xrange(len(experimentName)):
     #print "Total number of clusters ", np.trapz(dndm * dvdz[1:],zbin[1:],np.diff(zbin[1:]))*4.*np.pi*fsky
     #print "Total number of clusters possible", np.trapz(dndm2,zbin[1:],np.diff(zbin[1:]))*4.*np.pi*fsky
 
-    np.savetxt('output/dN_dz_'+experimentName[ii]+'.txt',np.transpose([zbin[1:],dndm,dvdz[1:]])) 
+    np.savetxt('output/dN_dz_'+experimentName[ii]+'z3.txt',np.transpose([zbin[1:],dndm,dvdz[1:]])) 
 #    np.savetxt('output/dN_dmdz_'+experimentName[ii]+'.txt',np.transpose(dNdmdz)) 
 #    np.savetxt('output/dN_dmdz_zbins_'+experimentName[ii]+'.txt',np.transpose([zbin[1:],dvdz[1:]]))
 #    np.savetxt('output/dN_dmdz_mbins_'+experimentName[ii]+'.txt',dm) 
