@@ -156,7 +156,7 @@ class ClusterCosmology(Cosmology):
 
 class Halo_MF:
 
-    def __init__(self,clusterCosmology,Mexp,zcenters,kh=None,powerZK=None,kmin=2e-5,kmax=11.,knum=200):
+    def __init__(self,clusterCosmology,Mexp,zcenters,kh=None,powerZK=None,kmin=1e-4,kmax=11.,knum=200):
         self.cc = clusterCosmology
 
 
@@ -184,7 +184,7 @@ class Halo_MF:
         # pl.plot2d(self.M200)
         # pl.done("output/debug.png")
 
-    def _pk(self,zarr,kmin=2e-5,kmax=11.,knum=200):
+    def _pk(self,zarr,kmin,kmax,knum):
         self.cc.pars.set_matter_power(redshifts=zarr, kmax=kmax)
         self.cc.pars.Transfer.high_precision = True
         
@@ -313,6 +313,7 @@ class Halo_MF:
         m_wl = self.Mexp
 
         if self.sigN is None: self.updateSNGrid(SZCluster)
+        print self.sigN[3,3]
         P_func = SZCluster.Pfunc_qarr(self.sigN,self.M,self.zarr,q_arr)
 
         dn_dVdm = self.dn_dM(self.M200,200.)
