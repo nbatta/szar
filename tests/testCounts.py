@@ -87,11 +87,11 @@ print "thetc = ", thetc
 
 # HMF
 
-zbin = np.arange(0.1,2.0,0.1)
+zbin = np.arange(0.1,2.0,0.5)
 #zbin = np.insert(zbin_temp,0,0.0)
 #print zbin
 
-Mexp = np.arange(13.5,15.7,0.4)
+Mexp = np.arange(13.5,15.7,0.5)
 
 start3 = time.time()
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
@@ -114,18 +114,12 @@ print "Total number of clusters ", np.trapz(dndm ,zbin[:],np.diff(zbin[:]))*fsky
 mfile = "data/S4-7mCMB_all.pkl"
 minrange, zinrange, lndM = pickle.load(open(mfile,'rb'))
 
-print lndM[3,3]
-sys.exit()
 outmerr = interpolateGrid(lndM,minrange,zinrange,Mexp,zbin,regular=False,kind="cubic",bounds_error=False,fill_value=np.inf)
 
-print outmerr[3,3]
 
 q_arr = np.logspace(np.log10(6.),np.log10(500.),64)
 
 dnqmz = HMF.N_of_mqz_SZ(outmerr,q_arr,SZProf)
-
-print dnqmz.shape
-print dnqmz[3,3,3]
 
 N,Nofz = getTotN(dnqmz,Mexp,zbin,q_arr,returnNz=True)
 

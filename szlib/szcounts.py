@@ -313,11 +313,12 @@ class Halo_MF:
         m_wl = self.Mexp
 
         if self.sigN is None: self.updateSNGrid(SZCluster)
-        print self.sigN[3,3]
-        P_func = SZCluster.Pfunc_qarr(self.sigN,self.M,self.zarr,q_arr)
+        P_func = SZCluster.Pfunc_qarr(self.sigN.copy(),self.M,self.zarr,q_arr)
+        
 
         dn_dVdm = self.dn_dM(self.M200,200.)
         dV_dz = self.dVdz
+
 
         # \int dm  dn/dzdm 
         for kk in xrange(q_arr.size):
@@ -325,7 +326,9 @@ class Halo_MF:
                 for i in xrange (z_arr.size):
                     dM = np.diff(self.M200[:,i])
                     dNdzmq[jj,i,kk] = np.trapz(dn_dVdm[:,i]*P_func[:,i,kk]*SZCluster.Mwl_prob(10**(m_wl[jj]),M_arr[:,i],mass_err[:,i]),self.M200[:,i],dM) * dV_dz[i]*4.*np.pi
-                   
+        
+
+            
         return dNdzmq
 
 class SZ_Cluster_Model:
@@ -482,17 +485,10 @@ class SZ_Cluster_Model:
 
         lnY = self.lnY
 
-    
-        rho_crit0m = self.cc.rhoc0om
-        hh = self.cc.H0/100
-
         P_func = np.zeros((M.size,z_arr.size,q_arr.size))
         M_arr =  np.outer(M,np.ones([z_arr.size]))
 
 
-        DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
-
-      
         # P_func(M,z,q)
         for i in xrange(z_arr.size):
             for kk in xrange(q_arr.size):
@@ -674,6 +670,7 @@ class SZ_Cluster_Model:
         ans = MM*0.0
         for ii in xrange(len(MM)):
             ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
+
         return ans
 
 
