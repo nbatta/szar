@@ -10,15 +10,10 @@ from orphics.tools.io import Plotter
 from orphics.analysis.flatMaps import interpolateGrid
 
 expName = sys.argv[1]
-calName = sys.argv[2]
-calFile = sys.argv[3]
+gridName = sys.argv[2]
+calName = sys.argv[3]
+calFile = sys.argv[4]
 
-#calFile = "data/S4-5mCMB_all_coarse.pkl"
-#expName = "S4-5m"
-#calName = "CMB_all_coarse"
-
-# zout = np.arange(0.1,3.0,0.5)
-# mout = np.arange(14.0,15.2,0.5)
 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
@@ -38,6 +33,9 @@ suffix = Config.get('general','suffix')
 # load the mass calibration grid
 mexprange, zrange, lndM = pickle.load(open(calFile,"rb"))
 
+mgrid,zgrid,siggrid = pickle.load(open("data/szgrid_"+expName+"_"+gridName+".pkl",'rb'))
+assert np.all(mgrid==mexprange)
+assert np.all(zrange==zgrid)
 
 saveId = expName + "_" + calName + "_" + suffix
 
@@ -49,6 +47,7 @@ noise = listFromConfig(Config,expName,'noises')
 freq = listFromConfig(Config,expName,'freqs')
 lknee = listFromConfig(Config,expName,'lknee')[0]
 alpha = listFromConfig(Config,expName,'alpha')[0]
+fsky = Config.getfloat(expName,'fsky')
 
 clttfile = Config.get('general','clttfile')
 
@@ -66,6 +65,7 @@ else:
 
 cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(cc,mexprange,zrange)
+HMF.sigN = siggrid.copy()
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
 dNFid_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
 
@@ -96,8 +96,6 @@ for i,z in enumerate(zrange):
 import itertools
 zindices = range(zrange.size)
 lenz = zrange.size
-# paramCombs = itertools.combinations_with_replacement(zindices,2)
-fsky = 0.4
 N_fid = dNFid_dmqz*fsky
 
 

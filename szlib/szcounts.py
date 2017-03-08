@@ -235,10 +235,10 @@ class Halo_MF:
         self.YM = YM
 
 
-    def updatePfunc(self):
+    def updatePfunc(self,SZCluster):
          self.Pfunc = SZCluster.Pfunc(self.sigN.copy(),self.M,self.zarr)
 
-    def updatePfunc_qarr(self):
+    def updatePfunc_qarr(self,SZCluster,q_arr):
         print "Calculating P_func_qarr. This takes a while..."
         self.P_func_qarr = SZCluster.Pfunc_qarr(self.sigN.copy(),self.M,self.zarr,q_arr)
 
@@ -248,7 +248,7 @@ class Halo_MF:
         z_arr = self.zarr
         
         if self.sigN is None: self.updateSigN(SZCluster)
-        if self.P_func is None: self.updatePfunc()
+        if self.P_func is None: self.updatePfunc(SZCluster)
         P_func = self.P_func
 
         dn_dzdm = self.dn_dM(self.M200,200.)
@@ -266,7 +266,7 @@ class Halo_MF:
 
         if self.sigN is None: self.updateSigN(SZCluster)
         if self.YM is None: self.updateYM(SZCluster)
-        if self.P_func is None: self.updatePfunc()
+        if self.P_func is None: self.updatePfunc(SZCluster)
         P_func = self.P_func
 
         dn_dVdm = self.dn_dM(self.M200,200.)
@@ -292,7 +292,7 @@ class Halo_MF:
         m_wl = self.Mexp
 
         if self.sigN is None: self.updateSigN(SZCluster)
-        if self.P_func_qarr is None: self.updatePfunc_qarr()
+        if self.P_func_qarr is None: self.updatePfunc_qarr(SZCluster,q_arr)
         P_func = self.P_func_qarr
 
         dn_dVdm = self.dn_dM(self.M200,200.)

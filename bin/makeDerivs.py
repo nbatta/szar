@@ -23,7 +23,7 @@ calibration error over mass.
 """
 
 from mpi4py import MPI
-from szlib.szcounts import ClusterCosmology,Halo_MF
+from szlib.szcounts import ClusterCosmology,Halo_MF,SZ_Cluster_Model
 import numpy as np
     
 
@@ -45,8 +45,9 @@ if rank==0:
 
     inParamList = sys.argv[1].split(',')
     expName = sys.argv[2]
-    calName = sys.argv[3]
-    calFile = sys.argv[4]
+    gridName = sys.argv[3]
+    calName = sys.argv[4]
+    calFile = sys.argv[5]
 
     # Let's read in all parameters that can be varied by looking
     # for those that have step sizes specified. All the others
@@ -79,7 +80,10 @@ if rank==0:
         for param in inParamList:
             assert param in paramList, param + " not found in ini file with a specified step size."
             assert param in stepSizes.keys(), param + " not found in stepSizes dict. Looks like a bug in the code."
-    
+
+
+
+
 
     numParams = len(inParamList)
     neededCores = 2*numParams+1
@@ -91,13 +95,10 @@ if rank==0:
     # load the mass calibration grid
     mexprange, zrange, lndM = pickle.load(open(calFile,"rb"))
 
-    # mexprange = np.arange(13.5,15.7,0.5)
-    # zrange = np.arange(0.05,3.0,0.5)
-    # lndM,dummy = np.meshgrid(mexprange,zrange) 
-    # lndM = lndM.T
-
-
-    zrange = np.insert(zrange,0,0.0)
+    mgrid,zgrid,siggrid = pickle.load(open("data/szgrid_"+expName+"_"+gridName+".pkl",'rb'))
+    assert np.all(mgrid==mexprange)
+    assert np.all(zrange==zgrid)
+    
     saveId = expName + "_" + calName + "_" + suffix
 
     from orphics.tools.io import dictFromSection, listFromConfig
@@ -141,6 +142,7 @@ else:
     lknee = None
     alpha = None
     massMultiplier = None
+    siggrid = None
 
 if rank==0: print "Broadcasting..."
 inParamList = comm.bcast(inParamList, root = 0)
@@ -160,6 +162,7 @@ freq = comm.bcast(freq, root = 0)
 lknee = comm.bcast(lknee, root = 0)
 alpha = comm.bcast(alpha, root = 0)
 massMultiplier = comm.bcast(massMultiplier, root = 0)
+siggrid = comm.bcast(siggrid, root = 0)
 if rank==0: print "Broadcasted."
 
 myParamIndex = (rank+1)/2-1
@@ -179,8 +182,12 @@ elif rank%2==0:
 
 if rank!=0: print rank,myParam,fparams[myParam],passParams[myParam]
 cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
-HMF = Halo_MF(clusterCosmology=cc)
-dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,zrange,mexprange,qbins,beam,noise,freq,clusterDict,lknee,alpha)
+HMF = Halo_MF(cc,mexprange,zrange)
+HMF.sigN = siggrid.copy()
+SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
+dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbins,SZProf)
+
+
 
 if rank==0: 
     np.save("data/N_dzmq_"+saveId+"_fid",dN_dmqz)

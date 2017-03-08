@@ -176,7 +176,6 @@ else:
     constDict = None
     clttfile = None
     clusterDict = None
-    clusterDict = comm.bcast(clusterDict, root = 0)
     beam = None
     noise = None
     freq = None
@@ -193,6 +192,7 @@ Nls = comm.bcast(Nls, root = 0)
 fparams = comm.bcast(fparams, root = 0)
 constDict = comm.bcast(constDict, root = 0)
 clttfile = comm.bcast(clttfile, root = 0)
+clusterDict = comm.bcast(clusterDict, root = 0)
 beam = comm.bcast(beam, root = 0)
 noise = comm.bcast(noise, root = 0)
 freq = comm.bcast(freq, root = 0)
