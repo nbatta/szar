@@ -123,7 +123,7 @@ for param1,param2 in paramCombs:
         dN1 = dN1[:,:,:]*fsky
 
     if param2[:3]=="S8Z":
-        k2 = zlist.index(param1)
+        k2 = zlist.index(param2)
         dN2 = derivs[k2][:,:,:]*fsky
     else:
         dN2 = np.load("data/dN_dzmq_"+saveId+"_"+param2+".npy")
