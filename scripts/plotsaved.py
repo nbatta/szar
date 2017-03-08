@@ -5,9 +5,11 @@ from orphics.tools.io import Plotter
 def cov2corr(cov):
     d = np.diag(cov)
     stddev = np.sqrt(d)
-    corr = cov / stddev[:, None]
-    corr = cov / stddev[None, :]
-    np.clip(corr, -1, 1, out=corr)
+    corr = cov.copy()*0.
+    for i in range(cov.shape[0]):
+        for j in range(cov.shape[0]):
+            corr[i,j] = cov[i,j]/stddev[i]/stddev[j]
+
     return corr
 
 
