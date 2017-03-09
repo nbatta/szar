@@ -168,7 +168,7 @@ class Halo_MF:
             kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=1e-4, maxkh=11, npoints = 200)
 
 
-        pk[multIndex,:] = multVal*P_camb
+        #pk[multIndex,:] = multVal*P_camb
 
 
         return kh, pk
