@@ -14,8 +14,9 @@ from szlib.szcounts import getTotN
 
 
 expName = sys.argv[1]
-calName = sys.argv[2]
-fishName = sys.argv[3]
+gridName = sys.argv[2]
+calName = sys.argv[3]
+fishName = sys.argv[4]
 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
@@ -23,7 +24,7 @@ Config.optionxform=str
 Config.read(iniFile)
 
 suffix = Config.get('general','suffix')
-saveId = expName + "_" + calName + "_" + suffix
+saveId = expName + "_" + gridName + "_" + calName + "_" + suffix
 
 
 

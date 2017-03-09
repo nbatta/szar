@@ -43,11 +43,11 @@ hb = haloBias(mrange,zrange,cc.rhoc0om,hmf.kh,hmf.pk)
 
 # sys.exit()
 
-powers = sampleVarianceOverNsquareOverBsquare(cc,hmf.kh,hmf.pk,mrange,zrange,fsky,lmax=1000)
+powers = sampleVarianceOverNsquareOverBsquare(cc,hmf.kh,hmf.pk,mrange,zrange,fsky,lmax=2000)
 
 sovernsquare = hb*hb*powers
 
-Nfile = "data/N_dzmq_S4-7m_CMB_all_coarse_wstep_fid.npy"
+Nfile = "data/N_dzmq_S4-7m_CMB_all_wstep_fid.npy"
 n = np.load(Nfile)
 print n.shape
 qs = [6.,500.,64]
@@ -55,16 +55,26 @@ qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
 
 nnoq = np.trapz(n,qbins,axis=2)*fsky
 
+pl = Plotter()
+pl.plot2d(nnoq)
+pl.done("output/ns.png")
+
+
 ms = 10**mrange
 dms = np.diff(ms)
 dM = np.outer(dms,np.ones([len(zrange)]))
 
 dZ = np.diff(zrange)
 
+
+
 nnoq = nnoq[:-1,:]*dM
 nnoq = nnoq[:,:-1]*dZ
 
 print nnoq.shape
+
+
+
 
 pl = Plotter()
 pl.plot2d(sovernsquare[:-1,:-1]*nnoq)
