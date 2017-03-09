@@ -99,7 +99,7 @@ if rank==0:
     assert np.all(mgrid==mexprange)
     assert np.all(zrange==zgrid)
     
-    saveId = expName + "_" + calName + "_" + suffix
+    saveId = expName + "_" + gridName + "_" + calName + "_" + suffix
 
     from orphics.tools.io import dictFromSection, listFromConfig
     constDict = dictFromSection(Config,'constants')

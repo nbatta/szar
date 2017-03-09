@@ -64,8 +64,8 @@ def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,Mexprange,z_arr,fsky,lmax=1000
 
     zedges = zs+np.diff(zs)[0]/2.
     zedges = np.insert(zedges,0,0.)
-    # print zedges
-    # print zedges.shape
+    print zedges
+    print zedges.shape
     chi_edges = cc.results.comoving_radial_distance(zedges)
     dchis = np.diff(chi_edges)
     
