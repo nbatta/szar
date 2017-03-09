@@ -34,6 +34,10 @@ suffix = Config.get('general','suffix')
 mexprange, zrange, lndM = pickle.load(open(calFile,"rb"))
 
 mgrid,zgrid,siggrid = pickle.load(open("data/szgrid_"+expName+"_"+gridName+".pkl",'rb'))
+
+print zrange 
+print zgrid
+
 assert np.all(mgrid==mexprange)
 assert np.all(zrange==zgrid)
 

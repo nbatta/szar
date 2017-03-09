@@ -35,30 +35,47 @@ def getTotN(Nmqz,mgrid,zgrid,qbins,returnNz=False):
 def gaussian(xx, mu, sig):
     return 1./(sig * np.sqrt(2*np.pi)) * np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
 
-def haloBias(Mexp,rhoc0m,kh,pk):
+def haloBias(Mexp,z_arr,rhoc0om,kh,pk):
     ac = 0.75
     pc = 0.3
     dc = 1.69
 
-    R = tinker.radius_from_mass(10**Mexp, rhoc0om)
+    M = np.outer(10**Mexp,np.ones([len(z_arr)]))
+    # pl = Plotter()
+    # pl.plot2d(np.log10(M))
+    # pl.done("output/masses.png")
+
+    R = tinker.radius_from_mass(M, rhoc0om)
+
+    # pl = Plotter()
+    # pl.plot2d(R)
+    # pl.done("output/Rs.png")
+
     sigsq = tinker.sigma_sq_integral(R, pk[:,:], kh)
 
 
-    return 1. + ((ac*dc**2./sigsq-1.)/dc) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
+    return 1. + (((ac*(dc**2.)/sigsq)-1.)/dc) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
 
-def sampleVarianceOverNsquare(cc,Mexprange,z_arr,lmax=1000):
-    hmf = Halo_MF(cc)
-    self.cc = cc
-    self.kh, self.pk = hmf.kh, hmf.pk #pk(z_arr)
-    self.Mexp = Mexprange
-    self.chis = self.cc.results.comoving_radial_distance(z_arr)
-    self.zs = z_arr
+def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,Mexprange,z_arr,fsky,lmax=1000):
+    print "WARNING: Sample variance calculation currently assumes equispaced zs"
+    Mexp = Mexprange
+    zs = z_arr
+    chis = cc.results.comoving_radial_distance(zs)
+
+    zedges = zs+np.diff(zs)[0]/2.
+    zedges = np.insert(zedges,0,0.)
+    # print zedges
+    # print zedges.shape
+    chi_edges = cc.results.comoving_radial_distance(zedges)
+    dchis = np.diff(chi_edges)
+    
 
 
-    self.PofElls = []
-    for i,chi in enumerate(self.chis):
-        pfunc = interp1d(self.kh,self.pk[i,:])
-        self.PofElls.append(lambda ell,chi: pfunc(ell*self.cc.h/chi))
+
+    PofElls = []
+    for i,chi in enumerate(chis):
+        pfunc = interp1d(kh,pk[i,:])
+        PofElls.append(lambda ell,chi: pfunc(ell*cc.h/chi))
     
     import healpy as hp
     frac = 1.-fsky
@@ -73,16 +90,22 @@ def sampleVarianceOverNsquare(cc,Mexprange,z_arr,lmax=1000):
 
 
     ellrange  = np.arange(2,lmax,1)
-    dchis = np.diff(self.chis)
 
-    for i,(chi,dchi) in enumerate(zip(self.chis,dchis)):
-        Pl = self.PofElls[i](ellrange,chi)
+    powers = []
+    for i,(chi,dchi) in enumerate(zip(chis,dchis)):
+        Pl = PofElls[i](ellrange,chi)
         Pl = np.insert(Pl,0,0)
         Pl = np.insert(Pl,0,0)
         alms = hp.almxfl(alms_original.copy(),np.sqrt(Pl))
         power = (alms*alms.conjugate()).real/chi/chi/dchi
-        print power.sum()
+        powers.append(power.sum())
+        # print i,powers[-1]
 
+    powers = np.array(powers)
+
+    retarray = np.outer(powers,np.ones([len(Mexp)])).transpose()
+    return retarray
+    
 
 
 def f_nu(cc,nu):
@@ -123,7 +146,7 @@ class ClusterCosmology(Cosmology):
         return fast.Mass_con_del_2_del_mean200(Mdel,delta,z,rhocz,self.rhoc0om,ERRTOL)
 
 class Halo_MF:
-
+    @timeit
     def __init__(self,clusterCosmology,Mexp,zcenters,kh=None,powerZK=None,kmin=1e-4,kmax=11.,knum=200):
 
         # update self.sigN (20 mins) and self.Pfunc if changing experiment
