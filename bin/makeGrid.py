@@ -161,8 +161,17 @@ if rank==0:
 
     if doSZ:
         clusterDict = dictFromSection(Config,'cluster_params')
+
+        cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
+        if doSZ:
+            HMF = Halo_MF(cc,mgrid,zgrid)
+            kh = HMF.kh
+            pk = HMF.pk
+
     else:
         clusterDict = None
+        kh = None
+        pk = None
         
 
 else:
@@ -181,6 +190,8 @@ else:
     freq = None
     lkneeT = None
     alphaT = None
+    kh = None
+    pk = None
 
 if rank==0: print "Broadcasting..."
 doLens = comm.bcast(doLens, root = 0)
@@ -198,12 +209,14 @@ noise = comm.bcast(noise, root = 0)
 freq = comm.bcast(freq, root = 0)
 lkneeT = comm.bcast(lkneeT, root = 0)
 alphaT = comm.bcast(alphaT, root = 0)
+kh = comm.bcast(kh, root = 0)
+pk = comm.bcast(pk, root = 0)
 if rank==0: print "Broadcasted."
 
 
 cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
 if doSZ:
-    HMF = Halo_MF(cc,mgrid,zgrid)
+    HMF = Halo_MF(cc,mgrid,zgrid,kh=kh,powerZK=pk)
     SZCluster = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lkneeT,alpha=alphaT)
 
 numms = mgrid.size

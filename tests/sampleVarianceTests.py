@@ -2,7 +2,7 @@ import matplotlib
 matplotlib.use('Agg')
 import sys
 import numpy as np
-from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,sampleVarianceOverNsquareOverBsquare,haloBias
+from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,sampleVarianceOverNsquareOverBsquare,haloBias,getTotN
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 
@@ -19,14 +19,14 @@ constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,clusterParams)
 cc = ClusterCosmology(cosmoDict,constDict,skipCls=True)
 
-mrange = np.arange(13.5,15.7,0.05)
+mrange = np.arange(13.5,15.71,0.05)
 zrange = np.arange(0.05,3.0,0.1)
 
 fsky=0.4
 
 hmf = Halo_MF(cc,mrange,zrange)
 
-hb = haloBias(mrange,zrange,cc.rhoc0om,hmf.kh,hmf.pk)
+#hb = haloBias(mrange,zrange,cc.rhoc0om,hmf.kh,hmf.pk)
 # pl = Plotter()
 # pl.plot2d(hb)
 # pl.done("output/hb.png")
@@ -43,21 +43,33 @@ hb = haloBias(mrange,zrange,cc.rhoc0om,hmf.kh,hmf.pk)
 
 # sys.exit()
 
-powers = sampleVarianceOverNsquareOverBsquare(cc,hmf.kh,hmf.pk,mrange,zrange,fsky,lmax=2000)
+#powers = sampleVarianceOverNsquareOverBsquare(cc,hmf.kh,hmf.pk,mrange,zrange,fsky,lmax=2000)
+#sovernsquare = hb*hb*powers
 
-sovernsquare = hb*hb*powers
-
-Nfile = "data/N_dzmq_S4-7m_CMB_all_wstep_fid.npy"
-n = np.load(Nfile)
-print n.shape
 qs = [6.,500.,64]
 qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
 
-nnoq = np.trapz(n,qbins,axis=2)*fsky
 
+
+
+# Nfile = "data/N_dzmq_S4-7m_CMB_all_coarse_master_test_fid.npy"
+# n = np.load(Nfile)
+# print getTotN(n,mrange,zrange,qbins,returnNz=False)
+# nnoq = np.trapz(n,qbins,axis=2)*fsky
+# pl = Plotter()
+# pl.plot2d(nnoq)
+# pl.done("output/nsMaster.png")
+
+
+Nfile = "data/N_dzmq_S4-7m_grid-default_CMB_all_refactor_test_fid.npy"
+n = np.load(Nfile)
+print getTotN(n,mrange,zrange,qbins,returnNz=False)
+nnoq = np.trapz(n,qbins,axis=2)*fsky
 pl = Plotter()
 pl.plot2d(nnoq)
-pl.done("output/ns.png")
+pl.done("output/nsRefactor.png")
+
+sys.exit()
 
 
 ms = 10**mrange

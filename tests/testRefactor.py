@@ -64,9 +64,12 @@ N1 = hmf.N_of_z()*fsky
 
 #hmf.sigN = np.loadtxt("temp.txt")
 
-
-N2 = hmf.N_of_z_SZ(SZProf)*fsky
-#np.savetxt("temp.txt",hmf.sigN)
+try:
+    hmf.sigN = np.loadtxt("tempSigN.txt")
+    N2 = hmf.N_of_z_SZ(SZProf)*fsky
+except:
+    N2 = hmf.N_of_z_SZ(SZProf)*fsky
+    np.savetxt("tempSigN.txt",hmf.sigN)
 
 pl = Plotter(scaleY='log')
 pl.add(zs,N1)
