@@ -22,6 +22,7 @@ iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
+bigDataDir = Config.get('general','bigDataDirectory')
 
 suffix = Config.get('general','suffix')
 saveId = expName + "_" + gridName + "_" + calName + "_" + suffix
@@ -61,7 +62,7 @@ Fisher = np.zeros((numParams,numParams))
 paramCombs = itertools.combinations_with_replacement(paramList,2)
 
 # Fiducial number counts
-N_fid = np.load("data/N_dzmq_"+saveId+"_fid"+".npy")
+N_fid = np.load(bigDataDir+"N_dzmq_"+saveId+"_fid"+".npy")
 N_fid = N_fid[:,:zlen,:]*fsky
 print "Total number of clusters: ", getTotN(N_fid,mgrid,zgrid,qbins)
 
@@ -94,8 +95,8 @@ if baoFile!='':
 # Populate Fisher
 for param1,param2 in paramCombs:
     if param1=='tau' or param2=='tau': continue
-    dN1 = np.load("data/dN_dzmq_"+saveId+"_"+param1+".npy")
-    dN2 = np.load("data/dN_dzmq_"+saveId+"_"+param2+".npy")
+    dN1 = np.load(bigDataDir+"dN_dzmq_"+saveId+"_"+param1+".npy")
+    dN2 = np.load(bigDataDir+"dN_dzmq_"+saveId+"_"+param2+".npy")
     dN1 = dN1[:,:zlen,:]*fsky
     dN2 = dN2[:,:zlen,:]*fsky
 
@@ -103,8 +104,8 @@ for param1,param2 in paramCombs:
     j = paramList.index(param2)
 
     if param1=='wa':
-        Nup = np.load("data/dNup_dzmq_"+saveId+"_"+param1+".npy")
-        Ndn = np.load("data/dNdn_dzmq_"+saveId+"_"+param1+".npy")
+        Nup = np.load(bigDataDir+"dNup_dzmq_"+saveId+"_"+param1+".npy")
+        Ndn = np.load(bigDataDir+"dNdn_dzmq_"+saveId+"_"+param1+".npy")
         print getTotN(Nup,mgrid,zgrid,qbins)
         print getTotN(Ndn,mgrid,zgrid,qbins)
 
@@ -159,4 +160,4 @@ except:
 
 
 
-pickle.dump((paramList,FisherTot),open("data/savedFisher_"+saveId+"_"+saveName+".pkl",'wb'))
+pickle.dump((paramList,FisherTot),open(bigDataDir+"savedFisher_"+saveId+"_"+saveName+".pkl",'wb'))

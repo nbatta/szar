@@ -56,6 +56,7 @@ if rank==0:
     Config = SafeConfigParser()
     Config.optionxform=str
     Config.read(iniFile)
+    bigDataDir = Config.get('general','bigDataDirectory')
 
     paramList = [] # the parameters that can be varied
     fparams = {}   # the 
@@ -95,7 +96,7 @@ if rank==0:
     # load the mass calibration grid
     mexprange, zrange, lndM = pickle.load(open(calFile,"rb"))
 
-    mgrid,zgrid,siggrid = pickle.load(open("data/szgrid_"+expName+"_"+gridName+".pkl",'rb'))
+    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+".pkl",'rb'))
     assert np.all(mgrid==mexprange)
     assert np.all(zrange==zgrid)
     
@@ -190,7 +191,7 @@ dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbins,SZProf)
 
 
 if rank==0: 
-    np.save("data/N_dzmq_"+saveId+"_fid",dN_dmqz)
+    np.save(bigDataDir+"N_dzmq_"+saveId+"_fid",dN_dmqz)
     dUps = {}
     dDns = {}
 
@@ -206,9 +207,9 @@ if rank==0:
 
     for param in inParamList:
         dN = (dUps[param]-dDns[param])/stepSizes[param]
-        np.save("data/dNup_dzmq_"+saveId+"_"+param,dUps[param])
-        np.save("data/dNdn_dzmq_"+saveId+"_"+param,dDns[param])
-        np.save("data/dN_dzmq_"+saveId+"_"+param,dN)
+        np.save(bigDataDir+"dNup_dzmq_"+saveId+"_"+param,dUps[param])
+        np.save(bigDataDir+"dNdn_dzmq_"+saveId+"_"+param,dDns[param])
+        np.save(bigDataDir+"dN_dzmq_"+saveId+"_"+param,dN)
         
 else:
     data = dN_dmqz.astype(np.float64)

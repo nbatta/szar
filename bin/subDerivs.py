@@ -13,13 +13,18 @@ calList = ['CMB_all']
 
 gridName = "grid-default"
 
+iniFile = "input/pipeline.ini"
+Config = SafeConfigParser()
+Config.optionxform=str
+Config.read(iniFile)
+bigDataDir = Config.get('general','bigDataDirectory')
 
 for exp in expList:
 
     for cal in calList:
 
 
-        massGridName = "data/lensgrid_"+exp+"_"+gridName+"_"+cal+".pkl"
+        massGridName = bigDataDir+"lensgrid_"+exp+"_"+gridName+"_"+cal+".pkl"
 
         #cmd = " mpirun -np " +str(numCores) + " python bin/makeDerivs.py allParams "+exp+" "+cal+" "+massGridName+"  > output"+str(time.time())+".log  2>&1 &"
 

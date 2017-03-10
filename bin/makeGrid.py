@@ -67,6 +67,8 @@ if rank==0:
 
     from orphics.tools.io import dictFromSection, listFromConfig
 
+    bigDataDir = Config.get('general','bigDataDirectory')
+
     ms = listFromConfig(Config,gridName,'mexprange')
     mgrid = np.arange(ms[0],ms[1],ms[2])
     zs = listFromConfig(Config,gridName,'zrange')
@@ -150,7 +152,7 @@ if rank==0:
         pl.done("output/Nl_"+expName+lensName+".png")
         #ls,Nls = np.loadtxt("data/LA_pol_Nl.txt",unpack=True,delimiter=",")
         # print ls,Nls
-        np.savetxt("data/nlsave_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
+        np.savetxt(bigDataDir+"nlsave_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
     else:
         ls = None
         Nls = None
@@ -285,7 +287,7 @@ else:
             comm.Recv(data, source=i, tag=77)
             MerrGrid += data
 
-        pickle.dump((mgrid,zgrid,MerrGrid),open("data/lensgrid_"+expName+"_"+gridName+"_"+lensName+".pkl",'wb'))
+        pickle.dump((mgrid,zgrid,MerrGrid),open(bigDataDir+"lensgrid_"+expName+"_"+gridName+"_"+lensName+".pkl",'wb'))
 
     if doSZ:
         for i in range(1,numcores):
@@ -294,4 +296,4 @@ else:
             siggrid += data
 
 
-        pickle.dump((mgrid,zgrid,siggrid),open("data/szgrid_"+expName+"_"+gridName+".pkl",'wb'))
+        pickle.dump((mgrid,zgrid,siggrid),open(bigDataDir+"szgrid_"+expName+"_"+gridName+".pkl",'wb'))

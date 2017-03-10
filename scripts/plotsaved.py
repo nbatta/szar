@@ -30,8 +30,8 @@ fisherPlanck = np.pad(fisherPlanck,pad_width=((0,numLeft),(0,numLeft)),mode="con
 #f7 = np.loadtxt("output/fisherSigma8S4-7m_CMB_all_wstep.txt")+fisherPlanck #[11:,11:]#+fisherPlanck
 #f5 = np.loadtxt("output/fisherSigma8S4-5m_CMB_all_wstep.txt")+fisherPlanck 
 
-f7 = np.loadtxt("output/fisherSigma8S4-7m_owl2_wstep.txt")+fisherPlanck #[11:,11:]#+fisherPlanck
-f5 = np.loadtxt("output/fisherSigma8S4-5m_owl2_wstep.txt")+fisherPlanck 
+f7 = np.loadtxt("fisherSigma8S4-7m_owl2_wstep.txt")+fisherPlanck #[11:,11:]#+fisherPlanck
+f5 = np.loadtxt("fisherSigma8S4-5m_owl2_wstep.txt")+fisherPlanck 
 
 # print f7.shape[0]
 # print f7.shape[0]-zout.size

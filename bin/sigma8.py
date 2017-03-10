@@ -33,7 +33,9 @@ suffix = Config.get('general','suffix')
 # load the mass calibration grid
 mexprange, zrange, lndM = pickle.load(open(calFile,"rb"))
 
-mgrid,zgrid,siggrid = pickle.load(open("data/szgrid_"+expName+"_"+gridName+".pkl",'rb'))
+bigDataDir = Config.get('general','bigDataDirectory')
+
+mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+".pkl",'rb'))
 
 print zrange 
 print zgrid
@@ -123,14 +125,14 @@ for param1,param2 in paramCombs:
         k1 = zlist.index(param1)
         dN1 = derivs[k1][:,:,:]*fsky
     else:
-        dN1 = np.load("data/dN_dzmq_"+saveId+"_"+param1+".npy")
+        dN1 = np.load(bigDataDir+"dN_dzmq_"+saveId+"_"+param1+".npy")
         dN1 = dN1[:,:,:]*fsky
 
     if param2[:3]=="S8Z":
         k2 = zlist.index(param2)
         dN2 = derivs[k2][:,:,:]*fsky
     else:
-        dN2 = np.load("data/dN_dzmq_"+saveId+"_"+param2+".npy")
+        dN2 = np.load(bigDataDir+"dN_dzmq_"+saveId+"_"+param2+".npy")
         dN2 = dN2[:,:,:]*fsky
 
 
@@ -156,7 +158,7 @@ for param1,param2 in paramCombs:
 
 print Fisher.shape
 
-np.savetxt("output/fisherSigma8"+saveId+".txt",Fisher)
+np.savetxt(bigDataDir+"fisherSigma8"+saveId+".txt",Fisher)
 
 Aerrs = np.sqrt(np.diagonal(np.linalg.inv(Fisher)))
 

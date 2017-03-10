@@ -13,12 +13,19 @@ calList = ['owl2']#,'owl1']#,'owl1']
 
 gridName = "grid-owl2"
 
+iniFile = "input/pipeline.ini"
+Config = SafeConfigParser()
+Config.optionxform=str
+Config.read(iniFile)
+bigDataDir = Config.get('general','bigDataDirectory')
+
+
 for exp in expList:
 
     for cal in calList:
 
 
-        massGridName = "data/"+cal+"-"+gridName+".pkl"
+        massGridName = bigDataDir+cal+"-"+gridName+".pkl"
 
         cmd = "nohup wq sub -r \"mode:bycore;N:"+str(numCores)+";hostfile: auto;job_name: "+exp+"_"+cal+";priority:med\" -c \"source ~/.bash_profile ; source ~/.bashrc ; cd ~/repos/SZ_filter ; mpirun -hostfile %hostfile% python bin/makeDerivs.py allParams "+exp+" "+gridName+" "+cal+" "+massGridName+" \" > output"+str(time.time())+"_cmbderiv_"+exp+"_"+cal+".log  &"
 
