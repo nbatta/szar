@@ -62,11 +62,11 @@ SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=fre
 
 fsky = 0.4
 
-N1 = hmf.N_of_z(Mexp,zs)*fsky
+N1 = hmf.N_of_z(Mexp,zs)*fsky*4*np.pi
 
 #hmf.sigN = np.loadtxt("temp.txt")
 
-N2 = hmf.N_of_z_SZ(Mexp,zs,beam,noise,freq,clusterDict,lknee,alpha)*fsky
+N2 = hmf.N_of_z_SZ(Mexp,zs,beam,noise,freq,clusterDict,lknee,alpha)*fsky*hmf.dVdz(zs)[1:]*4*np.pi
 
 
 pl = Plotter(scaleY='log')
@@ -77,7 +77,7 @@ Ntot1 = np.trapz(N2,zs[1:])
 print Ntot1
 
 
-sn,ntot = hmf.Mass_err(outmerr,Mexp,zs,beam,noise,freq,clusterDict,lknee,alpha)
+sn,ntot = hmf.Mass_err(fsky,outmerr,Mexp,zs,beam,noise,freq,clusterDict,lknee,alpha)
 
 print ntot
 
@@ -94,4 +94,10 @@ print N*fsky
 
 pl.add(zs[1:],Nofz*fsky)
 
-pl.done("output/Ns.png")
+pl.done("output/NsMaster.png")
+
+
+nnoq = np.trapz(dnqmz,q_arr,axis=2)*fsky
+pl = Plotter()
+pl.plot2d(nnoq)
+pl.done("output/ngridMaster.png")

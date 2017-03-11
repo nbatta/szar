@@ -157,7 +157,6 @@ class Halo_MF:
         self.override = overridePowerSpectra
         self.multiplyZ = multiplyZ
 
-    @timeit
     def pk(self,z_arr,multiplyZ=None,useStored=False):
         if multiplyZ is None: multiplyZ = self.multiplyZ
         multIndex, multVal = multiplyZ 
@@ -177,8 +176,8 @@ class Halo_MF:
             
             self.cc.pars.NonLinear = model.NonLinear_none
             self.cc.results = camb.get_results(self.cc.pars)
-            #kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=2e-5, maxkh=11, npoints = 200,)
-            kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=1e-4, maxkh=11, npoints = 200)
+            kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=2e-5, maxkh=11, npoints = 200,)
+            #kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=1e-4, maxkh=11, npoints = 200)
 
 
         #pk[multIndex,:] = multVal*P_camb
@@ -367,7 +366,7 @@ class Halo_MF:
         
         return dN_dzdm,dM200[:,0]
 
-    def Mass_err (self,mass_err,Mexp,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+    def Mass_err (self,fsky,mass_err,Mexp,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is TEMP WL MASS ERROR
         alpha_ym = self.cc.paramDict['alpha_ym'] #1.79   
         lnYmin = np.log(1e-13)
@@ -426,8 +425,8 @@ class Halo_MF:
         for i in xrange (len(z_arr) - 1):
             N_z[i] = np.sum(dn_dVdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1] / (mass_err[:,i]**2 + alpha_ym**2 * (sigN[:,i+1]/YM[:,i+1])**2))
             N_tot_z[i] = np.sum(dn_dVdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1])
-        err_WL_mass = 4.*np.pi* (1400./42000.)*np.sum(N_z*dV_dz[1:])*0.05
-        Ntot = 4.*np.pi* (1400./42000.)*np.sum(N_tot_z*dV_dz[1:])*0.05
+        err_WL_mass = 4.*np.pi* fsky*np.trapz(N_z*dV_dz[1:],z_arr[1:])
+        Ntot = 4.*np.pi* fsky*np.trapz(N_tot_z*dV_dz[1:],z_arr[1:])
 
         return 1./err_WL_mass,Ntot
 
