@@ -49,7 +49,7 @@ Mexp = np.arange(13.0,15.7,0.3)
 
 zs = np.insert(zs,0,0)
 
-outmerr = interpolateGrid(lndM,minrange,zinrange,Mexp,zs,regular=False,kind="cubic",bounds_error=False,fill_value=np.inf)
+outmerr = interpolateGrid(lndM,minrange,zinrange,Mexp,zs[1:],regular=False,kind="cubic",bounds_error=False,fill_value=np.inf)
 
 
 
@@ -69,6 +69,11 @@ N1 = hmf.N_of_z(Mexp,zs)*fsky*4*np.pi
 N2 = hmf.N_of_z_SZ(Mexp,zs,beam,noise,freq,clusterDict,lknee,alpha)*fsky*hmf.dVdz(zs)[1:]*4*np.pi
 
 
+
+pl = Plotter()
+pl.plot2d(hmf.sigN)
+pl.done("output/signMaster.png")
+
 pl = Plotter(scaleY='log')
 pl.add(zs[1:],N1)
 pl.add(zs[1:],N2)
@@ -85,6 +90,7 @@ print ntot
 
 q_arr = np.logspace(np.log10(6.),np.log10(500.),64)
 
+print zs
 dnqmz = hmf.N_of_mqz_SZ(outmerr,zs,Mexp,q_arr,beam,noise,freq,clusterDict,lknee,alpha)
 
 
@@ -92,7 +98,8 @@ N,Nofz = getTotN(dnqmz,Mexp,zs[1:],q_arr,returnNz=True)
 
 print N*fsky
 
-pl.add(zs[1:],Nofz*fsky)
+pl.add(zs[1:],Nofz*fsky,label="mqz")
+pl.legendOn()
 
 pl.done("output/NsMaster.png")
 

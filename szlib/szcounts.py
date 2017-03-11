@@ -302,7 +302,7 @@ class Halo_MF:
                 #print Mexp[j],z_arr[i]
             
             P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])#*dlnY
-
+        self.sigN = sigN.copy()
         #print P_func
         #dN_dzdm = self.N_of_Mz(M200,z_arr,200.)
         dn_dzdm = self.dn_dM(M200,z_arr,200.)
@@ -372,34 +372,19 @@ class Halo_MF:
         lnYmin = np.log(1e-13)
         dlnY = 0.1
         lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
-
-        #Mexp = np.arange(13.5, 15.71, .1)
+        
         M = 10.**Mexp
-        dM = np.gradient(M)
         rho_crit0m = self.cc.rhoc0om
         hh = self.cc.H0/100.
         #hh = 0.7
 
         M200 = np.outer(M,np.zeros([len(z_arr)]))
-        dM200 = np.outer(M,np.zeros([len(z_arr)]))
+        #dM200 = np.outer(M,np.zeros([len(z_arr)]))
         P_func = np.outer(M,np.zeros([len(z_arr)]))
         sigN = np.outer(M,np.zeros([len(z_arr)]))
         YM   =  np.outer(M,np.ones([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
 
-        #HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z2.txt',unpack=True)
-        #HSC_mass = np.transpose(HSC_mass)
-
-        #CMB_halo = np.loadtxt('data/AdvACTCMBLensingWhiteNoise150GhzTTOnly.dat',unpack=True)
-        #CMB_halo *= np.sqrt(1000.)
-        #CMB_halo = np.transpose(CMB_halo)
-
-        #mhalo = np.arange(14.0,15.7,0.05)
-        #zhalo = np.arange(0.1,2.0,0.05)
-
-        #CMB_mass = interpolateGrid(CMB_halo,mhalo,zhalo,np.log10(M) ,z_arr[1:])
-
-        #mass_err = 1./(np.sqrt((1./HSC_mass)**2 + (1./CMB_mass)**2))
 
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
 
@@ -408,14 +393,14 @@ class Halo_MF:
         for ii in xrange (len(z_arr)-1):
             i = ii + 1
             M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M,500,z_arr[i])
-            dM200[:,i] = np.gradient(M200[:,i])
+            #dM200[:,i] = np.diff(M200[:,i]) #np.gradient(M200[:,i])
             for j in xrange(len(M)):
                 var = SZProf.quickVar(M[j],z_arr[i],tmaxN,numts)
                 sigN[j,i] = np.sqrt(var)
                 YM[j,i] = SZProf.Y_M(M[j],z_arr[i])
                         
                 
-            P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
+            P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])#*dlnY
 
         dn_dVdm = self.dn_dM(M200,z_arr,200.)
         dV_dz = self.dVdz(z_arr)
@@ -423,8 +408,8 @@ class Halo_MF:
         N_z = np.zeros(len(z_arr) - 1)
         N_tot_z = np.zeros(len(z_arr) - 1)
         for i in xrange (len(z_arr) - 1):
-            N_z[i] = np.sum(dn_dVdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1] / (mass_err[:,i]**2 + alpha_ym**2 * (sigN[:,i+1]/YM[:,i+1])**2))
-            N_tot_z[i] = np.sum(dn_dVdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1])
+            N_z[i] = np.trapz(dn_dVdm[:,i+1]*P_func[:,i+1] / (mass_err[:,i]**2 + alpha_ym**2 * (sigN[:,i+1]/YM[:,i+1])**2),M200[:,i+1])
+            N_tot_z[i] = np.trapz(dn_dVdm[:,i+1]*P_func[:,i+1],M200[:,i+1])
         err_WL_mass = 4.*np.pi* fsky*np.trapz(N_z*dV_dz[1:],z_arr[1:])
         Ntot = 4.*np.pi* fsky*np.trapz(N_tot_z*dV_dz[1:],z_arr[1:])
 
@@ -474,8 +459,7 @@ class Halo_MF:
         for kk in xrange(len(q_arr)):
             for jj in xrange(len(m_wl)):
                 for i in xrange (len(z_arr) - 1):
-                    dM = np.diff(M200[:,i+1])
-                    dNdzmq[jj,i,kk] = np.trapz(dn_dVdm[:,i+1]*P_func[:,i,kk]*SZProf.Mwl_prob(10**(m_wl[jj]),M_arr[:,i+1],mass_err[:,i]),M200[:,i+1],dM) * dV_dz[i+1]*4.*np.pi
+                    dNdzmq[jj,i,kk] = np.trapz(dn_dVdm[:,i+1]*P_func[:,i,kk]*SZProf.Mwl_prob(10**(m_wl[jj]),M_arr[:,i+1],mass_err[:,i]),M200[:,i+1]) * dV_dz[i+1]*4.*np.pi
                    
         return dNdzmq
 
