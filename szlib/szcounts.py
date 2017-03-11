@@ -176,8 +176,8 @@ class Halo_MF:
             
             self.cc.pars.NonLinear = model.NonLinear_none
             self.cc.results = camb.get_results(self.cc.pars)
-            kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=2e-5, maxkh=11, npoints = 200,)
-            #kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=1e-4, maxkh=11, npoints = 200)
+            #kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=2e-5, maxkh=11, npoints = 200)
+            kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=1e-4, maxkh=11, npoints = 200)
 
 
         #pk[multIndex,:] = multVal*P_camb
@@ -261,9 +261,9 @@ class Halo_MF:
     def N_of_z_SZ(self,Mexp,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is dn/dV(z)
 
-        lnYmin = np.log(1e-13)
+        lnYmin = np.log(1e-14)
         dlnY = 0.1
-        lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
+        lnY = np.arange(lnYmin,lnYmin+13.,dlnY)
     
         #Mexp = np.arange(14.0, 15.4, 0.2)
         rho_crit0m = self.cc.rhoc0om
@@ -369,9 +369,9 @@ class Halo_MF:
     def Mass_err (self,fsky,mass_err,Mexp,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is TEMP WL MASS ERROR
         alpha_ym = self.cc.paramDict['alpha_ym'] #1.79   
-        lnYmin = np.log(1e-13)
+        lnYmin = np.log(1e-14)
         dlnY = 0.1
-        lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
+        lnY = np.arange(lnYmin,lnYmin+13.,dlnY)
         
         M = 10.**Mexp
         rho_crit0m = self.cc.rhoc0om
