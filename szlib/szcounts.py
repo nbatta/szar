@@ -19,6 +19,19 @@ from orphics.analysis.flatMaps import interpolateGrid
 import szlib.szlibNumbafied as fast
 from scipy.special import j0
 
+def getTotN(Nmqz,mgrid,zgrid,qbins,returnNz=False):
+    """Get total number of clusters given N/DmDqDz
+    and the corresponding log10(mass), z and q grids
+    """
+    Fellnoq = np.trapz(Nmqz,qbins,axis=2)
+    Nofz = np.trapz(Fellnoq.T,10**mgrid,axis=1)
+    N = np.trapz(Nofz.T,zgrid)
+    if returnNz:
+        return N,Nofz
+    else:
+        return N
+
+
 def haloBias(Mexp,rhoc0m,kh,pk):
     ac = 0.75
     pc = 0.3
@@ -228,9 +241,8 @@ class Halo_MF:
         N_dzdm = dn_dm[:,1:] * dV_dz[1:]
         return N_dzdm
 
-    def N_of_z(self,z_arr):
+    def N_of_z(self,Mexp,z_arr):
 
-        Mexp = np.arange(13.5, 15.71, .1)
         M = 10.**Mexp
         M200 = np.outer(M,np.zeros([len(z_arr)]))
 
@@ -247,14 +259,13 @@ class Halo_MF:
 
         return N_z
 
-    def N_of_z_SZ(self,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+    def N_of_z_SZ(self,Mexp,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is dn/dV(z)
 
         lnYmin = np.log(1e-13)
         dlnY = 0.1
         lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
     
-        Mexp = np.arange(12.5, 15.71, .1)
         #Mexp = np.arange(14.0, 15.4, 0.2)
         rho_crit0m = self.cc.rhoc0om
         hh = self.cc.H0/100
@@ -356,7 +367,7 @@ class Halo_MF:
         
         return dN_dzdm,dM200[:,0]
 
-    def Mass_err (self,mass_err,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+    def Mass_err (self,mass_err,Mexp,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is TEMP WL MASS ERROR
         alpha_ym = self.cc.paramDict['alpha_ym'] #1.79   
         lnYmin = np.log(1e-13)
@@ -364,7 +375,6 @@ class Halo_MF:
         lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
 
         #Mexp = np.arange(13.5, 15.71, .1)
-        Mexp = np.arange(12.5,15.5,0.05)+0.05 
         M = 10.**Mexp
         dM = np.gradient(M)
         rho_crit0m = self.cc.rhoc0om
@@ -401,22 +411,11 @@ class Halo_MF:
             M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M,500,z_arr[i])
             dM200[:,i] = np.gradient(M200[:,i])
             for j in xrange(len(M)):
-                try:
-                    assert fileFunc is not None
-                    filename = fileFunc(Mexp[j],z_arr[i])
-                    print filename
-                    sigN[j,i] = np.loadtxt(filename,unpack=True)[-1]
-                except:
-                    print "Calculating S/N because file not found or specified for M=",Mexp[j]," z=",z_arr[i]
-                    if quick:
-                        var = SZProf.quickVar(M[j],z_arr[i],tmaxN,numts)
-                    else:
-                        var = SZProf.filter_variance(M[j],z_arr[i])
-                    sigN[j,i] = np.sqrt(var)
-                    YM[j,i] = SZProf.Y_M(M[j],z_arr[i])
+                var = SZProf.quickVar(M[j],z_arr[i],tmaxN,numts)
+                sigN[j,i] = np.sqrt(var)
+                YM[j,i] = SZProf.Y_M(M[j],z_arr[i])
                         
-                print Mexp[j],z_arr[i]
-
+                
             P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
 
         dn_dVdm = self.dn_dM(M200,z_arr,200.)
