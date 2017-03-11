@@ -71,6 +71,10 @@ except:
     N2 = hmf.N_of_z_SZ(SZProf)*fsky
     np.savetxt("tempSigN.txt",hmf.sigN)
 
+pl = Plotter()
+pl.plot2d(hmf.sigN)
+pl.done("output/signRefactor.png")
+    
 pl = Plotter(scaleY='log')
 pl.add(zs,N1)
 pl.add(zs,N2)
@@ -94,6 +98,12 @@ N,Nofz = getTotN(dnqmz,Mexp,zs,q_arr,returnNz=True)
 
 print N*fsky
 
-pl.add(zs,Nofz*fsky)
+pl.add(zs,Nofz*fsky,label="mqz")
+pl.legendOn()
+pl.done("output/nsRefactor.png")
 
-pl.done("output/Ns.png")
+
+nnoq = np.trapz(dnqmz,q_arr,axis=2)*fsky
+pl = Plotter()
+pl.plot2d(nnoq)
+pl.done("output/ngridRefactor.png")
