@@ -52,22 +52,22 @@ qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
 
 
 
-# Nfile = "data/N_dzmq_S4-7m_CMB_all_coarse_master_test_fid.npy"
-# n = np.load(Nfile)
-# print getTotN(n,mrange,zrange,qbins,returnNz=False)
-# nnoq = np.trapz(n,qbins,axis=2)*fsky
-# pl = Plotter()
-# pl.plot2d(nnoq)
-# pl.done("output/nsMaster.png")
+Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/archived_new/N_dzmq_S4-7m_CMB_all_coarse_master_test_fid.npy"
+n = np.load(Nfile)
+print getTotN(n[:,:,:],mrange[1:],zrange,qbins,returnNz=False)
+nnoq = np.trapz(n,qbins,axis=2)*fsky
+pl = Plotter()
+pl.plot2d(nnoq)
+pl.done("output/ngridfineMaster.png")
 
 
-Nfile = "data/N_dzmq_S4-7m_grid-default_CMB_all_refactor_test_fid.npy"
+Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/archived_new/N_dzmq_S4-7m_grid-default_CMB_all_refactor_test_fid.npy"
 n = np.load(Nfile)
 print getTotN(n,mrange,zrange,qbins,returnNz=False)
 nnoq = np.trapz(n,qbins,axis=2)*fsky
 pl = Plotter()
 pl.plot2d(nnoq)
-pl.done("output/nsRefactor.png")
+pl.done("output/ngridfineRefactor.png")
 
 sys.exit()
 
