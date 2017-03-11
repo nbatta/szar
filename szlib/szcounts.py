@@ -459,7 +459,6 @@ class Halo_MF:
         for ii in xrange (len(z_arr)-1):
             i = ii + 1
             M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M,500,z_arr[i])
-            print z_arr[i]
             for j in xrange(len(M)):
                 var = SZProf.quickVar(M[j],z_arr[i],tmaxN,numts)
                 sigN[j,i] = np.sqrt(var)
