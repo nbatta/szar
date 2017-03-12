@@ -11,7 +11,7 @@ numCores = 2*numParams+1
 expList = ['S4-7m']
 calList = ['CMB_all']
 
-gridName = "grid-default"
+gridName = "grid-test"
 
 from ConfigParser import SafeConfigParser 
 iniFile = "input/pipeline.ini"

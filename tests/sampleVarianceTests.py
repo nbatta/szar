@@ -19,8 +19,12 @@ constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,clusterParams)
 cc = ClusterCosmology(cosmoDict,constDict,skipCls=True)
 
-mrange = np.arange(13.5,15.71,0.05)
-zrange = np.arange(0.05,3.0,0.1)
+
+mrange = np.arange(13.5,15.71,0.3)
+zrange = np.arange(0.05,3.0,0.3)
+
+#mrange = np.arange(13.5,15.71,0.05)
+#zrange = np.arange(0.05,3.0,0.1)
 
 fsky=0.4
 
@@ -64,8 +68,23 @@ qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
 #     raise ValueError
 
 
+Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/master/sigN.txt"
+sgrid = np.loadtxt(Nfile)
+pl = Plotter()
+pl.plot2d(sgrid)
+pl.done("output/sgridfineMaster.png")
 
-Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/master/N_dzmq_S4-7m_CMB_all_coarse_master_test_fid.npy"
+Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/refactor/szgrid_S4-7m_grid-test.pkl"
+import cPickle as pickle
+md,zd,sgrid = pickle.load(open(Nfile,'rb'))
+pl = Plotter()
+pl.plot2d(sgrid)
+pl.done("output/sgridfineRefactor.png")
+
+
+
+
+Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/master/N_dzmq_S4-7m_CMB_all_test_master_test_fid.npy"
 n = np.load(Nfile)
 print getTotN(n[:,:,:],mrange[:],zrange,qbins,returnNz=False)*fsky
 nnoq = np.trapz(n,qbins,axis=2)*fsky
@@ -74,7 +93,7 @@ pl.plot2d(nnoq)
 pl.done("output/ngridfineMaster.png")
 
 
-Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/refactor/N_dzmq_S4-7m_grid-default_CMB_all_refactor_test_fid.npy"
+Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/refactor/N_dzmq_S4-7m_grid-test_CMB_all_refactor_test_fid.npy"
 #Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/refactor/dNup_dzmq_S4-7m_grid-default_CMB_all_refactor_test_As.npy"
 n = np.load(Nfile)
 print getTotN(n,mrange,zrange,qbins,returnNz=False)*fsky
