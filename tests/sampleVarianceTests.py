@@ -61,7 +61,8 @@ pl.plot2d(nnoq)
 pl.done("output/ngridfineMaster.png")
 
 
-Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/archived_new/N_dzmq_S4-7m_grid-default_CMB_all_refactor_test_fid.npy"
+Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/refactor/N_dzmq_S4-7m_grid-default_CMB_all_refactor_test_fid.npy"
+#Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/refactor/dNup_dzmq_S4-7m_grid-default_CMB_all_refactor_test_As.npy"
 n = np.load(Nfile)
 print getTotN(n,mrange,zrange,qbins,returnNz=False)
 nnoq = np.trapz(n,qbins,axis=2)*fsky

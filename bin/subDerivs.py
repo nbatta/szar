@@ -13,6 +13,7 @@ calList = ['CMB_all']
 
 gridName = "grid-default"
 
+from ConfigParser import SafeConfigParser 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
