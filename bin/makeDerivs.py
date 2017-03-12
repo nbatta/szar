@@ -185,6 +185,8 @@ dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,zrange,mexprange,qbins,beam,noise,
 
 if rank==0: 
     np.save(bigDataDir+"N_dzmq_"+saveId+"_fid",dN_dmqz)
+    np.savetxt(bigDataDir+"sigN.txt",HMF.sigN)
+    
     dUps = {}
     dDns = {}
 

@@ -451,7 +451,7 @@ class Halo_MF:
                 #print Mexp[j],z_arr[i]
             for kk in xrange(len(q_arr)):
                 P_func[:,ii,kk] = SZProf.P_of_qn (lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr[kk])
-
+        self.sigN = sigN.copy()
         dn_dVdm = self.dn_dM(M200,z_arr,200.)
         dV_dz = self.dVdz(z_arr)
 
