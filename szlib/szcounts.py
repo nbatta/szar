@@ -56,6 +56,8 @@ def haloBias(Mexp,z_arr,rhoc0om,kh,pk):
 
     return 1. + (((ac*(dc**2.)/sigsq)-1.)/dc) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
 
+
+
 def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,Mexprange,z_arr,fsky,lmax=1000):
     print "WARNING: Sample variance calculation currently assumes equispaced zs"
     Mexp = Mexprange

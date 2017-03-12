@@ -262,7 +262,7 @@ for index in mySplit:
         concentration = 1.18
         MerrGrid[mindex,zindex] = 1./NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None)
     if doSZ:
-        var = SZCluster.quickVar(mass,z)
+        var = SZCluster.quickVar(10**mass,z)
         siggrid[mindex,zindex] = np.sqrt(var)
 
 

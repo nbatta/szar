@@ -44,9 +44,9 @@ zmax = Config.getfloat('general','zmax')
 fsky = Config.getfloat(expName,'fsky')
 
 # get mass and z grids
-ms = listFromConfig(Config,calName,'mexprange')
+ms = listFromConfig(Config,gridName,'mexprange')
 mgrid = np.arange(ms[0],ms[1],ms[2])
-zs = listFromConfig(Config,calName,'zrange')
+zs = listFromConfig(Config,gridName,'zrange')
 zgrid = np.arange(zs[0],zs[1],zs[2])
 zgrid = zgrid[zgrid<zmax]
 zlen = zgrid.size
@@ -65,6 +65,12 @@ paramCombs = itertools.combinations_with_replacement(paramList,2)
 N_fid = np.load(bigDataDir+"N_dzmq_"+saveId+"_fid"+".npy")
 N_fid = N_fid[:,:zlen,:]*fsky
 print "Total number of clusters: ", getTotN(N_fid,mgrid,zgrid,qbins)
+
+
+sId = expName + "_" + gridName 
+sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
+sovernsquare =  np.dstack([sovernsquareEach]*len(qbins))
+
 
 # Planck and BAO Fishers
 planckFile = Config.get(fishSection,'planckFile')
@@ -115,7 +121,7 @@ for param1,param2 in paramCombs:
 
 
     with np.errstate(divide='ignore'):
-        FellBlock = dN1*dN2*np.nan_to_num(1./N_fid)
+        FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid+(N_fid*N_fid*sovernsquare)))
     Fellnoq = np.trapz(FellBlock,qbins,axis=2)
     Fellnoz = np.trapz(Fellnoq,zgrid,axis=1)
     Fell = np.trapz(Fellnoz,10**mgrid)

@@ -20,20 +20,20 @@ clusterDict = dictFromSection(Config,clusterParams)
 cc = ClusterCosmology(cosmoDict,constDict,skipCls=True)
 
 
-mrange = np.arange(13.5,15.71,0.3)
-zrange = np.arange(0.05,3.0,0.3)
+# mrange = np.arange(13.5,15.71,0.3)
+# zrange = np.arange(0.05,3.0,0.3)
 
-#mrange = np.arange(13.5,15.71,0.05)
-#zrange = np.arange(0.05,3.0,0.1)
+mrange = np.arange(13.5,15.71,0.05)
+zrange = np.arange(0.05,3.0,0.1)
 
 fsky=0.4
 
 hmf = Halo_MF(cc,mrange,zrange)
 
-#hb = haloBias(mrange,zrange,cc.rhoc0om,hmf.kh,hmf.pk)
-# pl = Plotter()
-# pl.plot2d(hb)
-# pl.done("output/hb.png")
+hb = haloBias(mrange,zrange,cc.rhoc0om,hmf.kh,hmf.pk)
+pl = Plotter()
+pl.plot2d(hb)
+pl.done("output/hb.png")
 
 # ls = "-"
 # lab = ""
@@ -47,8 +47,8 @@ hmf = Halo_MF(cc,mrange,zrange)
 
 # sys.exit()
 
-#powers = sampleVarianceOverNsquareOverBsquare(cc,hmf.kh,hmf.pk,mrange,zrange,fsky,lmax=2000)
-#sovernsquare = hb*hb*powers
+powers = sampleVarianceOverNsquareOverBsquare(cc,hmf.kh,hmf.pk,mrange,zrange,fsky,lmax=1000)
+sovernsquare = hb*hb*powers
 
 qs = [6.,500.,64]
 qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
@@ -68,33 +68,32 @@ qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
 #     raise ValueError
 
 
-Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/master/sigN.txt"
-sgrid = np.loadtxt(Nfile)
-pl = Plotter()
-pl.plot2d(sgrid)
-pl.done("output/sgridfineMaster.png")
+# Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/master/sigN.txt"
+# sgrid = np.loadtxt(Nfile)
+# pl = Plotter()
+# pl.plot2d(sgrid)
+# pl.done("output/sgridfineMaster.png")
 
-Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/refactor/szgrid_S4-7m_grid-test.pkl"
-import cPickle as pickle
-md,zd,sgrid = pickle.load(open(Nfile,'rb'))
-pl = Plotter()
-pl.plot2d(sgrid)
-pl.done("output/sgridfineRefactor.png")
-
-
+# Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/refactor/szgrid_S4-7m_grid-test.pkl"
+# import cPickle as pickle
+# md,zd,sgrid = pickle.load(open(Nfile,'rb'))
+# pl = Plotter()
+# pl.plot2d(sgrid)
+# pl.done("output/sgridfineRefactor.png")
 
 
-Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/master/N_dzmq_S4-7m_CMB_all_test_master_test_fid.npy"
-n = np.load(Nfile)
-print getTotN(n[:,:,:],mrange[:],zrange,qbins,returnNz=False)*fsky
-nnoq = np.trapz(n,qbins,axis=2)*fsky
-pl = Plotter()
-pl.plot2d(nnoq)
-pl.done("output/ngridfineMaster.png")
 
 
-Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/refactor/N_dzmq_S4-7m_grid-test_CMB_all_refactor_test_fid.npy"
-#Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/refactor/dNup_dzmq_S4-7m_grid-default_CMB_all_refactor_test_As.npy"
+# Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/master/N_dzmq_S4-7m_CMB_all_coarse_master_test_fid.npy"
+# n = np.load(Nfile)
+# print getTotN(n[:,:,:],mrange[:],zrange,qbins,returnNz=False)*fsky
+# nnoq = np.trapz(n,qbins,axis=2)*fsky
+# pl = Plotter()
+# pl.plot2d(nnoq)
+# pl.done("output/ngridfineMaster.png")
+
+
+Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/refactor/N_dzmq_S4-7m_grid-default_CMB_all_refactor_test_fid.npy"
 n = np.load(Nfile)
 print getTotN(n,mrange,zrange,qbins,returnNz=False)*fsky
 nnoq = np.trapz(n,qbins,axis=2)*fsky
@@ -102,7 +101,7 @@ pl = Plotter()
 pl.plot2d(nnoq)
 pl.done("output/ngridfineRefactor.png")
 
-sys.exit()
+# sys.exit()
 
 
 ms = 10**mrange
@@ -118,9 +117,16 @@ nnoq = nnoq[:,:-1]*dZ
 
 print nnoq.shape
 
-
+outDir = "/gpfs01/astro/www/msyriac/"
+pl = Plotter()
+pl.plot2d((nnoq))
+pl.done(outDir+ "poisson.png")
 
 
 pl = Plotter()
-pl.plot2d(sovernsquare[:-1,:-1]*nnoq)
-pl.done("output/sovernsquare.png")
+pl.plot2d((sovernsquare[:-1,:-1]*nnoq*nnoq))
+pl.done(outDir+ "sample.png")
+
+pl = Plotter()
+pl.plot2d((sovernsquare[:-1,:-1]*nnoq))
+pl.done(outDir+ "ratio.png")

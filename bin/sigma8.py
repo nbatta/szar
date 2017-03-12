@@ -43,7 +43,7 @@ print zgrid
 assert np.all(mgrid==mexprange)
 assert np.all(zrange==zgrid)
 
-saveId = expName + "_" + calName + "_" + suffix
+saveId = expName + "_" + gridName + "_" + calName + "_" + suffix
 
 from orphics.tools.io import dictFromSection, listFromConfig
 constDict = dictFromSection(Config,'constants')
@@ -116,6 +116,11 @@ Fisher = np.zeros((numParams,numParams))
 paramCombs = itertools.combinations_with_replacement(paramList,2)
 
 
+sId = expName + "_" + gridName 
+sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
+sovernsquare =  np.dstack([sovernsquareEach]*len(qbins))
+
+
 # Populate Fisher
 for param1,param2 in paramCombs:
     if param1=='tau' or param2=='tau': continue
@@ -145,7 +150,7 @@ for param1,param2 in paramCombs:
 
 
     with np.errstate(divide='ignore'):
-        FellBlock = dN1*dN2*np.nan_to_num(1./N_fid)
+        FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid+(N_fid*N_fid*sovernsquare)))
     Fellnoq = np.trapz(FellBlock,qbins,axis=2)
     Fellnoz = np.trapz(Fellnoq,zrange,axis=1)
     Fell = np.trapz(Fellnoz,10**mexprange)

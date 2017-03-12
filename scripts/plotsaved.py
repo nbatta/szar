@@ -13,8 +13,8 @@ def cov2corr(cov):
     return corr
 
 
-#zout = np.arange(0.05,3.0,0.1)
-zout = np.arange(0.05,2.0,0.1)
+zout = np.arange(0.05,3.0,0.1)
+#zout = np.arange(0.05,2.0,0.1)
 
 planckFile = "data/Feb26_FisherMat_Planck_tau0.01_lens_fsky0.6_lcdm.csv"
 fisherPlanck = np.loadtxt(planckFile)
@@ -27,11 +27,19 @@ fisherPlanck = np.pad(fisherPlanck,pad_width=((0,numLeft),(0,numLeft)),mode="con
 # sys.exit()
 
 
-#f7 = np.loadtxt("output/fisherSigma8S4-7m_CMB_all_wstep.txt")+fisherPlanck #[11:,11:]#+fisherPlanck
-#f5 = np.loadtxt("output/fisherSigma8S4-5m_CMB_all_wstep.txt")+fisherPlanck 
+from ConfigParser import SafeConfigParser 
+iniFile = "input/pipeline.ini"
+Config = SafeConfigParser()
+Config.optionxform=str
+Config.read(iniFile)
+bigDataDir = Config.get('general','bigDataDirectory')
 
-f7 = np.loadtxt("fisherSigma8S4-7m_owl2_wstep.txt")+fisherPlanck #[11:,11:]#+fisherPlanck
-f5 = np.loadtxt("fisherSigma8S4-5m_owl2_wstep.txt")+fisherPlanck 
+
+f7 = np.loadtxt(bigDataDir+"fisherSigma8S4-7m_grid-default_CMB_all_refactor_test.txt")+fisherPlanck #[11:,11:]#+fisherPlanck
+f5 = np.loadtxt(bigDataDir+"fisherSigma8S4-5m_grid-default_CMB_all_refactor_test.txt")+fisherPlanck 
+
+#f7 = np.loadtxt("fisherSigma8S4-7m_owl2_wstep.txt")+fisherPlanck #[11:,11:]#+fisherPlanck
+#f5 = np.loadtxt("fisherSigma8S4-5m_owl2_wstep.txt")+fisherPlanck 
 
 # print f7.shape[0]
 # print f7.shape[0]-zout.size
