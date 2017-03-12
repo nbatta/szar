@@ -50,11 +50,24 @@ qs = [6.,500.,64]
 qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
 
 
+# iniFile = "input/pipeline.ini"
+# Config = SafeConfigParser()
+# Config.optionxform=str
+# Config.read(iniFile)
+# qs = listFromConfig(Config,'general','qbins')
+# qspacing = Config.get('general','qbins_spacing')
+# if qspacing=="log":
+#     qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
+# elif qspacing=="linear":
+#     qbins = np.linspace(qs[0],qs[1],int(qs[2]))
+# else:
+#     raise ValueError
 
 
-Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/archived_new/N_dzmq_S4-7m_CMB_all_coarse_master_test_fid.npy"
+
+Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/master/N_dzmq_S4-7m_CMB_all_coarse_master_test_fid.npy"
 n = np.load(Nfile)
-print getTotN(n[:,:,:],mrange[1:],zrange,qbins,returnNz=False)
+print getTotN(n[:,:,:],mrange[:],zrange,qbins,returnNz=False)*fsky
 nnoq = np.trapz(n,qbins,axis=2)*fsky
 pl = Plotter()
 pl.plot2d(nnoq)
@@ -64,7 +77,7 @@ pl.done("output/ngridfineMaster.png")
 Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/refactor/N_dzmq_S4-7m_grid-default_CMB_all_refactor_test_fid.npy"
 #Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/refactor/dNup_dzmq_S4-7m_grid-default_CMB_all_refactor_test_As.npy"
 n = np.load(Nfile)
-print getTotN(n,mrange,zrange,qbins,returnNz=False)
+print getTotN(n,mrange,zrange,qbins,returnNz=False)*fsky
 nnoq = np.trapz(n,qbins,axis=2)*fsky
 pl = Plotter()
 pl.plot2d(nnoq)
