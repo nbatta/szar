@@ -17,12 +17,20 @@ calList = ['CMB_all_coarse']
 # expList = ['SO-5m']
 # calList = ['testGrid']
 
+
+from ConfigParser import SafeConfigParser 
+iniFile = "input/pipeline.ini"
+Config = SafeConfigParser()
+Config.optionxform=str
+Config.read(iniFile)
+bigDataDir = Config.get('general','bigDataDirectory')
+
 for exp in expList:
 
     for cal in calList:
 
 
-        massGridName = "data/"+exp+cal+".pkl"
+        massGridName = bigDataDir+exp+cal+".pkl"
 
         #cmd = " mpirun -np " +str(numCores) + " python bin/makeDerivs.py allParams "+exp+" "+cal+" "+massGridName+"  > output"+str(time.time())+".log  2>&1 &"
 

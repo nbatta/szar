@@ -25,6 +25,7 @@ if rank==0:
     Config = SafeConfigParser()
     Config.optionxform=str
     Config.read(iniFile)
+    bigDataDir = Config.get('general','bigDataDirectory')
 
     fparams = {}   
     for (key, val) in Config.items('params'):
@@ -194,4 +195,4 @@ else:
         
 
     import cPickle as pickle
-    pickle.dump((mgrid,zgrid,MerrGrid),open("data/"+expName+calName+".pkl",'wb'))
+    pickle.dump((mgrid,zgrid,MerrGrid),open(bigDataDir+expName+calName+".pkl",'wb'))
