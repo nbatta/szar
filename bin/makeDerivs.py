@@ -22,10 +22,16 @@ calibration error over mass.
 
 """
 
+debug = True
+
+
+if debug: print "Starting common module imports..."
+
 from mpi4py import MPI
-from szlib.szcounts import ClusterCosmology,Halo_MF,SZ_Cluster_Model
+from szlib.szcounts import ClusterCosmology,Halo_MF,SZ_Cluster_Model,getNmzq
 import numpy as np
     
+if debug: print "Finished common module imports."
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -39,9 +45,14 @@ numcores = comm.Get_size()
 # python modules
 if rank==0:
 
+    if debug: print "Starting rank 0 imports..."
+
     import sys
     from ConfigParser import SafeConfigParser 
     import cPickle as pickle
+
+    if debug: print "Finished rank 0 imports. Starting rank 0 work..."
+    
 
     inParamList = sys.argv[1].split(',')
     expName = sys.argv[2]
@@ -92,15 +103,15 @@ if rank==0:
     You gave me "+str(numcores)+ " core(s) for "+str(numParams)+" param(s)."
 
 
-    suffix = Config.get('general','suffix')
+    version = Config.get('general','version')
     # load the mass calibration grid
-    mexprange, zrange, lndM = pickle.load(open(calFile,"rb"))
+    mexp_edges, z_edges, lndM = pickle.load(open(calFile,"rb"))
 
-    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+".pkl",'rb'))
-    assert np.all(mgrid==mexprange)
-    assert np.all(zrange==zgrid)
+    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
+    assert np.all(mgrid==mexp_edges)
+    assert np.all(z_edges==zgrid)
     
-    saveId = expName + "_" + gridName + "_" + calName + "_" + suffix
+    saveId = expName + "_" + gridName + "_" + calName + "_v" + version
 
     from orphics.tools.io import dictFromSection, listFromConfig
     constDict = dictFromSection(Config,'constants')
@@ -117,25 +128,26 @@ if rank==0:
     qs = listFromConfig(Config,'general','qbins')
     qspacing = Config.get('general','qbins_spacing')
     if qspacing=="log":
-        qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
+        qbin_edges = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2])+1)
     elif qspacing=="linear":
-        qbins = np.linspace(qs[0],qs[1],int(qs[2]))
+        qbin_edges = np.linspace(qs[0],qs[1],int(qs[2])+1)
     else:
         raise ValueError
 
     massMultiplier = Config.getfloat('general','mass_calib_factor')
+    if debug: print "Finished rank 0 work."
 
 else:
     inParamList = None
     stepSizes = None
     fparams = None
-    mexprange = None
-    zrange = None
+    mexp_edges = None
+    z_edges = None
     lndM = None
     saveId = None
     constDict = None
     clttfile = None
-    qbins = None
+    qbin_edges = None
     clusterDict = None
     beam = None
     noise = None
@@ -149,13 +161,13 @@ if rank==0: print "Broadcasting..."
 inParamList = comm.bcast(inParamList, root = 0)
 stepSizes = comm.bcast(stepSizes, root = 0)
 fparams = comm.bcast(fparams, root = 0)
-mexprange = comm.bcast(mexprange, root = 0)
-zrange = comm.bcast(zrange, root = 0)
+mexp_edges = comm.bcast(mexp_edges, root = 0)
+z_edges = comm.bcast(z_edges, root = 0)
 lndM = comm.bcast(lndM, root = 0)
 saveId = comm.bcast(saveId, root = 0)
 constDict = comm.bcast(constDict, root = 0)
 clttfile = comm.bcast(clttfile, root = 0)
-qbins = comm.bcast(qbins, root = 0)
+qbin_edges = comm.bcast(qbin_edges, root = 0)
 clusterDict = comm.bcast(clusterDict, root = 0)
 beam = comm.bcast(beam, root = 0)
 noise = comm.bcast(noise, root = 0)
@@ -183,15 +195,17 @@ elif rank%2==0:
 
 if rank!=0: print rank,myParam,fparams[myParam],passParams[myParam]
 cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
-HMF = Halo_MF(cc,mexprange,zrange)
+HMF = Halo_MF(cc,mexp_edges,z_edges)
 HMF.sigN = siggrid.copy()
+print HMF.sigN.shape
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
-dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbins,SZProf)
+dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbin_edges,SZProf)
 
 
 
 if rank==0: 
-    np.save(bigDataDir+"N_dzmq_"+saveId+"_fid",dN_dmqz)
+    #np.save(bigDataDir+"N_dzmq_"+saveId+"_fid",dN_dmqz)
+    np.save(bigDataDir+"N_mzq_"+saveId+"_fid",getNmzq(dN_dmqz,mexp_edges,z_edges,qbin_edges))
     dUps = {}
     dDns = {}
 
@@ -206,10 +220,17 @@ if rank==0:
             dDns[inParamList[myParamIndex]] = data.copy()
 
     for param in inParamList:
-        dN = (dUps[param]-dDns[param])/stepSizes[param]
-        np.save(bigDataDir+"dNup_dzmq_"+saveId+"_"+param,dUps[param])
-        np.save(bigDataDir+"dNdn_dzmq_"+saveId+"_"+param,dDns[param])
-        np.save(bigDataDir+"dN_dzmq_"+saveId+"_"+param,dN)
+        # dN = (dUps[param]-dDns[param])/stepSizes[param]
+        # np.save(bigDataDir+"dNup_dzmq_"+saveId+"_"+param,dUps[param])
+        # np.save(bigDataDir+"dNdn_dzmq_"+saveId+"_"+param,dDns[param])
+        # np.save(bigDataDir+"dN_dzmq_"+saveId+"_"+param,dN)
+        
+        Nup = getNmzq(dUps[param],mexp_edges,z_edges,qbin_edges)        
+        Ndn = getNmzq(dDns[param],mexp_edges,z_edges,qbin_edges)
+        dNdp = (Nup-Ndn)/stepSizes[param]
+        np.save(bigDataDir+"Nup_mzq_"+saveId+"_"+param,Nup)
+        np.save(bigDataDir+"Ndn_mzq_"+saveId+"_"+param,Ndn)
+        np.save(bigDataDir+"dNdp_mzq_"+saveId+"_"+param,dNdp)
         
 else:
     data = dN_dmqz.astype(np.float64)

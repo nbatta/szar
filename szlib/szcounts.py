@@ -19,59 +19,62 @@ from orphics.analysis.flatMaps import interpolateGrid
 import szlib.szlibNumbafied as fast
 from scipy.special import j0
 
-def getTotN(Nmqz,mgrid,zgrid,qbins,returnNz=False):
+def getTotN(Nmzq,mexp_edges,z_edges,q_edges,returnNz=False):
     """Get total number of clusters given N/DmDqDz
-    and the corresponding log10(mass), z and q grids
+    and the corresponding log10(mass), z and q grid edges
     """
-    Fellnoq = np.trapz(Nmqz,qbins,axis=2)
-    Nofz = np.trapz(Fellnoq.T,10**mgrid,axis=1)
-    N = np.trapz(Nofz.T,zgrid)
+    Nmz = np.trapz(Nmzq,dx=np.diff(qbin_edges),axis=2)
+    Nofz = np.trapz(Nmz.T,dx=np.diff(10**mexp_edges),axis=1)
+    N = np.trapz(Nofz.T,dx=np.diff(z_edges))
     if returnNz:
         return N,Nofz
     else:
         return N
 
 
+def getNmzq(Nmzq,mexp_edges,z_edges,q_edges):
+    """Get number of clusters in each (m,z,q) bin 
+    given dN/DmDqDz and the corresponding 
+    log10(mass), z and q grid edges
+    """
+    # Ndq = np.multiply(Nmzq,np.diff(q_edges))
+    # Ndz = np.multiply(Nmzq,np.diff(z_edges))
+    # Ndm = np.multiply(Nmzq,np.diff(10**mexp_edges))
+    Ndq = np.multiply(Nmzq,np.diff(q_edges).reshape((1,1,q_edges.size-1)))
+    Ndz = np.multiply(Ndq,np.diff(z_edges).reshape((1,z_edges.size-1,1)))
+    Ndm = np.multiply(Ndz,np.diff(10**mexp_edges).reshape((mexp_edges.size-1,1,1)))
+    return Ndm
+    
+
 def gaussian(xx, mu, sig):
     return 1./(sig * np.sqrt(2*np.pi)) * np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
 
-def haloBias(Mexp,z_arr,rhoc0om,kh,pk):
+def haloBias(Mexp_edges,z_edges,rhoc0om,kh,pk):
+
+    z_arr = (z_edges[1:]+z_edges[:-1])/2.
+    M_edges = 10**Mexp_edges
+    Masses = (M_edges[1:]+M_edges[:-1])/2.
+   
     ac = 0.75
     pc = 0.3
     dc = 1.69
 
-    M = np.outer(10**Mexp,np.ones([len(z_arr)]))
-    # pl = Plotter()
-    # pl.plot2d(np.log10(M))
-    # pl.done("output/masses.png")
-
+    M = np.outer(Masses,np.ones([len(z_arr)]))
     R = tinker.radius_from_mass(M, rhoc0om)
-
-    # pl = Plotter()
-    # pl.plot2d(R)
-    # pl.done("output/Rs.png")
-
     sigsq = tinker.sigma_sq_integral(R, pk[:,:], kh)
-
 
     return 1. + (((ac*(dc**2.)/sigsq)-1.)/dc) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
 
 
 
-def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,Mexprange,z_arr,fsky,lmax=1000):
-    print "WARNING: Sample variance calculation currently assumes equispaced zs"
-    Mexp = Mexprange
-    zs = z_arr
+def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,z_edges,fsky,lmax=1000):
+    zs = (z_edges[1:]+z_edges[:-1])/2.
     chis = cc.results.comoving_radial_distance(zs)
 
-    zedges = zs+np.diff(zs)[0]/2.
-    zedges = np.insert(zedges,0,0.)
-    print zedges
-    print zedges.shape
-    chi_edges = cc.results.comoving_radial_distance(zedges)
+    chi_edges = cc.results.comoving_radial_distance(z_edges)
     dchis = np.diff(chi_edges)
     
-
+    assert len(dchis)==len(chis)
 
 
     PofElls = []
@@ -84,7 +87,7 @@ def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,Mexprange,z_arr,fsky,lmax=1000
     nsides_allowed = 2**np.arange(5,13,1)
     nside_min = int((lmax+1.)/3.)
     nside = nsides_allowed[nsides_allowed>nside_min][0]
-    npix = 12*nside**2
+    npix = 12*(nside**2)
 
     hpmap = np.ones(npix)/(1.-frac)
     hpmap[:int(npix*frac)] = 0
@@ -105,8 +108,7 @@ def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,Mexprange,z_arr,fsky,lmax=1000
 
     powers = np.array(powers)
 
-    retarray = np.outer(powers,np.ones([len(Mexp)])).transpose()
-    return retarray
+    return powers
     
 
 
@@ -149,15 +151,18 @@ class ClusterCosmology(Cosmology):
 
 class Halo_MF:
     @timeit
-    def __init__(self,clusterCosmology,Mexp,zcenters,kh=None,powerZK=None,kmin=1e-4,kmax=11.,knum=200):
+    def __init__(self,clusterCosmology,Mexp_edges,z_edges,kh=None,powerZK=None,kmin=1e-4,kmax=11.,knum=200):
 
         # update self.sigN (20 mins) and self.Pfunc if changing experiment
         # update self.cc or self.pk if changing cosmology
         # update self.Pfunc if changing scaling relation parameters
 
+
+
         self.cc = clusterCosmology
 
-
+        zcenters = (z_edges[1:]+z_edges[:-1])/2.
+        self.zarr_edges = z_edges
         self.zarr = zcenters
         if powerZK is None:
             self.kh, self.pk = self._pk(self.zarr,kmin,kmax,knum)
@@ -169,15 +174,22 @@ class Halo_MF:
         self.Pfunc_qarr = None
         self.Pfunc = None
 
-        M = 10.**Mexp
+        M_edges = 10**Mexp_edges
+        M = (M_edges[1:]+M_edges[:-1])/2.
+        Mexp = np.log10(M)
+        #M = 10.**Mexp
         self.Mexp = Mexp
         self.M = M
         self.M200 = np.zeros((M.size,self.zarr.size))
+        self.M200_edges = np.zeros((M_edges.size,self.zarr.size))
         self.zeroTemplate = self.M200.copy()
 
         for i in xrange(self.zarr.size):
             self.M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M,500,self.zarr[i])
 
+        for i in xrange(self.zarr.size):
+            self.M200_edges[:,i] = self.cc.Mass_con_del_2_del_mean200(M_edges,500,self.zarr[i])
+            
 
     def _pk(self,zarr,kmin,kmax,knum):
         self.cc.pars.set_matter_power(redshifts=zarr, kmax=kmax)
@@ -186,6 +198,14 @@ class Halo_MF:
         self.cc.pars.NonLinear = model.NonLinear_none
         self.cc.results = camb.get_results(self.cc.pars)
         kh, z, powerZK = self.cc.results.get_matter_power_spectrum(minkh=kmin, maxkh=kmax, npoints = knum)
+
+
+        # PK = camb.get_matter_power_interpolator(self.cc.pars, nonlinear=False, kmax=kmax, zs=zarr)
+        # kh = np.linspace(kmin,kmax,knum)
+        # powerZK = np.zeros((zarr.size,kh.size))
+        # for i,z in enumerate(zarr):
+        #     powerZK[i,:] = PK.P(z,kh)
+
         return kh, powerZK
 
 
@@ -224,7 +244,8 @@ class Halo_MF:
         dn_dzdm = self.N_of_Mz(self.M200,200.)
         N_z = np.zeros(z_arr.size)
         for i in xrange(z_arr.size):
-            N_z[i] = np.trapz(dn_dzdm[:,i],self.M200[:,i],np.diff(self.M200[:,i]))
+            #N_z[i] = np.trapz(dn_dzdm[:,i],self.M200[:,i],np.diff(self.M200[:,i]))
+            N_z[i] = np.dot(dn_dzdm[:,i],np.diff(self.M200_edges[:,i]))
 
         return N_z*4.*np.pi
 
@@ -279,7 +300,8 @@ class Halo_MF:
         dn_dzdm = self.dn_dM(self.M200,200.)
         N_z = np.zeros(z_arr.size)
         for i in xrange (z_arr.size):
-            N_z[i] = np.trapz(dn_dzdm[:,i]*P_func[:,i],self.M200[:,i],np.diff(self.M200[:,i]))
+            #N_z[i] = np.trapz(dn_dzdm[:,i]*P_func[:,i],self.M200[:,i],np.diff(self.M200[:,i]))
+            N_z[i] = np.dot(dn_dzdm[:,i]*P_func[:,i],np.diff(self.M200_edges[:,i]))
 
 
         return N_z* self.dVdz[:]*4.*np.pi
@@ -300,15 +322,21 @@ class Halo_MF:
         N_z = np.zeros(z_arr.size)
         N_tot_z = np.zeros(z_arr.size)
         for i in xrange(z_arr.size):
-            N_z[i] = np.trapz(dn_dVdm[:,i]*P_func[:,i] / (mass_err[:,i]**2 + alpha_ym**2 * (self.sigN[:,i]/self.YM[:,i])**2),self.M200[:,i])
-            N_tot_z[i] = np.trapz(dn_dVdm[:,i]*P_func[:,i],self.M200[:,i])
-        err_WL_mass = 4.*np.pi* fsky*np.trapz(N_z*dV_dz[:],self.zarr)
-        Ntot = 4.*np.pi* fsky*np.trapz(N_tot_z*dV_dz[:],self.zarr)
+            #N_z[i] = np.trapz(dn_dVdm[:,i]*P_func[:,i] / (mass_err[:,i]**2 + alpha_ym**2 * (self.sigN[:,i]/self.YM[:,i])**2),self.M200[:,i])
+            #N_tot_z[i] = np.trapz(dn_dVdm[:,i]*P_func[:,i],self.M200[:,i])
+            N_z[i] = np.dot(dn_dVdm[:,i]*P_func[:,i] / (mass_err[:,i]**2 + alpha_ym**2 * (self.sigN[:,i]/self.YM[:,i])**2),np.diff(self.M200_edges[:,i]))
+            N_tot_z[i] = np.dot(dn_dVdm[:,i]*P_func[:,i],np.diff(self.M200_edges[:,i]))
+        #err_WL_mass = 4.*np.pi* fsky*np.trapz(N_z*dV_dz[:],self.zarr)
+        #Ntot = 4.*np.pi* fsky*np.trapz(N_tot_z*dV_dz[:],self.zarr)
+        err_WL_mass = 4.*np.pi* fsky*np.dot(N_z*dV_dz[:],np.diff(self.zarr_edges))
+        Ntot = 4.*np.pi* fsky*np.dot(N_tot_z*dV_dz[:],np.diff(self.zarr_edges))
 
         return 1./err_WL_mass,Ntot
 
-    def N_of_mqz_SZ (self,mass_err,q_arr,SZCluster):
-        # this is 3D grid for fisher matrix 
+    def N_of_mqz_SZ (self,mass_err,q_edges,SZCluster):
+        # this is 3D grid for fisher matrix
+
+        q_arr = (q_edges[1:]+q_edges[:-1])/2.
 
         z_arr = self.zarr
         M_arr =  np.outer(self.M,np.ones([len(z_arr)]))
@@ -323,13 +351,13 @@ class Halo_MF:
         dn_dVdm = self.dn_dM(self.M200,200.)
         dV_dz = self.dVdz
 
-
         # \int dm  dn/dzdm 
         for kk in xrange(q_arr.size):
             for jj in xrange(m_wl.size):
                 for i in xrange (z_arr.size):
-                    dM = np.diff(self.M200[:,i])
-                    dNdzmq[jj,i,kk] = np.trapz(dn_dVdm[:,i]*P_func[:,i,kk]*SZCluster.Mwl_prob(10**(m_wl[jj]),M_arr[:,i],mass_err[:,i]),self.M200[:,i],dM) * dV_dz[i]*4.*np.pi
+                    #dNdzmq[jj,i,kk] = np.trapz(dn_dVdm[:,i]*P_func[:,i,kk]*SZCluster.Mwl_prob(10**(m_wl[jj]),M_arr[:,i],mass_err[:,i]),self.M200[:,i]) * dV_dz[i]*4.*np.pi
+                    dM = np.diff(self.M200_edges[:,i])
+                    dNdzmq[jj,i,kk] = np.dot(dn_dVdm[:,i]*P_func[:,i,kk]*SZCluster.Mwl_prob(10**(m_wl[jj]),M_arr[:,i],mass_err[:,i]),dM) * dV_dz[i]*4.*np.pi
         
 
             
@@ -405,21 +433,11 @@ class SZ_Cluster_Model:
         self.gxrange = np.linspace(0.,nMax,numps)        
         self.gint = np.array([self.g(x) for x in self.gxrange])
 
-        self.gnorm_pre = np.trapz(self.gxrange*self.gint,self.gxrange,)
+        self.gnorm_pre = np.trapz(self.gxrange*self.gint,self.gxrange)
 
         # pl = Plotter()
         # pl.add(gxrange,gint)
         # pl.done("output/gint.png")
-
-        
-
-        # old code starts here
-
-        self.NNR = 1000
-        self.drint = 1e-4
-        self.rad = (np.arange(1.e5) + 1.0)*self.drint #in MPC (max rad is 10 MPC)
-        self.rad2 = self.rad**2.
-
 
 
     def quickVar(self,M,z,tmaxN=5.,numts=1000):

@@ -12,6 +12,29 @@ import matplotlib.pyplot as plt
 from szlib.szcounts import getTotN
 
 
+def rebinN(Nmzq,pzCutoff,zbin_edges):
+    if pzCutoff>=zbin_edges[-2]: return zbin_edges,Nmzq
+    orig = Nmzq.copy()
+    indexUpTo = np.where(pzCutoff>=zbin_edges)[0][-1]
+ 
+    rebinned = np.hstack((Nmzq[:,:indexUpTo,:],Nmzq[:,indexUpTo:,:].sum(axis=1).reshape((orig.shape[0],1,orig.shape[2]))))
+
+    new_z_edges = np.append(zbin_edges[:indexUpTo+1],zbin_edges[-1])
+    assert rebinned.shape[1]==(new_z_edges.size-1)
+    assert new_z_edges.size<zbin_edges.size
+    
+    return new_z_edges,rebinned
+
+
+zbin_edges = np.arange(0.,3.5,0.5)
+nmqz = np.ones((10,zbin_edges.size-1,5))
+print nmqz.shape
+print zbin_edges
+z_edges,rebinned = rebinN(nmqz,2.4,zbin_edges)
+print z_edges
+print rebinned.shape
+sys.exit()
+###
 
 expName = sys.argv[1]
 gridName = sys.argv[2]
@@ -24,8 +47,8 @@ Config.optionxform=str
 Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
 
-suffix = Config.get('general','suffix')
-saveId = expName + "_" + gridName + "_" + calName + "_" + suffix
+version = Config.get('general','version')
+saveId = expName + "_" + gridName + "_" + calName + "_v" + version
 
 
 
@@ -40,18 +63,15 @@ else:
     raise ValueError
 dq = np.diff(qbins)
 
-zmax = Config.getfloat('general','zmax')
 fsky = Config.getfloat(expName,'fsky')
 
 # get mass and z grids
 ms = listFromConfig(Config,gridName,'mexprange')
-mgrid = np.arange(ms[0],ms[1],ms[2])
+mexp_edges = np.arange(ms[0],ms[1]+ms[2],ms[2])
 zs = listFromConfig(Config,gridName,'zrange')
-zgrid = np.arange(zs[0],zs[1],zs[2])
-zgrid = zgrid[zgrid<zmax]
-zlen = zgrid.size
-dm = np.diff(10**mgrid)
-dz = np.diff(zgrid)
+z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
+dm = np.diff(10**mexp_edges)
+dz = np.diff(z_edges)
 
 # Fisher params
 fishSection = 'fisher-'+fishName
@@ -62,12 +82,12 @@ Fisher = np.zeros((numParams,numParams))
 paramCombs = itertools.combinations_with_replacement(paramList,2)
 
 # Fiducial number counts
-N_fid = np.load(bigDataDir+"N_dzmq_"+saveId+"_fid"+".npy")
-N_fid = N_fid[:,:zlen,:]*fsky
-print "Total number of clusters: ", getTotN(N_fid,mgrid,zgrid,qbins)
+N_fid = np.load(bigDataDir+"N_mzq_"+saveId+"_fid"+".npy")
+N_fid = N_fid[:,:,:]*fsky
+print "Total number of clusters: ", N_fid.sum() #getTotN(N_fid,mgrid,zgrid,qbins)
 
 
-sId = expName + "_" + gridName 
+sId = expName + "_" + gridName  + "_v" + version
 sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
 sovernsquare =  np.dstack([sovernsquareEach]*len(qbins))
 
@@ -98,22 +118,26 @@ if baoFile!='':
         fisherBAO = np.loadtxt(baoFile,delimiter=',')
     fisherBAO = np.pad(fisherBAO,pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.)
 
+
+    
+
+    
 # Populate Fisher
 for param1,param2 in paramCombs:
     if param1=='tau' or param2=='tau': continue
-    dN1 = np.load(bigDataDir+"dN_dzmq_"+saveId+"_"+param1+".npy")
-    dN2 = np.load(bigDataDir+"dN_dzmq_"+saveId+"_"+param2+".npy")
-    dN1 = dN1[:,:zlen,:]*fsky
-    dN2 = dN2[:,:zlen,:]*fsky
+    dN1 = np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param1+".npy")
+    dN2 = np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param2+".npy")
+    dN1 = dN1[:,:,:]*fsky
+    dN2 = dN2[:,:,:]*fsky
 
     i = paramList.index(param1)
     j = paramList.index(param2)
 
     if param1=='wa':
-        Nup = np.load(bigDataDir+"dNup_dzmq_"+saveId+"_"+param1+".npy")
-        Ndn = np.load(bigDataDir+"dNdn_dzmq_"+saveId+"_"+param1+".npy")
-        print getTotN(Nup,mgrid,zgrid,qbins)
-        print getTotN(Ndn,mgrid,zgrid,qbins)
+        Nup = np.load(bigDataDir+"Nup_mzq_"+saveId+"_"+param1+".npy")
+        Ndn = np.load(bigDataDir+"Ndn_mzq_"+saveId+"_"+param1+".npy")
+        print Nup.sum()
+        print Ndn.sum()
 
     assert not(np.any(np.isnan(dN1)))
     assert not(np.any(np.isnan(dN2)))
@@ -122,9 +146,7 @@ for param1,param2 in paramCombs:
 
     with np.errstate(divide='ignore'):
         FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid+(N_fid*N_fid*sovernsquare)))
-    Fellnoq = np.trapz(FellBlock,qbins,axis=2)
-    Fellnoz = np.trapz(Fellnoq,zgrid,axis=1)
-    Fell = np.trapz(Fellnoz,10**mgrid)
+    Fell = FellBlock.sum()
 
     
        

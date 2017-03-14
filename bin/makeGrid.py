@@ -56,6 +56,7 @@ if rank==0:
     Config = SafeConfigParser()
     Config.optionxform=str
     Config.read(iniFile)
+    version = Config.get('general','version')
 
     fparams = {}   
     for (key, val) in Config.items('params'):
@@ -70,10 +71,18 @@ if rank==0:
     bigDataDir = Config.get('general','bigDataDirectory')
 
     ms = listFromConfig(Config,gridName,'mexprange')
-    mgrid = np.arange(ms[0],ms[1],ms[2])
+    Mexp_edges = np.arange(ms[0],ms[1]+ms[2],ms[2])
     zs = listFromConfig(Config,gridName,'zrange')
-    zgrid = np.arange(zs[0],zs[1],zs[2])
+    z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 
+
+    M_edges = 10**Mexp_edges
+    M = (M_edges[1:]+M_edges[:-1])/2.
+    mgrid = np.log10(M)
+
+    zgrid = (z_edges[1:]+z_edges[:-1])/2.
+
+    
     beam = listFromConfig(Config,expName,'beams')
     noise = listFromConfig(Config,expName,'noises')
     freq = listFromConfig(Config,expName,'freqs')
@@ -194,6 +203,8 @@ else:
     alphaT = None
     kh = None
     pk = None
+    Mexp_edges = None
+    z_edges = None
 
 if rank==0: print "Broadcasting..."
 doLens = comm.bcast(doLens, root = 0)
@@ -213,6 +224,8 @@ lkneeT = comm.bcast(lkneeT, root = 0)
 alphaT = comm.bcast(alphaT, root = 0)
 kh = comm.bcast(kh, root = 0)
 pk = comm.bcast(pk, root = 0)
+Mexp_edges = comm.bcast(Mexp_edges, root = 0)
+z_edges = comm.bcast(z_edges, root = 0)
 if rank==0: print "Broadcasted."
 
 
@@ -283,17 +296,19 @@ else:
 
     if doLens:
         for i in range(1,numcores):
+            print "Waiting for lens ", i ," / ", numcores
             data = np.zeros(MerrGrid.shape, dtype=np.float64)
             comm.Recv(data, source=i, tag=77)
             MerrGrid += data
 
-        pickle.dump((mgrid,zgrid,MerrGrid),open(bigDataDir+"lensgrid_"+expName+"_"+gridName+"_"+lensName+".pkl",'wb'))
+        pickle.dump((Mexp_edges,z_edges,MerrGrid),open(bigDataDir+"lensgrid_"+expName+"_"+gridName+"_"+lensName+ "_v" + version+".pkl",'wb'))
 
     if doSZ:
         for i in range(1,numcores):
+            print "Waiting for sz ", i," / ", numcores
             data = np.zeros(siggrid.shape, dtype=np.float64)
             comm.Recv(data, source=i, tag=78)
             siggrid += data
 
 
-        pickle.dump((mgrid,zgrid,siggrid),open(bigDataDir+"szgrid_"+expName+"_"+gridName+".pkl",'wb'))
+        pickle.dump((Mexp_edges,z_edges,siggrid),open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'wb'))

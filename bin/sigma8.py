@@ -19,6 +19,7 @@ iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
+version = Config.get('general','version')
 
 fparams = {}   # the 
 for (key, val) in Config.items('params'):
@@ -29,13 +30,12 @@ for (key, val) in Config.items('params'):
         fparams[key] = float(val)
 
 
-suffix = Config.get('general','suffix')
 # load the mass calibration grid
 mexprange, zrange, lndM = pickle.load(open(calFile,"rb"))
 
 bigDataDir = Config.get('general','bigDataDirectory')
 
-mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+".pkl",'rb'))
+mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
 
 print zrange 
 print zgrid
@@ -43,7 +43,7 @@ print zgrid
 assert np.all(mgrid==mexprange)
 assert np.all(zrange==zgrid)
 
-saveId = expName + "_" + gridName + "_" + calName + "_" + suffix
+saveId = expName + "_" + gridName + "_" + calName + "_v" + version
 
 from orphics.tools.io import dictFromSection, listFromConfig
 constDict = dictFromSection(Config,'constants')

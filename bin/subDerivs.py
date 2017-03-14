@@ -8,10 +8,10 @@ numCores = 2*numParams+1
 #expList = ['SO-3m','SO-5m','SO-6m','SO-7m','S4-3m','S4-5m','S4-6m','S4-7m']
 #calList = ['CMB_all_coarse','CMB_pol_coarse']
 
-expList = ['S4-5m','S4-7m']
+expList = ['S4-7m']
 calList = ['CMB_all']
 
-gridName = "grid-default"
+gridName = "grid-test"
 
 from ConfigParser import SafeConfigParser 
 iniFile = "input/pipeline.ini"
@@ -19,13 +19,14 @@ Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
+version = Config.get('general','version')
 
 for exp in expList:
 
     for cal in calList:
 
 
-        massGridName = bigDataDir+"lensgrid_"+exp+"_"+gridName+"_"+cal+".pkl"
+        massGridName = bigDataDir+"lensgrid_"+exp+"_"+gridName+"_"+cal+ "_v" + version+".pkl"
 
         #cmd = " mpirun -np " +str(numCores) + " python bin/makeDerivs.py allParams "+exp+" "+cal+" "+massGridName+"  > output"+str(time.time())+".log  2>&1 &"
 
