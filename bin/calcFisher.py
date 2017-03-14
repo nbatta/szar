@@ -26,15 +26,6 @@ def rebinN(Nmzq,pzCutoff,zbin_edges):
     return new_z_edges,rebinned
 
 
-zbin_edges = np.arange(0.,3.5,0.5)
-nmqz = np.ones((10,zbin_edges.size-1,5))
-print nmqz.shape
-print zbin_edges
-z_edges,rebinned = rebinN(nmqz,2.4,zbin_edges)
-print z_edges
-print rebinned.shape
-sys.exit()
-###
 
 expName = sys.argv[1]
 gridName = sys.argv[2]
@@ -48,6 +39,7 @@ Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
 
 version = Config.get('general','version')
+pzcutoff = Config.getfloat('general','photoZCutOff')
 saveId = expName + "_" + gridName + "_" + calName + "_v" + version
 
 
@@ -82,7 +74,8 @@ Fisher = np.zeros((numParams,numParams))
 paramCombs = itertools.combinations_with_replacement(paramList,2)
 
 # Fiducial number counts
-N_fid = np.load(bigDataDir+"N_mzq_"+saveId+"_fid"+".npy")
+new_z_edges, N_fid = rebinN(np.load(bigDataDir+"N_mzq_"+saveId+"_fid"+".npy"),pzcutoff,z_edges)
+
 N_fid = N_fid[:,:,:]*fsky
 print "Total number of clusters: ", N_fid.sum() #getTotN(N_fid,mgrid,zgrid,qbins)
 
@@ -125,10 +118,11 @@ if baoFile!='':
 # Populate Fisher
 for param1,param2 in paramCombs:
     if param1=='tau' or param2=='tau': continue
-    dN1 = np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param1+".npy")
-    dN2 = np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param2+".npy")
+    new_z_edges, dN1 = rebinN(np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param1+".npy"),pzcutoff,z_edges)
+    new_z_edges, dN2 = rebinN(np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param2+".npy"),pzcutoff,z_edges)
     dN1 = dN1[:,:,:]*fsky
     dN2 = dN2[:,:,:]*fsky
+
 
     i = paramList.index(param1)
     j = paramList.index(param2)
@@ -145,7 +139,7 @@ for param1,param2 in paramCombs:
 
 
     with np.errstate(divide='ignore'):
-        FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid+(N_fid*N_fid*sovernsquare)))
+        FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid))#+(N_fid*N_fid*sovernsquare)))
     Fell = FellBlock.sum()
 
     
