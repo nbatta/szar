@@ -9,21 +9,8 @@ from orphics.tools.io import dictFromSection, listFromConfig
 from orphics.tools.io import Plotter
 import matplotlib.pyplot as plt
 
-from szlib.szcounts import getTotN
+from szlib.szcounts import rebinN
 
-
-def rebinN(Nmzq,pzCutoff,zbin_edges):
-    if pzCutoff>=zbin_edges[-2]: return zbin_edges,Nmzq
-    orig = Nmzq.copy()
-    indexUpTo = np.where(pzCutoff>=zbin_edges)[0][-1]
- 
-    rebinned = np.hstack((Nmzq[:,:indexUpTo,:],Nmzq[:,indexUpTo:,:].sum(axis=1).reshape((orig.shape[0],1,orig.shape[2]))))
-
-    new_z_edges = np.append(zbin_edges[:indexUpTo+1],zbin_edges[-1])
-    assert rebinned.shape[1]==(new_z_edges.size-1)
-    assert new_z_edges.size<zbin_edges.size
-    
-    return new_z_edges,rebinned
 
 
 

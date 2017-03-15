@@ -1,13 +1,19 @@
+from mpi4py import MPI
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
 import sys, os, time
-from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,getTotN
+from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,getNmzq
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle
 from orphics.tools.io import Plotter
 from orphics.analysis.flatMaps import interpolateGrid
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+numcores = comm.Get_size()    
+
 
 expName = sys.argv[1]
 gridName = sys.argv[2]
@@ -37,11 +43,10 @@ bigDataDir = Config.get('general','bigDataDirectory')
 
 mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
 
-print zrange 
-print zgrid
 
 assert np.all(mgrid==mexprange)
 assert np.all(zrange==zgrid)
+
 
 saveId = expName + "_" + gridName + "_" + calName + "_v" + version
 
@@ -61,9 +66,9 @@ clttfile = Config.get('general','clttfile')
 qs = listFromConfig(Config,'general','qbins')
 qspacing = Config.get('general','qbins_spacing')
 if qspacing=="log":
-    qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
+    qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2])+1)
 elif qspacing=="linear":
-    qbins = np.linspace(qs[0],qs[1],int(qs[2]))
+    qbins = np.linspace(qs[0],qs[1],int(qs[2])+1)
 else:
     raise ValueError
 
@@ -71,34 +76,49 @@ else:
 
 cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(cc,mexprange,zrange)
+
+assert numcores==(HMF.zarr.size+1), "ERROR: Need " + str((HMF.zarr.size+1))+" cores."
+
 HMF.sigN = siggrid.copy()
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
-dNFid_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
 
-origPk = HMF.pk.copy()
 
-h = 0.1
 
-derivs = []
+if rank==0:
+    dNFid_dmzq = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
+    np.save(bigDataDir+"N_mzq_"+saveId+"_fid_sigma8",getNmzq(dNFid_dmzq,mgrid,zrange,qbins))
 
-for i,z in enumerate(zrange):
-    print "Calculating derivatives for redshift ", z
+else:    
+
+    origPk = HMF.pk.copy()
+
+    h = 0.1
+
+    i = rank-1
+    print "Calculating derivatives for redshift ", HMF.zarr[i]
     HMF.pk = origPk.copy()
     HMF.pk[i,:] *= (1.+h/2.)
     dNUp_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
-
+    Nup = getNmzq(dNUp_dmqz,mgrid,zrange,qbins)
 
     HMF.pk = origPk.copy()
     HMF.pk[i,:] *= (1.-h/2.)
     dNDn_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
+    Ndn = getNmzq(dNDn_dmqz,mgrid,zrange,qbins)
 
 
-    derivN_mqz = (dNUp_dmqz-dNDn_dmqz)/h
+    dNdp = (Nup-Ndn)/h
+
+    param = "S8Z"+str(i)
+
+    np.save(bigDataDir+"Nup_mzq_"+saveId+"_"+param,Nup)
+    np.save(bigDataDir+"Ndn_mzq_"+saveId+"_"+param,Ndn)
+    np.save(bigDataDir+"dNdp_mzq_"+saveId+"_"+param,dNdp)
+    
 
 
-    derivs.append(derivN_mqz)
-
-
+    
+sys.exit(0)
 import itertools
 zindices = range(zrange.size)
 lenz = zrange.size

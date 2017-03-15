@@ -19,6 +19,22 @@ from orphics.analysis.flatMaps import interpolateGrid
 import szlib.szlibNumbafied as fast
 from scipy.special import j0
 
+
+def rebinN(Nmzq,pzCutoff,zbin_edges):
+    if pzCutoff>=zbin_edges[-2]: return zbin_edges,Nmzq
+    orig = Nmzq.copy()
+    indexUpTo = np.where(pzCutoff>=zbin_edges)[0][-1]
+ 
+    rebinned = np.hstack((Nmzq[:,:indexUpTo,:],Nmzq[:,indexUpTo:,:].sum(axis=1).reshape((orig.shape[0],1,orig.shape[2]))))
+
+    new_z_edges = np.append(zbin_edges[:indexUpTo+1],zbin_edges[-1])
+    assert rebinned.shape[1]==(new_z_edges.size-1)
+    assert new_z_edges.size<zbin_edges.size
+    
+    return new_z_edges,rebinned
+
+
+
 def getTotN(Nmzq,mexp_edges,z_edges,q_edges,returnNz=False):
     """Get total number of clusters given N/DmDqDz
     and the corresponding log10(mass), z and q grid edges
@@ -351,15 +367,13 @@ class Halo_MF:
         dn_dVdm = self.dn_dM(self.M200,200.)
         dV_dz = self.dVdz
 
-        # \int dm  dn/dzdm 
+        # \int dm  dn/dzdm
         for kk in xrange(q_arr.size):
             for jj in xrange(m_wl.size):
                 for i in xrange (z_arr.size):
-                    #dNdzmq[jj,i,kk] = np.trapz(dn_dVdm[:,i]*P_func[:,i,kk]*SZCluster.Mwl_prob(10**(m_wl[jj]),M_arr[:,i],mass_err[:,i]),self.M200[:,i]) * dV_dz[i]*4.*np.pi
                     dM = np.diff(self.M200_edges[:,i])
                     dNdzmq[jj,i,kk] = np.dot(dn_dVdm[:,i]*P_func[:,i,kk]*SZCluster.Mwl_prob(10**(m_wl[jj]),M_arr[:,i],mass_err[:,i]),dM) * dV_dz[i]*4.*np.pi
         
-
             
         return dNdzmq
 
@@ -472,38 +486,6 @@ class SZ_Cluster_Model:
         return var
 
 
-    @timeit
-    def quickVar_ufunc(self,M,z,tmaxN=5.,numts=1000):
-
-
-
-
-        # R500 in MPc, DAz in MPc, th500 in radians
-        R500 = self.cc.rdel_c(M,z,500.).flatten()#[0] # R500 in Mpc/h
-        print R500
-        DAz = self.cc.results.angular_diameter_distance(z) * (self.cc.H0/100.) 
-        th500 = R500/DAz
-        # gnorm = 2pi th500^2  \int dx x g(x)
-        gnorm = 2.*np.pi*(th500**2.)*self.gnorm_pre 
-
-        # u(th) = g(th/th500)/gnorm
-        u = lambda th: self.g(th/th500)/gnorm
-        thetamax = tmaxN * th500
-        thetas = np.linspace(0.,thetamax,numts)
-        uint = np.array([u(t) for t in thetas])
-
-        # \int dtheta theta j0(ell*theta) u(theta)
-        ells = self.evalells
-        integrand = lambda l: np.trapz(j0(l*thetas)*uint*thetas,thetas,np.diff(thetas))
-        integrands = np.array([integrand(ell) for ell in ells])
-
-
-
-        # varinv = \int dell 2pi ell integrand^2 / nl
-        varinv = np.trapz((integrands**2.)*ells*2.*np.pi/self.nl,ells,np.diff(ells))
-        var = 1./varinv
-
-        return var
 
 
 

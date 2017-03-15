@@ -48,7 +48,7 @@ f5 = np.loadtxt(bigDataDir+"fisherSigma8S4-5m_grid-default_CMB_all_refactor_test
 
 print f7.shape
 
-
+print f7[-3:,-3:]
 
 
 
