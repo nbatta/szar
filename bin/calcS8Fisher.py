@@ -2,7 +2,7 @@ import matplotlib
 matplotlib.use('Agg')
 import numpy as np
 import sys, os, time
-from szlib.szcounts import rebinN
+from szlib.szcounts import rebinN,getA
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle
@@ -79,9 +79,9 @@ Fisher = np.zeros((numParams,numParams))
 paramCombs = itertools.combinations_with_replacement(paramList,2)
 
 
-# sId = expName + "_" + gridName 
-# sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
-# sovernsquare =  np.dstack([sovernsquareEach]*len(qbins))
+sId = expName + "_" + gridName + "_v" + version
+sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
+sovernsquare =  np.dstack([sovernsquareEach]*(len(qbins)-1))
 
 
 # Populate Fisher
@@ -93,12 +93,6 @@ for param1,param2 in paramCombs:
     dN1 = dN1[:,:,:]*fsky
     dN2 = dN2[:,:,:]*fsky
 
-    
-    # Nup = np.load(bigDataDir+"Nup_mzq_"+saveId+"_"+param1+".npy")*fsky
-    # Ndn = np.load(bigDataDir+"Ndn_mzq_"+saveId+"_"+param2+".npy")*fsky
-    # print param1,Nup.sum()
-    # print param1,Ndn.sum()
-
 
     i = paramList.index(param1)
     j = paramList.index(param2)
@@ -109,7 +103,7 @@ for param1,param2 in paramCombs:
 
 
     with np.errstate(divide='ignore'):
-        FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid))#+(N_fid*N_fid*sovernsquare)))
+        FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid+(N_fid*N_fid*sovernsquare)))
 
     Fell = FellBlock.sum()
         
@@ -151,27 +145,43 @@ if baoFile!='':
 
 f = Fisher+fisherPlanck #[11:,11:]#+fisherPlanck
 
+pickle.dump((paramList,f),open(bigDataDir+"savedS8Fisher_"+saveId+"_"+saveName+".pkl",'wb'))
 
 
 
-inv = np.linalg.inv(f)
+# inv = np.linalg.inv(f)
 
-err = np.sqrt(np.diagonal(inv))[len(origParams):]
+# err = np.sqrt(np.diagonal(inv))[len(origParams):]
 
-print err
+# print err
 
-outDir = "/gpfs01/astro/www/msyriac/"
+# import camb
+# from szlib.szcounts import ClusterCosmology
 
-
-pl = Plotter(labelX="$z$",labelY="Error on $\sigma_8(z)/\sigma_8(0)$")
-pl.addErr(zrange,zrange*0.+1.,yerr=err)
-pl.legendOn()
-pl._ax.set_ylim(0.9,1.1)
-pl.done(outDir+"s8errsowl.png")
+# constDict = dictFromSection(Config,'constants')
 
 
-from orphics.tools.stats import cov2corr
-corr = cov2corr(f)    
-pl = Plotter()
-pl.plot2d(corr)
-pl.done(outDir+"corrowl.png")
+# s8,As1 = getA(fparams,constDict,zrange)
+# print s8
+# fparams['w0']=-0.7
+# s8,As2 = getA(fparams,constDict,zrange)
+# print s8
+
+# outDir = "/gpfs01/astro/www/msyriac/"
+
+
+
+
+# pl = Plotter(labelX="$z$",labelY="$\sigma_8(z)/\sigma_8(0)$",ftsize=12)
+# pl.addErr(zrange,As1,yerr=err,xerr=np.diff(z_edges)/2.)
+# pl.addErr(zrange,As2,yerr=err,xerr=np.diff(z_edges)/2.)
+# #pl.legendOn()
+# #pl._ax.set_ylim(0.9,1.1)
+# pl.done(outDir+"s8errsowl.png")
+
+
+# from orphics.tools.stats import cov2corr
+# corr = cov2corr(f)    
+# pl = Plotter()
+# pl.plot2d(corr)
+# pl.done(outDir+"corrowl.png")

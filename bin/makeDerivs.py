@@ -22,7 +22,7 @@ calibration error over mass.
 
 """
 
-debug = True
+debug = False
 
 
 if debug: print "Starting common module imports..."
@@ -197,7 +197,6 @@ if rank!=0: print rank,myParam,fparams[myParam],passParams[myParam]
 cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(cc,mexp_edges,z_edges)
 HMF.sigN = siggrid.copy()
-print HMF.sigN.shape
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
 dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbin_edges,SZProf)
 

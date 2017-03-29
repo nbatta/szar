@@ -3,7 +3,7 @@ import matplotlib
 matplotlib.use('Agg')
 import numpy as np
 import sys, os, time
-from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,getNmzq
+from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,getNmzq,getA
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle
@@ -40,6 +40,7 @@ for (key, val) in Config.items('params'):
 mexprange, zrange, lndM = pickle.load(open(calFile,"rb"))
 
 bigDataDir = Config.get('general','bigDataDirectory')
+pzcutoff = Config.getfloat('general','photoZCutOff')
 
 mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
 
@@ -82,7 +83,9 @@ assert numcores==(HMF.zarr.size+1), "ERROR: Need " + str((HMF.zarr.size+1))+" co
 HMF.sigN = siggrid.copy()
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
 
-
+h = 0.01
+s80, As = getA(fparams,constDict,zrange,kmax=11.)
+s8zs = As*s80
 
 if rank==0:
     dNFid_dmzq = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
@@ -92,17 +95,16 @@ else:
 
     origPk = HMF.pk.copy()
 
-    h = 0.1
-
+    
     i = rank-1
     print "Calculating derivatives for redshift ", HMF.zarr[i]
     HMF.pk = origPk.copy()
-    HMF.pk[i,:] *= (1.+h/2.)
+    HMF.pk[i,:] *= (1.+h/2.)**2. #((1.+h/2.)*s8zs[i])**2./s8zs[i]**2.
     dNUp_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
     Nup = getNmzq(dNUp_dmqz,mgrid,zrange,qbins)
 
     HMF.pk = origPk.copy()
-    HMF.pk[i,:] *= (1.-h/2.)
+    HMF.pk[i,:] *= (1.-h/2.)**2.
     dNDn_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
     Ndn = getNmzq(dNDn_dmqz,mgrid,zrange,qbins)
 
@@ -118,76 +120,3 @@ else:
 
 
     
-sys.exit(0)
-import itertools
-zindices = range(zrange.size)
-lenz = zrange.size
-N_fid = dNFid_dmqz*fsky
-
-
-
-# Fisher params
-fishSection = 'fisher-lcdm'
-zlist = ["S8Z"+str(z) for z in zrange]
-paramList = Config.get(fishSection,'paramList').split(',')+zlist
-saveName = Config.get(fishSection,'saveSuffix')
-numParams = len(paramList)
-Fisher = np.zeros((numParams,numParams))
-paramCombs = itertools.combinations_with_replacement(paramList,2)
-
-
-sId = expName + "_" + gridName 
-sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
-sovernsquare =  np.dstack([sovernsquareEach]*len(qbins))
-
-
-# Populate Fisher
-for param1,param2 in paramCombs:
-    if param1=='tau' or param2=='tau': continue
-
-
-    if param1[:3]=="S8Z":
-        k1 = zlist.index(param1)
-        dN1 = derivs[k1][:,:,:]*fsky
-    else:
-        dN1 = np.load(bigDataDir+"dN_dzmq_"+saveId+"_"+param1+".npy")
-        dN1 = dN1[:,:,:]*fsky
-
-    if param2[:3]=="S8Z":
-        k2 = zlist.index(param2)
-        dN2 = derivs[k2][:,:,:]*fsky
-    else:
-        dN2 = np.load(bigDataDir+"dN_dzmq_"+saveId+"_"+param2+".npy")
-        dN2 = dN2[:,:,:]*fsky
-
-
-    i = paramList.index(param1)
-    j = paramList.index(param2)
-
-    assert not(np.any(np.isnan(dN1)))
-    assert not(np.any(np.isnan(dN2)))
-    assert not(np.any(np.isnan(N_fid)))
-
-
-    with np.errstate(divide='ignore'):
-        FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid+(N_fid*N_fid*sovernsquare)))
-    Fellnoq = np.trapz(FellBlock,qbins,axis=2)
-    Fellnoz = np.trapz(Fellnoq,zrange,axis=1)
-    Fell = np.trapz(Fellnoz,10**mexprange)
-
-    
-       
-    Fisher[i,j] = Fell
-    Fisher[j,i] = Fell    
-
-
-print Fisher.shape
-
-np.savetxt(bigDataDir+"fisherSigma8"+saveId+".txt",Fisher)
-
-Aerrs = np.sqrt(np.diagonal(np.linalg.inv(Fisher)))
-
-pl = Plotter()
-pl.addErr(zrange,zrange*0.+1.,yerr=Aerrs)
-pl.done("output/aerrs"+saveId+".png")
-

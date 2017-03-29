@@ -42,7 +42,7 @@ zrange = np.arange(zs[0],zs[1]+zs[2],zs[2])
 
 
 hmf = Halo_MF(cc,mrange,zrange)
-hb = haloBias(mrange,zrange,cc.rhoc0om,hmf.kh,hmf.pk)
+zcents, hb = haloBias(mrange,zrange,cc.rhoc0om,hmf.kh,hmf.pk)
 powers = sampleVarianceOverNsquareOverBsquare(cc,hmf.kh,hmf.pk,zrange,fsky,lmax=lmax)
 
 sovernsquarebsquare = np.outer(powers,np.ones([len(mrange)-1])).transpose()

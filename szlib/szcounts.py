@@ -19,6 +19,17 @@ from orphics.analysis.flatMaps import interpolateGrid
 import szlib.szlibNumbafied as fast
 from scipy.special import j0
 
+def getA(fparams,constDict,zrange,kmax=11.):
+    cc = ClusterCosmology(fparams,constDict,skipCls=True)
+    if zrange[0]>=1.e-8: zrange = np.insert(zrange,0,0)
+    cc.pars.set_matter_power(redshifts=zrange, kmax=kmax)
+    cc.pars.Transfer.high_precision = True
+    cc.pars.NonLinear = camb.model.NonLinear_none
+    cc.results = camb.get_results(cc.pars)
+    s8s =  cc.results.get_sigma8()[::-1]
+    As = s8s[1:]/s8s[0]
+    return s8s[0],As
+
 
 def rebinN(Nmzq,pzCutoff,zbin_edges):
     if pzCutoff>=zbin_edges[-2]: return zbin_edges,Nmzq
@@ -79,7 +90,7 @@ def haloBias(Mexp_edges,z_edges,rhoc0om,kh,pk):
     R = tinker.radius_from_mass(M, rhoc0om)
     sigsq = tinker.sigma_sq_integral(R, pk[:,:], kh)
 
-    return 1. + (((ac*(dc**2.)/sigsq)-1.)/dc) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
+    return z_arr,1. + (((ac*(dc**2.)/sigsq)-1.)/dc) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
 
 
 

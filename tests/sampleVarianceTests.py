@@ -33,22 +33,56 @@ fsky=0.4
 
 hmf = Halo_MF(cc,mrange,zrange)
 
-hb = haloBias(mrange,zrange,cc.rhoc0om,hmf.kh,hmf.pk)
+import os
+outDir = os.environ['WWW']+"plots/"
+
+from clusterlensing.halobias import bias as hbias
+
+zcents, hb = haloBias(mrange,zrange,cc.rhoc0om,hmf.kh,hmf.pk)
+
+oml = 1.-cc.om-cc.ob-cc.omnuh2/cc.h/cc.h
+print oml
+# cbias = np.zeros((mrange.size,zcents.size))
+
+# for i,z in enumerate(zcents):
+#     cbias[:,i] = hbias(10**mrange,zcents,cc.h,cc.om,oml)
+
+Mg,zg = np.meshgrid(10**mrange,zcents)
+cbias = hbias(Mg,zg,cc.h,cc.om,oml).T
+
+
+print cbias
+print hb.shape
+print cbias.shape
+#sys.exit()
+
 pl = Plotter()
 pl.plot2d(hb)
-pl.done("output/hb.png")
+pl.done(outDir+"hb.png")
 
-# ls = "-"
-# lab = ""
-# pl = Plotter(labelX="$z$",labelY="b",ftsize=14)
-# pl.add(zrange,hb[np.where(np.isclose(mrange,14.0)),:].ravel(),ls=ls,label=lab+" 10^14 Msol/h")
-# pl.add(zrange,hb[np.where(np.isclose(mrange,14.3)),:].ravel(),ls=ls,label=lab+" 10^14.3 Msol/h")
-# pl.add(zrange,hb[np.where(np.isclose(mrange,14.5)),:].ravel(),ls=ls,label=lab+" 10^14.5 Msol/h")
-# pl.add(zrange,hb[np.where(np.isclose(mrange,14.7)),:].ravel(),ls=ls,label=lab+" 10^14.7 Msol/h")
-# pl.legendOn(loc='upper right',labsize=8)
-# pl.done("output/slicebias.png")
+pl = Plotter()
+pl.plot2d(cbias)
+pl.done(outDir+"cbias.png")
 
-# sys.exit()
+ls = "-"
+lab = ""
+pl = Plotter(labelX="$z$",labelY="b",ftsize=14)
+pl.add(zcents,hb[np.where(np.isclose(mrange,14.0)),:].ravel(),ls=ls,label=lab+" 10^14 Msol/h")
+pl.add(zcents,hb[np.where(np.isclose(mrange,14.3)),:].ravel(),ls=ls,label=lab+" 10^14.3 Msol/h")
+pl.add(zcents,hb[np.where(np.isclose(mrange,14.5)),:].ravel(),ls=ls,label=lab+" 10^14.5 Msol/h")
+pl.add(zcents,hb[np.where(np.isclose(mrange,14.7)),:].ravel(),ls=ls,label=lab+" 10^14.7 Msol/h")
+
+ls = "--"
+pl.add(zcents,cbias[np.where(np.isclose(mrange,14.0)),:].ravel(),ls=ls,label=lab+" 10^14 Msol/h")
+pl.add(zcents,cbias[np.where(np.isclose(mrange,14.3)),:].ravel(),ls=ls,label=lab+" 10^14.3 Msol/h")
+pl.add(zcents,cbias[np.where(np.isclose(mrange,14.5)),:].ravel(),ls=ls,label=lab+" 10^14.5 Msol/h")
+pl.add(zcents,cbias[np.where(np.isclose(mrange,14.7)),:].ravel(),ls=ls,label=lab+" 10^14.7 Msol/h")
+
+
+pl.legendOn(loc='upper right',labsize=8)
+pl.done(outDir+"slicebias.png")
+
+sys.exit()
 
 powers = sampleVarianceOverNsquareOverBsquare(cc,hmf.kh,hmf.pk,mrange,zrange,fsky,lmax=1000)
 sovernsquare = hb*hb*powers

@@ -156,12 +156,25 @@ if rank==0:
         ls = bin_edges[1:-1]
         Nls = Nlmv[1:-1]
 
+        from orphics.tools.stats import bin1D
+        binner1d = bin1D(bin_edges)
+        ellcls , clkk_binned = binner1d.binned(ellkk,Clkk)
+
+        
+
+        pl.add(ellcls,4.*clkk_binned/2./np.pi,ls="none",marker="x")
+        pl.add(ellcls,4.*clkk_binned/2./np.pi,ls="none",marker="x")
         pl.add(ls,4.*Nls/2./np.pi,ls="--")
+        np.savetxt(bigDataDir+"nlsave_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
+
+        Nls += clkk_binned[:-1]
+        np.savetxt(bigDataDir+"nlsaveTot_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
+        pl.add(ls,4.*Nls/2./np.pi,ls="-.")
+        
         pl.legendOn(loc='lower left',labsize=10)
         pl.done("output/Nl_"+expName+lensName+".png")
         #ls,Nls = np.loadtxt("data/LA_pol_Nl.txt",unpack=True,delimiter=",")
         # print ls,Nls
-        np.savetxt(bigDataDir+"nlsave_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
     else:
         ls = None
         Nls = None

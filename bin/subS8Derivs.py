@@ -7,8 +7,14 @@ import os
 #expList = ['SO-3m','SO-5m','SO-6m','SO-7m','S4-3m','S4-5m','S4-6m','S4-7m']
 #calList = ['CMB_all_coarse','CMB_pol_coarse']
 
-expList = ['S4-7m']
-calList = ['CMB_all']
+#expList = ['S4-7m']
+#calList = ['CMB_all']
+
+#expList = ['S4-1.5arc-noatm']
+#expList = ['SO-3m','SO-5m','SO-6m','SO-7m']
+expList = ['S4-3m','S4-5m','S4-6m','S4-7m']
+calList = ['CMB_all','CMB_pol']
+
 
 gridName = "grid-default"
 
