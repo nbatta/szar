@@ -19,6 +19,19 @@ from orphics.analysis.flatMaps import interpolateGrid
 import szlib.szlibNumbafied as fast
 from scipy.special import j0
 
+def getTotN(Nmqz,mgrid,zgrid,qbins,returnNz=False):
+    """Get total number of clusters given N/DmDqDz
+    and the corresponding log10(mass), z and q grids
+    """
+    Fellnoq = np.trapz(Nmqz,qbins,axis=2)
+    Nofz = np.trapz(Fellnoq.T,10**mgrid,axis=1)
+    N = np.trapz(Nofz.T,zgrid)
+    if returnNz:
+        return N,Nofz
+    else:
+        return N
+
+
 def haloBias(Mexp,rhoc0m,kh,pk):
     ac = 0.75
     pc = 0.3
@@ -144,7 +157,6 @@ class Halo_MF:
         self.override = overridePowerSpectra
         self.multiplyZ = multiplyZ
 
-    @timeit
     def pk(self,z_arr,multiplyZ=None,useStored=False):
         if multiplyZ is None: multiplyZ = self.multiplyZ
         multIndex, multVal = multiplyZ 
@@ -164,7 +176,7 @@ class Halo_MF:
             
             self.cc.pars.NonLinear = model.NonLinear_none
             self.cc.results = camb.get_results(self.cc.pars)
-            #kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=2e-5, maxkh=11, npoints = 200,)
+            #kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=2e-5, maxkh=11, npoints = 200)
             kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=1e-4, maxkh=11, npoints = 200)
 
 
@@ -228,9 +240,8 @@ class Halo_MF:
         N_dzdm = dn_dm[:,1:] * dV_dz[1:]
         return N_dzdm
 
-    def N_of_z(self,z_arr):
+    def N_of_z(self,Mexp,z_arr):
 
-        Mexp = np.arange(13.5, 15.71, .1)
         M = 10.**Mexp
         M200 = np.outer(M,np.zeros([len(z_arr)]))
 
@@ -247,14 +258,13 @@ class Halo_MF:
 
         return N_z
 
-    def N_of_z_SZ(self,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+    def N_of_z_SZ(self,Mexp,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is dn/dV(z)
 
-        lnYmin = np.log(1e-13)
+        lnYmin = np.log(1e-14)
         dlnY = 0.1
-        lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
+        lnY = np.arange(lnYmin,lnYmin+13.,dlnY)
     
-        Mexp = np.arange(12.5, 15.71, .1)
         #Mexp = np.arange(14.0, 15.4, 0.2)
         rho_crit0m = self.cc.rhoc0om
         hh = self.cc.H0/100
@@ -292,7 +302,7 @@ class Halo_MF:
                 #print Mexp[j],z_arr[i]
             
             P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])#*dlnY
-
+        self.sigN = sigN.copy()
         #print P_func
         #dN_dzdm = self.N_of_Mz(M200,z_arr,200.)
         dn_dzdm = self.dn_dM(M200,z_arr,200.)
@@ -356,41 +366,25 @@ class Halo_MF:
         
         return dN_dzdm,dM200[:,0]
 
-    def Mass_err (self,mass_err,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
+    def Mass_err (self,fsky,mass_err,Mexp,z_arr,beams,noises,freqs,clusterDict,lknee,alpha,fileFunc=None,quick=True,tmaxN=5,numts=1000):
         # this is TEMP WL MASS ERROR
         alpha_ym = self.cc.paramDict['alpha_ym'] #1.79   
-        lnYmin = np.log(1e-13)
+        lnYmin = np.log(1e-14)
         dlnY = 0.1
-        lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
-
-        #Mexp = np.arange(13.5, 15.71, .1)
-        Mexp = np.arange(12.5,15.5,0.05)+0.05 
+        lnY = np.arange(lnYmin,lnYmin+13.,dlnY)
+        
         M = 10.**Mexp
-        dM = np.gradient(M)
         rho_crit0m = self.cc.rhoc0om
         hh = self.cc.H0/100.
         #hh = 0.7
 
         M200 = np.outer(M,np.zeros([len(z_arr)]))
-        dM200 = np.outer(M,np.zeros([len(z_arr)]))
+        #dM200 = np.outer(M,np.zeros([len(z_arr)]))
         P_func = np.outer(M,np.zeros([len(z_arr)]))
         sigN = np.outer(M,np.zeros([len(z_arr)]))
         YM   =  np.outer(M,np.ones([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
 
-        #HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z2.txt',unpack=True)
-        #HSC_mass = np.transpose(HSC_mass)
-
-        #CMB_halo = np.loadtxt('data/AdvACTCMBLensingWhiteNoise150GhzTTOnly.dat',unpack=True)
-        #CMB_halo *= np.sqrt(1000.)
-        #CMB_halo = np.transpose(CMB_halo)
-
-        #mhalo = np.arange(14.0,15.7,0.05)
-        #zhalo = np.arange(0.1,2.0,0.05)
-
-        #CMB_mass = interpolateGrid(CMB_halo,mhalo,zhalo,np.log10(M) ,z_arr[1:])
-
-        #mass_err = 1./(np.sqrt((1./HSC_mass)**2 + (1./CMB_mass)**2))
 
         DA_z = self.cc.results.angular_diameter_distance(z_arr) * hh
 
@@ -399,25 +393,14 @@ class Halo_MF:
         for ii in xrange (len(z_arr)-1):
             i = ii + 1
             M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M,500,z_arr[i])
-            dM200[:,i] = np.gradient(M200[:,i])
+            #dM200[:,i] = np.diff(M200[:,i]) #np.gradient(M200[:,i])
             for j in xrange(len(M)):
-                try:
-                    assert fileFunc is not None
-                    filename = fileFunc(Mexp[j],z_arr[i])
-                    print filename
-                    sigN[j,i] = np.loadtxt(filename,unpack=True)[-1]
-                except:
-                    print "Calculating S/N because file not found or specified for M=",Mexp[j]," z=",z_arr[i]
-                    if quick:
-                        var = SZProf.quickVar(M[j],z_arr[i],tmaxN,numts)
-                    else:
-                        var = SZProf.filter_variance(M[j],z_arr[i])
-                    sigN[j,i] = np.sqrt(var)
-                    YM[j,i] = SZProf.Y_M(M[j],z_arr[i])
+                var = SZProf.quickVar(M[j],z_arr[i],tmaxN,numts)
+                sigN[j,i] = np.sqrt(var)
+                YM[j,i] = SZProf.Y_M(M[j],z_arr[i])
                         
-                print Mexp[j],z_arr[i]
-
-            P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])*dlnY
+                
+            P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])#*dlnY
 
         dn_dVdm = self.dn_dM(M200,z_arr,200.)
         dV_dz = self.dVdz(z_arr)
@@ -425,10 +408,10 @@ class Halo_MF:
         N_z = np.zeros(len(z_arr) - 1)
         N_tot_z = np.zeros(len(z_arr) - 1)
         for i in xrange (len(z_arr) - 1):
-            N_z[i] = np.sum(dn_dVdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1] / (mass_err[:,i]**2 + alpha_ym**2 * (sigN[:,i+1]/YM[:,i+1])**2))
-            N_tot_z[i] = np.sum(dn_dVdm[:,i+1]*P_func[:,i+1]*dM200[:,i+1])
-        err_WL_mass = 4.*np.pi* (1400./42000.)*np.sum(N_z*dV_dz[1:])*0.05
-        Ntot = 4.*np.pi* (1400./42000.)*np.sum(N_tot_z*dV_dz[1:])*0.05
+            N_z[i] = np.trapz(dn_dVdm[:,i+1]*P_func[:,i+1] / (mass_err[:,i]**2 + alpha_ym**2 * (sigN[:,i+1]/YM[:,i+1])**2),M200[:,i+1])
+            N_tot_z[i] = np.trapz(dn_dVdm[:,i+1]*P_func[:,i+1],M200[:,i+1])
+        err_WL_mass = 4.*np.pi* fsky*np.trapz(N_z*dV_dz[1:],z_arr[1:])
+        Ntot = 4.*np.pi* fsky*np.trapz(N_tot_z*dV_dz[1:],z_arr[1:])
 
         return 1./err_WL_mass,Ntot
 
@@ -460,7 +443,6 @@ class Halo_MF:
         for ii in xrange (len(z_arr)-1):
             i = ii + 1
             M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M,500,z_arr[i])
-            print z_arr[i]
             for j in xrange(len(M)):
                 var = SZProf.quickVar(M[j],z_arr[i],tmaxN,numts)
                 sigN[j,i] = np.sqrt(var)
@@ -469,7 +451,7 @@ class Halo_MF:
                 #print Mexp[j],z_arr[i]
             for kk in xrange(len(q_arr)):
                 P_func[:,ii,kk] = SZProf.P_of_qn (lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr[kk])
-
+        self.sigN = sigN.copy()
         dn_dVdm = self.dn_dM(M200,z_arr,200.)
         dV_dz = self.dVdz(z_arr)
 
@@ -477,8 +459,7 @@ class Halo_MF:
         for kk in xrange(len(q_arr)):
             for jj in xrange(len(m_wl)):
                 for i in xrange (len(z_arr) - 1):
-                    dM = np.diff(M200[:,i+1])
-                    dNdzmq[jj,i,kk] = np.trapz(dn_dVdm[:,i+1]*P_func[:,i,kk]*SZProf.Mwl_prob(10**(m_wl[jj]),M_arr[:,i+1],mass_err[:,i]),M200[:,i+1],dM) * dV_dz[i+1]*4.*np.pi
+                    dNdzmq[jj,i,kk] = np.trapz(dn_dVdm[:,i+1]*P_func[:,i,kk]*SZProf.Mwl_prob(10**(m_wl[jj]),M_arr[:,i+1],mass_err[:,i]),M200[:,i+1]) * dV_dz[i+1]*4.*np.pi
                    
         return dNdzmq
 

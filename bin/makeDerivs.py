@@ -55,6 +55,7 @@ if rank==0:
     Config = SafeConfigParser()
     Config.optionxform=str
     Config.read(iniFile)
+    bigDataDir = Config.get('general','bigDataDirectory')
 
     paramList = [] # the parameters that can be varied
     fparams = {}   # the 
@@ -183,7 +184,9 @@ HMF = Halo_MF(clusterCosmology=cc)
 dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,zrange,mexprange,qbins,beam,noise,freq,clusterDict,lknee,alpha)
 
 if rank==0: 
-    np.save("data/N_dzmq_"+saveId+"_fid",dN_dmqz)
+    np.save(bigDataDir+"N_dzmq_"+saveId+"_fid",dN_dmqz)
+    np.savetxt(bigDataDir+"sigN.txt",HMF.sigN)
+    
     dUps = {}
     dDns = {}
 
@@ -199,9 +202,9 @@ if rank==0:
 
     for param in inParamList:
         dN = (dUps[param]-dDns[param])/stepSizes[param]
-        np.save("data/dNup_dzmq_"+saveId+"_"+param,dUps[param])
-        np.save("data/dNdn_dzmq_"+saveId+"_"+param,dDns[param])
-        np.save("data/dN_dzmq_"+saveId+"_"+param,dN)
+        np.save(bigDataDir+"dNup_dzmq_"+saveId+"_"+param,dUps[param])
+        np.save(bigDataDir+"dNdn_dzmq_"+saveId+"_"+param,dDns[param])
+        np.save(bigDataDir+"dN_dzmq_"+saveId+"_"+param,dN)
         
 else:
     data = dN_dmqz.astype(np.float64)
