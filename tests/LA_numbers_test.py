@@ -46,6 +46,12 @@ print "S/N", SZ.Y_M(MM,zz)/np.sqrt(var)
 #print SZ.f_nu(freq[0])
 #print SZ.f_nu_test(freq[0])
 
+print "PS test"
+
+print SZ.Prof_tilde_new(3000,MM,zz)
+
+print SZ.Prof_tilde(3000,MM,zz)
+
 lnYmin = np.log(1e-13)
 dlnY = 0.1
 lnY = np.arange(lnYmin,lnYmin+10.,dlnY)

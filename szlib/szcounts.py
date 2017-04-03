@@ -168,7 +168,7 @@ class Halo_MF:
             kh, z, pk = self.cc.results.get_matter_power_spectrum(minkh=1e-4, maxkh=11, npoints = 200)
 
 
-        pk[multIndex,:] = multVal*P_camb
+        #pk[multIndex,:] = multVal*P_camb
 
 
         return kh, pk
@@ -630,11 +630,23 @@ class SZ_Cluster_Model:
         #intgrl = ell *0.0
         #for ii in xrange(len(ell)):
         #    intgrl[ii] = np.sum(self.Prof(rr,M,z)*rr**2*np.sinc(ell[ii]*rr/DA_z)) * dr
-        intgrl = np.sum(self.Prof(rr,M,z)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
+        intgrl = np.sum(self.Prof(rr,M,z,R500)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
         ans = 4.0*np.pi/DA_z**2 * intgrl
         ans *= c.SIGMA_T/(c.ME*c.C**2)*c.MPC2CM*c.eV_2_erg*1000.0
         return ans
-    
+
+    def Prof_tilde_new(self,ell,M,z):
+        dr = 0.01
+        R500 = self.cc.rdel_c(M,z,500.).flatten()[0]
+        DA_z = self.cc.results.angular_diameter_distance(z)
+        rr = np.arange(dr,R500*5.0,dr)
+        M_fac = M / (3e14) * (100./70.)
+        P500 = 1.65e-3 * (100./70.)**2 * M_fac**(2./3.) * self.cc.E_z(z) #keV cm^3 
+        intgrl = P500*np.sum(self.GNFW(rr/R500)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
+        ans = 4.0*np.pi/DA_z**2 * intgrl
+        ans *= c.SIGMA_T/(c.ME*c.C**2)*c.MPC2CM*c.eV_2_erg*1000.0
+        return ans
+
     def y2D_norm(self,M,z,tht,R500):
 
         r = np.arange(0.0001,100.,0.0001)
@@ -763,7 +775,7 @@ class SZ_Cluster_Model:
         return ans
     
     def Y_erf(self,Y_true,sigma_N):
-        q = 6.
+        q = 5.
         sigma_Na = np.outer(sigma_N,np.ones(len(Y_true[0,:])))
         
         ans = 0.5 * (1. + special.erf((Y_true - q*sigma_Na)/(np.sqrt(2.)*sigma_Na)))
