@@ -603,17 +603,18 @@ class SZ_Cluster_Model:
     def Prof_tilde(self,ell,M,z):
         dr = 0.01
         pars = camb.CAMBparams()
-        pars.set_cosmology(H0=cp.h0, ombh2=cp.ob*(cp.h0/100.)**2, omch2=(cp.om - cp.ob)*(cp.h0/100.)**2,)    
+        pars.set_cosmology(H0=self.cc.H0, ombh2=self.cc.ob*(self.cc.H0/100.)**2, omch2=(self.cc.om - self.cc.ob)*(self.cc.H0/100.)**2,)    
         results = camb.get_background(pars)
         DA_z = results.angular_diameter_distance(z) #* (70./100.)
-        R500 = HP.rdel_c(M,z,500)
+        R500 = self.cc.rdel_c(M,z,500.).flatten()[0]
+        #R500 = HP.rdel_c(M,z,500)
         rr = np.arange(dr,R500*5.0,dr)
         #intgrl = ell *0.0
         #for ii in xrange(len(ell)):
         #    intgrl[ii] = np.sum(self.Prof(rr,M,z)*rr**2*np.sinc(ell[ii]*rr/DA_z)) * dr
         intgrl = np.sum(self.Prof(rr,M,z,R500)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
         ans = 4.0*np.pi/DA_z**2 * intgrl
-        ans *= c.SIGMA_T/(c.ME*c.C**2)*c.MPC2CM*c.eV_2_erg*1000.0
+        ans *= self.cc.c['SIGMA_T']/(self.cc.c['ME']*self.cc.c['C']**2)*self.cc.c['MPC2CM']*self.cc.c['eV_2_erg']*1000.0
         return ans
 
     def Prof_tilde_new(self,ell,M,z):
@@ -625,7 +626,8 @@ class SZ_Cluster_Model:
         P500 = 1.65e-3 * (100./70.)**2 * M_fac**(2./3.) * self.cc.E_z(z) #keV cm^3 
         intgrl = P500*np.sum(self.GNFW(rr/R500)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
         ans = 4.0*np.pi/DA_z**2 * intgrl
-        ans *= c.SIGMA_T/(c.ME*c.C**2)*c.MPC2CM*c.eV_2_erg*1000.0
+        ans *= self.cc.c['SIGMA_T']/(self.cc.c['ME']*self.cc.c['C']**2)*self.cc.c['MPC2CM']*self.cc.c['eV_2_erg']*1000.0
+        #ans *= c.SIGMA_T/(c.ME*c.C**2)*c.MPC2CM*c.eV_2_erg*1000.0
         return ans
 
     def y2D_norm(self,M,z,tht,R500):

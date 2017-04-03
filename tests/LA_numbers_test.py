@@ -48,10 +48,12 @@ print "S/N", SZ.Y_M(MM,zz)/np.sqrt(var)
 
 print "PS test"
 
+start = time.time()
 print SZ.Prof_tilde_new(3000,MM,zz)
-
+print "Time for new", time.time() - start
+start2 = time.time()
 print SZ.Prof_tilde(3000,MM,zz)
-
+print "Time for old", time.time() - start2
 lnYmin = np.log(1e-13)
 dlnY = 0.1
 lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
