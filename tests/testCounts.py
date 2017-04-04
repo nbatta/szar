@@ -55,7 +55,7 @@ cosmoDict = dictFromSection(Config,cosmologyName)
 #cosmoDict = dictFromSection(Config,'WMAP9')
 constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,clusterParams)
-cc = ClusterCosmology(cosmoDict,constDict,pickling=True,lmax=5000)#,clTTFixFile = "data/cltt_lensed_Feb18.txt")
+cc = ClusterCosmology(cosmoDict,constDict,pickling=True,clTTFixFile = "data/cltt_lensed_Feb18.txt")
 
 # make an SZ profile example
 
@@ -63,10 +63,10 @@ cc = ClusterCosmology(cosmoDict,constDict,pickling=True,lmax=5000)#,clTTFixFile 
 SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lmax=lmax,lknee=lknee,alpha=alpha,dell=dell,pmaxN=pmaxN,numps=numps)
 
 
-MM = 10**np.linspace(13.,14.,5)
-print SZProfExample.quickVar_ufunc(MM,zz,tmaxN=tmaxN,numts=numts)
+#MM = 10**np.linspace(13.,14.,5)
+#print SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts)
 
-sys.exit()
+#sys.exit()
 
 
 print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts))

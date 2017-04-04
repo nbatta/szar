@@ -21,6 +21,7 @@ Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
 
+outDir=os.environ['WWW']
 
 beam = listFromConfig(Config,experimentName,'beams')
 noise = listFromConfig(Config,experimentName,'noises')
@@ -50,6 +51,7 @@ minrange, zinrange, lndM = pickle.load(open(mfile,'rb'))
 #zs = np.arange(0.1,3.0,0.1)
 z_edges = np.arange(0.,3.0,0.3)+0.3
 zs = (z_edges[1:]+z_edges[:-1])/2.
+
 Mexp_edges = np.arange(13.0,15.7,0.3)
 M_edges = 10**Mexp_edges
 M = (M_edges[1:]+M_edges[:-1])/2.
@@ -81,7 +83,7 @@ except:
 
 pl = Plotter()
 pl.plot2d(hmf.sigN)
-pl.done("output/signRefactor.png")
+pl.done(outDir+"signRefactor.png")
     
 pl = Plotter(scaleY='log')
 pl.add(zs,N1)
@@ -112,10 +114,10 @@ print N*fsky
 
 pl.add(zs,Nofz*fsky,label="mqz")
 pl.legendOn()
-pl.done("output/nsRefactor.png")
+pl.done(outDir+"nsRefactor.png")
 
 
 nnoq = np.trapz(dnqmz,q_arr,axis=2)*fsky
 pl = Plotter()
 pl.plot2d(nnoq)
-pl.done("output/ngridRefactor.png")
+pl.done(outDir+"ngridRefactor.png")
