@@ -159,7 +159,20 @@ class ClusterCosmology(Cosmology):
         #critical density as a function of z
         ans = self.rho_crit0H100*self.E_z(z)**2.
         return ans
+    
+    # def rhoc_alt(self,z):
+    #     #critical density as a function of z
+    #     ans = self.rho_crit0*self.E_z(z)**2.
+    #     return ans
 
+    # def rdel_c_alt(self,Moverh,z,delta):
+    #     #spherical overdensity radius w.r.t. the critical density
+    #     rhocz = self.rhoc_alt(z)
+    #     M = Moverh/self.h
+    #     ans = (3. * M / (4. * np.pi * delta*rhocz))**(1.0/3.0)
+    #     return ans*self.h
+        
+    
     def rdel_c(self,M,z,delta):
         #spherical overdensity radius w.r.t. the critical density
         rhocz = self.rhoc(z)
