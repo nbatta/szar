@@ -310,7 +310,7 @@ class Halo_MF:
             for j in xrange(M.size):
                 var = SZCluster.quickVar(M[j],zs[i],tmaxN,numts)
                 sigN[j,i] = np.sqrt(var)
-                        
+                print M[j],zs[i],sigN[j,i]
 
         self.sigN = sigN.copy()
 
@@ -448,7 +448,7 @@ class SZ_Cluster_Model:
 
             self.nlinv += (freq_fac)/nells
         self.nl = 1./self.nlinv
-        self.nl2 = 1./self.nlinv2  
+        self.nl2 = 1./self.nlinv2
 
         # ls = self.evalells
         # pl = Plotter(scaleY='log')
