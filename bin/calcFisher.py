@@ -68,8 +68,8 @@ print "Total number of clusters: ", N_fid.sum() #getTotN(N_fid,mgrid,zgrid,qbins
 
 
 sId = expName + "_" + gridName  + "_v" + version
-sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
-sovernsquare =  np.dstack([sovernsquareEach]*len(qbins))
+#sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
+#sovernsquare =  np.dstack([sovernsquareEach]*len(qbins))
 
 
 # Planck and BAO Fishers

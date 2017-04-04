@@ -55,7 +55,7 @@ cosmoDict = dictFromSection(Config,cosmologyName)
 #cosmoDict = dictFromSection(Config,'WMAP9')
 constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,clusterParams)
-cc = ClusterCosmology(cosmoDict,constDict,clTTFixFile = "data/cltt_lensed_Feb18.txt")
+cc = ClusterCosmology(cosmoDict,constDict,pickling=True,lmax=5000)#,clTTFixFile = "data/cltt_lensed_Feb18.txt")
 
 # make an SZ profile example
 

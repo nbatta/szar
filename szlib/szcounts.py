@@ -432,8 +432,9 @@ class SZ_Cluster_Model:
         # ls = self.evalells
         # pl = Plotter(scaleY='log')
         # pl.add(ls,self.cc.theory.lCl('TT',self.evalells)*ls**2.)
-        # pl.add(ls,self.nl*ls**2.,label="no freq")
-        # pl.add(ls,self.nl*freq_fac*ls**2.,label="freq")
+        # pl.add(ls,self.nl*ls**2.,label="fg")
+        # pl.add(ls,self.nl2*ls**2.,label="no fg")
+        # # pl.add(ls,self.nl*freq_fac*ls**2.,label="freq")
         # pl.legendOn(loc="upper right")
         # pl.done("output/cmb.png")
         # sys.exit()

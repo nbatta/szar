@@ -10,11 +10,12 @@ numCores = 2*numParams+1
 
 #expList = ['S4-7m']
 #calList = ['CMB_all']
-
+expList = ['SO-3m','SO-5m','SO-6m','SO-7m','S4-3m','S4-5m','S4-6m','S4-7m','S4-5m-noatm','S4-6m-noatm','S4-7m-noatm','SO-5m-noatm','SO-6m-noatm','SO-7m-noatm','SO-3m-noatm','S4-3m-noatm']
+calList = ['CMB_all','CMB_pol','CMB_all_nodelens','CMB_pol_nodelens']
 #expList = ['SO-3m','SO-5m','SO-6m','SO-7m']
-expList = ['S4-3m','S4-5m','S4-6m','S4-7m']
+#expList = ['S4-3m','S4-5m','S4-6m','S4-7m']
 #expList = ['S4-1.5arc-noatm']
-calList = ['CMB_pol','CMB_all']
+#calList = ['CMB_pol','CMB_all']
 
 gridName = "grid-default"
 

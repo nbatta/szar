@@ -57,6 +57,7 @@ if rank==0:
     Config.optionxform=str
     Config.read(iniFile)
     version = Config.get('general','version')
+    miscentering = Config.getboolean('general','miscentering')
 
     fparams = {}   
     for (key, val) in Config.items('params'):
@@ -178,6 +179,7 @@ if rank==0:
     else:
         ls = None
         Nls = None
+        beamX = None
     
     constDict = dictFromSection(Config,'constants')
     clttfile = Config.get('general','clttfile')
@@ -201,6 +203,8 @@ if rank==0:
 else:
     doLens = None
     doSZ = None
+    beamX = None
+    miscentering = None
     mgrid = None
     zgrid = None
     ls = None
@@ -222,6 +226,8 @@ else:
 if rank==0: print "Broadcasting..."
 doLens = comm.bcast(doLens, root = 0)
 doSZ = comm.bcast(doSZ, root = 0)
+beamX = comm.bcast(beamX, root = 0)
+miscentering = comm.bcast(miscentering, root = 0)
 mgrid = comm.bcast(mgrid, root = 0)
 zgrid = comm.bcast(zgrid, root = 0)
 ls = comm.bcast(ls, root = 0)
@@ -286,7 +292,12 @@ for index in mySplit:
         critical = True
         atClusterZ = True
         concentration = 1.18
-        MerrGrid[mindex,zindex] = 1./NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None)
+        if miscentering:
+            ray = beamX/2.
+        else:
+            ray = None
+            
+        MerrGrid[mindex,zindex] = 1./NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=ray)
     if doSZ:
         var = SZCluster.quickVar(10**mass,z)
         siggrid[mindex,zindex] = np.sqrt(var)
