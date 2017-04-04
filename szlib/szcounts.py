@@ -532,7 +532,10 @@ class SZ_Cluster_Model:
 
             self.nlinv += (freq_fac)/nells
         self.nl = 1./self.nlinv
-        self.nl2 = 1./self.nlinv2  
+        self.nl2 = 1./self.nlinv2
+
+        print self.nl[100]
+        sys.exit()
 
         # ls = self.evalells
         # pl = Plotter(scaleY='log')

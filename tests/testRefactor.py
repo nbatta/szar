@@ -21,6 +21,7 @@ Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
 
+outDir = os.environ['WWW']
 
 beam = listFromConfig(Config,experimentName,'beams')
 noise = listFromConfig(Config,experimentName,'noises')
@@ -72,7 +73,7 @@ N2 = hmf.N_of_z_SZ(Mexp,zs,beam,noise,freq,clusterDict,lknee,alpha)*fsky*hmf.dVd
 
 pl = Plotter()
 pl.plot2d(hmf.sigN)
-pl.done("output/signMaster.png")
+pl.done(outDir+"signMaster.png")
 
 pl = Plotter(scaleY='log')
 pl.add(zs[1:],N1)
@@ -101,10 +102,10 @@ print N*fsky
 pl.add(zs[1:],Nofz*fsky,label="mqz")
 pl.legendOn()
 
-pl.done("output/NsMaster.png")
+pl.done(outDir+"NsMaster.png")
 
 
 nnoq = np.trapz(dnqmz,q_arr,axis=2)*fsky
 pl = Plotter()
 pl.plot2d(nnoq)
-pl.done("output/ngridMaster.png")
+pl.done(outDir+"ngridMaster.png")
