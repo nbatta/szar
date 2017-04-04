@@ -49,11 +49,11 @@ minrange, zinrange, lndM = pickle.load(open(mfile,'rb'))
 # Mexp = np.arange(13.0,15.7,0.3)
 
 #zs = np.arange(0.1,3.0,0.1)
-w = 0.3
+w = 0.1
 z_edges = np.arange(0.,3.0+w,w)
 zs = (z_edges[1:]+z_edges[:-1])/2.
 
-w = 0.3
+w = 0.1
 Mexp_edges = np.arange(13.0,15.7+w,w)
 M_edges = 10**Mexp_edges
 M = (M_edges[1:]+M_edges[:-1])/2.
