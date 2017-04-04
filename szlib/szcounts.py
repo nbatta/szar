@@ -50,9 +50,17 @@ def getTotN(Nmzq,mexp_edges,z_edges,q_edges,returnNz=False):
     """Get total number of clusters given N/DmDqDz
     and the corresponding log10(mass), z and q grid edges
     """
-    Nmz = np.trapz(Nmzq,dx=np.diff(qbin_edges),axis=2)
-    Nofz = np.trapz(Nmz.T,dx=np.diff(10**mexp_edges),axis=1)
-    N = np.trapz(Nofz.T,dx=np.diff(z_edges))
+    q_arr = (q_edges[1:]+q_edges[:-1])/2.
+    M_edges = 10**mexp_edges
+    M = (M_edges[1:]+M_edges[:-1])/2.
+    zs = (z_edges[1:]+z_edges[:-1])/2.
+       
+    Nmz = np.trapz(Nmzq,q_arr,axis=2)
+    #Nmz = np.trapz(Nmzq,dx=np.diff(q_edges),axis=2)
+    Nofz = np.trapz(Nmz.T,M,axis=1)
+    #Nofz = np.trapz(Nmz.T,dx=np.diff(10**mexp_edges),axis=1)
+    N = np.trapz(Nofz.T,zs)
+    #N = np.trapz(Nofz.T,dx=np.diff(z_edges))
     if returnNz:
         return N,Nofz
     else:

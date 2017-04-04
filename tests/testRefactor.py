@@ -47,8 +47,13 @@ minrange, zinrange, lndM = pickle.load(open(mfile,'rb'))
 # zs = np.arange(0.1,3.0,0.3)
 # Mexp = np.arange(13.0,15.7,0.3)
 
-zs = np.arange(0.1,3.0,0.1)
-Mexp = np.arange(13.0,15.7,0.1)
+#zs = np.arange(0.1,3.0,0.1)
+z_edges = np.arange(0.,3.0,0.3)+0.3
+zs = (z_edges[1:]+z_edges[:-1])/2.
+Mexp_edges = np.arange(13.0,15.7,0.3)
+M_edges = 10**Mexp_edges
+M = (M_edges[1:]+M_edges[:-1])/2.
+Mexp = np.log10(M)
 
 outmerr = interpolateGrid(lndM,minrange,zinrange,Mexp,zs,regular=False,kind="cubic",bounds_error=False,fill_value=np.inf)
 
@@ -56,7 +61,7 @@ outmerr = interpolateGrid(lndM,minrange,zinrange,Mexp,zs,regular=False,kind="cub
 
 
 
-hmf = Halo_MF(cc,Mexp,zs)
+hmf = Halo_MF(cc,Mexp_edges,z_edges)
 
 
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
@@ -92,12 +97,16 @@ print ntot
 
 
 
-q_arr = np.logspace(np.log10(6.),np.log10(500.),64)
+#q_arr = np.logspace(np.log10(6.),np.log10(500.),64)
+qs = [6.,500.,64]
+qbin_edges = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2])+1)
+q_arr = (qbin_edges[1:]+qbin_edges[:-1])/2.
 
-dnqmz = hmf.N_of_mqz_SZ(outmerr,q_arr,SZProf)
+dnqmz = hmf.N_of_mqz_SZ(outmerr,qbin_edges,SZProf)
 
-
-N,Nofz = getTotN(dnqmz,Mexp,zs,q_arr,returnNz=True)
+print qbin_edges.shape
+print dnqmz.shape
+N,Nofz = getTotN(dnqmz,Mexp_edges,z_edges,qbin_edges,returnNz=True)
 
 print N*fsky
 
