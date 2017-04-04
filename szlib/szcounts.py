@@ -299,7 +299,7 @@ class Halo_MF:
                     else:
                         var = SZProf.filter_variance(M[j],z_arr[i])
                     sigN[j,i] = np.sqrt(var)
-                #print Mexp[j],z_arr[i]
+                    print M[j],z_arr[i],sigN[j,i]
             
             P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])#*dlnY
         self.sigN = sigN.copy()
@@ -534,8 +534,6 @@ class SZ_Cluster_Model:
         self.nl = 1./self.nlinv
         self.nl2 = 1./self.nlinv2
 
-        print self.nl[100]
-        sys.exit()
 
         # ls = self.evalells
         # pl = Plotter(scaleY='log')
