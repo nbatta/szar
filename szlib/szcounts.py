@@ -310,7 +310,7 @@ class Halo_MF:
             for j in xrange(M.size):
                 var = SZCluster.quickVar(M[j],zs[i],tmaxN,numts)
                 sigN[j,i] = np.sqrt(var)
-                print M[j],zs[i],sigN[j,i]
+                print self.Mexp[j],zs[i],sigN[j,i]
 
         self.sigN = sigN.copy()
 
