@@ -21,7 +21,8 @@ cosmologyName = 'LACosmology' # from ini file
 fileFunc = lambda M,z:"data/"+experimentName+"_m"+str(M)+"z"+str(z)+".txt"
 #experimentName = ["AdvAct","S45m","S46m","S47m"]
 #experimentName = ["S43m"]
-experimentName = ["S45m","S46m","S47m"]
+#experimentName = ["S45m","S46m","S47m"]
+experimentName = ["S42arc","S415arc","S41arc"]
 #experimentName = ["SO5m","SO6m","SO7m"]#,"SO5m_No270","SO6m_No270","SO7m_No270"]
 #experimentName = ["S45m"]
 

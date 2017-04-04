@@ -463,6 +463,46 @@ class Halo_MF:
                    
         return dNdzmq
 
+    def Cl_ell(self,ell):
+        #fix the mass and redshift ranges 
+        M = 10**np.arange(11.0, 16, .1)
+        dM = np.gradient(M)
+        
+        zmax = 6.0
+        zmin = 0.01
+        delz = (zmax-zmin)/100. # 140 redshift restriction
+        zbin_temp = np.arange(zmin,zmax,delz)
+        z_arr = np.insert(zbin_temp,0,0.0)
+        dz = np.gradient(z_arr)
+        #ell = np.arange(1000,3000,1000)
+        
+        M200 = np.outer(M,np.zeros([len(z_arr)]))
+        dM200 = np.outer(M,np.zeros([len(z_arr)]))
+        formfac = np.zeros((len(ell),len(M),len(z_arr)))
+        
+#        np.outer(ell,np.outer(M,np.zeros([len(z_arr)])))
+        #print formfac.shape
+        
+        for i in xrange (len(z_arr)):
+            M200[:,i] = self.Mass_con_del_2_del_mean200(M/(cp.h0/100.),500,z_arr[i])
+            dM200[:,i] = np.gradient(M200[:,i])
+            if (i > 0): 
+                for j in xrange (len(M)):
+                    for k in xrange (len(ell)):
+                        formfac[k,j,i] = SZProf.Prof_tilde(ell[k],M[j]/(cp.h0/100.),z_arr[i])
+        
+        dn_dm = self.dn_dM(M200,z_arr,200.)
+        dV_dz = self.dVdz(z_arr)
+        
+        ans = np.zeros(len(ell))
+        for k in xrange (len(ell)):
+            for i in xrange (len(z_arr)-1):
+                ii = i + 1.
+                ans[k] += 4*np.pi *dV_dz[ii] * dz[ii] * np.trapz( dn_dm[:,ii] * formfac[k,:,ii]**2,M200[ii])
+        #print dn_dm.shape, formfac.shape
+        #ans  =1.    
+        return ans
+
 class SZ_Cluster_Model:
     def __init__(self,clusterCosmology,clusterDict,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1.,dell=10,pmaxN=5,numps=1000,nMax=1,**options):
         self.cc = clusterCosmology
@@ -600,22 +640,36 @@ class SZ_Cluster_Model:
         ans = P500 * self.GNFW(xx)
         return ans
 
-    def Prof_tilde(self,ell,M,z):
+    def Prof_tilde_old(self,ell,M,z):
         dr = 0.01
         pars = camb.CAMBparams()
-        pars.set_cosmology(H0=cp.h0, ombh2=cp.ob*(cp.h0/100.)**2, omch2=(cp.om - cp.ob)*(cp.h0/100.)**2,)    
+        pars.set_cosmology(H0=self.cc.H0, ombh2=self.cc.ob*(self.cc.H0/100.)**2, omch2=(self.cc.om - self.cc.ob)*(self.cc.H0/100.)**2,)    
         results = camb.get_background(pars)
         DA_z = results.angular_diameter_distance(z) #* (70./100.)
-        R500 = HP.rdel_c(M,z,500)
+        R500 = self.cc.rdel_c(M,z,500.).flatten()[0]
+        #R500 = HP.rdel_c(M,z,500)
         rr = np.arange(dr,R500*5.0,dr)
         #intgrl = ell *0.0
         #for ii in xrange(len(ell)):
         #    intgrl[ii] = np.sum(self.Prof(rr,M,z)*rr**2*np.sinc(ell[ii]*rr/DA_z)) * dr
-        intgrl = np.sum(self.Prof(rr,M,z)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
+        intgrl = np.sum(self.Prof(rr,M,z,R500)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
         ans = 4.0*np.pi/DA_z**2 * intgrl
-        ans *= c.SIGMA_T/(c.ME*c.C**2)*c.MPC2CM*c.eV_2_erg*1000.0
+        ans *= self.cc.c['SIGMA_T']/(self.cc.c['ME']*self.cc.c['C']**2)*self.cc.c['MPC2CM']*self.cc.c['eV_2_erg']*1000.0
         return ans
-    
+
+    def Prof_tilde(self,ell,M,z):
+        dr = 0.01
+        R500 = self.cc.rdel_c(M,z,500.).flatten()[0]
+        DA_z = self.cc.results.angular_diameter_distance(z)
+        rr = np.arange(dr,R500*5.0,dr)
+        M_fac = M / (3e14) * (100./70.)
+        P500 = 1.65e-3 * (100./70.)**2 * M_fac**(2./3.) * self.cc.E_z(z) #keV cm^3 
+        intgrl = P500*np.sum(self.GNFW(rr/R500)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
+        ans = 4.0*np.pi/DA_z**2 * intgrl
+        ans *= self.cc.c['SIGMA_T']/(self.cc.c['ME']*self.cc.c['C']**2)*self.cc.c['MPC2CM']*self.cc.c['eV_2_erg']*1000.0
+        #ans *= c.SIGMA_T/(c.ME*c.C**2)*c.MPC2CM*c.eV_2_erg*1000.0
+        return ans
+
     def y2D_norm(self,M,z,tht,R500):
 
         r = np.arange(0.0001,100.,0.0001)
@@ -744,7 +798,7 @@ class SZ_Cluster_Model:
         return ans
     
     def Y_erf(self,Y_true,sigma_N):
-        q = 6.
+        q = 5.
         sigma_Na = np.outer(sigma_N,np.ones(len(Y_true[0,:])))
         
         ans = 0.5 * (1. + special.erf((Y_true - q*sigma_Na)/(np.sqrt(2.)*sigma_Na)))
@@ -799,6 +853,6 @@ class SZ_Cluster_Model:
 
     def Mwl_prob (self,Mwl,M,Merr):
         #Gaussian error probablity for weak lensing mass 
-        ans = self.gaussian(Mwl,M,Merr*M)
+        ans = self.gaussian(Mwl*self.scaling['b_wl'],M,Merr*M)
         return ans
 
