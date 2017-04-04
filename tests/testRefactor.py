@@ -45,8 +45,10 @@ minrange, zinrange, lndM = pickle.load(open(mfile,'rb'))
 # zs = np.arange(0.5,3.0,0.5)
 # Mexp = np.arange(13.5,15.7,0.5)
 
-zs = np.arange(0.1,3.0,0.3)
-Mexp = np.arange(13.0,15.7,0.3)
+w=0.3
+zs = np.arange(w/2,3.0,w)
+w=0.3
+Mexp = np.arange(13.0+w/2.,15.7,w)
 
 zs = np.insert(zs,0,0)
 
@@ -72,7 +74,7 @@ N2 = hmf.N_of_z_SZ(Mexp,zs,beam,noise,freq,clusterDict,lknee,alpha)*fsky*hmf.dVd
 
 
 pl = Plotter()
-pl.plot2d(hmf.sigN)
+pl.plot2d(hmf.sigN[:,1:])
 pl.done(outDir+"signMaster.png")
 
 pl = Plotter(scaleY='log')

@@ -299,7 +299,7 @@ class Halo_MF:
                     else:
                         var = SZProf.filter_variance(M[j],z_arr[i])
                     sigN[j,i] = np.sqrt(var)
-                    print M[j],z_arr[i],sigN[j,i]
+                    print Mexp[j],z_arr[i],sigN[j,i]
             
             P_func[:,i] = SZProf.P_of_q (lnY,M_arr[:,i],z_arr[i],sigN[:,i])#*dlnY
         self.sigN = sigN.copy()
