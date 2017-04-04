@@ -15,8 +15,8 @@ clusterParams = 'LACluster' # from ini file
 cosmologyName = 'LACosmology' # from ini file
 experimentName = "LATest"
 
-#iniFile = "input/params.ini"
-iniFile = "input/pipeline.ini"
+iniFile = "input/params.ini"
+#iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
@@ -53,7 +53,7 @@ cosmoDict = dictFromSection(Config,cosmologyName)
 #cosmoDict = dictFromSection(Config,'WMAP9')
 constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,clusterParams)
-cc = ClusterCosmology(cosmoDict,constDict,lmax)
+cc = ClusterCosmology(cosmoDict,constDict,clTTFixFile = "data/cltt_lensed_Feb18.txt")
 
 # make an SZ profile example
 
