@@ -11,7 +11,7 @@ from orphics.tools.io import FisherPlots
 def getFisher(expName,calName,saveName,inParamList,suffix):
     saveId = expName + "_" + calName + "_" + suffix
 
-    paramList,FisherTot = pickle.load(open("data/savedFisher_"+saveId+"_"+saveName+".pkl",'rb'))
+    paramList,FisherTot = pickle.load(open(bigDataDir+"savedFisher_"+saveId+"_"+saveName+".pkl",'rb'))
     try:
         assert paramList==inParamList
     except:
@@ -28,29 +28,30 @@ iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
+bigDataDir = Config.get('general','bigDataDirectory')
 
-fishSection = "w"
-noatm = ""
-#noatm = "-noatm"
-cal = "CMB_all"
+fishSection = "mnu"
+#noatm = ""
+noatm = "-noatm"
+cal = "CMB_all_coarse"
 #cal = "owl2"
 derivSet = "wstep"
 
-# paramName = "mnu"
-# width = 0.1
-# paramCent = 0.06
-# paramStep = 0.001
-# startPoint = 0.
-# xMultiplier = 1000.
-# labelSuffix = " $(meV)$"
-
-paramName = "w0"
+paramName = "mnu"
 width = 0.1
-paramCent = -1.
+paramCent = 0.06
 paramStep = 0.001
-startPoint = paramCent-width
-xMultiplier = 1.
-labelSuffix = ""
+startPoint = 0.
+xMultiplier = 1000.
+labelSuffix = " $(meV)$"
+
+# paramName = "w0"
+# width = 0.1
+# paramCent = -1.
+# paramStep = 0.001
+# startPoint = paramCent-width
+# xMultiplier = 1.
+# labelSuffix = ""
 
 cosmoFisher = Config.get('fisher-'+fishSection,'saveSuffix')
 

@@ -178,7 +178,7 @@ for index in mySplit:
     critical = True
     atClusterZ = True
     concentration = 1.18
-    MerrGrid[mindex,zindex] = 1./NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None)#,verbose=True)
+    MerrGrid[mindex,zindex] = 1./NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None)[0]#,verbose=True)
     #print mass,z,1./MerrGrid[mindex,zindex]
 
 

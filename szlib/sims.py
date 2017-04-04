@@ -107,7 +107,7 @@ class BattagliaSims(object):
         # areaPixKpc2_test = (stampWidthMpc/PIX*1.e3)**2.#areaKpc2(pixWidthArcmin)
         # print areaPixKpc2, areaPixKpc2_test
 
-        sys.exit()
+        #sys.exit()
 
         maps = {}
         for filen,tag in zip([fileDM,fileStar,fileGas,fileY],["dm","stars","gas","y"]):
