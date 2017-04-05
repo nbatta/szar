@@ -10,6 +10,7 @@ from Tinker_MF import dn_dlogM
 from Tinker_MF import tinker_params
 import Tinker_MF as tinker
 
+from orphics.tools.cmb import noise_func
 from orphics.tools.output import Plotter
 from orphics.theory.cosmology import Cosmology
 from orphics.tools.stats import timeit
@@ -21,13 +22,28 @@ from scipy.special import j0
 
 
 class fgNoises(object):
+    '''
+    Returns fgPower * l(l+1)/2pi in uK^2
+    '''
 
-    def __init__(self,constDict,ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt'):
+    def __init__(self,constDict,ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',ksz_battaglia_test_csv=None,tsz_battaglia_template_csv=None):
         self.c = constDict
         el,ksz = np.loadtxt(ksz_file,unpack=True)
         self.ksz_func = interp1d(el,ksz)
         elp,kszp = np.loadtxt(ksz_p_file,unpack=True)
         self.ksz_p_func = interp1d(elp,kszp)
+
+        if ksz_battaglia_test_csv is not None:
+            ells,cls = np.loadtxt(ksz_battaglia_test_csv,delimiter=',',unpack=True)
+            clfunc = interp1d(ells,cls,bounds_error=False,fill_value=0.)
+            self.ksz_battaglia_test = lambda ell: 1.65*clfunc(ell)
+
+        if tsz_battaglia_template_csv is not None:
+            ells,cls = np.loadtxt(tsz_battaglia_template_csv,delimiter=',',unpack=True)
+            self.tsz_template = interp1d(ells,cls,bounds_error=False,fill_value=0.)
+        else:
+            self.tsz_template = None
+            
 
     def g_nu(self,nu):
         beta = (nu*1e9) * self.c['H_CGS'] / (self.c['K_CGS']*self.c['TCMB'])
@@ -73,8 +89,10 @@ class fgNoises(object):
         ans = self.ksz_func(ell) * (1.65/1.5) + self.ksz_p_func(ell)
         return ans
         
-
-
+    def tSZ(self,ell,nu1,nu2):
+        assert self.tsz_template is not None, "You did not initialize this object with tsz_battaglia_template_csv."
+        return self.c['A_tsz']*self.tsz_template(ell)*f_nu(self.c,nu1)*f_nu(self.c,nu2)/f_nu(self.c,self.c['nu0'])**2.
+        
 
 def getA(fparams,constDict,zrange,kmax=11.):
     cc = ClusterCosmology(fparams,constDict,skipCls=True)
@@ -541,7 +559,7 @@ class SZ_Cluster_Model:
             freq_fac = (f_nu(self.cc.c,freq))**2
 
 
-            nells = self.cc.clttfunc(self.evalells)+( self.noise_func(self.evalells,fwhm,noise,lknee,alpha) / self.cc.c['TCMBmuK']**2.)
+            nells = self.cc.clttfunc(self.evalells)+( noise_func(self.evalells,fwhm,noise,lknee,alpha) / self.cc.c['TCMBmuK']**2.)
             self.nlinv2 += (freq_fac)/nells
 
             nells += (fgs.rad_ps(self.evalells,freq,freq) + fgs.cib_p(self.evalells,freq,freq) + \
@@ -672,17 +690,6 @@ class SZ_Cluster_Model:
         return P_func
 
     
-
-    def noise_func(self,ell,fwhm,rms_noise,lknee=0.,alpha=0.):
-        if lknee>1.e-3:
-            atmFactor = (lknee/ell)**(-alpha)
-        else:
-            atmFactor = 0.
-        rms = rms_noise * (1./60.)*(np.pi/180.)
-        tht_fwhm = np.deg2rad(fwhm / 60.)
-        ans = (atmFactor+1.) * (rms**2.) * np.exp((tht_fwhm**2.)*(ell**2.) / (8.*np.log(2.)))
-        return ans
-
 
     
     def Y_M(self,MM,zz):
