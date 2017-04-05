@@ -45,9 +45,9 @@ minrange, zinrange, lndM = pickle.load(open(mfile,'rb'))
 # zs = np.arange(0.5,3.0,0.5)
 # Mexp = np.arange(13.5,15.7,0.5)
 
-w=0.3
+w=0.1
 zs = np.arange(w/2,3.0,w)
-w=0.3
+w=0.1
 Mexp = np.arange(13.0+w/2.,15.7,w)
 
 zs = np.insert(zs,0,0)
