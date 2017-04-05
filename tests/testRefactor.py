@@ -21,7 +21,7 @@ Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
 
-outDir = os.environ['WWW']
+outDir=os.environ['WWW']
 
 beam = listFromConfig(Config,experimentName,'beams')
 noise = listFromConfig(Config,experimentName,'noises')
@@ -45,69 +45,80 @@ minrange, zinrange, lndM = pickle.load(open(mfile,'rb'))
 # zs = np.arange(0.5,3.0,0.5)
 # Mexp = np.arange(13.5,15.7,0.5)
 
-w=0.1
-zs = np.arange(w/2,3.0,w)
-w=0.1
-Mexp = np.arange(13.0+w/2.,15.7,w)
+# zs = np.arange(0.1,3.0,0.3)
+# Mexp = np.arange(13.0,15.7,0.3)
 
-zs = np.insert(zs,0,0)
+#zs = np.arange(0.1,3.0,0.1)
+w = 0.1
+z_edges = np.arange(0.,3.0+w,w)
+zs = (z_edges[1:]+z_edges[:-1])/2.
 
-outmerr = interpolateGrid(lndM,minrange,zinrange,Mexp,zs[1:],regular=False,kind="cubic",bounds_error=False,fill_value=np.inf)
+w = 0.1
+Mexp_edges = np.arange(13.0,15.7+w,w)
+M_edges = 10**Mexp_edges
+M = (M_edges[1:]+M_edges[:-1])/2.
+Mexp = np.log10(M)
+
+outmerr = interpolateGrid(lndM,minrange,zinrange,Mexp,zs,regular=False,kind="cubic",bounds_error=False,fill_value=np.inf)
 
 
 
 
-
-hmf = Halo_MF(cc)
+hmf = Halo_MF(cc,Mexp_edges,z_edges)
 
 
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
 
 fsky = 0.4
 
-N1 = hmf.N_of_z(Mexp,zs)*fsky*4*np.pi
+N1 = hmf.N_of_z()*fsky
 
 #hmf.sigN = np.loadtxt("temp.txt")
 
-N2 = hmf.N_of_z_SZ(Mexp,zs,beam,noise,freq,clusterDict,lknee,alpha)*fsky*hmf.dVdz(zs)[1:]*4*np.pi
-
-
+try:
+    hmf.sigN = np.loadtxt("tempSigN.txt")
+    N2 = hmf.N_of_z_SZ(SZProf)*fsky
+except:
+    N2 = hmf.N_of_z_SZ(SZProf)*fsky
+    np.savetxt("tempSigN.txt",hmf.sigN)
 
 pl = Plotter()
-pl.plot2d(hmf.sigN[:,1:])
-pl.done(outDir+"signMaster.png")
-
+pl.plot2d(hmf.sigN)
+pl.done(outDir+"signRefactor.png")
+    
 pl = Plotter(scaleY='log')
-pl.add(zs[1:],N1)
-pl.add(zs[1:],N2)
+pl.add(zs,N1)
+pl.add(zs,N2)
 
-Ntot1 = np.trapz(N2,zs[1:])
+Ntot1 = np.trapz(N2,zs)
 print Ntot1
 
 
-sn,ntot = hmf.Mass_err(fsky,outmerr,Mexp,zs,beam,noise,freq,clusterDict,lknee,alpha)
+sn,ntot = hmf.Mass_err(fsky,outmerr,SZProf)
 
 print ntot
 
 
 
-q_arr = np.logspace(np.log10(6.),np.log10(500.),64)
+#q_arr = np.logspace(np.log10(6.),np.log10(500.),64)
+qs = [6.,500.,64]
+qbin_edges = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2])+1)
+q_arr = (qbin_edges[1:]+qbin_edges[:-1])/2.
 
-print zs
-dnqmz = hmf.N_of_mqz_SZ(outmerr,zs,Mexp,q_arr,beam,noise,freq,clusterDict,lknee,alpha)
+dnqmz = hmf.N_of_mqz_SZ(outmerr,qbin_edges,SZProf)
 
-
-N,Nofz = getTotN(dnqmz,Mexp,zs[1:],q_arr,returnNz=True)
+print qbin_edges.shape
+print dnqmz.shape
+N,Nofz = getTotN(dnqmz,Mexp_edges,z_edges,qbin_edges,returnNz=True)
 
 print N*fsky
 
-pl.add(zs[1:],Nofz*fsky,label="mqz")
+pl.add(zs,Nofz*fsky,label="mqz")
 pl.legendOn()
-
-pl.done(outDir+"NsMaster.png")
+pl.done(outDir+"nsRefactor.png")
 
 
 nnoq = np.trapz(dnqmz,q_arr,axis=2)*fsky
 pl = Plotter()
 pl.plot2d(nnoq)
-pl.done(outDir+"ngridMaster.png")
+pl.done(outDir+"ngridRefactor.png")

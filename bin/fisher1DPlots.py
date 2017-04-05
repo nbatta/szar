@@ -9,7 +9,7 @@ from orphics.tools.io import FisherPlots
 
 
 def getFisher(expName,calName,saveName,inParamList,suffix):
-    saveId = expName + "_" + calName + "_" + suffix
+    saveId = expName + "_" + gridName+ "_" + calName + "_" + suffix
 
     paramList,FisherTot = pickle.load(open(bigDataDir+"savedFisher_"+saveId+"_"+saveName+".pkl",'rb'))
     try:
@@ -30,12 +30,14 @@ Config.optionxform=str
 Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
 
+gridName = "grid-default"
+
 fishSection = "mnu"
 #noatm = ""
 noatm = "-noatm"
-cal = "CMB_all_coarse"
+cal = "CMB_all"
 #cal = "owl2"
-derivSet = "wstep"
+derivSet = "v0.1mis"
 
 paramName = "mnu"
 width = 0.1
@@ -74,7 +76,7 @@ fplots.addFisher('S4-5m',cmbfisher5)
 fplots.addFisher('S4-6m',cmbfisher6)
 fplots.addFisher('S4-7m',cmbfisher7)
 listFishers = ['S4-3m','S4-5m','S4-6m','S4-7m']
-fplots.plot1d(paramName,np.arange(startPoint,paramCent+width,paramStep),listFishers,labels=listFishers,saveFile="/gpfs01/astro/www/msyriac/s4Probe1d"+fishSection+"_"+paramName+"_"+cal+noatm+"_"+cosmoFisher+"_"+derivSet+".png",xmultiplier=xMultiplier,labelXSuffix=labelSuffix)
+fplots.plot1d(paramName,np.arange(startPoint,paramCent+width,paramStep),listFishers,labels=listFishers,saveFile="/gpfs01/astro/www/msyriac/s4Probe1d"+fishSection+"_"+paramName+"_"+gridName+"_"+cal+noatm+"_"+cosmoFisher+"_"+derivSet+".png",xmultiplier=xMultiplier,labelXSuffix=labelSuffix)
 
 """OWL"""
 # res = "7m"

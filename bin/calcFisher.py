@@ -9,12 +9,13 @@ from orphics.tools.io import dictFromSection, listFromConfig
 from orphics.tools.io import Plotter
 import matplotlib.pyplot as plt
 
-from szlib.szcounts import getTotN
+from szlib.szcounts import rebinN
 
 
 expName = sys.argv[1]
-calName = sys.argv[2]
-fishName = sys.argv[3]
+gridName = sys.argv[2]
+calName = sys.argv[3]
+fishName = sys.argv[4]
 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
@@ -22,8 +23,9 @@ Config.optionxform=str
 Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
 
-suffix = Config.get('general','suffix')
-saveId = expName + "_" + calName + "_" + suffix
+version = Config.get('general','version')
+pzcutoff = Config.getfloat('general','photoZCutOff')
+saveId = expName + "_" + gridName + "_" + calName + "_v" + version
 
 
 
@@ -38,18 +40,15 @@ else:
     raise ValueError
 dq = np.diff(qbins)
 
-zmax = Config.getfloat('general','zmax')
 fsky = Config.getfloat(expName,'fsky')
 
 # get mass and z grids
-ms = listFromConfig(Config,calName,'mexprange')
-mgrid = np.arange(ms[0],ms[1],ms[2])
-zs = listFromConfig(Config,calName,'zrange')
-zgrid = np.arange(zs[0],zs[1],zs[2])
-zgrid = zgrid[zgrid<zmax]
-zlen = zgrid.size
-dm = np.diff(10**mgrid)
-dz = np.diff(zgrid)
+ms = listFromConfig(Config,gridName,'mexprange')
+mexp_edges = np.arange(ms[0],ms[1]+ms[2],ms[2])
+zs = listFromConfig(Config,gridName,'zrange')
+z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
+dm = np.diff(10**mexp_edges)
+dz = np.diff(z_edges)
 
 # Fisher params
 fishSection = 'fisher-'+fishName
@@ -60,9 +59,22 @@ Fisher = np.zeros((numParams,numParams))
 paramCombs = itertools.combinations_with_replacement(paramList,2)
 
 # Fiducial number counts
-N_fid = np.load(bigDataDir+"N_dzmq_"+saveId+"_fid"+".npy")
-N_fid = N_fid[:,:zlen,:]*fsky
-print "Total number of clusters: ", getTotN(N_fid,mgrid,zgrid,qbins)
+# <<<<<<< HEAD
+# N_fid = np.load(bigDataDir+"N_dzmq_"+saveId+"_fid"+".npy")
+# N_fid = N_fid[:,:zlen,:]*fsky
+# print "Total number of clusters: ", getTotN(N_fid,mgrid,zgrid,qbins)
+# =======
+new_z_edges, N_fid = rebinN(np.load(bigDataDir+"N_mzq_"+saveId+"_fid"+".npy"),pzcutoff,z_edges)
+
+N_fid = N_fid[:,:,:]*fsky
+print "Total number of clusters: ", N_fid.sum() #getTotN(N_fid,mgrid,zgrid,qbins)
+
+
+sId = expName + "_" + gridName  + "_v" + version
+#sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
+#sovernsquare =  np.dstack([sovernsquareEach]*len(qbins))
+
+# >>>>>>> refactor
 
 # Planck and BAO Fishers
 planckFile = Config.get(fishSection,'planckFile')
@@ -90,22 +102,42 @@ if baoFile!='':
         fisherBAO = np.loadtxt(baoFile,delimiter=',')
     fisherBAO = np.pad(fisherBAO,pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.)
 
+
+    
+
+    
 # Populate Fisher
 for param1,param2 in paramCombs:
     if param1=='tau' or param2=='tau': continue
-    dN1 = np.load(bigDataDir+"dN_dzmq_"+saveId+"_"+param1+".npy")
-    dN2 = np.load(bigDataDir+"dN_dzmq_"+saveId+"_"+param2+".npy")
-    dN1 = dN1[:,:zlen,:]*fsky
-    dN2 = dN2[:,:zlen,:]*fsky
+# <<<<<<< HEAD
+#     dN1 = np.load(bigDataDir+"dN_dzmq_"+saveId+"_"+param1+".npy")
+#     dN2 = np.load(bigDataDir+"dN_dzmq_"+saveId+"_"+param2+".npy")
+#     dN1 = dN1[:,:zlen,:]*fsky
+#     dN2 = dN2[:,:zlen,:]*fsky
+# =======
+    new_z_edges, dN1 = rebinN(np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param1+".npy"),pzcutoff,z_edges)
+    new_z_edges, dN2 = rebinN(np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param2+".npy"),pzcutoff,z_edges)
+    dN1 = dN1[:,:,:]*fsky
+    dN2 = dN2[:,:,:]*fsky
+
+# >>>>>>> refactor
 
     i = paramList.index(param1)
     j = paramList.index(param2)
 
-    # if param1=='wa':
-    #     Nup = np.load("data/dNup_dzmq_"+saveId+"_"+param1+".npy")
-    #     Ndn = np.load("data/dNdn_dzmq_"+saveId+"_"+param1+".npy")
-    #     print getTotN(Nup,mgrid,zgrid,qbins)
-    #     print getTotN(Ndn,mgrid,zgrid,qbins)
+# <<<<<<< HEAD
+#     # if param1=='wa':
+#     #     Nup = np.load("data/dNup_dzmq_"+saveId+"_"+param1+".npy")
+#     #     Ndn = np.load("data/dNdn_dzmq_"+saveId+"_"+param1+".npy")
+#     #     print getTotN(Nup,mgrid,zgrid,qbins)
+#     #     print getTotN(Ndn,mgrid,zgrid,qbins)
+# =======
+#     if param1=='wa':
+#         Nup = np.load(bigDataDir+"Nup_mzq_"+saveId+"_"+param1+".npy")
+#         Ndn = np.load(bigDataDir+"Ndn_mzq_"+saveId+"_"+param1+".npy")
+#         print Nup.sum()
+#         print Ndn.sum()
+# >>>>>>> refactor
 
     assert not(np.any(np.isnan(dN1)))
     assert not(np.any(np.isnan(dN2)))
@@ -113,10 +145,8 @@ for param1,param2 in paramCombs:
 
 
     with np.errstate(divide='ignore'):
-        FellBlock = dN1*dN2*np.nan_to_num(1./N_fid)
-    Fellnoq = np.trapz(FellBlock,qbins,axis=2)
-    Fellnoz = np.trapz(Fellnoq,zgrid,axis=1)
-    Fell = np.trapz(Fellnoz,10**mgrid)
+        FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid))#+(N_fid*N_fid*sovernsquare)))
+    Fell = FellBlock.sum()
 
     
        

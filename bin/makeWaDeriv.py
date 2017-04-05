@@ -166,9 +166,12 @@ if rank==0:
     np.save("data/dN_dzmq_"+saveId+"_wa",dN)
         
 else:
+    
     cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
-    HMF = Halo_MF(clusterCosmology=cc,overridePowerSpectra=override)
-    dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,zrange,mexprange,qbins,beam,noise,freq,clusterDict,lknee,alpha)
+    HMF = Halo_MF(clusterCosmology=cc,mexprange,zrange)
+    HMF.sigN = siggrid.copy()
+    SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)    
+    dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbins)
     data = dN_dmqz.astype(np.float64)
     comm.Send(data, dest=0, tag=77)
 
