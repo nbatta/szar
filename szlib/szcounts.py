@@ -20,6 +20,18 @@ from orphics.analysis.flatMaps import interpolateGrid
 import szlib.szlibNumbafied as fast
 from scipy.special import j0
 
+def totTTNoise(ells,constDict,beamFWHM,noiseT,freq,lknee,alpha,tsz_battaglia_template_csv="data/sz_template_battaglia.csv",TCMB=2.7255e6):
+    ls = ells
+    instrument = noise_func(ls,beamFWHM,noiseT,lknee,alpha)/ cc.c['TCMBmuK']**2.
+    fgs = fgNoises(constDict,tsz_battaglia_template_csv)
+    ksz = fgs.ksz_temp(ls)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
+    radio = fgs.rad_ps(ls,freq,freq)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
+    cibp = fgs.cib_p(ls,freq,freq) /ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
+    cibc = fgs.cib_c(ls,freq,freq)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
+    tsz = fgs.tSZ(ls,freq,freq)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
+    return instrument+ksz+radio+cibp+cibc+tsz
+    
+
 
 class fgNoises(object):
     '''
