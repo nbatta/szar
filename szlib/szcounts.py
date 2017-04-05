@@ -19,6 +19,63 @@ from orphics.analysis.flatMaps import interpolateGrid
 import szlib.szlibNumbafied as fast
 from scipy.special import j0
 
+
+class fgNoises(object):
+
+    def __init__(self,constDict,ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt'):
+        self.c = constDict
+        el,ksz = np.loadtxt(ksz_file,unpack=True)
+        self.ksz_func = interp1d(el,ksz)
+        elp,kszp = np.loadtxt(ksz_p_file,unpack=True)
+        self.ksz_p_func = interp1d(elp,kszp)
+
+    def g_nu(self,nu):
+        beta = (nu*1e9) * self.c['H_CGS'] / (self.c['K_CGS']*self.c['TCMB'])
+        ans = 2.* self.c['H_CGS']**2 * (nu*1e9)**4 / (self.c['C']**2 *self.c['K_CGS'] * self.c['TCMB']**2) \
+            * np.exp(beta) * 1. / (np.exp(beta) - 1.)**2
+        return ans
+
+    def B_nu(self,Td,nu):
+        beta = (nu*1e9) * self.c['H_CGS'] / (self.c['K_CGS']*Td)
+        ans = 2.* self.c['H_CGS'] * nu**3 / (self.c['C'])**2 / (np.exp(beta) - 1.)
+        return ans
+
+    def rad_ps(self,ell,nu1,nu2):
+        ans = self.c['A_ps'] * (ell/self.c['ell0sec']) ** 2 * (nu1*nu2/self.c['nu0']**2) ** self.c['al_ps'] \
+            * self.g_nu(nu1) * self.g_nu(nu2) / (self.g_nu(self.c['nu0']))**2
+        return ans 
+    
+    def res_gal(self,ell,nu1,nu2):
+        ans = self.c['A_g'] * (ell/self.c['ell0sec']) ** self.c['n_g'] * (nu1*nu2/self.c['nu0']**2) ** self.c['al_g'] \
+            * self.g_nu(nu1) * self.g_nu(nu2) / (self.g_nu(self.c['nu0']))**2
+        return ans 
+    
+    def cib_p(self,ell,nu1,nu2):
+
+        mu1 = nu1**self.c['al_cib']*self.B_nu(self.c['Td'],nu1) * self.g_nu(nu1)
+        mu2 = nu2**self.c['al_cib']*self.B_nu(self.c['Td'],nu2) * self.g_nu(nu2)
+        mu0 = self.c['nu0']**self.c['al_cib']*self.B_nu(self.c['Td'],self.c['nu0']) \
+            * self.g_nu(self.c['nu0'])
+
+        ans = self.c['A_cibp'] * (ell/self.c['ell0sec']) ** 2.0 * mu1 * mu2 / mu0**2
+        return ans
+
+    def cib_c(self,ell,nu1,nu2):
+        mu1 = nu1**self.c['al_cib']*self.B_nu(self.c['Td'],nu1) * self.g_nu(nu1)
+        mu2 = nu2**self.c['al_cib']*self.B_nu(self.c['Td'],nu2) * self.g_nu(nu2)
+        mu0 = self.c['nu0']**self.c['al_cib']*self.B_nu(self.c['Td'],self.c['nu0']) \
+            * self.g_nu(self.c['nu0'])
+ 
+        ans = self.c['A_cibc'] * (ell/self.c['ell0sec']) ** (2.-self.c['n_cib']) * mu1 * mu2 / mu0**2
+        return ans
+
+    def ksz_temp(self,ell):
+        ans = self.ksz_func(ell) * (1.65/1.5) + self.ksz_p_func(ell)
+        return ans
+        
+
+
+
 def getA(fparams,constDict,zrange,kmax=11.):
     cc = ClusterCosmology(fparams,constDict,skipCls=True)
     if zrange[0]>=1.e-8: zrange = np.insert(zrange,0,0)
@@ -147,8 +204,9 @@ def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,z_edges,fsky,lmax=1000):
     
 
 
-def f_nu(cc,nu):
-    mu = cc.c['H_CGS']*(1e9*nu)/(cc.c['K_CGS']*cc.c['TCMB'])
+def f_nu(constDict,nu):
+    c = constDict
+    mu = c['H_CGS']*(1e9*nu)/(c['K_CGS']*c['TCMB'])
     ans = mu*coth(mu/2.0) - 4.0
     return np.float(ans)
 
@@ -446,7 +504,12 @@ class Halo_MF:
         return ans
 
 class SZ_Cluster_Model:
-    def __init__(self,clusterCosmology,clusterDict,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1.,dell=10,pmaxN=5,numps=1000,nMax=1,ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1,qmin=6.):
+    def __init__(self,clusterCosmology,clusterDict, \
+                 fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1., \
+                 dell=10,pmaxN=5,numps=1000,nMax=1,ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1, \
+                 qmin=6., \
+                 ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt'):
+        
         self.cc = clusterCosmology
         self.P0 = clusterDict['P0']
         self.xc = clusterDict['xc']
@@ -462,6 +525,9 @@ class SZ_Cluster_Model:
         lnYmax = np.log(ymax)
         self.lnY = np.arange(lnYmin,lnYmax,dlnY)
 
+
+        fgs = fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file)
+
         # lnYmin = np.log(1e-13)
         # dlnY = 0.1
         # lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
@@ -472,14 +538,14 @@ class SZ_Cluster_Model:
         self.nlinv2 = 0.
         self.evalells = np.arange(2,lmax,self.dell)
         for freq,fwhm,noise in zip(freqs,fwhms,rms_noises):
-            freq_fac = (f_nu(self.cc,freq))**2
+            freq_fac = (f_nu(self.cc.c,freq))**2
 
 
             nells = self.cc.clttfunc(self.evalells)+( self.noise_func(self.evalells,fwhm,noise,lknee,alpha) / self.cc.c['TCMBmuK']**2.)
             self.nlinv2 += (freq_fac)/nells
 
-            nells += (self.rad_ps(self.evalells,freq,freq) + self.cib_p(self.evalells,freq,freq) + \
-                      self.cib_c(self.evalells,freq,freq) + self.ksz_temp(self.evalells)) \
+            nells += (fgs.rad_ps(self.evalells,freq,freq) + fgs.cib_p(self.evalells,freq,freq) + \
+                      fgs.cib_c(self.evalells,freq,freq) + fgs.ksz_temp(self.evalells)) \
                       / self.cc.c['TCMBmuK']**2. / ((self.evalells+1.)*self.evalells) * 2.* np.pi 
 
             self.nlinv += (freq_fac)/nells
@@ -614,54 +680,9 @@ class SZ_Cluster_Model:
             atmFactor = 0.
         rms = rms_noise * (1./60.)*(np.pi/180.)
         tht_fwhm = np.deg2rad(fwhm / 60.)
-        ans = (atmFactor+1.) * (rms**2.) * np.exp((tht_fwhm**2.)*(ell**2.) / (8.*np.log(2.))) ## Add Hasselfield noise knee
+        ans = (atmFactor+1.) * (rms**2.) * np.exp((tht_fwhm**2.)*(ell**2.) / (8.*np.log(2.)))
         return ans
 
-    def g_nu(self,nu):
-        beta = (nu*1e9) * self.cc.c['H_CGS'] / (self.cc.c['K_CGS']*self.cc.c['TCMB'])
-        ans = 2.* self.cc.c['H_CGS']**2 * (nu*1e9)**4 / (self.cc.c['C']**2 *self.cc.c['K_CGS'] * self.cc.c['TCMB']**2) \
-            * np.exp(beta) * 1. / (np.exp(beta) - 1.)**2
-        return ans
-
-    def B_nu(self,Td,nu):
-        beta = (nu*1e9) * self.cc.c['H_CGS'] / (self.cc.c['K_CGS']*Td)
-        ans = 2.* self.cc.c['H_CGS'] * nu**3 / (self.cc.c['C'])**2 / (np.exp(beta) - 1.)
-        return ans
-
-    def rad_ps(self,ell,nu1,nu2):
-        ans = self.cc.c['A_ps'] * (ell/self.cc.c['ell0sec']) ** 2 * (nu1*nu2/self.cc.c['nu0']**2) ** self.cc.c['al_ps'] \
-            * self.g_nu(nu1) * self.g_nu(nu2) / (self.g_nu(self.cc.c['nu0']))**2
-        return ans 
-    
-    def res_gal(self,ell,nu1,nu2):
-        ans = cc.c['A_g'] * (ell/cc.c['ell0sec']) ** cc.c['n_g'] * (nu1*nu2/cc.c['nu0']**2) ** cc.c['al_g'] \
-            * self.g_nu(nu1) * self.g_nu(nu2) / (self.g_nu(cc.c['nu0']))**2
-        return ans 
-    
-    def cib_p(self,ell,nu1,nu2):
-
-        mu1 = nu1**self.cc.c['al_cib']*self.B_nu(self.cc.c['Td'],nu1) * self.g_nu(nu1)
-        mu2 = nu2**self.cc.c['al_cib']*self.B_nu(self.cc.c['Td'],nu2) * self.g_nu(nu2)
-        mu0 = self.cc.c['nu0']**self.cc.c['al_cib']*self.B_nu(self.cc.c['Td'],self.cc.c['nu0']) \
-            * self.g_nu(self.cc.c['nu0'])
-
-        ans = self.cc.c['A_cibp'] * (ell/self.cc.c['ell0sec']) ** 2.0 * mu1 * mu2 / mu0**2
-        return ans
-
-    def cib_c(self,ell,nu1,nu2):
-        mu1 = nu1**self.cc.c['al_cib']*self.B_nu(self.cc.c['Td'],nu1) * self.g_nu(nu1)
-        mu2 = nu2**self.cc.c['al_cib']*self.B_nu(self.cc.c['Td'],nu2) * self.g_nu(nu2)
-        mu0 = self.cc.c['nu0']**self.cc.c['al_cib']*self.B_nu(self.cc.c['Td'],self.cc.c['nu0']) \
-            * self.g_nu(self.cc.c['nu0'])
- 
-        ans = self.cc.c['A_cibc'] * (ell/self.cc.c['ell0sec']) ** (2.-self.cc.c['n_cib']) * mu1 * mu2 / mu0**2
-        return ans
-
-    def ksz_temp(self,ell):
-        el,ksz = np.loadtxt('input/ksz_BBPS.txt',unpack=True)
-        elp,kszp = np.loadtxt('input/ksz_p_BBPS.txt',unpack=True)
-        ans = np.interp(ell,el,ksz) * (1.65/1.5) + np.interp(ell,elp,kszp)
-        return ans
 
     
     def Y_M(self,MM,zz):
