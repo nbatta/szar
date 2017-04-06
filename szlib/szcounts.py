@@ -279,7 +279,7 @@ class ClusterCosmology(Cosmology):
         # Converts M to c where M is defined wrt delta overdensity relative to *critical* density at redshift of cluster.
         M200 = self.Mass_con_del_2_del_mean200(np.array(M).reshape((1,)),delta,z)
         c200 = fast.con_M_rel_duffy200(M200[0], z)
-        c = c200*(1.+z)*((200./delta)*cc.om/cc.E_z(z)**2.)**(1./3.)
+        c = c200*(1.+z)*((200./delta)*self.om/self.E_z(z)**2.)**(1./3.)
         return c
 
 
