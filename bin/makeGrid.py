@@ -386,7 +386,7 @@ for index in mySplit:
         overdensity = 500
         critical = True
         atClusterZ = True
-        concentration = 1.18
+        concentration = cc.Mdel_to_cdel(mass,z,overdensity) #1.18
         if miscentering:
             ray = beamY/2.
         else:
