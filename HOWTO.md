@@ -16,4 +16,12 @@ This ini file lets you specify configurations for experiments and Fisher matrice
 
 1. Identify or describe an experiment configuration (e.g. `[SO-6m]`)
 2. Identify or describe a grid configuration (e.g. `[grid-default]`). This is the 
+3. Make CMB lensing and SZ variance grids for each experiment by running `bin/makeGrid.py`. To see options for using it,
+``
+python bin/makeGrid.py -h
+``
 
+or do it in parallel with MPI using
+``
+python bin/subGrids.py
+``

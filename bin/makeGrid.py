@@ -92,6 +92,7 @@ if rank==0:
     tellmin,tellmax = listFromConfig(Config,expName,'tellrange')
     pellmin,pellmax = listFromConfig(Config,expName,'pellrange')
     lmax = int(Config.getfloat(expName,'lmax'))
+    constDict = dictFromSection(Config,'constants')
 
     if doLens:
         pols = Config.get(lensName,'polList').split(',')
@@ -102,8 +103,7 @@ if rank==0:
         noiseFind = np.array(noise)[ind]
         assert beamFind.size==1
         assert noiseFind.size==1
-        beamX = beamY = beamFind[0]
-        noiseTX = noiseTY = noiseFind[0]
+        
 
 
         from orphics.tools.cmb import loadTheorySpectraFromCAMB
@@ -114,18 +114,114 @@ if rank==0:
         dell = 20
         gradCut = 2000
         kmin = 100
-        cambRoot = "data/ell28k_highacc"
-        theory = loadTheorySpectraFromCAMB(cambRoot,unlensedEqualsLensed=False,useTotal=False,lpad=9000)
+        
+        from orphics.theory.cosmology import Cosmology
+        cc = Cosmology(lmax=8000,pickling=True)
+        theory = cc.theory
+
+        #cambRoot = "data/ell28k_highacc"
+        #theory = loadTheorySpectraFromCAMB(cambRoot,unlensedEqualsLensed=False,useTotal=False,lpad=9000)
         lmap = lm.makeEmptyCEATemplate(raSizeDeg=deg, decSizeDeg=deg,pixScaleXarcmin=px,pixScaleYarcmin=px)
 
+        
+        testFreq = freq_to_use
+        from szlib.szcounts import fgNoises
+        fgs = fgNoises(constDict,ksz_battaglia_test_csv="data/ksz_template_battaglia.csv",tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
+        tcmbmuk = constDict['TCMB'] * 1.0e6
+        ksz = lambda x: fgs.ksz_temp(x)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
+        radio = lambda x: fgs.rad_ps(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
+        cibp = lambda x: fgs.cib_p(x,testFreq,testFreq) /x/(x+1.)*2.*np.pi/ tcmbmuk**2.
+        cibc = lambda x: fgs.cib_c(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
+        tsz = lambda x: fgs.tSZ(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
+
+        fgFunc = lambda x: ksz(x)+radio(x)+cibp(x)+cibc(x)+tsz(x)
+        #fgFunc = None
+
+        
         Nleach = {}
         kmaxes = []
         for polComb in pols:
+            X,Y = polComb
+            
+            if X=='T':
+                beamX = 5.0
+                noiseTX = 45.0
+                noisePX = np.sqrt(2.)*noiseFind[0] # this doesn't matter
+                slkneeTX = 0.
+                slkneePX = 0. # this doesn't matter
+                salphaTX = 1.
+                salphaPX = 1. # this doesn't matter
+                tellminX = 2.
+                tellmaxX = 3000.
+                pellminX = 2.
+                pellmaxX = 3000.
+        
+                beamY = beamFind[0]
+                noiseTY = noiseFind[0]
+                noisePY = np.sqrt(2.)*noiseFind[0]
+                slkneeTY = lkneeT
+                slkneePY = lkneeP
+                salphaTY = alphaT
+                salphaPY = alphaP
+                tellminY = tellmin
+                tellmaxY = tellmax
+                pellminY = pellmin
+                pellmaxY = pellmax
+            else:
+                beamX = beamFind[0]
+                noiseTX = noiseFind[0]
+                noisePX = np.sqrt(2.)*noiseFind[0]
+                slkneeTX = lkneeT
+                slkneePX = lkneeP
+                salphaTX = alphaT
+                salphaPX = alphaP
+                tellminX = tellmin
+                tellmaxX = tellmax
+                pellminX = pellmin
+                pellmaxX = pellmax
+        
+                beamY = beamFind[0]
+                noiseTY = noiseFind[0]
+                noisePY = np.sqrt(2.)*noiseFind[0]
+                slkneeTY = lkneeT
+                slkneePY = lkneeP
+                salphaTY = alphaT
+                salphaPY = alphaP
+                tellminY = tellmin
+                tellmaxY = tellmax
+                pellminY = pellmin
+                pellmaxY = pellmax
+
+            
             kmax = getMax(polComb,tellmax,pellmax)
             bin_edges = np.arange(kmin,kmax,dell)+dell
 
             myNls = NlGenerator(lmap,theory,bin_edges,gradCut=gradCut)
-            myNls.updateNoise(beamX,noiseTX,np.sqrt(2.)*noiseTX,tellmin,tellmax,pellmin,pellmax,beamY=beamY,noiseTY=noiseTY,noisePY=np.sqrt(2.)*noiseTY,lkneesX=(lkneeT,lkneeP),lkneesY=(lkneeT,lkneeP),alphasX=(alphaT,alphaP),alphasY=(alphaT,alphaP))
+            nTX,nPX,nTY,nPY = myNls.updateNoise(beamX,noiseTX,noisePX,tellminX,tellmaxX,pellminX,pellmaxX,beamY=beamY,noiseTY=noiseTY,noisePY=noisePY,lkneesX=(slkneeTX,slkneePX),lkneesY=(slkneeTY,slkneePY),alphasX=(salphaTX,salphaPX),alphasY=(salphaTY,salphaPY),fgFuncY=fgFunc,tellminY=tellminY,tellmaxY=tellmaxY,pellminY=pellminY,pellmaxY=pellmaxY)
+
+            from orphics.tools.io import Plotter
+            from orphics.tools.stats import bin2D
+            bin_edges = np.arange(100,8000,10)
+            binner = bin2D(myNls.N.modLMap, bin_edges)
+            pls, binnedTX = binner.bin(nTX)
+            pls, binnedTY = binner.bin(nTY)
+            pls, binnedPX = binner.bin(nPX)
+            pls, binnedPY = binner.bin(nPY)
+            
+            pl = Plotter(scaleY='log')
+            pl.add(pls,theory.uCl('TT',pls)*pls**2.,alpha=0.3,ls="--")
+            pl.add(pls,theory.lCl('TT',pls)*pls**2.)
+            pl.add(pls,binnedTX*pls**2.,alpha=0.3)
+            pl.add(pls,binnedTY*pls**2.)
+            pl.done("output/NlTT_"+expName+lensName+polComb+".png")
+
+            pl = Plotter(scaleY='log')
+            pl.add(pls,theory.uCl('EE',pls)*pls**2.,alpha=0.3,ls="--")
+            pl.add(pls,theory.lCl('EE',pls)*pls**2.)
+            pl.add(pls,binnedPX*pls**2.,alpha=0.3)
+            pl.add(pls,binnedPY*pls**2.)
+            pl.done("output/NlEE_"+expName+lensName+polComb+".png")
+
 
             if (polComb=='EB' or polComb=='TB') and (delens):
                 ls, Nls, eff = myNls.iterativeDelens(polComb,1.0,True)
@@ -181,7 +277,6 @@ if rank==0:
         Nls = None
         beamX = None
     
-    constDict = dictFromSection(Config,'constants')
     clttfile = Config.get('general','clttfile')
 
 
@@ -297,7 +392,8 @@ for index in mySplit:
         else:
             ray = None
             
-        MerrGrid[mindex,zindex] = 1./NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=ray)
+        snRet,k500,std = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=ray)
+        MerrGrid[mindex,zindex] = 1./snRet
     if doSZ:
         var = SZCluster.quickVar(10**mass,z)
         siggrid[mindex,zindex] = np.sqrt(var)

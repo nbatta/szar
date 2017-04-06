@@ -41,9 +41,9 @@ class fgNoises(object):
     def __init__(self,constDict,ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',ksz_battaglia_test_csv=None,tsz_battaglia_template_csv=None):
         self.c = constDict
         el,ksz = np.loadtxt(ksz_file,unpack=True)
-        self.ksz_func = interp1d(el,ksz)
+        self.ksz_func = interp1d(el,ksz,bounds_error=False,fill_value=0.)
         elp,kszp = np.loadtxt(ksz_p_file,unpack=True)
-        self.ksz_p_func = interp1d(elp,kszp)
+        self.ksz_p_func = interp1d(elp,kszp,bounds_error=False,fill_value=0.)
 
         if ksz_battaglia_test_csv is not None:
             ells,cls = np.loadtxt(ksz_battaglia_test_csv,delimiter=',',unpack=True)
@@ -582,15 +582,15 @@ class SZ_Cluster_Model:
         self.nl = 1./self.nlinv
         self.nl2 = 1./self.nlinv2
 
-        ls = self.evalells
-        pl = Plotter(scaleY='log')
-        pl.add(ls,self.cc.theory.lCl('TT',self.evalells)*ls**2.)
-        pl.add(ls,self.nl*ls**2.,label="fg")
-        pl.add(ls,self.nl2*ls**2.,label="no fg")
-        # pl.add(ls,self.nl*freq_fac*ls**2.,label="freq")
-        pl.legendOn(loc="upper right")
-        pl.done("output/cmb.png")
-        sys.exit()
+        # ls = self.evalells
+        # pl = Plotter(scaleY='log')
+        # pl.add(ls,self.cc.theory.lCl('TT',self.evalells)*ls**2.)
+        # pl.add(ls,self.nl*ls**2.,label="fg")
+        # pl.add(ls,self.nl2*ls**2.,label="no fg")
+        # # pl.add(ls,self.nl*freq_fac*ls**2.,label="freq")
+        # pl.legendOn(loc="upper right")
+        # pl.done("output/cmb.png")
+        # sys.exit()
 
 
            
