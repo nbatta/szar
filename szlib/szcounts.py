@@ -13,6 +13,7 @@ import Tinker_MF as tinker
 from orphics.tools.cmb import noise_func
 from orphics.tools.output import Plotter
 from orphics.theory.cosmology import Cosmology
+import orphics.theory.cosmology as cosmo
 from orphics.tools.stats import timeit
 from scipy.interpolate import interp1d
 from orphics.analysis.flatMaps import interpolateGrid
@@ -242,7 +243,7 @@ def f_nu(constDict,nu):
 
 
 class ClusterCosmology(Cosmology):
-    def __init__(self,paramDict,constDict,lmax=None,clTTFixFile=None,skipCls=False,pickling=False):
+    def __init__(self,paramDict=cosmo.defaultCosmology,constDict=cosmo.defaultConstants,lmax=None,clTTFixFile=None,skipCls=False,pickling=False):
         Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls,pickling)
         self.rhoc0om = self.rho_crit0H100*self.om
         
@@ -256,17 +257,6 @@ class ClusterCosmology(Cosmology):
         ans = self.rho_crit0H100*self.E_z(z)**2.
         return ans
     
-    # def rhoc_alt(self,z):
-    #     #critical density as a function of z
-    #     ans = self.rho_crit0*self.E_z(z)**2.
-    #     return ans
-
-    # def rdel_c_alt(self,Moverh,z,delta):
-    #     #spherical overdensity radius w.r.t. the critical density
-    #     rhocz = self.rhoc_alt(z)
-    #     M = Moverh/self.h
-    #     ans = (3. * M / (4. * np.pi * delta*rhocz))**(1.0/3.0)
-    #     return ans*self.h
         
     
     def rdel_c(self,M,z,delta):
@@ -284,6 +274,14 @@ class ClusterCosmology(Cosmology):
         rhocz = self.rhoc(z)
         ERRTOL = self.c['ERRTOL']        
         return fast.Mass_con_del_2_del_mean200(Mdel,delta,z,rhocz,self.rhoc0om,ERRTOL)
+
+    def Mdel_to_cdel(self,M,z,delta):
+        # Converts M to c where M is defined wrt delta overdensity relative to *critical* density at redshift of cluster.
+        M200 = cc.Mass_con_del_2_del_mean200(np.array(M).reshape((1,)),delta,z)
+        c200 = fast.con_M_rel_duffy200(M200[0], z)
+        c = c200*(1.+z)*((200./delta)*cc.om/cc.E_z(z)**2.)**(1./3.)
+        return c
+
 
 class Halo_MF:
     @timeit

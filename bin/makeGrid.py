@@ -57,7 +57,6 @@ if rank==0:
     Config.optionxform=str
     Config.read(iniFile)
     version = Config.get('general','version')
-    miscentering = Config.getboolean('general','miscentering')
 
     fparams = {}   
     for (key, val) in Config.items('params'):
@@ -96,6 +95,7 @@ if rank==0:
 
     if doLens:
         pols = Config.get(lensName,'polList').split(',')
+        miscentering = Config.getboolean(lensName,'miscenter')
         delens = Config.getboolean(lensName,'delens')
         freq_to_use = Config.getfloat(lensName,'freq')
         ind = np.where(np.isclose(freq,freq_to_use))
@@ -275,7 +275,7 @@ if rank==0:
     else:
         ls = None
         Nls = None
-        beamX = None
+        beamY = None
     
     clttfile = Config.get('general','clttfile')
 
@@ -298,7 +298,7 @@ if rank==0:
 else:
     doLens = None
     doSZ = None
-    beamX = None
+    beamY = None
     miscentering = None
     mgrid = None
     zgrid = None
@@ -321,7 +321,7 @@ else:
 if rank==0: print "Broadcasting..."
 doLens = comm.bcast(doLens, root = 0)
 doSZ = comm.bcast(doSZ, root = 0)
-beamX = comm.bcast(beamX, root = 0)
+beamY = comm.bcast(beamY, root = 0)
 miscentering = comm.bcast(miscentering, root = 0)
 mgrid = comm.bcast(mgrid, root = 0)
 zgrid = comm.bcast(zgrid, root = 0)
@@ -388,7 +388,7 @@ for index in mySplit:
         atClusterZ = True
         concentration = 1.18
         if miscentering:
-            ray = beamX/2.
+            ray = beamY/2.
         else:
             ray = None
             
