@@ -25,3 +25,12 @@ or do it in parallel with MPI using
 ``
 python bin/subGrids.py
 ``
+4. Make SZ grids for optical weak lensing
+``
+python bin/subOWLGrids.py
+``
+5. Make easy derivatives
+6. Make sigma8 derivatives
+7. Make CMB lensing offset derivatives
+8. Make wa derivatives
+

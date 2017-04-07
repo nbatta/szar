@@ -5,7 +5,8 @@ import sys, os
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle
 
-gridName = "grid-default"
+calName = sys.argv[1] #"owl1"
+gridName = "grid-"+calName
 outDir = os.environ['WWW']
 
 iniFile = "input/pipeline.ini"
@@ -55,4 +56,4 @@ pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
 pl.plot2d(pgrid,extent=[mgrid.min(),mgrid.max(),zgrid.min(),zgrid.max()],levels=[3.0,5.0],labsize=14,aspect="auto")
 pl.done(outDir+"interpHSCgrid.png")
 
-pickle.dump((Mexp_edges,z_edges,outmerr),open(bigDataDir+"lensgrid_"+gridName+"_owl.pkl",'wb'))
+pickle.dump((Mexp_edges,z_edges,outmerr),open(bigDataDir+"lensgrid_"+gridName+"_"+calName+".pkl",'wb'))
