@@ -279,8 +279,10 @@ class ClusterCosmology(Cosmology):
         # Converts M to c where M is defined wrt delta overdensity relative to *critical* density at redshift of cluster.
         M200 = self.Mass_con_del_2_del_mean200(np.array(M).reshape((1,)),delta,z)
         c200 = fast.con_M_rel_duffy200(M200[0], z)
-        c = c200*(1.+z)*((200./delta)*self.om/self.E_z(z)**2.)**(1./3.)
-        return c
+        Rdelc = self.rdel_c(M,z,delta) # Rdel_crit in Mpc/h
+        R200m = self.rdel_m(M,z,200.) # R200_mean in Mpc/h
+        c = c200*(Rdelc/R200m)**(1./3.)
+        return c[0]
 
 
 class Halo_MF:
@@ -395,8 +397,7 @@ class Halo_MF:
             for j in xrange(M.size):
                 var = SZCluster.quickVar(M[j],zs[i],tmaxN,numts)
                 sigN[j,i] = np.sqrt(var)
-                print self.Mexp[j],zs[i],sigN[j,i]
-
+             
         self.sigN = sigN.copy()
 
     def updateYM(self,SZCluster):
