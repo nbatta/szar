@@ -276,6 +276,7 @@ if rank==0:
         ls = None
         Nls = None
         beamY = None
+        miscentering = None
     
     clttfile = Config.get('general','clttfile')
 
