@@ -277,10 +277,10 @@ class ClusterCosmology(Cosmology):
 
     def Mdel_to_cdel(self,M,z,delta):
         # Converts M to c where M is defined wrt delta overdensity relative to *critical* density at redshift of cluster.
-        M200 = self.Mass_con_del_2_del_mean200(np.array(M).reshape((1,)),delta,z)
-        c200 = fast.con_M_rel_duffy200(M200[0], z)
+        M200 = self.Mass_con_del_2_del_mean200(np.array(M).reshape((1,)),delta,z)[0]
+        c200 = fast.con_M_rel_duffy200(M200, z)
         Rdelc = self.rdel_c(M,z,delta) # Rdel_crit in Mpc/h
-        R200m = self.rdel_m(M,z,200.) # R200_mean in Mpc/h
+        R200m = self.rdel_m(M200,z,200.) # R200_mean in Mpc/h
         c = c200*(Rdelc/R200m)**(1./3.)
         return c[0]
 
