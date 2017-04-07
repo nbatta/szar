@@ -35,6 +35,8 @@ MM = 0.8*3e14 #M/h
 
 SZ = SZ_Cluster_Model(cc,clusterDict,lmax=lmax )
 
+HMF = Halo_MF(clusterCosmology=cc)
+
 var = SZ.quickVar(MM,zz)
 var2 = SZ.filter_variance(MM,zz)
 
@@ -55,8 +57,10 @@ start2 = time.time()
 print SZ.Prof_tilde_old(3000,MM,zz)
 print "Time for old", time.time() - start2
 
-#ll = np.arange(1000,3000,200)
-#print SZ.Cl_ell(ll)
+ll = np.arange(1000,3000,200)
+start3 = time.time()
+print HMF.Cl_ell(ll)
+print "Time for old", time.time() - start3
 
 lnYmin = np.log(1e-13)
 dlnY = 0.1
