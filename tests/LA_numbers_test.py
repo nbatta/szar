@@ -35,28 +35,35 @@ MM = 0.8*3e14 #M/h
 
 SZ = SZ_Cluster_Model(cc,clusterDict,lmax=lmax )
 
-var = SZ.quickVar(MM,zz)
-var2 = SZ.filter_variance(MM,zz)
+Mexpedge = np.arange(12.0,15.8,0.1)
+zedge = np.arange(0.0,5.0,0.05)
 
-print np.sqrt(var), np.sqrt(var2)
-print "LA", SZ.Y_M(MM,zz)
-print "Planck", SZ.Y_M_test(MM,zz)
+HMF = Halo_MF(cc,Mexpedge,zedge)
 
-print "S/N", SZ.Y_M(MM,zz)/np.sqrt(var)
+#var = SZ.quickVar(MM,zz)
+#var2 = SZ.filter_variance(MM,zz)
+
+#print np.sqrt(var), np.sqrt(var2)
+#print "LA", SZ.Y_M(MM,zz)
+#print "Planck", SZ.Y_M_test(MM,zz)
+
+#print "S/N", SZ.Y_M(MM,zz)/np.sqrt(var)
 #print SZ.f_nu(freq[0])
 #print SZ.f_nu_test(freq[0])
 
 print "PS test"
 
-start = time.time()
-print SZ.Prof_tilde(3000,MM,zz)
-print "Time for new", time.time() - start
-start2 = time.time()
-print SZ.Prof_tilde_old(3000,MM,zz)
-print "Time for old", time.time() - start2
+#start = time.time()
+#print SZ.Prof_tilde(3000,MM,zz)
+#print "Time for new", time.time() - start
+#start2 = time.time()
+#print SZ.Prof_tilde_old(3000,MM,zz)
+#print "Time for old", time.time() - start2
 
-#ll = np.arange(1000,3000,200)
-#print SZ.Cl_ell(ll)
+ll = np.arange(1000,3000,200)
+start3 = time.time()
+print HMF.Cl_ell(ll,SZ)
+print "Time for old", time.time() - start3
 
 lnYmin = np.log(1e-13)
 dlnY = 0.1

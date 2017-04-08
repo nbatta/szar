@@ -517,17 +517,19 @@ class Halo_MF:
         
         return dNdzmq
 
-    def Cl_ell(self,ell):
+    def Cl_ell(self,ell,SZCluster):
         #fix the mass and redshift ranges 
-        M = 10**np.arange(11.0, 16, .1)
-        dM = np.gradient(M)
+        M = self.M#10**np.arange(11.0, 16, .1)
+        #dM = np.gradient(M)
         
-        zmax = 6.0
-        zmin = 0.01
-        delz = (zmax-zmin)/100. # 140 redshift restriction
-        zbin_temp = np.arange(zmin,zmax,delz)
-        z_arr = np.insert(zbin_temp,0,0.0)
+        #zmax = 6.0
+        #zmin = 0.01
+        z_arr = self.zarr
         dz = np.gradient(z_arr)
+        #delz = (zmax-zmin)/100. # 140 redshift restriction
+        #zbin_temp = np.arange(zmin,zmax,delz)
+        #z_arr = np.insert(zbin_temp,0,0.0)
+        #dz = np.diff(z_arr)
         #ell = np.arange(1000,3000,1000)
         
         M200 = np.outer(M,np.zeros([len(z_arr)]))
@@ -537,22 +539,21 @@ class Halo_MF:
 #        np.outer(ell,np.outer(M,np.zeros([len(z_arr)])))
         #print formfac.shape
         
-        for i in xrange (len(z_arr)):
-            M200[:,i] = self.Mass_con_del_2_del_mean200(M/(cp.h0/100.),500,z_arr[i])
+        for i in xrange (z_arr.size):
+            M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M/(self.cc.H0/100.),500,z_arr[i])
             dM200[:,i] = np.gradient(M200[:,i])
             if (i > 0): 
                 for j in xrange (len(M)):
                     for k in xrange (len(ell)):
-                        formfac[k,j,i] = SZProf.Prof_tilde(ell[k],M[j]/(cp.h0/100.),z_arr[i])
+                        formfac[k,j,i] = SZCluster.Prof_tilde(ell[k],M[j]/(self.cc.H0/100.),z_arr[i])
         
-        dn_dm = self.dn_dM(M200,z_arr,200.)
-        dV_dz = self.dVdz(z_arr)
+        dn_dm = self.dn_dM(M200,200.)
+        dV_dz = self.dVdz
         
         ans = np.zeros(len(ell))
         for k in xrange (len(ell)):
-            for i in xrange (len(z_arr)-1):
-                ii = i + 1.
-                ans[k] += 4*np.pi *dV_dz[ii] * dz[ii] * np.trapz( dn_dm[:,ii] * formfac[k,:,ii]**2,M200[ii])
+            for i in xrange (z_arr.size):
+                ans[k] += 4*np.pi *dV_dz[i] * dz[i] * np.trapz( dn_dm[:,i] * formfac[k,:,i]**2,M200[:,i])
         #print dn_dm.shape, formfac.shape
         #ans  =1.    
         return ans
