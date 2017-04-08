@@ -7,10 +7,10 @@ import sys
 from orphics.tools.io import FisherPlots
 
 
-def getFisher(expName,calName,saveName,inParamList,suffix):
-    saveId = expName + "_" + calName + "_" + suffix
+def getFisher(expName,gridName,calName,saveName,inParamList,suffix):
+    saveId = expName + "_" + gridName+ "_" + calName + "_" + suffix
 
-    paramList,FisherTot = pickle.load(open("data/savedFisher_"+saveId+"_"+saveName+".pkl",'rb'))
+    paramList,FisherTot = pickle.load(open(bigDataDir+"savedFisher_"+saveId+"_"+saveName+".pkl",'rb'))
     assert paramList==inParamList
     return FisherTot
 
@@ -21,14 +21,15 @@ iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
+bigDataDir = Config.get('general','bigDataDirectory')
 
 
-fishSection = "mnu-w"
+fishSection = "w"
 #noatm = ""
 noatm = "-noatm"
 cal = "CMB_all"
 #cal = "owl1"
-derivSet = "wstep"
+derivSet = "v0.2"
 
 
 cosmoFisher = Config.get('fisher-'+fishSection,'saveSuffix')
@@ -83,13 +84,25 @@ for (key, val) in Config.items('params'):
 
 #"""CMB OWL comparison"""
 
-res = "5m"
-owl1x = getFisher("S4-5m"+noatm,'owl2',cosmoFisher,paramList,"wstep")
-owl2x = getFisher("S4-5m"+noatm,'owl2',cosmoFisher,paramList,"wstep2x")
-fplots = FisherPlots(paramList,paramLatexList,fparams)
-fplots.addFisher('owl1x',owl1x)
-fplots.addFisher('owl2x',owl2x)
-listFishers = ['owl1x','owl2x']
-labFishers = ['S4-5m LSST-like','S4-5m LSST-like 2x error']
+# res = "5m"
+# owl1x = getFisher("S4-5m"+noatm,'owl2',cosmoFisher,paramList,"wstep")
+# owl2x = getFisher("S4-5m"+noatm,'owl2',cosmoFisher,paramList,"wstep2x")
+# fplots = FisherPlots(paramList,paramLatexList,fparams)
+# fplots.addFisher('owl1x',owl1x)
+# fplots.addFisher('owl2x',owl2x)
+# listFishers = ['owl1x','owl2x']
+# labFishers = ['S4-5m LSST-like','S4-5m LSST-like 2x error']
 
-fplots.plotPair(['mnu','w0'],listFishers,labels=labFishers,saveFile="/gpfs01/astro/www/msyriac/s42d_mnuw0_2x"+res+"_"+noatm+"_"+cosmoFisher+"_"+derivSet+".png")
+# fplots.plotPair(['mnu','w0'],listFishers,labels=labFishers,saveFile="/gpfs01/astro/www/msyriac/s42d_mnuw0_2x"+res+"_"+noatm+"_"+cosmoFisher+"_"+derivSet+".png")
+
+
+#"""CMB OWL comparison"""
+
+res = "7m"
+owl1 = getFisher("S4-"+res+noatm,'grid-owl2','owl2',cosmoFisher,paramList,derivSet)
+fplots = FisherPlots(paramList,paramLatexList,fparams)
+fplots.addFisher('owl1',owl1)
+listFishers = ['owl1']
+labFishers = ['S4-'+res]
+
+fplots.plotPair(['b_wl','b_ym'],listFishers,labels=labFishers,saveFile="/gpfs01/astro/www/msyriac/s42d_bb_"+res+"_"+noatm+"_"+cosmoFisher+"_"+derivSet+".png")

@@ -3,9 +3,10 @@ cmdRoot = "python bin/calcS8Fisher.py "
 
 expList = ['S4','SO']
 resList = ['-3m','-5m','-6m','-7m']
-atmList = ['']#,'-noatm']
+atmList = ['','-noatm']
 #calList = ['CMB_all','owl2']#,'CMB_pol','owl1']
-calList = ['CMB_pol']#,'CMB_pol','owl1']
+calList = ['CMB_all','CMB_pol','CMB_all_miscentered','CMB_pol_miscentered']
+#calList = ['CMB_pol']#,'CMB_pol','owl1']
 #calList = ['owl1']#,'CMB_pol','owl1']
 
 gridList = ['grid-default']

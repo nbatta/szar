@@ -103,7 +103,8 @@ if baoFile!='':
     fisherBAO = np.pad(fisherBAO,pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.)
 
 
-    
+print paramList
+
 
     
 # Populate Fisher
@@ -182,6 +183,11 @@ except:
     pass
 try:
     print "wa 1-sigma : "+ str(errDict['wa']) 
+except:
+    pass
+
+try:
+    print "bMWL 1-sigma : "+ str(errDict['b_wl']*100.)  + " %"
 except:
     pass
 
