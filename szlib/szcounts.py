@@ -138,18 +138,6 @@ def getTotN(Nmzq,mexp_edges,z_edges,q_edges,returnNz=False):
     """Get total number of clusters given N/DmDqDz
     and the corresponding log10(mass), z and q grid edges
     """
-    # q_arr = (q_edges[1:]+q_edges[:-1])/2.
-    # M_edges = 10**mexp_edges
-    # M = (M_edges[1:]+M_edges[:-1])/2.
-    # zs = (z_edges[1:]+z_edges[:-1])/2.
-       
-    # Nmz = np.trapz(Nmzq,q_arr,axis=2)
-    # #Nmz = np.trapz(Nmzq,dx=np.diff(q_edges),axis=2)
-    # Nofz = np.trapz(Nmz.T,M,axis=1)
-    # #Nofz = np.trapz(Nmz.T,dx=np.diff(10**mexp_edges),axis=1)
-    # N = np.trapz(Nofz.T,zs)
-    # #N = np.trapz(Nofz.T,dx=np.diff(z_edges))
-
 
     Ndq = np.multiply(Nmzq,np.diff(q_edges).reshape((1,1,q_edges.size-1)))
     Ndm = np.multiply(Ndq,np.diff(10**mexp_edges).reshape((mexp_edges.size-1,1,1)))
@@ -291,7 +279,6 @@ class ClusterCosmology(Cosmology):
 
 
 class Halo_MF:
-    @timeit
     def __init__(self,clusterCosmology,Mexp_edges,z_edges,kh=None,powerZK=None,kmin=1e-4,kmax=11.,knum=200):
 
         # update self.sigN (20 mins) and self.Pfunc if changing experiment
@@ -383,7 +370,6 @@ class Halo_MF:
 
         return N_z*4.*np.pi
 
-    @timeit
     def updateSigN(self,SZCluster,tmaxN=5,numts=1000):
         zs = self.zarr
         M = self.M
@@ -710,7 +696,6 @@ class SZ_Cluster_Model:
 
         return P_func
 
-    @timeit
     def Pfunc_qarr(self,sigN,M,z_arr,q_arr):
 
         lnY = self.lnY
