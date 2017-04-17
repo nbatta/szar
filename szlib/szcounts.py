@@ -11,7 +11,7 @@ from Tinker_MF import tinker_params
 import Tinker_MF as tinker
 
 from orphics.tools.cmb import noise_func
-from orphics.tools.output import Plotter
+from orphics.tools.io import Plotter
 from orphics.theory.cosmology import Cosmology
 import orphics.theory.cosmology as cosmo
 from orphics.tools.stats import timeit

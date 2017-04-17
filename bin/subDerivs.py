@@ -8,10 +8,15 @@ numCores = 2*numParams+1
 #expList = ['SO-3m','SO-5m','SO-6m','SO-7m','S4-3m','S4-5m','S4-6m','S4-7m']
 #calList = ['CMB_all_coarse','CMB_pol_coarse']
 
+
+expList = ['S4-3.0-0.4']
+calList = ['CMB_pol_miscentered']
+
+
 #expList = ['S4-7m']
 #calList = ['CMB_all']
-expList = ['SO-3m','SO-5m','SO-6m','SO-7m','S4-3m','S4-5m','S4-6m','S4-7m','S4-5m-noatm','S4-6m-noatm','S4-7m-noatm','SO-5m-noatm','SO-6m-noatm','SO-7m-noatm','SO-3m-noatm','S4-3m-noatm']
-calList = ['CMB_all','CMB_pol','CMB_all_miscentered','CMB_pol_miscentered']
+#expList = ['SO-3m','SO-5m','SO-6m','SO-7m','S4-3m','S4-5m','S4-6m','S4-7m','S4-5m-noatm','S4-6m-noatm','S4-7m-noatm','SO-5m-noatm','SO-6m-noatm','SO-7m-noatm','SO-3m-noatm','S4-3m-noatm']
+#calList = ['CMB_all','CMB_pol','CMB_all_miscentered','CMB_pol_miscentered']
 #calList = ['CMB_all','CMB_pol','CMB_all_nodelens','CMB_pol_nodelens']
 #expList = ['SO-3m','SO-5m','SO-6m','SO-7m']
 #expList = ['S4-3m','S4-5m','S4-6m','S4-7m']
@@ -29,12 +34,6 @@ bigDataDir = Config.get('general','bigDataDirectory')
 version = Config.get('general','version')
 
 
-from ConfigParser import SafeConfigParser 
-iniFile = "input/pipeline.ini"
-Config = SafeConfigParser()
-Config.optionxform=str
-Config.read(iniFile)
-bigDataDir = Config.get('general','bigDataDirectory')
 
 for exp in expList:
 
