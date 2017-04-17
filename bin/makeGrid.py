@@ -104,26 +104,7 @@ if rank==0:
         assert beamFind.size==1
         assert noiseFind.size==1
         
-
-
-        from orphics.tools.cmb import loadTheorySpectraFromCAMB
-        import flipper.liteMap as lm
-        from alhazen.quadraticEstimator import NlGenerator,getMax
-        deg = 10.
-        px = 0.5
-        dell = 20
-        gradCut = 2000
-        kmin = 100
-        
-        from orphics.theory.cosmology import Cosmology
-        cc = Cosmology(lmax=8000,pickling=True)
-        theory = cc.theory
-
-        #cambRoot = "data/ell28k_highacc"
-        #theory = loadTheorySpectraFromCAMB(cambRoot,unlensedEqualsLensed=False,useTotal=False,lpad=9000)
-        lmap = lm.makeEmptyCEATemplate(raSizeDeg=deg, decSizeDeg=deg,pixScaleXarcmin=px,pixScaleYarcmin=px)
-
-        
+       
         testFreq = freq_to_use
         from szlib.szcounts import fgNoises
         fgs = fgNoises(constDict,ksz_battaglia_test_csv="data/ksz_template_battaglia.csv",tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
@@ -134,105 +115,60 @@ if rank==0:
         cibc = lambda x: fgs.cib_c(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
         tsz = lambda x: fgs.tSZ(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
 
-        fgFunc = lambda x: ksz(x)+radio(x)+cibp(x)+cibc(x)+tsz(x)
-        #fgFunc = None
+        fgFunc =  lambda x: ksz(x)+radio(x)+cibp(x)+cibc(x)+tsz(x)
 
+        beamTX = 5.0
+        noiseTX = 42.0
+        tellminX = 2
+        tellmaxX = 3000
+        lkneeTX = 0
+        alphaTX = 1
+        fgFuncX = None
+       
+
+        beamPX = beamTY = beamPY = beamFind
+        beamY = beamTY
+        noiseTY = noiseFind
+        noisePX = np.sqrt(2.)*noiseTY
+        noisePY = np.sqrt(2.)*noiseTY
+        pellminX = pellmin
+        pellmaxX = pellmax
+        pellminY = pellmin
+        pellmaxY = pellmax
+        tellminY = tellmin
+        tellmaxY = tellmax
+        lkneeTY = lkneeT
+        lkneePX = lkneePY = lkneeP
+        alphaTY = alphaT
+        alphaPX = alphaPY = alphaP
+        fgFuncY = fgFunc
         
-        Nleach = {}
-        kmaxes = []
-        for polComb in pols:
-            X,Y = polComb
-            
-            if X=='T':
-                beamX = 5.0
-                noiseTX = 45.0
-                noisePX = np.sqrt(2.)*noiseFind[0] # this doesn't matter
-                slkneeTX = 0.
-                slkneePX = 0. # this doesn't matter
-                salphaTX = 1.
-                salphaPX = 1. # this doesn't matter
-                tellminX = 2.
-                tellmaxX = 3000.
-                pellminX = 2.
-                pellmaxX = 3000.
         
-                beamY = beamFind[0]
-                noiseTY = noiseFind[0]
-                noisePY = np.sqrt(2.)*noiseFind[0]
-                slkneeTY = lkneeT
-                slkneePY = lkneeP
-                salphaTY = alphaT
-                salphaPY = alphaP
-                tellminY = tellmin
-                tellmaxY = tellmax
-                pellminY = pellmin
-                pellmaxY = pellmax
-            else:
-                beamX = beamFind[0]
-                noiseTX = noiseFind[0]
-                noisePX = np.sqrt(2.)*noiseFind[0]
-                slkneeTX = lkneeT
-                slkneePX = lkneeP
-                salphaTX = alphaT
-                salphaPX = alphaP
-                tellminX = tellmin
-                tellmaxX = tellmax
-                pellminX = pellmin
-                pellmaxX = pellmax
-        
-                beamY = beamFind[0]
-                noiseTY = noiseFind[0]
-                noisePY = np.sqrt(2.)*noiseFind[0]
-                slkneeTY = lkneeT
-                slkneePY = lkneeP
-                salphaTY = alphaT
-                salphaPY = alphaP
-                tellminY = tellmin
-                tellmaxY = tellmax
-                pellminY = pellmin
-                pellmaxY = pellmax
 
+        import flipper.liteMap as lm
+        from alhazen.quadraticEstimator import NlGenerator,getMax
+        deg = 5.
+        px = 1.0
+        dell = 10
+        gradCut = 2000
+        kellmin = 10
+        lmap = lm.makeEmptyCEATemplate(raSizeDeg=deg, decSizeDeg=deg,pixScaleXarcmin=px,pixScaleYarcmin=px)
+        kellmax = max(tellmax,pellmax)
+        from orphics.theory.cosmology import Cosmology
+        cc = Cosmology(lmax=int(kellmax),pickling=True)
+        theory = cc.theory
+        bin_edges = np.arange(kellmin,kellmax,dell)
+        myNls = NlGenerator(lmap,theory,bin_edges,gradCut=gradCut)
+        nTX,nPX,nTY,nPY = myNls.updateNoiseAdvanced(beamTX,noiseTX,beamPX,noisePX,tellminX,tellmaxX,pellminX,pellmaxX,beamTY,noiseTY,beamPY,noisePY,tellminY,tellmaxY,pellminY,pellmaxY,(lkneeTX,lkneePX),(alphaTX,alphaPX),(lkneeTY,lkneePY),(alphaTY,alphaPY),None,None,None,None,None,None,None,None,fgFuncX,fgFuncY,None,None,None,None,None,None,None,None)
+
+
+        ls,Nls,ells,dclbb,efficiency = myNls.getNlIterative(pols,kellmin,kellmax,tellmax,pellmin,pellmax,dell=dell,halo=True)
+
+        ls = ls[1:-1]
+        Nls = Nls[1:-1]
+        print Nls
             
-            kmax = getMax(polComb,tellmax,pellmax)
-            bin_edges = np.arange(kmin,kmax,dell)+dell
 
-            myNls = NlGenerator(lmap,theory,bin_edges,gradCut=gradCut)
-            nTX,nPX,nTY,nPY = myNls.updateNoise(beamX,noiseTX,noisePX,tellminX,tellmaxX,pellminX,pellmaxX,beamY=beamY,noiseTY=noiseTY,noisePY=noisePY,lkneesX=(slkneeTX,slkneePX),lkneesY=(slkneeTY,slkneePY),alphasX=(salphaTX,salphaPX),alphasY=(salphaTY,salphaPY),fgFuncY=fgFunc,tellminY=tellminY,tellmaxY=tellmaxY,pellminY=pellminY,pellmaxY=pellmaxY)
-
-            from orphics.tools.io import Plotter
-            from orphics.tools.stats import bin2D
-            bin_edges = np.arange(100,8000,10)
-            binner = bin2D(myNls.N.modLMap, bin_edges)
-            pls, binnedTX = binner.bin(nTX)
-            pls, binnedTY = binner.bin(nTY)
-            pls, binnedPX = binner.bin(nPX)
-            pls, binnedPY = binner.bin(nPY)
-            
-            pl = Plotter(scaleY='log')
-            pl.add(pls,theory.uCl('TT',pls)*pls**2.,alpha=0.3,ls="--")
-            pl.add(pls,theory.lCl('TT',pls)*pls**2.)
-            pl.add(pls,binnedTX*pls**2.,alpha=0.3)
-            pl.add(pls,binnedTY*pls**2.)
-            pl.done("output/NlTT_"+expName+lensName+polComb+".png")
-
-            pl = Plotter(scaleY='log')
-            pl.add(pls,theory.uCl('EE',pls)*pls**2.,alpha=0.3,ls="--")
-            pl.add(pls,theory.lCl('EE',pls)*pls**2.)
-            pl.add(pls,binnedPX*pls**2.,alpha=0.3)
-            pl.add(pls,binnedPY*pls**2.)
-            pl.done("output/NlEE_"+expName+lensName+polComb+".png")
-
-
-            if (polComb=='EB' or polComb=='TB') and (delens):
-                ls, Nls, eff = myNls.iterativeDelens(polComb,1.0,True)
-            else:
-                ls,Nls = myNls.getNl(polComb=polComb,halo=True)
-
-            Nleach[polComb] = (ls,Nls)
-            kmaxes.append(kmax)
-
-        bin_edges = np.arange(kmin,max(kmaxes),dell)+dell
-        Nlmvinv = 0.
         from scipy.interpolate import interp1d
 
         from orphics.tools.io import Plotter
@@ -242,32 +178,20 @@ if rank==0:
         pl.add(ellkk,4.*Clkk/2./np.pi)
 
 
-        for polComb in pols:
-            ls,Nls = Nleach[polComb]
-            nlfunc = interp1d(ls,Nls,bounds_error=False,fill_value=np.inf)
-            Nleval = nlfunc(bin_edges)
-            Nlmvinv += np.nan_to_num(1./Nleval)
-            pl.add(ls,4.*Nls/2./np.pi,label=polComb)
-
-        Nlmv = np.nan_to_num(1./Nlmvinv)
-        ls = bin_edges[1:-1]
-        Nls = Nlmv[1:-1]
-
         from orphics.tools.stats import bin1D
-        binner1d = bin1D(bin_edges)
+        dls = np.diff(ls)[0]
+        bin_edges_nls = np.arange(ls[0]-dls/2.,ls[-1]+dls*3./2.,dls)
+        binner1d = bin1D(bin_edges_nls)
         ellcls , clkk_binned = binner1d.binned(ellkk,Clkk)
 
-        
-
-        pl.add(ellcls,4.*clkk_binned/2./np.pi,ls="none",marker="x")
         pl.add(ellcls,4.*clkk_binned/2./np.pi,ls="none",marker="x")
         pl.add(ls,4.*Nls/2./np.pi,ls="--")
         np.savetxt(bigDataDir+"nlsave_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
 
-        Nls += clkk_binned[:-1]
+        Nls += clkk_binned[:]
         np.savetxt(bigDataDir+"nlsaveTot_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
-        pl.add(ls,4.*Nls/2./np.pi,ls="-.")
         
+        pl.add(ls,4.*Nls/2./np.pi,ls="-.")
         pl.legendOn(loc='lower left',labsize=10)
         pl.done("output/Nl_"+expName+lensName+".png")
         #ls,Nls = np.loadtxt("data/LA_pol_Nl.txt",unpack=True,delimiter=",")

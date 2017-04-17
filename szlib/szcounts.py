@@ -463,36 +463,36 @@ class Halo_MF:
         dn_dVdm = self.dn_dM(self.M200,200.)
         dV_dz = self.dVdz
 
-        N = M_arr.copy()*0.
-        print "Checking norm of mass calibration..."
-        mexp_int = m_wl
-        m_int_edges = self.M_edges
-        #mass_err *= 1.e-1
+        # N = M_arr.copy()*0.
+        # print "Checking norm of mass calibration..."
+        # mexp_int = m_wl
+        # m_int_edges = self.M_edges
+        # #mass_err *= 1.e-1
 
-        # mexp_int_edges = np.arange(9.0,16.0,0.01)
-        # m_int_edges = 10**mexp_int_edges
-        # m_int = (m_int_edges[1:]+m_int_edges[:-1])/2.
-        # mexp_int = np.log10(m_int)
-        for i in xrange (z_arr.size):
-            for j in xrange (self.Mexp.size):
-                N[j,i] = np.dot(SZCluster.Mwl_prob(10**(mexp_int),M_arr[j,i],mass_err[j,i]),np.diff(m_int_edges))
-        from orphics.tools.io import Plotter
-        import os
-        mmin = self.Mexp.min()
-        mmax = self.Mexp.max()
-        zmin = self.zarr.min()
-        zmax = self.zarr.max()
-        pgrid = np.rot90(N)
-        pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
-        pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],labsize=14,aspect="auto")
-        pl.done(os.environ['WWW']+"normMassCalib.png")
+        # # mexp_int_edges = np.arange(9.0,16.0,0.01)
+        # # m_int_edges = 10**mexp_int_edges
+        # # m_int = (m_int_edges[1:]+m_int_edges[:-1])/2.
+        # # mexp_int = np.log10(m_int)
+        # for i in xrange (z_arr.size):
+        #     for j in xrange (self.Mexp.size):
+        #         N[j,i] = np.dot(SZCluster.Mwl_prob(10**(mexp_int),M_arr[j,i],mass_err[j,i]),np.diff(m_int_edges))
+        # from orphics.tools.io import Plotter
+        # import os
+        # mmin = self.Mexp.min()
+        # mmax = self.Mexp.max()
+        # zmin = self.zarr.min()
+        # zmax = self.zarr.max()
+        # pgrid = np.rot90(N)
+        # pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
+        # pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],labsize=14,aspect="auto")
+        # pl.done(os.environ['WWW']+"normMassCalib.png")
 
         # pgrid = mass_err
         # pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
         # pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],labsize=14,aspect="auto")
         # pl.done(os.environ['WWW']+"normMassCalib.png")
 
-        sys.exit()
+        # sys.exit()
         
         # \int dm  dn/dzdm
         for kk in xrange(q_arr.size):

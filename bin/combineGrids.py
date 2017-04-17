@@ -23,7 +23,7 @@ zmaxes = []
 dms = []
 dzs = []
 
-mindicesList = [15,20,25,30]
+mindicesList = [60,80,120,160]
 
 from orphics.tools.output import Plotter
 pl = Plotter(labelX="$z$",labelY="S/N per cluster",ftsize=14)
@@ -75,7 +75,7 @@ for gridFile,ls,lab,outPlot in zip(gridList,['-','--'],['CMB lensing','optical l
     
     plt.gca().set_color_cycle(None)
 
-pl.legendOn(loc='upper right',labsize=8)
+pl.legendOn(loc='upper right',labsize=10)
 pl.done(outDir+"slice.pdf")
     
 sys.exit()

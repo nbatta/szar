@@ -149,7 +149,7 @@ class BattagliaSims(object):
 
         trueM500 = self.trueM500overh[str(snap)][massIndex]/self.cc.h
 
-        freqfac = f_nu(self.cc,freqGHz)
+        freqfac = f_nu(self.cc.c,freqGHz)
         print freqfac
         szMapuK = maps['y']*freqfac*self.TCMB
 
@@ -164,3 +164,40 @@ class BattagliaSims(object):
         kappa = totMass/sigmaCr # not sure if totMass needs to be rescaled?
 
         return maps, z, kappa, szMapuK, projectedM500, trueM500, trueR500, t.pixScaleX, t.pixScaleY
+
+    
+def getKappaSZ(bSims,snap,massIndex,px,thetaMapshape):
+    from enlib import enmap,utils,lensing,powspec
+    arcmin =  utils.arcmin
+    b = bSims
+    PIX = 2048
+    maps, z, kappaSimDat, szMapuKDat, projectedM500, trueM500, trueR500, pxInRad, pxInRad = b.getMaps(snap,massIndex,freqGHz=150.)
+    pxIn = pxInRad * 180.*60./np.pi
+    hwidth = PIX*pxIn/2.
+    
+    # input pixelization
+    shapeSim, wcsSim = enmap.geometry(pos=[[-hwidth*arcmin,-hwidth*arcmin],[hwidth*arcmin,hwidth*arcmin]], res=pxIn*arcmin, proj="car")
+    kappaSim = enmap.enmap(kappaSimDat,wcsSim)
+    szMapuK = enmap.enmap(szMapuKDat,wcsSim)
+    
+    # downgrade to native
+    shapeOut, wcsOut = enmap.geometry(pos=[[-hwidth*arcmin,-hwidth*arcmin],[hwidth*arcmin,hwidth*arcmin]], res=px*arcmin, proj="car")
+    kappaMap = enmap.project(kappaSim,shapeOut,wcsOut)
+    szMap = enmap.project(szMapuK,shapeOut,wcsOut)
+
+    # print thetaMapshape
+    # print szMap.shape
+    diffPad = ((np.array(thetaMapshape) - np.array(szMap.shape))/2.+0.5).astype(int)
+    
+    apodWidth = 25
+    # kappaMap = enmap.pad(kappaMap,diffPad)[:-1,:-1]
+    # szMap = enmap.pad(szMap,diffPad)[:-1,:-1]
+    kappaMap = enmap.pad(enmap.apod(kappaMap,apodWidth),diffPad)[:-1,:-1]
+    szMap = enmap.pad(enmap.apod(szMap,apodWidth),diffPad)[:-1,:-1]
+    print szMap.shape
+    assert szMap.shape==thetaMapshape
+
+    print z, projectedM500
+    
+    # print "kappaint ", kappaMap[thetaMap*60.*180./np.pi<10.].mean()
+    return kappaMap,szMap,projectedM500,z

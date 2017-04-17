@@ -113,11 +113,11 @@ if baoFile!='':
 FisherTot = Fisher + fisherPlanck
 FisherTot += fisherBAO
 
-from orphics.tools.io import Plotter
-import os
-pl = Plotter()
-pl.plot2d(np.log10(np.abs(fisherPlanck)))
-pl.done(os.environ['WWW']+"fisher.png")          
+# from orphics.tools.io import Plotter
+# import os
+# pl = Plotter()
+# pl.plot2d(np.log10(np.abs(fisherPlanck)))
+# pl.done(os.environ['WWW']+"fisher.png")          
 
 Finv = np.linalg.inv(FisherTot)
 

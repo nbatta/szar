@@ -47,7 +47,8 @@ cc = ClusterCosmology(cosmoDict,constDict,clTTFixFile = "data/cltt_lensed_Feb18.
 
 
 if "owl" in calName:
-    calFile = bigDataDir+"lensgrid_grid-"+cal+"_"+cal+".pkl"
+    calFile = bigDataDir+"lensgrid_"+gridName+"_"+cal+".pkl"
+    #calFile = bigDataDir+"lensgrid_grid-"+cal+"_"+cal+".pkl"
 else:
     calFile = bigDataDir+"lensgrid_"+exp+"_"+gridName+"_"+calName+ "_v" + version+".pkl"
 
