@@ -422,6 +422,20 @@ class Halo_MF:
 
         return N_z* self.dVdz[:]*4.*np.pi
 
+    def N_of_mz_SZ(self,SZCluster):
+
+        z_arr = self.zarr
+        
+        if self.sigN is None: self.updateSigN(SZCluster)
+        if self.Pfunc is None: self.updatePfunc(SZCluster)
+        P_func = self.Pfunc
+
+        dn_dzdm = self.dn_dM(self.M200,200.)
+        N_z = np.zeros(z_arr.size)
+        N_mz = np.multiply(dn_dzdm[:,:]*P_func[:,:],np.diff(self.M200_edges[:,:],axis=0))
+
+
+        return N_mz* self.dVdz[:]*4.*np.pi
 
     def Mass_err (self,fsky,mass_err,SZCluster):
         alpha_ym = self.cc.paramDict['alpha_ym'] 

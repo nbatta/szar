@@ -2,26 +2,11 @@ import time
 import os
 
 numParams = 15
-#numParams = 1
 numCores = 2*numParams+1
-#expList = ['S4-3m-noatm','S4-5m-noatm','S4-6m-noatm','S4-7m-noatm']#,'SO-6m-noatm','SO-7m-noatm']
-#expList = ['SO-3m','SO-5m','SO-6m','SO-7m','S4-3m','S4-5m','S4-6m','S4-7m']
-#calList = ['CMB_all_coarse','CMB_pol_coarse']
 
-
-expList = ['S4-3.0-0.4']
-calList = ['CMB_pol_miscentered']
-
-
-#expList = ['S4-7m']
-#calList = ['CMB_all']
-#expList = ['SO-3m','SO-5m','SO-6m','SO-7m','S4-3m','S4-5m','S4-6m','S4-7m','S4-5m-noatm','S4-6m-noatm','S4-7m-noatm','SO-5m-noatm','SO-6m-noatm','SO-7m-noatm','SO-3m-noatm','S4-3m-noatm']
-#calList = ['CMB_all','CMB_pol','CMB_all_miscentered','CMB_pol_miscentered']
-#calList = ['CMB_all','CMB_pol','CMB_all_nodelens','CMB_pol_nodelens']
-#expList = ['SO-3m','SO-5m','SO-6m','SO-7m']
-#expList = ['S4-3m','S4-5m','S4-6m','S4-7m']
-#expList = ['S4-1.5arc-noatm']
-#calList = ['CMB_pol','CMB_all']
+#expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-1.5-0.7','S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1','S4-1.5-0.05','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
+expList = ['S4-1.5-0.7','S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1','S4-1.5-0.05']
+calList = ['CMB_all','CMB_pol','CMB_all_miscentered','CMB_pol_miscentered']
 
 gridName = "grid-default"
 

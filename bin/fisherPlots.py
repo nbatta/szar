@@ -28,10 +28,11 @@ fishSection = "mnu-w0"
 
 noatm = ""
 #noatm = "-noatm"
-#cal = "CMB_all"
-cal = "owl2"
-derivSet = "v0.2"
-gridName = "grid-owl2"
+#cal = "CMB_all_miscentered"
+cal = "CMB_pol_miscentered"
+#cal = "owl2"
+derivSet = "v0.3_ysig_0.127"
+gridName = "grid-default"
 
 cosmoFisher = Config.get('fisher-'+fishSection,'saveSuffix')
 paramList = Config.get('fisher-'+fishSection,'paramList').split(',')
@@ -44,16 +45,18 @@ for (key, val) in Config.items('params'):
 
 
 """RES STUDY"""
-cmbfisher3 = getFisher("S4-3m"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
-cmbfisher5 = getFisher("S4-5m"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
-cmbfisher6 = getFisher("S4-6m"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
-cmbfisher7 = getFisher("S4-7m"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
+cmbfisher3 = getFisher("S4-3.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
+cmbfisher5 = getFisher("S4-2.5-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
+cmbfisher6 = getFisher("S4-2.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
+cmbfisher7 = getFisher("S4-1.5-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
+cmbfisher8 = getFisher("S4-1.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
 fplots = FisherPlots(paramList,paramLatexList,fparams)
 fplots.addFisher('cmb3',cmbfisher3)
 fplots.addFisher('cmb5',cmbfisher5)
 fplots.addFisher('cmb6',cmbfisher6)
 fplots.addFisher('cmb7',cmbfisher7)
-fplots.plotPair(['mnu','w0'],['cmb3','cmb5','cmb6','cmb7'],labels=['S4-3m','S4-5m','S4-6m','S4-7m'],saveFile="/gpfs01/astro/www/msyriac/s4resatm_"+cal+noatm+"_"+cosmoFisher+"_"+derivSet+".png")
+fplots.addFisher('cmb8',cmbfisher8)
+fplots.plotPair(['mnu','w0'],['cmb3','cmb5','cmb6','cmb7','cmb8'],labels=['S4-3.0-0.4','S4-2.5-0.4','S4-2.0-0.4','S4-1.5-0.4','S4-1.0-0.4'],saveFile="/gpfs01/astro/www/msyriac/s4resatm_"+cal+noatm+"_"+cosmoFisher+"_"+derivSet+".png",xlims=[-0.1,0.2],ylims=[-1.12,-0.88])
 
 #"""OWL"""
 # res = "5m"
