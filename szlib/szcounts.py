@@ -134,13 +134,19 @@ def rebinN(Nmzq,pzCutoff,zbin_edges):
 
 
 
-def getTotN(Nmzq,mexp_edges,z_edges,q_edges,returnNz=False):
+def getTotN(Nmzq,m200_edges_z,z_edges,q_edges,returnNz=False):
     """Get total number of clusters given N/DmDqDz
     and the corresponding log10(mass), z and q grid edges
     """
 
     Ndq = np.multiply(Nmzq,np.diff(q_edges).reshape((1,1,q_edges.size-1)))
-    Ndm = np.multiply(Ndq,np.diff(10**mexp_edges).reshape((mexp_edges.size-1,1,1)))
+
+    print Ndq.shape
+    #sys.exit()
+    for i in xrange(z_edges.size-1):
+        #N_z[i] = np.dot(dn_dzdm[:,i],np.diff(self.M200_edges[:,i]))
+        Ndm[:,:,i] = np.multiply(Ndq[:,:,i],np.diff(m200_edges_z[:,i]).reshape((m200_edges_z.size-1,1,1)))
+    
     Ndz = np.multiply(Ndm,np.diff(z_edges).reshape((1,z_edges.size-1,1)))
     
     N = Ndz.sum()
