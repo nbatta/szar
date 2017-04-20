@@ -1,6 +1,6 @@
 """
 
-Calculates cluster count derivatives for w_a using MPI.
+Calculates cluster count derivatives using MPI.
 
 Always reads values from input/pipelineMakeDerivs.py, including
 parameter fiducials and step-sizes.
@@ -22,16 +22,22 @@ calibration error over mass.
 
 """
 
+debug = False
+
+
+if debug: print "Starting common module imports..."
+
 from mpi4py import MPI
-from szlib.szcounts import ClusterCosmology,Halo_MF
+from szlib.szcounts import ClusterCosmology,Halo_MF,SZ_Cluster_Model,getNmzq
 import numpy as np
     
+if debug: print "Finished common module imports."
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 numcores = comm.Get_size()    
 
-assert numcores==3
+
 
 
 # the boss prepares cosmology objects for the minions
@@ -39,42 +45,59 @@ assert numcores==3
 # python modules
 if rank==0:
 
+    if debug: print "Starting rank 0 imports..."
+
     import sys
     from ConfigParser import SafeConfigParser 
     import cPickle as pickle
 
-    expName = sys.argv[1]
-    calName = sys.argv[2]
-    calFile = sys.argv[3]
-    powerFile = sys.argv[4]
-    stepSize = float(sys.argv[5])
+    if debug: print "Finished rank 0 imports. Starting rank 0 work..."
+    
 
+    expName = sys.argv[1]
+    gridName = sys.argv[2]
+    calName = sys.argv[3]
+    calFile = sys.argv[4]
+
+    # Let's read in all parameters that can be varied by looking
+    # for those that have step sizes specified. All the others
+    # only have fiducials.
     iniFile = "input/pipeline.ini"
     Config = SafeConfigParser()
     Config.optionxform=str
     Config.read(iniFile)
+    bigDataDir = Config.get('general','bigDataDirectory')
+    waDerivRoot = bigDataDir+Config.get('general','waDerivRoot')
 
-    fparams = {} 
+
+    fparams = {}   # the 
+    stepSizes = {}
     for (key, val) in Config.items('params'):
         if ',' in val:
             param, step = val.split(',')
             fparams[key] = float(param)
+            stepSizes[key] = float(step)
         else:
             fparams[key] = float(val)
 
 
 
 
-    numParams = 1
+    waStep = stepSizes['wa']
+
+    assert numcores==3, "I need 3 cores to do my job for 1 params. \
+    You gave me "+str(numcores)+ " core(s) for 1 param(s)."
 
 
-    suffix = Config.get('general','suffix')
+    version = Config.get('general','version')
     # load the mass calibration grid
-    mexprange, zrange, lndM = pickle.load(open(calFile,"rb"))
+    mexp_edges, z_edges, lndM = pickle.load(open(calFile,"rb"))
 
-
-    zrange = np.insert(zrange,0,0.0)
-    saveId = expName + "_" + calName + "_" + suffix
+    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
+    assert np.all(mgrid==mexp_edges)
+    assert np.all(z_edges==zgrid)
+    
+    saveId = expName + "_" + gridName + "_" + calName + "_v" + version
 
     from orphics.tools.io import dictFromSection, listFromConfig
     constDict = dictFromSection(Config,'constants')
@@ -91,23 +114,26 @@ if rank==0:
     qs = listFromConfig(Config,'general','qbins')
     qspacing = Config.get('general','qbins_spacing')
     if qspacing=="log":
-        qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
+        qbin_edges = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2])+1)
     elif qspacing=="linear":
-        qbins = np.linspace(qs[0],qs[1],int(qs[2]))
+        qbin_edges = np.linspace(qs[0],qs[1],int(qs[2])+1)
     else:
         raise ValueError
 
     massMultiplier = Config.getfloat('general','mass_calib_factor')
+    if debug: print "Finished rank 0 work."
 
 else:
+    waDerivRoot = None
+    waStep = None
     fparams = None
-    mexprange = None
-    zrange = None
+    mexp_edges = None
+    z_edges = None
     lndM = None
     saveId = None
     constDict = None
     clttfile = None
-    qbins = None
+    qbin_edges = None
     clusterDict = None
     beam = None
     noise = None
@@ -115,17 +141,19 @@ else:
     lknee = None
     alpha = None
     massMultiplier = None
-    powerFile = None
+    siggrid = None
 
 if rank==0: print "Broadcasting..."
+waDerivRoot = comm.bcast(waDerivRoot, root = 0)
+waStep = comm.bcast(waStep, root = 0)
 fparams = comm.bcast(fparams, root = 0)
-mexprange = comm.bcast(mexprange, root = 0)
-zrange = comm.bcast(zrange, root = 0)
+mexp_edges = comm.bcast(mexp_edges, root = 0)
+z_edges = comm.bcast(z_edges, root = 0)
 lndM = comm.bcast(lndM, root = 0)
 saveId = comm.bcast(saveId, root = 0)
 constDict = comm.bcast(constDict, root = 0)
 clttfile = comm.bcast(clttfile, root = 0)
-qbins = comm.bcast(qbins, root = 0)
+qbin_edges = comm.bcast(qbin_edges, root = 0)
 clusterDict = comm.bcast(clusterDict, root = 0)
 beam = comm.bcast(beam, root = 0)
 noise = comm.bcast(noise, root = 0)
@@ -133,45 +161,60 @@ freq = comm.bcast(freq, root = 0)
 lknee = comm.bcast(lknee, root = 0)
 alpha = comm.bcast(alpha, root = 0)
 massMultiplier = comm.bcast(massMultiplier, root = 0)
-powerFile = comm.bcast(powerFile, root = 0)
+siggrid = comm.bcast(siggrid, root = 0)
 if rank==0: print "Broadcasted."
 
+myParamIndex = (rank+1)/2-1
 passParams = fparams.copy()
 
-
-# If boss, do the fiducial. If odd rank, the minion is doing an "up" job, else doing a "down" job
-if rank==0:
-    override = None
-elif rank%2==1:
-    override = powerFile + "Up"
-elif rank%2==0:
-    override = powerFile + "Dn"
-
     
+if rank==1:
+    fileSuff = "Up"
+elif rank==2:
+    fileSuff = "Dn"
+
+if rank!=0:    
+    pFile = lambda z: waDerivRoot+str(waStep)+fileSuff+"_matterpower_"+str(z)+".dat"
+    zcents = (z_edges[1:]+z_edges[:-1])/2.
+    for inum,z in enumerate(zcents):
+        kh,p = np.loadtxt(pFile(z),unpack=True)
+        if inum==0:
+            khorig = kh.copy()
+            pk = np.zeros((zcents.size,kh.size))
+        assert np.all(np.isclose(kh,khorig))
+        pk[inum,:] = p.copy()
+else:
+    kh = None
+    pk = None
+
+cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
+HMF = Halo_MF(cc,mexp_edges,z_edges,kh=kh,powerZK=pk)
+HMF.sigN = siggrid.copy()
+SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
+dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbin_edges,SZProf)
+
 
 if rank==0: 
+    np.save(bigDataDir+"N_mzq_"+saveId+"_wa_fid",getNmzq(dN_dmqz,mexp_edges,z_edges,qbin_edges))
 
     print "Waiting for ups and downs..."
     for i in range(1,numcores):
-        data = np.empty((mexprange.size,zrange.size-1,qbins.size), dtype=np.float64)
+        data = np.empty(dN_dmqz.shape, dtype=np.float64)
         comm.Recv(data, source=i, tag=77)
-        if i%2==1:
-            dUps = data.copy()
-        elif i%2==0:
-            dDns = data.copy()
-
-    dN = (dUps-dDns)/stepSize
-    np.save("data/dNup_dzmq_"+saveId+"_wa",dUps)
-    np.save("data/dNdn_dzmq_"+saveId+"_wa",dDns)
-    np.save("data/dN_dzmq_"+saveId+"_wa",dN)
-        
-else:
+        if i==1:
+            dUp = data.copy()
+        elif i==2:
+            dDn = data.copy()
+            
+            
+    Nup = getNmzq(dUp,mexp_edges,z_edges,qbin_edges)        
+    Ndn = getNmzq(dDn,mexp_edges,z_edges,qbin_edges)
+    dNdp = (Nup-Ndn)/waStep
+    np.save(bigDataDir+"Nup_mzq_"+saveId+"_wa",Nup)
+    np.save(bigDataDir+"Ndn_mzq_"+saveId+"_wa",Ndn)
+    np.save(bigDataDir+"dNdp_mzq_"+saveId+"_wa",dNdp)
     
-    cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
-    HMF = Halo_MF(clusterCosmology=cc,mexprange,zrange)
-    HMF.sigN = siggrid.copy()
-    SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)    
-    dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbins)
+else:
     data = dN_dmqz.astype(np.float64)
     comm.Send(data, dest=0, tag=77)
 

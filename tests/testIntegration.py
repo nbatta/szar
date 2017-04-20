@@ -101,14 +101,15 @@ q_arr = (qbin_edges[1:]+qbin_edges[:-1])/2.
 dnqmz = hmf.N_of_mqz_SZ(outmerr,qbin_edges,SZProf)
 
 
-M_edges = 10**Mexp_edges
-M200_edges_z = np.zeros((M_edges.size,zs.size))
-for i in xrange(zs.size):
-    M200_edges_z[:,i] = cc.Mass_con_del_2_del_mean200(M_edges,500,zs[i])
+# M_edges = 10**Mexp_edges
+# M200_edges_z = np.zeros((M_edges.size,zs.size))
+# for i in xrange(zs.size):
+#     M200_edges_z[:,i] = cc.Mass_con_del_2_del_mean200(M_edges,500,zs[i])
 
-print M200_edges_z.shape
+# print M200_edges_z.shape
 
-N,Nofz = getTotN(dnqmz,M200_edges_z,z_edges,qbin_edges,returnNz=True)
+# N,Nofz = getTotNM200(dnqmz,M200_edges_z,z_edges,qbin_edges,returnNz=True)
+N,Nofz = getTotN(dnqmz,Mexp_edges,z_edges,qbin_edges,returnNz=True)
 
 print "All clusters according to dnqmz ",N*fsky
 print "All clusters according to \dzdnqmz ",np.dot(Nofz,np.diff(z_edges))*fsky

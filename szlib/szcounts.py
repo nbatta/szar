@@ -132,20 +132,32 @@ def rebinN(Nmzq,pzCutoff,zbin_edges):
     
     return new_z_edges,rebinned
 
+def getTotN(Nmzq,mexp_edges,z_edges,q_edges,returnNz=False):
+    """Get total number of clusters given N/DmDqDz
+    and the corresponding log10(mass), z and q grid edges
+    """
+
+    Ndq = np.multiply(Nmzq,np.diff(q_edges).reshape((1,1,q_edges.size-1)))
+    Ndm = np.multiply(Ndq,np.diff(10**mexp_edges).reshape((mexp_edges.size-1,1,1)))
+    Ndz = np.multiply(Ndm,np.diff(z_edges).reshape((1,z_edges.size-1,1)))
+    
+    N = Ndz.sum()
+    if returnNz:
+        return N,Ndm.sum(axis=(0,2))
+    else:
+        return N
 
 
-def getTotN(Nmzq,m200_edges_z,z_edges,q_edges,returnNz=False):
+def getTotNM200(Nmzq,m200_edges_z,z_edges,q_edges,returnNz=False):
     """Get total number of clusters given N/DmDqDz
     and the corresponding log10(mass), z and q grid edges
     """
 
     Ndq = np.multiply(Nmzq,np.diff(q_edges).reshape((1,1,q_edges.size-1)))
 
-    print Ndq.shape
-    #sys.exit()
-    for i in xrange(z_edges.size-1):
-        #N_z[i] = np.dot(dn_dzdm[:,i],np.diff(self.M200_edges[:,i]))
-        Ndm[:,:,i] = np.multiply(Ndq[:,:,i],np.diff(m200_edges_z[:,i]).reshape((m200_edges_z.size-1,1,1)))
+    dm = m200_edges_z[1:,:]-m200_edges_z[:-1,:]
+    Ndm = np.multiply(Ndq,dm.reshape((m200_edges_z.shape[0]-1,z_edges.size-1,1)))
+    
     
     Ndz = np.multiply(Ndm,np.diff(z_edges).reshape((1,z_edges.size-1,1)))
     
@@ -299,6 +311,11 @@ class Halo_MF:
         self.zarr = zcenters
         if powerZK is None:
             self.kh, self.pk = self._pk(self.zarr,kmin,kmax,knum)
+        else:
+            assert kh is not None
+            self.kh = kh
+            self.pk = powerZK
+            
         self.DAz = self.cc.results.angular_diameter_distance(self.zarr)        
         self._initdVdz(self.zarr)
 
@@ -475,7 +492,7 @@ class Halo_MF:
         dNdzmq = np.zeros([len(self.M),len(z_arr),len(q_arr)])
 
         m_wl = self.Mexp
-
+        
         if self.sigN is None: self.updateSigN(SZCluster)
         if self.Pfunc_qarr is None: self.updatePfunc_qarr(SZCluster,q_arr)
         P_func = self.Pfunc_qarr
@@ -510,7 +527,7 @@ class Halo_MF:
         # pgrid = mass_err
         # pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
         # pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],labsize=14,aspect="auto")
-        # pl.done(os.environ['WWW']+"normMassCalib.png")
+        # pl.done(os.environ['WWW']+"massgrid.png")
 
         # sys.exit()
         

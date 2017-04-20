@@ -24,6 +24,9 @@ def getFisher(N_fid,paramList,priorNameList,priorValueList,bigDataDir,saveId,pzc
 
             with np.errstate(divide='ignore'):
                 FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid))#+(N_fid*N_fid*sovernsquare)))
+            #Ncollapsed = N_fid.sum(axis=0).sum(axis=-1)
+            #print N_fid[np.where(Ncollapsed<1.)].sum() ," clusters fall in bins where N<1"
+            #FellBlock[np.where(Ncollapsed<1.)] = 0.
             Fell = FellBlock.sum()
         else:
             Fell = 0.

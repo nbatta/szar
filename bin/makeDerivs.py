@@ -69,12 +69,15 @@ if rank==0:
     Config.read(iniFile)
     bigDataDir = Config.get('general','bigDataDirectory')
 
+    manualParamList = Config.get('general','manualParams').split(',')
+
     paramList = [] # the parameters that can be varied
     fparams = {}   # the 
     stepSizes = {}
     for (key, val) in Config.items('params'):
         if ',' in val:
             param, step = val.split(',')
+            if param in manualParamList: continue
             paramList.append(key)
             fparams[key] = float(param)
             stepSizes[key] = float(step)

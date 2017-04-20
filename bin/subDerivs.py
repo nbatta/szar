@@ -5,7 +5,8 @@ numParams = 15
 numCores = 2*numParams+1
 
 #expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-1.5-0.7','S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1','S4-1.5-0.05','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
-expList = ['S4-1.5-0.7','S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1','S4-1.5-0.05']
+expList = ['SO-v2'] #'S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1']
+#expList = ['S4-1.5-0.7','S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1','S4-1.5-0.05']
 calList = ['CMB_all','CMB_pol','CMB_all_miscentered','CMB_pol_miscentered']
 
 gridName = "grid-default"
