@@ -11,7 +11,7 @@ from Tinker_MF import tinker_params
 import Tinker_MF as tinker
 
 from orphics.tools.cmb import noise_func
-from orphics.tools.output import Plotter
+from orphics.tools.io import Plotter
 from orphics.theory.cosmology import Cosmology
 import orphics.theory.cosmology as cosmo
 from orphics.tools.stats import timeit
@@ -132,25 +132,38 @@ def rebinN(Nmzq,pzCutoff,zbin_edges):
     
     return new_z_edges,rebinned
 
-
-
 def getTotN(Nmzq,mexp_edges,z_edges,q_edges,returnNz=False):
     """Get total number of clusters given N/DmDqDz
     and the corresponding log10(mass), z and q grid edges
     """
-    q_arr = (q_edges[1:]+q_edges[:-1])/2.
-    M_edges = 10**mexp_edges
-    M = (M_edges[1:]+M_edges[:-1])/2.
-    zs = (z_edges[1:]+z_edges[:-1])/2.
-       
-    Nmz = np.trapz(Nmzq,q_arr,axis=2)
-    #Nmz = np.trapz(Nmzq,dx=np.diff(q_edges),axis=2)
-    Nofz = np.trapz(Nmz.T,M,axis=1)
-    #Nofz = np.trapz(Nmz.T,dx=np.diff(10**mexp_edges),axis=1)
-    N = np.trapz(Nofz.T,zs)
-    #N = np.trapz(Nofz.T,dx=np.diff(z_edges))
+
+    Ndq = np.multiply(Nmzq,np.diff(q_edges).reshape((1,1,q_edges.size-1)))
+    Ndm = np.multiply(Ndq,np.diff(10**mexp_edges).reshape((mexp_edges.size-1,1,1)))
+    Ndz = np.multiply(Ndm,np.diff(z_edges).reshape((1,z_edges.size-1,1)))
+    
+    N = Ndz.sum()
     if returnNz:
-        return N,Nofz
+        return N,Ndm.sum(axis=(0,2))
+    else:
+        return N
+
+
+def getTotNM200(Nmzq,m200_edges_z,z_edges,q_edges,returnNz=False):
+    """Get total number of clusters given N/DmDqDz
+    and the corresponding log10(mass), z and q grid edges
+    """
+
+    Ndq = np.multiply(Nmzq,np.diff(q_edges).reshape((1,1,q_edges.size-1)))
+
+    dm = m200_edges_z[1:,:]-m200_edges_z[:-1,:]
+    Ndm = np.multiply(Ndq,dm.reshape((m200_edges_z.shape[0]-1,z_edges.size-1,1)))
+    
+    
+    Ndz = np.multiply(Ndm,np.diff(z_edges).reshape((1,z_edges.size-1,1)))
+    
+    N = Ndz.sum()
+    if returnNz:
+        return N,Ndm.sum(axis=(0,2))
     else:
         return N
 
@@ -160,9 +173,6 @@ def getNmzq(Nmzq,mexp_edges,z_edges,q_edges):
     given dN/DmDqDz and the corresponding 
     log10(mass), z and q grid edges
     """
-    # Ndq = np.multiply(Nmzq,np.diff(q_edges))
-    # Ndz = np.multiply(Nmzq,np.diff(z_edges))
-    # Ndm = np.multiply(Nmzq,np.diff(10**mexp_edges))
     Ndq = np.multiply(Nmzq,np.diff(q_edges).reshape((1,1,q_edges.size-1)))
     Ndz = np.multiply(Ndq,np.diff(z_edges).reshape((1,z_edges.size-1,1)))
     Ndm = np.multiply(Ndz,np.diff(10**mexp_edges).reshape((mexp_edges.size-1,1,1)))
@@ -171,6 +181,7 @@ def getNmzq(Nmzq,mexp_edges,z_edges,q_edges):
 
 def gaussian(xx, mu, sig):
     return 1./(sig * np.sqrt(2*np.pi)) * np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
+
 
 def haloBias(Mexp_edges,z_edges,rhoc0om,kh,pk):
 
@@ -286,7 +297,6 @@ class ClusterCosmology(Cosmology):
 
 
 class Halo_MF:
-    @timeit
     def __init__(self,clusterCosmology,Mexp_edges,z_edges,kh=None,powerZK=None,kmin=1e-4,kmax=11.,knum=200):
 
         # update self.sigN (20 mins) and self.Pfunc if changing experiment
@@ -301,6 +311,11 @@ class Halo_MF:
         self.zarr = zcenters
         if powerZK is None:
             self.kh, self.pk = self._pk(self.zarr,kmin,kmax,knum)
+        else:
+            assert kh is not None
+            self.kh = kh
+            self.pk = powerZK
+            
         self.DAz = self.cc.results.angular_diameter_distance(self.zarr)        
         self._initdVdz(self.zarr)
 
@@ -310,6 +325,7 @@ class Halo_MF:
         self.Pfunc = None
 
         M_edges = 10**Mexp_edges
+        self.M_edges = M_edges
         M = (M_edges[1:]+M_edges[:-1])/2.
         Mexp = np.log10(M)
         #M = 10.**Mexp
@@ -334,12 +350,6 @@ class Halo_MF:
         self.cc.results = camb.get_results(self.cc.pars)
         kh, z, powerZK = self.cc.results.get_matter_power_spectrum(minkh=kmin, maxkh=kmax, npoints = knum)
 
-
-        # PK = camb.get_matter_power_interpolator(self.cc.pars, nonlinear=False, kmax=kmax, zs=zarr)
-        # kh = np.linspace(kmin,kmax,knum)
-        # powerZK = np.zeros((zarr.size,kh.size))
-        # for i,z in enumerate(zarr):
-        #     powerZK[i,:] = PK.P(z,kh)
 
         return kh, powerZK
 
@@ -379,12 +389,10 @@ class Halo_MF:
         dn_dzdm = self.N_of_Mz(self.M200,200.)
         N_z = np.zeros(z_arr.size)
         for i in xrange(z_arr.size):
-            #N_z[i] = np.trapz(dn_dzdm[:,i],self.M200[:,i],np.diff(self.M200[:,i]))
             N_z[i] = np.dot(dn_dzdm[:,i],np.diff(self.M200_edges[:,i]))
 
         return N_z*4.*np.pi
 
-    @timeit
     def updateSigN(self,SZCluster,tmaxN=5,numts=1000):
         zs = self.zarr
         M = self.M
@@ -432,12 +440,25 @@ class Halo_MF:
         dn_dzdm = self.dn_dM(self.M200,200.)
         N_z = np.zeros(z_arr.size)
         for i in xrange (z_arr.size):
-            #N_z[i] = np.trapz(dn_dzdm[:,i]*P_func[:,i],self.M200[:,i],np.diff(self.M200[:,i]))
             N_z[i] = np.dot(dn_dzdm[:,i]*P_func[:,i],np.diff(self.M200_edges[:,i]))
 
 
         return N_z* self.dVdz[:]*4.*np.pi
 
+    def N_of_mz_SZ(self,SZCluster):
+
+        z_arr = self.zarr
+        
+        if self.sigN is None: self.updateSigN(SZCluster)
+        if self.Pfunc is None: self.updatePfunc(SZCluster)
+        P_func = self.Pfunc
+
+        dn_dzdm = self.dn_dM(self.M200,200.)
+        N_z = np.zeros(z_arr.size)
+        N_mz = np.multiply(dn_dzdm[:,:]*P_func[:,:],np.diff(self.M200_edges[:,:],axis=0))
+
+
+        return N_mz* self.dVdz[:]*4.*np.pi
 
     def Mass_err (self,fsky,mass_err,SZCluster):
         alpha_ym = self.cc.paramDict['alpha_ym'] 
@@ -454,12 +475,8 @@ class Halo_MF:
         N_z = np.zeros(z_arr.size)
         N_tot_z = np.zeros(z_arr.size)
         for i in xrange(z_arr.size):
-            #N_z[i] = np.trapz(dn_dVdm[:,i]*P_func[:,i] / (mass_err[:,i]**2 + alpha_ym**2 * (self.sigN[:,i]/self.YM[:,i])**2),self.M200[:,i])
-            #N_tot_z[i] = np.trapz(dn_dVdm[:,i]*P_func[:,i],self.M200[:,i])
             N_z[i] = np.dot(dn_dVdm[:,i]*P_func[:,i] / (mass_err[:,i]**2 + alpha_ym**2 * (self.sigN[:,i]/self.YM[:,i])**2),np.diff(self.M200_edges[:,i]))
             N_tot_z[i] = np.dot(dn_dVdm[:,i]*P_func[:,i],np.diff(self.M200_edges[:,i]))
-        #err_WL_mass = 4.*np.pi* fsky*np.trapz(N_z*dV_dz[:],self.zarr)
-        #Ntot = 4.*np.pi* fsky*np.trapz(N_tot_z*dV_dz[:],self.zarr)
         err_WL_mass = 4.*np.pi* fsky*np.dot(N_z*dV_dz[:],np.diff(self.zarr_edges))
         Ntot = 4.*np.pi* fsky*np.dot(N_tot_z*dV_dz[:],np.diff(self.zarr_edges))
 
@@ -475,7 +492,7 @@ class Halo_MF:
         dNdzmq = np.zeros([len(self.M),len(z_arr),len(q_arr)])
 
         m_wl = self.Mexp
-
+        
         if self.sigN is None: self.updateSigN(SZCluster)
         if self.Pfunc_qarr is None: self.updatePfunc_qarr(SZCluster,q_arr)
         P_func = self.Pfunc_qarr
@@ -483,6 +500,37 @@ class Halo_MF:
         dn_dVdm = self.dn_dM(self.M200,200.)
         dV_dz = self.dVdz
 
+        # N = M_arr.copy()*0.
+        # print "Checking norm of mass calibration..."
+        # mexp_int = m_wl
+        # m_int_edges = self.M_edges
+        # #mass_err *= 1.e-1
+
+        # # mexp_int_edges = np.arange(9.0,16.0,0.01)
+        # # m_int_edges = 10**mexp_int_edges
+        # # m_int = (m_int_edges[1:]+m_int_edges[:-1])/2.
+        # # mexp_int = np.log10(m_int)
+        # for i in xrange (z_arr.size):
+        #     for j in xrange (self.Mexp.size):
+        #         N[j,i] = np.dot(SZCluster.Mwl_prob(10**(mexp_int),M_arr[j,i],mass_err[j,i]),np.diff(m_int_edges))
+        # from orphics.tools.io import Plotter
+        # import os
+        # mmin = self.Mexp.min()
+        # mmax = self.Mexp.max()
+        # zmin = self.zarr.min()
+        # zmax = self.zarr.max()
+        # pgrid = np.rot90(N)
+        # pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
+        # pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],labsize=14,aspect="auto")
+        # pl.done(os.environ['WWW']+"normMassCalib.png")
+
+        # pgrid = mass_err
+        # pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
+        # pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],labsize=14,aspect="auto")
+        # pl.done(os.environ['WWW']+"massgrid.png")
+
+        # sys.exit()
+        
         # \int dm  dn/dzdm
         for kk in xrange(q_arr.size):
             for jj in xrange(m_wl.size):
@@ -536,7 +584,8 @@ class Halo_MF:
 class SZ_Cluster_Model:
     def __init__(self,clusterCosmology,clusterDict, \
                  fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1., \
-                 dell=10,pmaxN=5,numps=1000,nMax=1,ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1, \
+                 dell=10,pmaxN=5,numps=1000,nMax=1, \
+                 ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1, \
                  qmin=6., \
                  ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt'):
         
@@ -684,7 +733,6 @@ class SZ_Cluster_Model:
 
         return P_func
 
-    @timeit
     def Pfunc_qarr(self,sigN,M,z_arr,q_arr):
 
         lnY = self.lnY
@@ -768,6 +816,6 @@ class SZ_Cluster_Model:
 
     def Mwl_prob (self,Mwl,M,Merr):
         #Gaussian error probablity for weak lensing mass 
-        ans = gaussian(Mwl*self.scaling['b_wl'],M,Merr*M)
+        ans = gaussian(Mwl*self.scaling['b_wl'],M,Merr*M) 
         return ans
     

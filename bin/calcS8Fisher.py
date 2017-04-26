@@ -57,8 +57,16 @@ zrange = (z_edges[1:]+z_edges[:-1])/2.
 
 NFid_mzq = np.load(bigDataDir+"N_mzq_"+saveId+"_fid_sigma8.npy")
 NFid_mzq_alt = np.load(bigDataDir+"N_mzq_"+saveId+"_fid.npy")
-assert np.all(NFid_mzq==NFid_mzq_alt)
-
+try:
+    assert np.all(np.isclose(NFid_mzq,NFid_mzq_alt))
+except:
+    print "ERROR: Sigma8 and fid saves are not identical"
+    print NFid_mzq.shape
+    print NFid_mzq_alt.shape
+    from orphics.tools.io import quickPlot2d
+    quickPlot2d(NFid_mzq[0,:,:],os.environ['WWW']+"debug_sig8.png")
+    quickPlot2d(NFid_mzq_alt[0,:,:],os.environ['WWW']+"debug_fid.png")
+    sys.exit(1)
 
     
 import itertools
@@ -80,8 +88,8 @@ paramCombs = itertools.combinations_with_replacement(paramList,2)
 
 
 sId = expName + "_" + gridName + "_v" + version
-sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
-sovernsquare =  np.dstack([sovernsquareEach]*(len(qbins)-1))
+#sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
+#sovernsquare =  np.dstack([sovernsquareEach]*(len(qbins)-1))
 
 
 # Populate Fisher
@@ -103,7 +111,7 @@ for param1,param2 in paramCombs:
 
 
     with np.errstate(divide='ignore'):
-        FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid+(N_fid*N_fid*sovernsquare)))
+        FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid))#+(N_fid*N_fid*sovernsquare)))
 
     Fell = FellBlock.sum()
         

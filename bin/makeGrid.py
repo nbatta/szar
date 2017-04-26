@@ -32,14 +32,19 @@ if rank==0:
     parser.add_argument('--skip-sz', dest='skipSZ', action='store_const',
                         const=True, default=False,
                         help='Skip SZ variance.')
+    parser.add_argument('--skip-ray', dest='skipRay', action='store_const',
+                        const=True, default=False,
+                        help='Skip miscentered lensing.')
 
+    
     args = parser.parse_args()
 
 
     expName = args.expName
     gridName = args.gridName
     lensName = args.lensName
-
+    
+    doRayDeriv = not(args.skipRay)
     doLens = not(args.skipLens)
     doSZ = not(args.skipSZ)
 
@@ -62,6 +67,9 @@ if rank==0:
     for (key, val) in Config.items('params'):
         if ',' in val:
             param, step = val.split(',')
+            if key=='sigR':
+                rayFid = float(param)
+                rayStep = float(step)
             fparams[key] = float(param)
         else:
             fparams[key] = float(val)
@@ -104,26 +112,7 @@ if rank==0:
         assert beamFind.size==1
         assert noiseFind.size==1
         
-
-
-        from orphics.tools.cmb import loadTheorySpectraFromCAMB
-        import flipper.liteMap as lm
-        from alhazen.quadraticEstimator import NlGenerator,getMax
-        deg = 10.
-        px = 0.5
-        dell = 20
-        gradCut = 2000
-        kmin = 100
-        
-        from orphics.theory.cosmology import Cosmology
-        cc = Cosmology(lmax=8000,pickling=True)
-        theory = cc.theory
-
-        #cambRoot = "data/ell28k_highacc"
-        #theory = loadTheorySpectraFromCAMB(cambRoot,unlensedEqualsLensed=False,useTotal=False,lpad=9000)
-        lmap = lm.makeEmptyCEATemplate(raSizeDeg=deg, decSizeDeg=deg,pixScaleXarcmin=px,pixScaleYarcmin=px)
-
-        
+       
         testFreq = freq_to_use
         from szlib.szcounts import fgNoises
         fgs = fgNoises(constDict,ksz_battaglia_test_csv="data/ksz_template_battaglia.csv",tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
@@ -134,105 +123,59 @@ if rank==0:
         cibc = lambda x: fgs.cib_c(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
         tsz = lambda x: fgs.tSZ(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
 
-        fgFunc = lambda x: ksz(x)+radio(x)+cibp(x)+cibc(x)+tsz(x)
-        #fgFunc = None
+        fgFunc =  lambda x: ksz(x)+radio(x)+cibp(x)+cibc(x)+tsz(x)
 
+        beamTX = 5.0
+        noiseTX = 42.0
+        tellminX = 2
+        tellmaxX = 3000
+        lkneeTX = 0
+        alphaTX = 1
+        fgFuncX = None
+       
+
+        beamPX = beamTY = beamPY = beamFind
+        beamY = beamTY
+        noiseTY = noiseFind
+        noisePX = np.sqrt(2.)*noiseTY
+        noisePY = np.sqrt(2.)*noiseTY
+        pellminX = pellmin
+        pellmaxX = pellmax
+        pellminY = pellmin
+        pellmaxY = pellmax
+        tellminY = tellmin
+        tellmaxY = tellmax
+        lkneeTY = lkneeT
+        lkneePX = lkneePY = lkneeP
+        alphaTY = alphaT
+        alphaPX = alphaPY = alphaP
+        fgFuncY = fgFunc
         
-        Nleach = {}
-        kmaxes = []
-        for polComb in pols:
-            X,Y = polComb
-            
-            if X=='T':
-                beamX = 5.0
-                noiseTX = 45.0
-                noisePX = np.sqrt(2.)*noiseFind[0] # this doesn't matter
-                slkneeTX = 0.
-                slkneePX = 0. # this doesn't matter
-                salphaTX = 1.
-                salphaPX = 1. # this doesn't matter
-                tellminX = 2.
-                tellmaxX = 3000.
-                pellminX = 2.
-                pellmaxX = 3000.
         
-                beamY = beamFind[0]
-                noiseTY = noiseFind[0]
-                noisePY = np.sqrt(2.)*noiseFind[0]
-                slkneeTY = lkneeT
-                slkneePY = lkneeP
-                salphaTY = alphaT
-                salphaPY = alphaP
-                tellminY = tellmin
-                tellmaxY = tellmax
-                pellminY = pellmin
-                pellmaxY = pellmax
-            else:
-                beamX = beamFind[0]
-                noiseTX = noiseFind[0]
-                noisePX = np.sqrt(2.)*noiseFind[0]
-                slkneeTX = lkneeT
-                slkneePX = lkneeP
-                salphaTX = alphaT
-                salphaPX = alphaP
-                tellminX = tellmin
-                tellmaxX = tellmax
-                pellminX = pellmin
-                pellmaxX = pellmax
-        
-                beamY = beamFind[0]
-                noiseTY = noiseFind[0]
-                noisePY = np.sqrt(2.)*noiseFind[0]
-                slkneeTY = lkneeT
-                slkneePY = lkneeP
-                salphaTY = alphaT
-                salphaPY = alphaP
-                tellminY = tellmin
-                tellmaxY = tellmax
-                pellminY = pellmin
-                pellmaxY = pellmax
 
+        import flipper.liteMap as lm
+        from alhazen.quadraticEstimator import NlGenerator,getMax
+        deg = 5.
+        px = 1.0
+        dell = 10
+        gradCut = 2000
+        kellmin = 10
+        lmap = lm.makeEmptyCEATemplate(raSizeDeg=deg, decSizeDeg=deg,pixScaleXarcmin=px,pixScaleYarcmin=px)
+        kellmax = max(tellmax,pellmax)
+        from orphics.theory.cosmology import Cosmology
+        cc = Cosmology(lmax=int(kellmax),pickling=True)
+        theory = cc.theory
+        bin_edges = np.arange(kellmin,kellmax,dell)
+        myNls = NlGenerator(lmap,theory,bin_edges,gradCut=gradCut)
+        nTX,nPX,nTY,nPY = myNls.updateNoiseAdvanced(beamTX,noiseTX,beamPX,noisePX,tellminX,tellmaxX,pellminX,pellmaxX,beamTY,noiseTY,beamPY,noisePY,tellminY,tellmaxY,pellminY,pellmaxY,(lkneeTX,lkneePX),(alphaTX,alphaPX),(lkneeTY,lkneePY),(alphaTY,alphaPY),None,None,None,None,None,None,None,None,fgFuncX,fgFuncY,None,None,None,None,None,None,None,None)
+
+
+        ls,Nls,ells,dclbb,efficiency = myNls.getNlIterative(pols,kellmin,kellmax,tellmax,pellmin,pellmax,dell=dell,halo=True)
+
+        ls = ls[1:-1]
+        Nls = Nls[1:-1]
             
-            kmax = getMax(polComb,tellmax,pellmax)
-            bin_edges = np.arange(kmin,kmax,dell)+dell
 
-            myNls = NlGenerator(lmap,theory,bin_edges,gradCut=gradCut)
-            nTX,nPX,nTY,nPY = myNls.updateNoise(beamX,noiseTX,noisePX,tellminX,tellmaxX,pellminX,pellmaxX,beamY=beamY,noiseTY=noiseTY,noisePY=noisePY,lkneesX=(slkneeTX,slkneePX),lkneesY=(slkneeTY,slkneePY),alphasX=(salphaTX,salphaPX),alphasY=(salphaTY,salphaPY),fgFuncY=fgFunc,tellminY=tellminY,tellmaxY=tellmaxY,pellminY=pellminY,pellmaxY=pellmaxY)
-
-            from orphics.tools.io import Plotter
-            from orphics.tools.stats import bin2D
-            bin_edges = np.arange(100,8000,10)
-            binner = bin2D(myNls.N.modLMap, bin_edges)
-            pls, binnedTX = binner.bin(nTX)
-            pls, binnedTY = binner.bin(nTY)
-            pls, binnedPX = binner.bin(nPX)
-            pls, binnedPY = binner.bin(nPY)
-            
-            pl = Plotter(scaleY='log')
-            pl.add(pls,theory.uCl('TT',pls)*pls**2.,alpha=0.3,ls="--")
-            pl.add(pls,theory.lCl('TT',pls)*pls**2.)
-            pl.add(pls,binnedTX*pls**2.,alpha=0.3)
-            pl.add(pls,binnedTY*pls**2.)
-            pl.done("output/NlTT_"+expName+lensName+polComb+".png")
-
-            pl = Plotter(scaleY='log')
-            pl.add(pls,theory.uCl('EE',pls)*pls**2.,alpha=0.3,ls="--")
-            pl.add(pls,theory.lCl('EE',pls)*pls**2.)
-            pl.add(pls,binnedPX*pls**2.,alpha=0.3)
-            pl.add(pls,binnedPY*pls**2.)
-            pl.done("output/NlEE_"+expName+lensName+polComb+".png")
-
-
-            if (polComb=='EB' or polComb=='TB') and (delens):
-                ls, Nls, eff = myNls.iterativeDelens(polComb,1.0,True)
-            else:
-                ls,Nls = myNls.getNl(polComb=polComb,halo=True)
-
-            Nleach[polComb] = (ls,Nls)
-            kmaxes.append(kmax)
-
-        bin_edges = np.arange(kmin,max(kmaxes),dell)+dell
-        Nlmvinv = 0.
         from scipy.interpolate import interp1d
 
         from orphics.tools.io import Plotter
@@ -242,32 +185,20 @@ if rank==0:
         pl.add(ellkk,4.*Clkk/2./np.pi)
 
 
-        for polComb in pols:
-            ls,Nls = Nleach[polComb]
-            nlfunc = interp1d(ls,Nls,bounds_error=False,fill_value=np.inf)
-            Nleval = nlfunc(bin_edges)
-            Nlmvinv += np.nan_to_num(1./Nleval)
-            pl.add(ls,4.*Nls/2./np.pi,label=polComb)
-
-        Nlmv = np.nan_to_num(1./Nlmvinv)
-        ls = bin_edges[1:-1]
-        Nls = Nlmv[1:-1]
-
         from orphics.tools.stats import bin1D
-        binner1d = bin1D(bin_edges)
+        dls = np.diff(ls)[0]
+        bin_edges_nls = np.arange(ls[0]-dls/2.,ls[-1]+dls*3./2.,dls)
+        binner1d = bin1D(bin_edges_nls)
         ellcls , clkk_binned = binner1d.binned(ellkk,Clkk)
 
-        
-
-        pl.add(ellcls,4.*clkk_binned/2./np.pi,ls="none",marker="x")
         pl.add(ellcls,4.*clkk_binned/2./np.pi,ls="none",marker="x")
         pl.add(ls,4.*Nls/2./np.pi,ls="--")
         np.savetxt(bigDataDir+"nlsave_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
 
-        Nls += clkk_binned[:-1]
+        Nls += clkk_binned[:]
         np.savetxt(bigDataDir+"nlsaveTot_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
-        pl.add(ls,4.*Nls/2./np.pi,ls="-.")
         
+        pl.add(ls,4.*Nls/2./np.pi,ls="-.")
         pl.legendOn(loc='lower left',labsize=10)
         pl.done("output/Nl_"+expName+lensName+".png")
         #ls,Nls = np.loadtxt("data/LA_pol_Nl.txt",unpack=True,delimiter=",")
@@ -277,6 +208,9 @@ if rank==0:
         Nls = None
         beamY = None
         miscentering = None
+        doRayDeriv = False
+        rayFid = None
+        rayStep = None
     
     clttfile = Config.get('general','clttfile')
 
@@ -297,6 +231,9 @@ if rank==0:
         
 
 else:
+    doRayDeriv = None
+    rayFid = None
+    rayStep = None
     doLens = None
     doSZ = None
     beamY = None
@@ -320,6 +257,9 @@ else:
     z_edges = None
 
 if rank==0: print "Broadcasting..."
+doRayDeriv = comm.bcast(doRayDeriv, root = 0)
+rayFid = comm.bcast(rayFid, root = 0)
+rayStep = comm.bcast(rayStep, root = 0)
 doLens = comm.bcast(doLens, root = 0)
 doSZ = comm.bcast(doSZ, root = 0)
 beamY = comm.bcast(beamY, root = 0)
@@ -351,7 +291,12 @@ if doSZ:
 
 numms = mgrid.size
 numzs = zgrid.size
-if doLens: MerrGrid = np.zeros((numms,numzs))
+if doLens:
+    MerrGrid = np.zeros((numms,numzs))
+    if doRayDeriv:
+        MerrGridUp = np.zeros((numms,numzs))
+        MerrGridDn = np.zeros((numms,numzs))
+        
 if doSZ: siggrid = np.zeros((numms,numzs))
 numes = numms*numzs
 
@@ -367,7 +312,7 @@ if rank==0:
     print "I have ",numcores, " cores to work with."
     print "And I have ", numes, " tasks to do."
     print "Each worker gets at least ", mintasks, " tasks and at most ", maxtasks, " tasks."
-    buestguess = (0.5*int(doSZ)+2.0*int(doLens))*maxtasks
+    buestguess = (0.5*int(doSZ)+(1.+2.*int(doRayDeriv))*5.2*int(doLens))*maxtasks
     print "My best guess is that this will take ", buestguess, " seconds."
     print "Starting the slow part..."
 
@@ -395,6 +340,15 @@ for index in mySplit:
             
         snRet,k500,std = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=ray)
         MerrGrid[mindex,zindex] = 1./snRet
+        if doRayDeriv:
+            rayUp = rayFid+rayStep/2.
+            snRetUp,k500Up,stdUp = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=rayUp)
+            MerrGridUp[mindex,zindex] = 1./snRetUp
+            rayDn = rayFid-rayStep/2.
+            snRetDn,k500Dn,stdDn = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=rayDn)
+            MerrGridDn[mindex,zindex] = 1./snRetDn
+
+        
     if doSZ:
         var = SZCluster.quickVar(10**mass,z)
         siggrid[mindex,zindex] = np.sqrt(var)
@@ -406,6 +360,12 @@ if rank!=0:
     if doLens:
         MerrGrid = MerrGrid.astype(np.float64)
         comm.Send(MerrGrid, dest=0, tag=77)
+        if doRayDeriv:
+            MerrGridUp = MerrGridUp.astype(np.float64)
+            MerrGridDn = MerrGridDn.astype(np.float64)
+            comm.Send(MerrGridUp, dest=0, tag=98)
+            comm.Send(MerrGridDn, dest=0, tag=99)
+            
     if doSZ:
         siggrid = siggrid.astype(np.float64)
         comm.Send(siggrid, dest=0, tag=78)
@@ -420,16 +380,27 @@ else:
             print "Waiting for lens ", i ," / ", numcores
             data = np.zeros(MerrGrid.shape, dtype=np.float64)
             comm.Recv(data, source=i, tag=77)
-            MerrGrid += data
+            MerrGrid += data.copy()
+            if doRayDeriv:
+                data = np.zeros(MerrGridUp.shape, dtype=np.float64)
+                comm.Recv(data, source=i, tag=98)
+                MerrGridUp += data.copy()
+                data = np.zeros(MerrGridDn.shape, dtype=np.float64)
+                comm.Recv(data, source=i, tag=99)
+                MerrGridDn += data.copy()
+                
 
         pickle.dump((Mexp_edges,z_edges,MerrGrid),open(bigDataDir+"lensgrid_"+expName+"_"+gridName+"_"+lensName+ "_v" + version+".pkl",'wb'))
-
+        if doRayDeriv:
+            pickle.dump((Mexp_edges,z_edges,MerrGridUp),open(bigDataDir+"lensgridRayUp_"+expName+"_"+gridName+"_"+lensName+ "_v" + version+".pkl",'wb'))
+            pickle.dump((Mexp_edges,z_edges,MerrGridDn),open(bigDataDir+"lensgridRayDn_"+expName+"_"+gridName+"_"+lensName+ "_v" + version+".pkl",'wb'))
+        
     if doSZ:
         for i in range(1,numcores):
             print "Waiting for sz ", i," / ", numcores
             data = np.zeros(siggrid.shape, dtype=np.float64)
             comm.Recv(data, source=i, tag=78)
-            siggrid += data
+            siggrid += data.copy()
 
 
         pickle.dump((Mexp_edges,z_edges,siggrid),open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'wb'))

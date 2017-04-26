@@ -1,6 +1,5 @@
 import matplotlib
 matplotlib.use('Agg')
-import itertools
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle
 import numpy as np
@@ -8,7 +7,7 @@ import sys
 from orphics.tools.io import dictFromSection, listFromConfig
 from orphics.tools.io import Plotter
 import matplotlib.pyplot as plt
-
+from szlib.fisher import getFisher
 from szlib.szcounts import rebinN
 
 
@@ -54,16 +53,8 @@ dz = np.diff(z_edges)
 fishSection = 'fisher-'+fishName
 paramList = Config.get(fishSection,'paramList').split(',')
 saveName = Config.get(fishSection,'saveSuffix')
-numParams = len(paramList)
-Fisher = np.zeros((numParams,numParams))
-paramCombs = itertools.combinations_with_replacement(paramList,2)
 
 # Fiducial number counts
-# <<<<<<< HEAD
-# N_fid = np.load(bigDataDir+"N_dzmq_"+saveId+"_fid"+".npy")
-# N_fid = N_fid[:,:zlen,:]*fsky
-# print "Total number of clusters: ", getTotN(N_fid,mgrid,zgrid,qbins)
-# =======
 new_z_edges, N_fid = rebinN(np.load(bigDataDir+"N_mzq_"+saveId+"_fid"+".npy"),pzcutoff,z_edges)
 
 N_fid = N_fid[:,:,:]*fsky
@@ -74,7 +65,6 @@ sId = expName + "_" + gridName  + "_v" + version
 #sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
 #sovernsquare =  np.dstack([sovernsquareEach]*len(qbins))
 
-# >>>>>>> refactor
 
 # Planck and BAO Fishers
 planckFile = Config.get(fishSection,'planckFile')
@@ -94,7 +84,24 @@ if planckFile!='':
         fisherPlanck = np.loadtxt(planckFile,delimiter=',')
     fisherPlanck = np.pad(fisherPlanck,pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.)
 
-fisherBAO = 0.
+
+
+
+
+try:
+    priorNameList = Config.get(fishSection,'prior_names').split(',')
+    priorValueList = listFromConfig(Config,fishSection,'prior_values')
+except:
+    priorNameList = []
+    priorValueList = []
+    
+##########################
+# Populate Fisher
+Fisher = getFisher(N_fid,paramList,priorNameList,priorValueList,bigDataDir,saveId,pzcutoff,z_edges,fsky)
+##########################
+
+
+fisherBAO = Fisher.copy()*0.
 if baoFile!='':
     try:
         fisherBAO = np.loadtxt(baoFile)
@@ -103,62 +110,16 @@ if baoFile!='':
     fisherBAO = np.pad(fisherBAO,pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.)
 
 
-    
-
-    
-# Populate Fisher
-for param1,param2 in paramCombs:
-    if param1=='tau' or param2=='tau': continue
-# <<<<<<< HEAD
-#     dN1 = np.load(bigDataDir+"dN_dzmq_"+saveId+"_"+param1+".npy")
-#     dN2 = np.load(bigDataDir+"dN_dzmq_"+saveId+"_"+param2+".npy")
-#     dN1 = dN1[:,:zlen,:]*fsky
-#     dN2 = dN2[:,:zlen,:]*fsky
-# =======
-    new_z_edges, dN1 = rebinN(np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param1+".npy"),pzcutoff,z_edges)
-    new_z_edges, dN2 = rebinN(np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param2+".npy"),pzcutoff,z_edges)
-    dN1 = dN1[:,:,:]*fsky
-    dN2 = dN2[:,:,:]*fsky
-
-# >>>>>>> refactor
-
-    i = paramList.index(param1)
-    j = paramList.index(param2)
-
-# <<<<<<< HEAD
-#     # if param1=='wa':
-#     #     Nup = np.load("data/dNup_dzmq_"+saveId+"_"+param1+".npy")
-#     #     Ndn = np.load("data/dNdn_dzmq_"+saveId+"_"+param1+".npy")
-#     #     print getTotN(Nup,mgrid,zgrid,qbins)
-#     #     print getTotN(Ndn,mgrid,zgrid,qbins)
-# =======
-#     if param1=='wa':
-#         Nup = np.load(bigDataDir+"Nup_mzq_"+saveId+"_"+param1+".npy")
-#         Ndn = np.load(bigDataDir+"Ndn_mzq_"+saveId+"_"+param1+".npy")
-#         print Nup.sum()
-#         print Ndn.sum()
-# >>>>>>> refactor
-
-    assert not(np.any(np.isnan(dN1)))
-    assert not(np.any(np.isnan(dN2)))
-    assert not(np.any(np.isnan(N_fid)))
-
-
-    with np.errstate(divide='ignore'):
-        FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid))#+(N_fid*N_fid*sovernsquare)))
-    Fell = FellBlock.sum()
-
-    
-       
-    Fisher[i,j] = Fell
-    Fisher[j,i] = Fell    
-
-
 FisherTot = Fisher + fisherPlanck
 FisherTot += fisherBAO
 
-Finv = np.linalg.inv(FisherTot)
+# from orphics.tools.io import Plotter
+# import os
+# pl = Plotter()
+# pl.plot2d(np.log10(np.abs(fisherPlanck)))
+# pl.done(os.environ['WWW']+"fisher.png")          
 
+Finv = np.linalg.inv(FisherTot)
 
 errs = np.sqrt(np.diagonal(Finv))
 errDict = {}
@@ -182,6 +143,11 @@ except:
     pass
 try:
     print "wa 1-sigma : "+ str(errDict['wa']) 
+except:
+    pass
+
+try:
+    print "bMWL 1-sigma : "+ str(errDict['b_wl']*100.)  + " %"
 except:
     pass
 

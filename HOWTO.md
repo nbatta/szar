@@ -29,7 +29,14 @@ python bin/subGrids.py
 ``
 python bin/subOWLGrids.py
 ``
-5. Make easy derivatives
+5a. Make easy derivatives for CMB
+``
+python bin/subDerivs.py
+``
+5b. Make easy derivatives for OWL
+``
+python bin/subOWL.py
+``
 6. Make sigma8 derivatives
 7. Make CMB lensing offset derivatives
 8. Make wa derivatives

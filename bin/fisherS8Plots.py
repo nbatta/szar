@@ -27,7 +27,7 @@ noatm = ""
 #noatm = "-noatm"
 cal = "CMB_pol"
 #cal = "owl2"
-derivSet = "0.1"
+derivSet = "0.3_ysig_0.127"
 gridName = "grid-default"
 
 
@@ -36,10 +36,18 @@ origParams = Config.get('fisher-'+fishSection,'paramList').split(',')
 
 
 """RES STUDY"""
-cmbfisher3 = getFisher(bigDataDir,"S4-3m"+noatm,gridName,cal,cosmoFisher,derivSet)
-cmbfisher2 = getFisher(bigDataDir,"S4-5m"+noatm,gridName,cal,cosmoFisher,derivSet)
-cmbfisher15 = getFisher(bigDataDir,"S4-6m"+noatm,gridName,cal,cosmoFisher,derivSet)
-cmbfisher1 = getFisher(bigDataDir,"S4-7m"+noatm,gridName,cal,cosmoFisher,derivSet)
+# cmbfisher3 = getFisher(bigDataDir,"S4-3.0-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+# cmbfisher2 = getFisher(bigDataDir,"S4-2.5-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+# cmbfisher15 = getFisher(bigDataDir,"S4-2.0-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+# cmbfisher1 = getFisher(bigDataDir,"S4-1.5-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+# cmbfisher0 = getFisher(bigDataDir,"S4-1.0-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+
+cmbfisher3 = getFisher(bigDataDir,"S4-1.5-0.05"+noatm,gridName,cal,cosmoFisher,derivSet)
+cmbfisher2 = getFisher(bigDataDir,"S4-1.5-0.1"+noatm,gridName,cal,cosmoFisher,derivSet)
+cmbfisher15 = getFisher(bigDataDir,"S4-1.5-0.2"+noatm,gridName,cal,cosmoFisher,derivSet)
+cmbfisher1 = getFisher(bigDataDir,"S4-1.5-0.3"+noatm,gridName,cal,cosmoFisher,derivSet)
+cmbfisher0 = getFisher(bigDataDir,"S4-1.5-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+cmbfisher01 = getFisher(bigDataDir,"S4-1.5-0.7"+noatm,gridName,cal,cosmoFisher,derivSet)
 
 # cmbfisher3 = getFisher(bigDataDir,"SO-3m"+noatm,gridName,cal,cosmoFisher,derivSet)
 # cmbfisher2 = getFisher(bigDataDir,"SO-5m"+noatm,gridName,cal,cosmoFisher,derivSet)
@@ -71,22 +79,29 @@ print s82
 s82zs = As2*s82
 
 
-outDir = "/gpfs01/astro/www/msyriac/"
+outDir = "/gpfs01/astro/www/msyriac/web/work/"
 
 
-#zbins = np.append(np.arange(0.,2.0,0.5),3.0)
-zbins = np.arange(0.,3.5,0.5)
+zbins = np.append(np.arange(0.,2.5,0.5),3.0)
+#zbins = np.arange(0.,3.5,0.5)
+#zbins = np.arange(0.,3.1,0.1)
 
 pl = Plotter(labelX="$z$",labelY="$\sigma_8(z)/\sigma_8(z)_{w=-1}$",ftsize=12)
 #pl = Plotter(labelX="$z$",labelY="$\sigma_8(z)$",ftsize=12)
 #pl = Plotter(labelX="$z$",labelY="$D(z)/D(z)_{w=-1}$",ftsize=12)
 
+
+colList = ['C0','C1','C2','C3','C4','C5']
+#['coral','forestgreen','gold','indigo','purple']
+
 from matplotlib.patches import Rectangle
 currentAxis = plt.gca()
-for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1],['S4 SZ + CMB Halo Lensing (P only) 3m','5m','6m','7m'],['coral','forestgreen','gold','indigo'])):
+#for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1,cmbfisher0],['3.0\'','2.5\'','2.0\'','1.5\'','1.0\''],colList)):
+for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1,cmbfisher0,cmbfisher01],['0.05','0.1','0.2','0.3','0.4','0.7'],colList)):
 #for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1],['SO-SZ + CMB Halo Lensing (P only) 3m','5m','6m','7m'],['coral','forestgreen','gold','indigo'])):
     inv = np.linalg.inv(f)
     err = np.sqrt(np.diagonal(inv))[len(origParams):]
+    #if lab=='0.1': continue #print err
     zcents = []
     errcents = []
     xerrs = []
@@ -113,15 +128,16 @@ for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1
     pl._ax.fill_between(zrange, 1., 1.,label=lab,alpha=0.75,color=col)
     
 
-pl.add(zrange,s82zs/s81zs,label="$w=-0.97$",color='red',alpha=0.5)
-pl.add(zrange,s81zs/s81zs,label="$w=-1$",color='black',alpha=0.5,ls="--")
+#pl.add(zrange,s82zs/s81zs,label="$w=-0.97$",color='red',alpha=0.5)
+pl.add(zrange,s81zs/s81zs,color='black',alpha=0.5,ls="--")#,label="$w=-1$")
 
 # pl.add(zrange,s82zs/s81zs/s82*s81,label="$w=-0.97$",color='red',alpha=0.5)
 # pl.add(zrange,s81zs*0.+1.,label="$w=-1$",color='black',alpha=0.5,ls="--")
 
 
-pl.legendOn(labsize=10)
-pl._ax.set_ylim(0.9,1.1)
+pl.legendOn(labsize=9)
+#pl._ax.set_ylim(0.9,1.1) # res
+pl._ax.set_ylim(0.95,1.05) # fsky
 #pl._ax.text(0.8,.82,"Madhavacheril et. al. in prep")
-pl.done(outDir+"s8S4.png")
+pl.done(outDir+"S4_"+cal+"_fsky.png")
 #pl.done(outDir+"s8SO.png")
