@@ -158,8 +158,6 @@ def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,z_edges,fsky,lmax=1000):
     powers = np.array(powers)
 
     return powers
-    
-
 
 def f_nu(constDict,nu):
     c = constDict
