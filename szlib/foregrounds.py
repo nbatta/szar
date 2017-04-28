@@ -1,5 +1,12 @@
 import numpy as np
 from scipy.interpolate import interp1d
+#from szlib.szcounts import f_nu
+
+def f_nu(constDict,nu):
+    c = constDict
+    mu = c['H_CGS']*(1e9*nu)/(c['K_CGS']*c['TCMB'])
+    ans = mu*coth(mu/2.0) - 4.0
+    return np.float(ans)
 
 def totTTNoise(ells,constDict,beamFWHM,noiseT,freq,lknee,alpha,tsz_battaglia_template_csv="data/sz_template_battaglia.csv",TCMB=2.7255e6):
     ls = ells
