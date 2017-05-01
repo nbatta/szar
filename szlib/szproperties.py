@@ -65,7 +65,7 @@ class SZ_Cluster_Model:
         self.gint = np.array([self.g(x) for x in self.gxrange])
 
         self.gnorm_pre = np.trapz(self.gxrange*self.gint,self.gxrange)
-    @timeit
+    #@timeit
     def quickVar(self,M,z,tmaxN=5.,numts=1000):
 
         R500 = self.cc.rdel_c(M,z,500.).flatten()[0] # R500 in Mpc/h 
