@@ -322,11 +322,12 @@ mySplitIndex = rank
 
 mySplit = splits[mySplitIndex]
 
-import enlib.fft as fftfast
-arcStamp = 100.
-pxStamp = 0.05
-Npix = int(arcStamp/pxStamp)
-B = fftfast.fft(np.zeros((Npix,Npix)),axes=[-2,-1],flags=['FFTW_MEASURE'])
+if doLens: 
+    import enlib.fft as fftfast
+    arcStamp = 100.
+    pxStamp = 0.05
+    Npix = int(arcStamp/pxStamp)
+    B = fftfast.fft(np.zeros((Npix,Npix)),axes=[-2,-1],flags=['FFTW_MEASURE'])
 # Ndown = fftfast.fft_len(Npix,direction="below")
 # Nup = fftfast.fft_len(Npix,direction="above")
 # print Npix,Ndown,Nup
