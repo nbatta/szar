@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
-from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,fgNoises
+from szar.counts import ClusterCosmology,SZ_Cluster_Model,fgNoises
 import sys,os
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle

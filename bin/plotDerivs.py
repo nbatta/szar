@@ -65,7 +65,7 @@ for (key, val) in Config.items('params'):
     else:
         fparams[key] = float(val)
 passParams = fparams
-from szlib.szcounts import ClusterCosmology,Halo_MF
+from szar.counts import ClusterCosmology,Halo_MF
 cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(cc,Mexp_edges,z_edges)
 kh = HMF.kh

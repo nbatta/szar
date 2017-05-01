@@ -2,8 +2,8 @@ import matplotlib
 matplotlib.use('Agg')
 import sys
 import numpy as np
-from szlib.szcounts import ClusterCosmology,Halo_MF,sampleVarianceOverNsquareOverBsquare,haloBias,getTotN
-#from szlib.szproperties import SZ_Cluster_Model
+from szar.counts import ClusterCosmology,Halo_MF,sampleVarianceOverNsquareOverBsquare,haloBias,getTotN
+#from szar.szproperties import SZ_Cluster_Model
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 

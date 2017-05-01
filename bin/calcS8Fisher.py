@@ -2,7 +2,7 @@ import matplotlib
 matplotlib.use('Agg')
 import numpy as np
 import sys, os, time
-from szlib.szcounts import rebinN,getA
+from szar.counts import rebinN,getA
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle
@@ -164,7 +164,7 @@ pickle.dump((paramList,f),open(bigDataDir+"savedS8Fisher_"+saveId+"_"+saveName+"
 # print err
 
 # import camb
-# from szlib.szcounts import ClusterCosmology
+# from szar.counts import ClusterCosmology
 
 # constDict = dictFromSection(Config,'constants')
 

@@ -6,10 +6,10 @@ from camb import model
 import time
 import cPickle as pickle
 
-from Tinker_MF import dn_dlogM
-from Tinker_MF import tinker_params
-import Tinker_MF as tinker
-from szlib.foregrounds import fgNoises
+from tinker import dn_dlogM
+from tinker import tinker_params
+import tinker as tinker
+from szar.foregrounds import fgNoises
 
 from orphics.tools.io import Plotter
 from orphics.theory.cosmology import Cosmology
@@ -18,7 +18,7 @@ from orphics.tools.stats import timeit
 from scipy.interpolate import interp1d
 from orphics.analysis.flatMaps import interpolateGrid
 
-import szlib.szlibNumbafied as fast
+import szar._fast as fast
 
 def getA(fparams,constDict,zrange,kmax=11.):
     cc = ClusterCosmology(fparams,constDict,skipCls=True)

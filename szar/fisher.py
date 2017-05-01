@@ -1,5 +1,5 @@
 import itertools
-from szlib.szcounts import rebinN
+from szar.counts import rebinN
 import numpy as np
 
 

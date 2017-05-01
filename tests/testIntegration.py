@@ -5,7 +5,7 @@ import numpy as np
 from scipy import special
 import matplotlib.pyplot as plt
 import sys, os, time
-from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,getTotN
+from szar.counts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,getTotN
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle

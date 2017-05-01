@@ -7,8 +7,8 @@ import sys
 from orphics.tools.io import dictFromSection, listFromConfig
 from orphics.tools.io import Plotter
 import matplotlib.pyplot as plt
-from szlib.fisher import getFisher
-from szlib.szcounts import rebinN
+from szar.fisher import getFisher
+from szar.counts import rebinN
 
 
 expName = sys.argv[1]

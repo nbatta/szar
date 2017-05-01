@@ -12,7 +12,7 @@ Feb 24, 2017 - MM
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
-from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,SampleVariance
+from szar.counts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,SampleVariance
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 from orphics.tools.io import Plotter

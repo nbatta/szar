@@ -1,7 +1,7 @@
 import numpy as np
 import orphics.tools.io as io
 import sys, time
-from szlib.szcounts import ClusterCosmology,Halo_MF
+from szar.counts import ClusterCosmology,Halo_MF
 from ConfigParser import SafeConfigParser
 
 paramName = sys.argv[1]

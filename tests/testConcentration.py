@@ -1,12 +1,12 @@
 import matplotlib
 matplotlib.use('Agg')
-from szlib.szcounts import ClusterCosmology
+from szar.counts import ClusterCosmology
 import numpy as np
 import sys,os
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle
 from orphics.tools.io import dictFromSection, listFromConfig, Plotter
-import szlib.szlibNumbafied as fast
+import szar._fast as fast
 
 M = 2.e14
 z = 0.1

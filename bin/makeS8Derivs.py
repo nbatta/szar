@@ -3,8 +3,8 @@ import matplotlib
 matplotlib.use('Agg')
 import numpy as np
 import sys, os, time
-from szlib.szcounts import ClusterCosmology,Halo_MF,getNmzq,getA
-from szlib.szproperties import SZ_Cluster_Model
+from szar.counts import ClusterCosmology,Halo_MF,getNmzq,getA
+from szar.szproperties import SZ_Cluster_Model
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle

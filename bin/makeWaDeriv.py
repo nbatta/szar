@@ -28,8 +28,8 @@ debug = False
 if debug: print "Starting common module imports..."
 
 from mpi4py import MPI
-from szlib.szcounts import ClusterCosmology,Halo_MF,getNmzq
-from szlib.szproperties import SZ_Cluster_Model
+from szar.counts import ClusterCosmology,Halo_MF,getNmzq
+from szar.szproperties import SZ_Cluster_Model
 import numpy as np
     
 if debug: print "Finished common module imports."

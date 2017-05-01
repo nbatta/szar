@@ -5,8 +5,8 @@ import numpy as np
 from scipy import special
 import matplotlib.pyplot as plt
 import sys, os, time
-from szlib.szcounts import ClusterCosmology,Halo_MF,getTotN
-from szlib.szproperties import SZ_Cluster_Model
+from szar.counts import ClusterCosmology,Halo_MF,getTotN
+from szar.szproperties import SZ_Cluster_Model
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 from orphics.analysis.flatMaps import interpolateGrid

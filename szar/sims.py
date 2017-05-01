@@ -4,7 +4,7 @@ import ConfigParser
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
-from szlib.szcounts import ClusterCosmology,f_nu
+from szar.counts import ClusterCosmology,f_nu
 import orphics.analysis.flatMaps as fmaps
 import re
 from orphics.tools.io import Plotter

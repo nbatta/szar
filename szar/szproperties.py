@@ -1,7 +1,7 @@
 import numpy as np
 from orphics.tools.cmb import noise_func
-from szlib.foregrounds import fgNoises
-from szlib.szcounts import ClusterCosmology,f_nu
+from szar.foregrounds import fgNoises
+from szar.counts import ClusterCosmology,f_nu
 from scipy.special import j0
 from orphics.tools.stats import timeit
 

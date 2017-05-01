@@ -55,7 +55,7 @@ cmbfisher01 = getFisher(bigDataDir,"S4-1.5-0.7"+noatm,gridName,cal,cosmoFisher,d
 # cmbfisher1 = getFisher(bigDataDir,"SO-7m"+noatm,gridName,cal,cosmoFisher,derivSet)
 
 
-from szlib.szcounts import getA
+from szar.counts import getA
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 fparams = {}   # the 
 for (key, val) in Config.items('params'):
