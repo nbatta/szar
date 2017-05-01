@@ -1,4 +1,4 @@
-# szar -(SZ) (A)strophysics (R)outines
+# szar - (SZ) (A)strophysics (R)outines
 
 Regal. Hungarian for sh*t or "I don't believe it" according to Urban Dictionary. But mostly a library for CMB foregrounds and SZ forecasting.
 
