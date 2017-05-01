@@ -5,7 +5,8 @@ import numpy as np
 from scipy import special
 import matplotlib.pyplot as plt
 import sys, os, time
-from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,getTotN
+from szlib.szcounts import ClusterCosmology,Halo_MF,getTotN
+from szlib.szproperties import SZ_Cluster_Model
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 from orphics.analysis.flatMaps import interpolateGrid
@@ -70,7 +71,7 @@ SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms
 
 
 print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts))
-print "filtvar " , np.sqrt(SZProfExample.filter_variance(MM,zz))
+#print "filtvar " , np.sqrt(SZProfExample.filter_variance(MM,zz))
 
 
 
@@ -93,11 +94,11 @@ print "thetc = ", thetc
 
 # HMF
 
-zbin = np.arange(0.1,2.0,0.5)
+zbin = np.arange(0.,3.0,0.1)
 #zbin = np.insert(zbin_temp,0,0.0)
 #print zbin
 
-Mexp = np.arange(13.5,15.7,0.5)
+Mexp = np.arange(13.5,15.71,0.01)
 
 start3 = time.time()
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
@@ -106,6 +107,7 @@ HMF = Halo_MF(cc,Mexp,zbin)
 dvdz = HMF.dVdz#(zbin)
 dndm = HMF.N_of_z_SZ(SZProf)
 
+sys.exit()
 print "Time for N of z " , time.time() - start3
 
 

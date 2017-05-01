@@ -208,6 +208,7 @@ class ClusterCosmology(Cosmology):
 
 
 class Halo_MF:
+    @timeit
     def __init__(self,clusterCosmology,Mexp_edges,z_edges,kh=None,powerZK=None,kmin=1e-4,kmax=11.,knum=200):
 
         # update self.sigN (20 mins) and self.Pfunc if changing experiment
