@@ -313,7 +313,7 @@ if rank==0:
     print "I have ",numcores, " cores to work with."
     print "And I have ", numes, " tasks to do."
     print "Each worker gets at least ", mintasks, " tasks and at most ", maxtasks, " tasks."
-    buestguess = (0.5*int(doSZ)+(1.+2.*int(doRayDeriv))*5.2*int(doLens))*maxtasks
+    buestguess = (0.5*int(doSZ)+(1.+2.*int(doRayDeriv))*5.0*int(doLens))*maxtasks
     print "My best guess is that this will take ", buestguess, " seconds."
     print "Starting the slow part..."
 
@@ -321,6 +321,15 @@ if rank==0:
 mySplitIndex = rank
 
 mySplit = splits[mySplitIndex]
+
+import enlib.fft as fftfast
+arcStamp = 100.
+pxStamp = 0.05
+Npix = int(arcStamp/pxStamp)
+B = fftfast.fft(np.zeros((Npix,Npix)),axes=[-2,-1],flags=['FFTW_MEASURE'])
+# Ndown = fftfast.fft_len(Npix,direction="below")
+# Nup = fftfast.fft_len(Npix,direction="above")
+# print Npix,Ndown,Nup
 
 for index in mySplit:
             
@@ -334,19 +343,21 @@ for index in mySplit:
         critical = True
         atClusterZ = True
         concentration = cc.Mdel_to_cdel(mass,z,overdensity) #1.18
-        if miscentering:
-            ray = beamY/2.
-        else:
-            ray = None
-            
-        snRet,k500,std = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=ray)
+        # if miscentering:
+        #     ray = beamY/2.
+        # else:
+        #     ray = None
+        ray = rayFid
+
+        
+        snRet,k500,std = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=ray,arcStamp=arcStamp,pxStamp=pxStamp)
         MerrGrid[mindex,zindex] = 1./snRet
         if doRayDeriv:
             rayUp = rayFid+rayStep/2.
-            snRetUp,k500Up,stdUp = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=rayUp)
+            snRetUp,k500Up,stdUp = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=rayUp,arcStamp=arcStamp,pxStamp=pxStamp)
             MerrGridUp[mindex,zindex] = 1./snRetUp
             rayDn = rayFid-rayStep/2.
-            snRetDn,k500Dn,stdDn = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=rayDn)
+            snRetDn,k500Dn,stdDn = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=rayDn,arcStamp=arcStamp,pxStamp=pxStamp)
             MerrGridDn[mindex,zindex] = 1./snRetDn
 
         
