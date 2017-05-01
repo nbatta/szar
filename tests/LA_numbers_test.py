@@ -60,9 +60,9 @@ print "PS test"
 #print SZ.Prof_tilde_old(3000,MM,zz)
 #print "Time for old", time.time() - start2
 
-ll = np.arange(1000,3000,200)
+ll = np.arange(200,7000,200)
 start3 = time.time()
-print HMF.Cl_ell(ll,SZ)
+print HMF.Cl_ell(ll,SZ)*ll**2 / (2.*np.pi) * 1e12
 print "Time for old", time.time() - start3
 
 lnYmin = np.log(1e-13)

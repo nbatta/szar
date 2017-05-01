@@ -3,7 +3,8 @@ matplotlib.use('Agg')
 from mpi4py import MPI
 import numpy as np
 from alhazen.halos import NFWMatchedFilterSN
-from szlib.szcounts import ClusterCosmology,SZ_Cluster_Model,Halo_MF
+from szlib.szcounts import ClusterCosmology,Halo_MF
+from szlib.szproperties import SZ_Cluster_Model
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -114,7 +115,7 @@ if rank==0:
         
        
         testFreq = freq_to_use
-        from szlib.szcounts import fgNoises
+        from szlib.foregrounds import fgNoises
         fgs = fgNoises(constDict,ksz_battaglia_test_csv="data/ksz_template_battaglia.csv",tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
         tcmbmuk = constDict['TCMB'] * 1.0e6
         ksz = lambda x: fgs.ksz_temp(x)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.

@@ -6,7 +6,8 @@ from orphics.tools.io import Plotter
 import cPickle as pickle
 import sys
 
-from szlib.szcounts import ClusterCosmology,Halo_MF,SZ_Cluster_Model,getNmzq
+from szlib.szcounts import ClusterCosmology,Halo_MF,getNmzq
+from szlib.szproperties import SZ_Cluster_Model
 import numpy as np
 
 from orphics.analysis.flatMaps import interpolateGrid
