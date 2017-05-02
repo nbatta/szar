@@ -146,6 +146,22 @@ class SZ_Cluster_Model:
         ans = Y_star*((b_ym)*MM/ 1e14)**alpha_ym *(DA_z/100.)**(-2.) * beta_fac * self.cc.E_z(zz) ** (2./3.) * (1. + zz)**gamma_ym
         return ans
 
+    def Y_erf(self,Y_true,sigma_N):
+        q = self.qmin
+        sigma_Na = np.outer(sigma_N,np.ones(len(Y_true[0,:])))
+         
+        ans = 0.5 * (1. + special.erf((Y_true - q*sigma_Na)/(np.sqrt(2.)*sigma_Na)))
+        return ans
+    
+    def P_of_Y (self,lnY,MM,zz):
+ 
+        Y = np.exp(lnY)
+        Ma = np.outer(MM,np.ones(len(Y[0,:])))
+        Ysig = self.scaling['Ysig'] * (1. + zz)**self.scaling['gammaYsig'] * (Ma/(self.cc.H0/100.)/6e14)**self.scaling['betaYsig']
+        numer = -1.*(np.log(Y/self.Y_M(Ma,zz)))**2
+        ans = 1./(Ysig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*Ysig**2))
+        return ans
+
     def P_of_q(self,lnY,MM,zz,sigma_N):
         lnYa = np.outer(np.ones(len(MM)),lnY)
 
