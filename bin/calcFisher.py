@@ -5,7 +5,7 @@ import cPickle as pickle
 import numpy as np
 import sys
 from orphics.tools.io import dictFromSection, listFromConfig
-from orphics.tools.io import Plotter
+from orphics.tools.io import Plotter, nostdout
 import matplotlib.pyplot as plt
 from szar.fisher import getFisher
 from szar.counts import rebinN
@@ -87,8 +87,10 @@ new_z_edges, N_fid = rebinN(np.load(bigDataDir+"N_mzq_"+saveId+"_fid"+".npy"),pz
 
 N_fid = N_fid[:,:,:]*fsky
 print "Effective number of clusters: ", N_fid.sum() #getTotN(N_fid,mgrid,zgrid,qbins)
-print "Actual number of clusters: ", getExpN(Config,bigDataDir,version,expName,gridName,mexp_edges,z_edges)
+with nostdout():
+    actualN = getExpN(Config,bigDataDir,version,expName,gridName,mexp_edges,z_edges)
 
+print "Actual number of clusters: ", actualN
 sId = expName + "_" + gridName  + "_v" + version
 #sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
 #sovernsquare =  np.dstack([sovernsquareEach]*len(qbins))

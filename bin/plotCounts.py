@@ -85,8 +85,8 @@ from matplotlib.patches import Rectangle
 expList = ['S4-2.0-0.4']#,'S4-1.5-0.4','S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1','S4-1.5-0.05']
 pad = 0.05
 
-#pl = Plotter(labelX="$z$",labelY="$N(z)$",ftsize=12,scaleY='log')
-pl = Plotter(labelX="$z$",labelY="$N(z)$",ftsize=12)
+pl = Plotter(labelX="$z$",labelY="$N(z)$",ftsize=12,scaleY='log')
+#pl = Plotter(labelX="$z$",labelY="$N(z)$",ftsize=12)
 
 colList = ['C0','C1','C2','C3','C4','C5']
 for expName,col in zip(expList,colList):
@@ -137,7 +137,7 @@ for expName,col in zip(expList,colList):
         print N
         N2 = Nz[np.logical_and(zrange>zleft,zrange<=zright)].sum()
         currentAxis.add_patch(Rectangle((zcent - xerr+pad, 0), 2*xerr-pad/2., N, facecolor=col,alpha=0.5))
-        #currentAxis.add_patch(Rectangle((zcent - xerr+pad+pad/3., 0), 2*xerr-pad/2., N2, facecolor=col))
+        currentAxis.add_patch(Rectangle((zcent - xerr+pad+pad/3., 0), 2*xerr-pad/2., N2, facecolor=col))
 
     massSense = lndM #*100./np.sqrt(Nmz)
     massSense = interpolateGrid(massSense,masses,zrange,10**mexp_new,z_new,regular=True)#,kind="cubic",bounds_error=False,fill_value=np.inf)
@@ -147,8 +147,8 @@ for expName,col in zip(expList,colList):
     
 
 #pl.legendOn(labsize=9)
-#pl._ax.set_ylim(1,5.e4) # fsky
-#pl._ax.set_xlim(0.,3.)
+pl._ax.set_ylim(1,5.e4) # fsky
+pl._ax.set_xlim(0.,3.)
 pl.done(outDir+"Nofz.png")
 
 fsense[fsense>10.] = np.nan

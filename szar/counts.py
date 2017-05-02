@@ -347,17 +347,11 @@ class Halo_MF:
         if self.Pfunc is None: self.updatePfunc(SZCluster)
         P_func = self.Pfunc.copy()
 
-        print self.sigN
-        print self.Pfunc
-        sys.exit()
-
         dn_dzdm = self.dn_dM(self.M200,200.)
         N_z = np.zeros(z_arr.size)
         for i in xrange (z_arr.size):
             N_z[i] = np.dot(dn_dzdm[:,i]*P_func[:,i],np.diff(self.M200_edges[:,i]))
 
-        print P_func
-        sys.exit()
         return N_z* self.dVdz[:]*4.*np.pi
 
     def N_of_mz_SZ(self,SZCluster):
