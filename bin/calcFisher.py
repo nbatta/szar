@@ -10,6 +10,33 @@ import matplotlib.pyplot as plt
 from szar.fisher import getFisher
 from szar.counts import rebinN
 
+from szar.counts import ClusterCosmology,Halo_MF
+from szar.szproperties import SZ_Cluster_Model
+
+
+def getExpN(Config,bigDataDir,version,expName,gridName,mexp_edges,z_edges):
+    experimentName = expName
+    cosmoDict = dictFromSection(Config,"params")
+    constDict = dictFromSection(Config,'constants')
+    clusterDict = dictFromSection(Config,'cluster_params')
+    clttfile = Config.get("general","clttfile")
+    cc = ClusterCosmology(cosmoDict,constDict,clTTFixFile = clttfile)
+
+    beam = listFromConfig(Config,experimentName,'beams')
+    noise = listFromConfig(Config,experimentName,'noises')
+    freq = listFromConfig(Config,experimentName,'freqs')
+    lmax = int(Config.getfloat(experimentName,'lmax'))
+    lknee = float(Config.get(experimentName,'lknee').split(',')[0])
+    alpha = float(Config.get(experimentName,'alpha').split(',')[0])
+    fsky = Config.getfloat(experimentName,'fsky')
+    SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
+    hmf = Halo_MF(cc,mexp_edges,z_edges)
+    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
+
+    hmf.sigN = siggrid.copy()
+    Ns = np.multiply(hmf.N_of_z_SZ(SZProf)*fsky,np.diff(z_edges).reshape(1,z_edges.size-1)).ravel()
+
+    return Ns.sum()
 
 expName = sys.argv[1]
 gridName = sys.argv[2]
@@ -58,8 +85,8 @@ saveName = Config.get(fishSection,'saveSuffix')
 new_z_edges, N_fid = rebinN(np.load(bigDataDir+"N_mzq_"+saveId+"_fid"+".npy"),pzcutoff,z_edges)
 
 N_fid = N_fid[:,:,:]*fsky
-print "Total number of clusters: ", N_fid.sum() #getTotN(N_fid,mgrid,zgrid,qbins)
-
+print "Effective number of clusters: ", N_fid.sum() #getTotN(N_fid,mgrid,zgrid,qbins)
+print "Actual number of clusters: ", getExpN(Config,bigDataDir,version,expName,gridName,mexp_edges,z_edges)
 
 sId = expName + "_" + gridName  + "_v" + version
 #sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")

@@ -7,14 +7,14 @@ import os
 #calList = ['CMB_all']
 
 #,'CMB_pol']#,'CMB_all_miscentered','CMB_pol_miscentered']
-
-expList = ['SO-v2-6m','SO-v2','SO-v2-6m-noatm','SO-v2-noatm'] #'S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1']
+expList = ['SO-v2-6m-noatm']
+#expList = ['SO-v2-6m','SO-v2','SO-v2-6m-noatm','SO-v2-noatm'] #'S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1']
 calList = ['CMB_all']#,'CMB_pol']#,'CMB_all_miscentered','CMB_pol_miscentered']
 
 # expList = ['S4-3.0-0.4']
 #calList = ['CMB_pol_miscentered']
 
-numCores = 76
+numCores = 304
 
 gridName = "grid-default"
 

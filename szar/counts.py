@@ -1,5 +1,4 @@
 import numpy as np
-from scipy import special
 from sympy.functions import coth
 import camb
 from camb import model

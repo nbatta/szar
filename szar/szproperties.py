@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import special
 from orphics.tools.cmb import noise_func
 from szar.foregrounds import fgNoises
 from szar.counts import ClusterCosmology,f_nu
