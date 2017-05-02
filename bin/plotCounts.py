@@ -109,6 +109,8 @@ for expName,col in zip(expList,colList):
     
     SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
     Nofzs = np.multiply(HMF.N_of_z_SZ(SZProf)*fsky,np.diff(z_edges).reshape(1,z_edges.size-1)).ravel()
+    print Nofzs.sum()
+    #sys.exit()
 
     saveId = expName + "_" + gridName + "_" + cal + "_v" + version
     Nmzq = np.load(bigDataDir+"N_mzq_"+saveId+"_fid.npy")*fsky
@@ -133,7 +135,7 @@ for expName,col in zip(expList,colList):
         N = Nofzs[np.logical_and(zrange>zleft,zrange<=zright)].sum()
         N2 = Nz[np.logical_and(zrange>zleft,zrange<=zright)].sum()
         currentAxis.add_patch(Rectangle((zcent - xerr+pad, 0), 2*xerr-pad/2., N, facecolor=col,alpha=0.5))
-        currentAxis.add_patch(Rectangle((zcent - xerr+pad+pad/3., 0), 2*xerr-pad/2., N2, facecolor=col))
+        #currentAxis.add_patch(Rectangle((zcent - xerr+pad+pad/3., 0), 2*xerr-pad/2., N2, facecolor=col))
 
     massSense = lndM #*100./np.sqrt(Nmz)
     massSense = interpolateGrid(massSense,masses,zrange,10**mexp_new,z_new,regular=True)#,kind="cubic",bounds_error=False,fill_value=np.inf)
