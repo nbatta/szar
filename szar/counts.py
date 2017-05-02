@@ -92,8 +92,6 @@ def getNmzq(Nmzq,mexp_edges,z_edges,q_edges):
     return Ndm
     
 
-def gaussian(xx, mu, sig):
-    return 1./(sig * np.sqrt(2*np.pi)) * np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
 
 
 def haloBias(Mexp_edges,z_edges,rhoc0om,kh,pk):

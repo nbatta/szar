@@ -5,6 +5,8 @@ from szar.counts import ClusterCosmology,f_nu
 from scipy.special import j0
 from orphics.tools.stats import timeit
 
+def gaussian(xx, mu, sig):
+    return 1./(sig * np.sqrt(2*np.pi)) * np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
 
 class SZ_Cluster_Model:
     def __init__(self,clusterCosmology,clusterDict, \
