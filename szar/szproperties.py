@@ -115,9 +115,9 @@ class SZ_Cluster_Model:
         P_func = np.outer(M,np.zeros([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
 
-
         for i in xrange(z_arr.size):
             P_func[:,i] = self.P_of_q(lnY,M_arr[:,i],z_arr[i],sigN[:,i])
+            
 
         return P_func
 
@@ -174,7 +174,7 @@ class SZ_Cluster_Model:
         ans = MM*0.0
         for ii in xrange(len(MM)):
             ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
-            return ans
+        return ans
 
     def P_of_qn(self,lnY,MM,zz,sigma_N,qarr):
         lnYa = np.outer(np.ones(len(MM)),lnY)
