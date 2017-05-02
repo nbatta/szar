@@ -1,6 +1,6 @@
 import numpy as np
+from sympy.functions import coth
 from scipy.interpolate import interp1d
-#from szar.counts import f_nu
 
 def f_nu(constDict,nu):
     c = constDict
