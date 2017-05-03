@@ -33,7 +33,7 @@ if rank==0:
     parser.add_argument('--skip-sz', dest='skipSZ', action='store_const',
                         const=True, default=False,
                         help='Skip SZ variance.')
-    parser.add_argument('--skip-ray', dest='skipRay', action='store_const',
+    #parser.add_argument('--skip-ray', dest='skipRay', action='store_const',
                         const=True, default=False,
                         help='Skip miscentered lensing.')
 
@@ -45,7 +45,7 @@ if rank==0:
     gridName = args.gridName
     lensName = args.lensName
     
-    doRayDeriv = not(args.skipRay)
+    #doRayDeriv = not(args.skipRay)
     doLens = not(args.skipLens)
     doSZ = not(args.skipSZ)
 
@@ -63,6 +63,7 @@ if rank==0:
     Config.optionxform=str
     Config.read(iniFile)
     version = Config.get('general','version')
+    pzcut = Config.get('general','photoZCutOff')
 
     fparams = {}   
     for (key, val) in Config.items('params'):
@@ -209,7 +210,7 @@ if rank==0:
         Nls = None
         beamY = None
         miscentering = None
-        doRayDeriv = False
+        #doRayDeriv = False
         rayFid = None
         rayStep = None
     
@@ -232,7 +233,7 @@ if rank==0:
         
 
 else:
-    doRayDeriv = None
+    #doRayDeriv = None
     rayFid = None
     rayStep = None
     doLens = None
@@ -258,7 +259,7 @@ else:
     z_edges = None
 
 if rank==0: print "Broadcasting..."
-doRayDeriv = comm.bcast(doRayDeriv, root = 0)
+#doRayDeriv = comm.bcast(doRayDeriv, root = 0)
 rayFid = comm.bcast(rayFid, root = 0)
 rayStep = comm.bcast(rayStep, root = 0)
 doLens = comm.bcast(doLens, root = 0)
@@ -294,7 +295,7 @@ numms = mgrid.size
 numzs = zgrid.size
 if doLens:
     MerrGrid = np.zeros((numms,numzs))
-    if doRayDeriv:
+    if True: #doRayDeriv:
         MerrGridUp = np.zeros((numms,numzs))
         MerrGridDn = np.zeros((numms,numzs))
         
@@ -313,7 +314,7 @@ if rank==0:
     print "I have ",numcores, " cores to work with."
     print "And I have ", numes, " tasks to do."
     print "Each worker gets at least ", mintasks, " tasks and at most ", maxtasks, " tasks."
-    buestguess = (0.5*int(doSZ)+(1.+2.*int(doRayDeriv))*5.0*int(doLens))*maxtasks
+    buestguess = (0.5*int(doSZ)+(1.+2.*5.0*int(doLens))*maxtasks
     print "My best guess is that this will take ", buestguess, " seconds."
     print "Starting the slow part..."
 
