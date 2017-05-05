@@ -26,16 +26,16 @@ if rank==0:
     parser.add_argument('expName', type=str,help='The name of the experiment in input/pipeline.ini')
     parser.add_argument('gridName', type=str,help='The name of the grid in input/pipeline.ini')
     parser.add_argument('lensName', nargs='?',type=str,help='The name of the CMB lensing calibration in input/pipeline.ini. Not required if using --skip-lensing option.',default="")
-    parser.add_argument('--skip-lensing', dest='skipLens', action='store_const',
-                        const=True, default=False,
+    parser.add_argument('--skip-lensing', dest='skipLens', action='store_const', \
+                        const=True, default=False, \
                         help='Skip CMB lensing matched filter.')
 
-    parser.add_argument('--skip-sz', dest='skipSZ', action='store_const',
-                        const=True, default=False,
+    parser.add_argument('--skip-sz', dest='skipSZ', action='store_const', \
+                        const=True, default=False, \
                         help='Skip SZ variance.')
-    #parser.add_argument('--skip-ray', dest='skipRay', action='store_const',
-                        const=True, default=False,
-                        help='Skip miscentered lensing.')
+    # #parser.add_argument('--skip-ray', dest='skipRay', action='store_const',
+    #                     const=True, default=False,
+    #                     help='Skip miscentered lensing.')
 
     
     args = parser.parse_args()
@@ -213,6 +213,7 @@ if rank==0:
         #doRayDeriv = False
         rayFid = None
         rayStep = None
+        pzcut = None
     
     clttfile = Config.get('general','clttfile')
 
@@ -234,6 +235,7 @@ if rank==0:
 
 else:
     #doRayDeriv = None
+    pzcut = None
     rayFid = None
     rayStep = None
     doLens = None
@@ -260,6 +262,7 @@ else:
 
 if rank==0: print "Broadcasting..."
 #doRayDeriv = comm.bcast(doRayDeriv, root = 0)
+pzcut = comm.bcast(pzcut, root = 0)
 rayFid = comm.bcast(rayFid, root = 0)
 rayStep = comm.bcast(rayStep, root = 0)
 doLens = comm.bcast(doLens, root = 0)
@@ -314,7 +317,8 @@ if rank==0:
     print "I have ",numcores, " cores to work with."
     print "And I have ", numes, " tasks to do."
     print "Each worker gets at least ", mintasks, " tasks and at most ", maxtasks, " tasks."
-    buestguess = (0.5*int(doSZ)+(1.+2.*5.0*int(doLens))*maxtasks
+    zfrac = float(len(z_edges[np.where(z_edges>pzcut)]))/len(z_edges)
+    buestguess = (0.5*int(doSZ)+((1.+(2.*zfrac))*5.0*int(doLens)))*maxtasks
     print "My best guess is that this will take ", buestguess, " seconds."
     print "Starting the slow part..."
 
@@ -349,17 +353,25 @@ for index in mySplit:
         #     ray = beamY/2.
         # else:
         #     ray = None
-        ray = rayFid
-
+        if z>pzcut:
+            ray = rayFid
+        else:
+            ray = None
         
         snRet,k500,std = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=ray,arcStamp=arcStamp,pxStamp=pxStamp)
         MerrGrid[mindex,zindex] = 1./snRet
-        if doRayDeriv:
+        if True: #doRayDeriv:
             rayUp = rayFid+rayStep/2.
-            snRetUp,k500Up,stdUp = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=rayUp,arcStamp=arcStamp,pxStamp=pxStamp)
+            if z>pzcut:
+                snRetUp,k500Up,stdUp = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=rayUp,arcStamp=arcStamp,pxStamp=pxStamp)
+            else:
+                snRetUp = snRet
             MerrGridUp[mindex,zindex] = 1./snRetUp
             rayDn = rayFid-rayStep/2.
-            snRetDn,k500Dn,stdDn = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=rayDn,arcStamp=arcStamp,pxStamp=pxStamp)
+            if z>pzcut:
+                snRetDn,k500Dn,stdDn = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=rayDn,arcStamp=arcStamp,pxStamp=pxStamp)
+            else:
+                snRetDn = snRet
             MerrGridDn[mindex,zindex] = 1./snRetDn
 
         
@@ -374,7 +386,7 @@ if rank!=0:
     if doLens:
         MerrGrid = MerrGrid.astype(np.float64)
         comm.Send(MerrGrid, dest=0, tag=77)
-        if doRayDeriv:
+        if True:#doRayDeriv:
             MerrGridUp = MerrGridUp.astype(np.float64)
             MerrGridDn = MerrGridDn.astype(np.float64)
             comm.Send(MerrGridUp, dest=0, tag=98)
@@ -395,7 +407,7 @@ else:
             data = np.zeros(MerrGrid.shape, dtype=np.float64)
             comm.Recv(data, source=i, tag=77)
             MerrGrid += data.copy()
-            if doRayDeriv:
+            if True:#doRayDeriv:
                 data = np.zeros(MerrGridUp.shape, dtype=np.float64)
                 comm.Recv(data, source=i, tag=98)
                 MerrGridUp += data.copy()
@@ -405,7 +417,7 @@ else:
                 
 
         pickle.dump((Mexp_edges,z_edges,MerrGrid),open(bigDataDir+"lensgrid_"+expName+"_"+gridName+"_"+lensName+ "_v" + version+".pkl",'wb'))
-        if doRayDeriv:
+        if True:#doRayDeriv:
             pickle.dump((Mexp_edges,z_edges,MerrGridUp),open(bigDataDir+"lensgridRayUp_"+expName+"_"+gridName+"_"+lensName+ "_v" + version+".pkl",'wb'))
             pickle.dump((Mexp_edges,z_edges,MerrGridDn),open(bigDataDir+"lensgridRayDn_"+expName+"_"+gridName+"_"+lensName+ "_v" + version+".pkl",'wb'))
         

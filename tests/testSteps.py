@@ -124,21 +124,24 @@ if True:
 
         
     pl = Plotter(labelX="$z$",labelY="$dN$")
+    xstep = 0.01
     for i,val in enumerate(vals):
         assert yNzs[key][i][0]==val
-        pl.add(getCents(z_edges),yNzs[key][i][1],label=str(val))
-    pl.legendOn()
+        pl.add(getCents(z_edges)+((i-len(vals)/2)*xstep),yNzs[key][i][1],label=key+" "+str(val))
+    pl.legendOn(labsize=10,loc='upper right')
     pl.done(outDir+key+"_Nz_step.png")
     pl = Plotter(labelX="$M$",labelY="$dN$")
+    xstep = 0.01
     for i,val in enumerate(vals):
         assert yNzs[key][i][0]==val
-        pl.add(getCents(mexp_edges),yNzs[key][i][2],label=str(val))
-    pl.legendOn()
+        pl.add(getCents(mexp_edges)+((i-len(vals)/2)*xstep),yNzs[key][i][2],label=key+" "+str(val))
+    pl.legendOn(labsize=10,loc='upper right')
     pl.done(outDir+key+"_Nm_step.png")
-    pl = Plotter(labelX="$q$",labelY="$dN$")
+    pl = Plotter(labelX="$q$",labelY="$dN$",scaleX='log')
+    xstep = 0.1
     for i,val in enumerate(vals):
         assert yNzs[key][i][0]==val
-        pl.add(getCents(qbin_edges),yNzs[key][i][3],label=str(val))
-    pl.legendOn()
+        pl.add(getCents(qbin_edges)+((i-len(vals)/2)*xstep),yNzs[key][i][3],label=key+" "+str(val))
+    pl.legendOn(labsize=10,loc='upper right')
     pl.done(outDir+key+"_Nq_step.png")
 

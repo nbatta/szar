@@ -393,6 +393,7 @@ class Halo_MF:
 
     def N_of_mqz_SZ (self,mass_err,q_edges,SZCluster):
         # this is 3D grid for fisher matrix
+        # Index MZQ
 
         q_arr = (q_edges[1:]+q_edges[:-1])/2.
 
