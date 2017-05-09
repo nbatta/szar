@@ -181,6 +181,11 @@ try:
 except:
     pass
 
+try:
+    print "sigma8 1-sigma : "+ str(errDict['S8All'])
+except:
+    pass
+
 
 
 

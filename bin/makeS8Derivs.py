@@ -85,12 +85,37 @@ HMF.sigN = siggrid.copy()
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
 
 h = 0.01
-s80, As = getA(fparams,constDict,zrange,kmax=11.)
-s8zs = As*s80
+# s80, As = getA(fparams,constDict,zrange,kmax=11.)
+# s8zs = As*s80
 
 if rank==0:
     dNFid_dmzq = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
     np.save(bigDataDir+"N_mzq_"+saveId+"_fid_sigma8",getNmzq(dNFid_dmzq,mgrid,zrange,qbins))
+
+    origPk = HMF.pk.copy()
+
+    
+    print "Calculating derivatives for overall power ..."
+    HMF.pk = origPk.copy()
+    HMF.pk[:,:] *= (1.+h/2.)**2. 
+    dNUp_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
+    Nup = getNmzq(dNUp_dmqz,mgrid,zrange,qbins)
+
+    HMF.pk = origPk.copy()
+    HMF.pk[:,:] *= (1.-h/2.)**2.
+    dNDn_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
+    Ndn = getNmzq(dNDn_dmqz,mgrid,zrange,qbins)
+
+
+    dNdp = (Nup-Ndn)/h
+
+    param = "S8All"
+
+    np.save(bigDataDir+"Nup_mzq_"+saveId+"_"+param,Nup)
+    np.save(bigDataDir+"Ndn_mzq_"+saveId+"_"+param,Ndn)
+    np.save(bigDataDir+"dNdp_mzq_"+saveId+"_"+param,dNdp)
+    
+    
 
 else:    
 
