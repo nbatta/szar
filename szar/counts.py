@@ -338,7 +338,7 @@ class Halo_MF:
         print "Calculating P_func_qarr. This takes a while..."
         self.Pfunc_qarr = SZCluster.Pfunc_qarr(self.sigN.copy(),self.M,self.zarr,q_arr)
 
-    def N_of_z_SZ(self,SZCluster):
+    def N_of_z_SZ(self,fsky,SZCluster):
         # this is dN/dz(z) with selection
 
         z_arr = self.zarr
@@ -352,7 +352,7 @@ class Halo_MF:
         for i in xrange (z_arr.size):
             N_z[i] = np.dot(dn_dzdm[:,i]*P_func[:,i],np.diff(self.M200_edges[:,i]))
 
-        return N_z* self.dVdz[:]*4.*np.pi
+        return N_z* self.dVdz[:]*4.*np.pi*fsky
 
     def N_of_mz_SZ(self,SZCluster):
 
@@ -389,7 +389,7 @@ class Halo_MF:
         err_WL_mass = 4.*np.pi* fsky*np.dot(N_z*dV_dz[:],np.diff(self.zarr_edges))
         Ntot = 4.*np.pi* fsky*np.dot(N_tot_z*dV_dz[:],np.diff(self.zarr_edges))
 
-        return 1./err_WL_mass,Ntot
+        return np.sqrt(1./err_WL_mass)*100.,Ntot
 
     def N_of_mqz_SZ (self,mass_err,q_edges,SZCluster):
         # this is 3D grid for fisher matrix

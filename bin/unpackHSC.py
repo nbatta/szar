@@ -9,7 +9,7 @@ calName = sys.argv[1] #"owl1"
 gridName = "grid-"+calName
 outDir = os.environ['WWW']
 
-iniFile = "input/pipeline.ini"
+iniFile = "input/pipeline_nick.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
