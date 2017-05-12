@@ -15,7 +15,7 @@ class SZ_Cluster_Model:
                  dell=10,pmaxN=5,numps=1000,nMax=1, \
                  ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1, \
                  qmin=6., \
-                 ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt'):
+                 ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',fg=True):
 
         self.cc = clusterCosmology
         self.P0 = clusterDict['P0']
@@ -36,22 +36,32 @@ class SZ_Cluster_Model:
 
         self.dell = 10
         self.nlinv = 0.
-        self.nlinv2 = 0.
+        self.nlinv_cmb = 0.
+        self.nlinv_nofg = 0.
+        self.nlinv_cmb_nofg = 0.
         self.evalells = np.arange(2,lmax,self.dell)
         for freq,fwhm,noise in zip(freqs,fwhms,rms_noises):
             freq_fac = (f_nu(self.cc.c,freq))**2
 
 
-            nells = self.cc.clttfunc(self.evalells)+( noise_func(self.evalells,fwhm,noise,lknee,alpha) / self.cc.c['TCMBmuK']**2.)
-            self.nlinv2 += (freq_fac)/nells
+            inst_noise = ( noise_func(self.evalells,fwhm,noise,lknee,alpha) / self.cc.c['TCMBmuK']**2.)
+            nells = self.cc.clttfunc(self.evalells)+inst_noise
+            self.nlinv_nofg += (freq_fac)/nells
+            self.nlinv_cmb_nofg += (1./inst_noise)
 
-            nells += (fgs.rad_ps(self.evalells,freq,freq) + fgs.cib_p(self.evalells,freq,freq) + \
+            totfg = (fgs.rad_ps(self.evalells,freq,freq) + fgs.cib_p(self.evalells,freq,freq) + \
                       fgs.cib_c(self.evalells,freq,freq) + fgs.ksz_temp(self.evalells)) \
                       / self.cc.c['TCMBmuK']**2. / ((self.evalells+1.)*self.evalells) * 2.* np.pi
+            nells += totfg
 
             self.nlinv += (freq_fac)/nells
+            self.nlinv_cmb += (1./(inst_noise+totfg))
         self.nl = 1./self.nlinv
-        self.nl2 = 1./self.nlinv2
+        self.nl_cmb = 1./self.nlinv_cmb
+        self.nl_nofg = 1./self.nlinv_nofg
+        self.nl_cmb_nofg = 1./self.nlinv_cmb_nofg
+
+        self.fg = fg
 
         c = self.xc
         alpha = self.al
@@ -86,7 +96,12 @@ class SZ_Cluster_Model:
         integrand = lambda l: np.trapz(j0(l*thetas)*uint*thetas,thetas,np.diff(thetas))
         integrands = np.array([integrand(ell) for ell in ells])
 
-        varinv = np.trapz((integrands**2.)*ells*2.*np.pi/self.nl,ells,np.diff(ells))
+        if self.fg:
+            noise = self.nl
+        else:
+            noise = self.nl_nofg
+            
+        varinv = np.trapz((integrands**2.)*ells*2.*np.pi/noise,ells,np.diff(ells))
         var = 1./varinv
 
         return var

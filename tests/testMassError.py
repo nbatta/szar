@@ -18,10 +18,10 @@ zz = 0.5
 MM = 5.e14
 clusterParams = 'cluster_params' # from ini file
 cosmologyName = 'params' # from ini file
-experimentName = "PlanckTest"
+experimentName = "PlanckTestNoFg"
 expName = experimentName
 #iniFile = "input/params.ini"
-iniFile = "input/pipeline_nick.ini"
+iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
