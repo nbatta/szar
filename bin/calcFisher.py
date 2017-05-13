@@ -34,7 +34,7 @@ def getExpN(Config,bigDataDir,version,expName,gridName,mexp_edges,z_edges):
     mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
 
     hmf.sigN = siggrid.copy()
-    Ns = np.multiply(hmf.N_of_z_SZ(SZProf)*fsky,np.diff(z_edges).reshape(1,z_edges.size-1)).ravel()
+    Ns = np.multiply(hmf.N_of_z_SZ(fsky,SZProf),np.diff(z_edges).reshape(1,z_edges.size-1)).ravel()
     #Ns = np.multiply(hmf.N_of_z()*fsky,np.diff(z_edges).reshape(1,z_edges.size-1)).ravel()
 
     return Ns.sum()
