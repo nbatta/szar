@@ -12,13 +12,13 @@ from ConfigParser import SafeConfigParser
 from orphics.analysis.flatMaps import interpolateGrid
 import cPickle as pickle
 
-gridName = "grid-owl2"
-calName = "owl2" 
+gridName = "grid-owl1-planck"
+calName = "owl1-planck" 
 zz = 0.5
 MM = 5.e14
 clusterParams = 'cluster_params' # from ini file
 cosmologyName = 'params' # from ini file
-experimentName = "PlanckTestNoFg"
+experimentName = "PlanckTest"
 expName = experimentName
 #iniFile = "input/params.ini"
 iniFile = "input/pipeline.ini"
@@ -63,7 +63,7 @@ cc = ClusterCosmology(cosmoDict,constDict,pickling=True,clTTFixFile = "data/cltt
 # make an SZ profile example
 
 
-SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lmax=lmax,lknee=lknee,alpha=alpha,dell=dell,pmaxN=pmaxN,numps=numps)
+SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lmax=lmax,lknee=lknee,alpha=alpha,dell=dell,pmaxN=pmaxN,numps=numps,qmin=6)
 
 version = Config.get('general','version')
 bigDataDir = Config.get('general','bigDataDirectory')
@@ -81,9 +81,16 @@ HMF.sigN = siggrid.copy()
 
 #sys.exit()
 
-print z_edges
-print HMF.N_of_z()
-print HMF.N_of_z_SZ(fsky,SZProfExample)*np.diff(z_edges)
+#print z_edges
+#print HMF.N_of_z()
+
+Nzs =  HMF.N_of_z_SZ(fsky,SZProfExample)*np.diff(z_edges)
+zcents = (z_edges[1:]+z_edges[:-1])/2.
+pl = Plotter()
+pl.add(zcents,Nzs)
+pl.done("nz.png")
+
+
 print HMF.Mass_err(fsky,lndM,SZProfExample)
 
 #print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts))

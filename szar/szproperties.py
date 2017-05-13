@@ -61,6 +61,15 @@ class SZ_Cluster_Model:
         self.nl_nofg = 1./self.nlinv_nofg
         self.nl_cmb_nofg = 1./self.nlinv_cmb_nofg
 
+
+        # from orphics.tools.io import Plotter
+        # pl = Plotter(scaleY='log')
+        # pl.add(self.evalells,self.nl*self.evalells**2.)
+        # ells = np.arange(2,3000,1)
+        # pl.add(ells,self.cc.clttfunc(ells)*ells**2.)
+        # pl.done("nltt.png")
+        # sys.exit()
+
         self.fg = fg
 
         c = self.xc
