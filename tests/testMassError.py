@@ -91,7 +91,7 @@ pl.add(zcents,Nzs)
 pl.done("nz.png")
 
 
-print HMF.Mass_err(fsky,lndM,SZProfExample)
+print HMF.Mass_err(fsky,lndM*8.0,SZProfExample)
 
 #print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts))
 #print "filtvar " , np.sqrt(SZProfExample.filter_variance(MM,zz))
