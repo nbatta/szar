@@ -55,6 +55,8 @@ lknee = listFromConfig(Config,expName,'lknee')[0]
 alpha = listFromConfig(Config,expName,'alpha')[0]
 fsky = Config.getfloat(expName,'fsky')
 
+massMultiplier = Config.getfloat('general','mass_calib_factor')
+
 clttfile = Config.get('general','clttfile')
 
 # get s/n q-bins
@@ -79,7 +81,7 @@ h = 0.01
 # s80, As = getA(fparams,constDict,zrange,kmax=11.)
 # s8zs = As*s80
 
-dNFid_dmzq = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
+dNFid_dmzq = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbins,SZProf)
 np.save(bigDataDir+"N_mzq_"+saveId+"_fid_sigma8",getNmzq(dNFid_dmzq,mgrid,zrange,qbins))
 
 origPk = HMF.pk.copy()
@@ -88,12 +90,12 @@ origPk = HMF.pk.copy()
 print "Calculating derivatives for overall power ..."
 HMF.pk = origPk.copy()
 HMF.pk[:,:] *= (1.+h/2.)**2. 
-dNUp_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
+dNUp_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbins,SZProf)
 Nup = getNmzq(dNUp_dmqz,mgrid,zrange,qbins)
 
 HMF.pk = origPk.copy()
 HMF.pk[:,:] *= (1.-h/2.)**2.
-dNDn_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
+dNDn_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbins,SZProf)
 Ndn = getNmzq(dNDn_dmqz,mgrid,zrange,qbins)
 
 
