@@ -19,9 +19,10 @@ for exp in expList:
     for gridName in grids:
         
         # do only sz gen6 only
-        cmd = "nohup wq sub -r \"mode:bycore;N:"+str(numCores)+";hostfile: auto;job_name: szowl_"+exp+"_"+";group:[gen6];priority:med\" -c \"source ~/.bash_profile ; source ~/.bashrc ; cd ~/repos/szar ; mpirun -hostfile %hostfile% python bin/makeGrid.py "+exp+" "+gridName+" --skip-lensing \" > output"+str(time.time())+"_szgrid_"+exp+".log  &"
+        #cmd = "nohup wq sub -r \"mode:bycore;N:"+str(numCores)+";hostfile: auto;job_name: szowl_"+exp+"_"+";group:[gen6];priority:med\" -c \"source ~/.bash_profile ; source ~/.bashrc ; cd ~/repos/szar ; mpirun -hostfile %hostfile% python bin/makeGrid.py "+exp+" "+gridName+" --skip-lensing \" > output"+str(time.time())+"_szgrid_"+exp+".log  &"
 
         # do only sz
+        cmd = "nohup mpirun -np "+str(numCores)+" python bin/makeGrid.py "+exp+" "+gridName+" --skip-lensing > output"+str(time.time())+"_szgrid_"+exp+".log  &"
         #cmd = "nohup mpirun python bin/makeGrid.py "+exp+" "+gridName+" --skip-lensing \" > output"+str(time.time())+"_szgrid_"+exp+".log  &"
 
         print cmd
