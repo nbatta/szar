@@ -119,6 +119,10 @@ class SZ_Cluster_Model:
         ans = self.P0 / ((xx*self.xc)**self.gm * (1 + (xx*self.xc)**self.al)**((self.bt-self.gm)/self.al))
         return ans
 
+    def GNFWvar(self,xx,P0,xc,gm,al,bt):
+        ans = P0 / ((xx*xc)**gm * (1 + (xx*xc)**al)**((bt-gm)/al))
+        return ans
+
     def Prof_tilde(self,ell,M,z):
         dr = 0.01
         R500 = self.cc.rdel_c(M,z,500.).flatten()[0]
@@ -129,6 +133,28 @@ class SZ_Cluster_Model:
         intgrl = P500*np.sum(self.GNFW(rr/R500)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
         ans = 4.0*np.pi/DA_z**2 * intgrl
         ans *= self.cc.c['SIGMA_T']/(self.cc.c['ME']*self.cc.c['C']**2)*self.cc.c['MPC2CM']*self.cc.c['eV_2_erg']*1000.0
+
+        return ans
+
+    def Prof_tilde_tau(self,ell,M,z):
+
+        P0 = 4e3
+        xc = 0.5
+        gm = 0.2
+        al = 0.88
+        bt = 3.83
+
+        dr = 0.01
+        R500 = self.cc.rdel_c(M,z,500.).flatten()[0]
+        DA_z = self.cc.results.angular_diameter_distance(z)
+        rr = np.arange(dr,R500*5.0,dr)
+        M_fac = M / (3e14) * (100./70.)
+        #P500 = 1.65e-3 * (100./70.)**2 * M_fac**(2./3.) * self.cc.E_z(z) #keV cm^3 
+        tau500 = 1.
+        intgrl = tau500*np.sum(self.GNFWtau(rr/R500,P0,xc,gm,al,bt)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
+        ans = 4.0*np.pi/DA_z**2 * intgrl
+        ans *= self.cc.c['SIGMA_T'] # CHECK Units
+        #/(self.cc.c['ME']*self.cc.c['C']**2)*self.cc.c['MPC2CM']*self.cc.c['eV_2_erg']*1000.0
 
         return ans
 
