@@ -61,7 +61,10 @@ fplots.addFisher('cmb3',cmbfisher3)
 
 #fplots.plotTri(['mnu','wa','w0','b_ym','tau','H0'],['cmb3','cmb6','cmb8'],labels=['S4-3.0-0.4','S4-2.0-0.4','S4-1.0-0.4'],saveFile="/gpfs01/astro/www/msyriac/test.png",loc='upper right')
 #fplots.plotTri(['mnu','wa','w0','b_ym'],['cmb3','cmb6','cmb8'],labels=['S4-3.0-0.4','S4-2.0-0.4','S4-1.0-0.4'],saveFile="/gpfs01/astro/www/msyriac/test.png",loc='upper right')
-fplots.plotTri(['omch2','S8All','H0'],['cmb3'],labels=['SO-v2'],saveFile="/gpfs01/astro/www/msyriac/test.png",loc='upper right')
+#fplots.plotTri(['omch2','S8All','H0'],['cmb3'],labels=['SO-v2'],saveFile="/gpfs01/astro/www/msyriac/test.png",loc='upper right')
+
+fplots.plotTri(paramList,['cmb3'],labels=['SO-v2'],saveFile="/gpfs01/astro/www/msyriac/test.png",loc='upper right')
+
 
 #fplots.plotPair(['mnu','w0'],['cmb3','cmb5','cmb6','cmb7','cmb8'],labels=['S4-3.0-0.4','S4-2.5-0.4','S4-2.0-0.4','S4-1.5-0.4','S4-1.0-0.4'],saveFile="/gpfs01/astro/www/msyriac/s4resatmwa_"+cal+noatm+"_"+cosmoFisher+"_"+derivSet+".png",xlims=[-0.1,0.2],ylims=[-1.12,-0.88])
 #fplots.plotPair(['mnu','w0'],['cmb3','cmb5','cmb6','cmb7','cmb8'],labels=['S4-3.0-0.4','S4-2.5-0.4','S4-2.0-0.4','S4-1.5-0.4','S4-1.0-0.4'],saveFile="/gpfs01/astro/www/msyriac/s4resatmmnuwa_"+cal+noatm+"_"+cosmoFisher+"_"+derivSet+".png",loc='lower left')#,xlims=[-0.1,0.2])#,ylims=[-1.12,-0.88])
