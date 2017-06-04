@@ -210,7 +210,7 @@ class SZ_Cluster_Model:
  
         Y = np.exp(lnY)
         Ma = np.outer(MM,np.ones(len(Y[0,:])))
-        Ysig = self.scaling['Ysig'] * (1. + zz)**self.scaling['gammaYsig'] * (Ma/(self.cc.H0/100.)/6e14)**self.scaling['betaYsig']
+        Ysig = self.scaling['Ysig'] * (1. + zz)**self.scaling['gammaYsig'] * (Ma/1e14)**self.scaling['betaYsig']
         numer = -1.*(np.log(Y/self.Y_M(Ma,zz)))**2
         ans = 1./(Ysig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*Ysig**2))
         return ans

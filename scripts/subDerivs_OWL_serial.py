@@ -6,12 +6,13 @@ from ConfigParser import SafeConfigParser
 #expList = ['S4-3m-noatm','S4-5m-noatm','S4-6m-noatm','S4-7m-noatm','SO-3m-noatm','SO-5m-noatm','SO-6m-noatm','SO-7m-noatm']#,'SO-6m','SO-7m','S4-5m','S4-6m','S4-7m']
 #expList = ['S4-5m','S4-7m']
 #expList = ['SO-3m','SO-5m','SO-6m','SO-7m','S4-3m','S4-5m','S4-6m','S4-7m','S4-5m-noatm','S4-6m-noatm','S4-7m-noatm','SO-5m-noatm','SO-6m-noatm','SO-7m-noatm','SO-3m-noatm','S4-3m-noatm']
-expList = ['PlanckTest']
+expList = ['CCATP-S4']
+#expList = ['AdvAct-s16_ud','AdvAct-s16_dp','AdvAct-s16_md','AdvAct-s16_wd','AdvAct-s16_uw']
 #expList = ['SO-v2-6m','SO-v2']
 
 #'SO-5m-noatm','SO-6m-noatm','SO-7m-noatm',
 #expList = ['AdvAct']
-calList = ['owl1-planck']#,'owl1']#,'owl1']
+calList = ['owl2']#,'owl1']#,'owl1']
 
 #gridList = ["grid-owl2"]
 
