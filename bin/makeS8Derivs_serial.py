@@ -107,7 +107,28 @@ np.save(bigDataDir+"Nup_mzq_"+saveId+"_"+param,Nup)
 np.save(bigDataDir+"Ndn_mzq_"+saveId+"_"+param,Ndn)
 np.save(bigDataDir+"dNdp_mzq_"+saveId+"_"+param,dNdp)
 
-    
+zs = listFromConfig(Config,gridName,'zrange')
+z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
+
+nums8bins = z_edges.size -1.
+
+for i in xrange(nums8bins):
+    print "Calculating derivatives for redshift ", HMF.zarr[i]
+    HMF.pk = origPk.copy()
+    HMF.pk[i,:] *= (1.+h/2.)**2. #((1.+h/2.)*s8zs[i])**2./s8zs[i]**2.                                                                    
+    dNUp_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
+    Nup = getNmzq(dNUp_dmqz,mgrid,zrange,qbins)
+
+    HMF.pk = origPk.copy()
+    HMF.pk[i,:] *= (1.-h/2.)**2.
+    dNDn_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
+    Ndn = getNmzq(dNDn_dmqz,mgrid,zrange,qbins)
 
 
-    
+    dNdp = (Nup-Ndn)/h
+
+    param = "S8Z"+str(i)
+
+    np.save(bigDataDir+"Nup_mzq_"+saveId+"_"+param,Nup)
+    np.save(bigDataDir+"Ndn_mzq_"+saveId+"_"+param,Ndn)
+    np.save(bigDataDir+"dNdp_mzq_"+saveId+"_"+param,dNdp)
