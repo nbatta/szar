@@ -28,7 +28,8 @@ noatm = ""
 cal = "CMB_all"
 #cal = "owl2"
 derivSet = "0.3_ysig_0.127"
-gridName = "grid-default"
+#gridName = "grid-default"
+gridName = "grid-1.2"
 
 
 cosmoFisher = Config.get('fisher-'+fishSection,'saveSuffix')
@@ -36,18 +37,18 @@ origParams = Config.get('fisher-'+fishSection,'paramList').split(',')
 
 
 """RES STUDY"""
-# cmbfisher3 = getFisher(bigDataDir,"S4-3.0-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
-# cmbfisher2 = getFisher(bigDataDir,"S4-2.5-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
-# cmbfisher15 = getFisher(bigDataDir,"S4-2.0-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
-# cmbfisher1 = getFisher(bigDataDir,"S4-1.5-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
-# cmbfisher0 = getFisher(bigDataDir,"S4-1.0-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+cmbfisher3 = getFisher(bigDataDir,"S4-3.0-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+#cmbfisher2 = getFisher(bigDataDir,"S4-2.5-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+cmbfisher15 = getFisher(bigDataDir,"S4-2.0-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+cmbfisher1 = getFisher(bigDataDir,"S4-1.5-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+cmbfisher0 = getFisher(bigDataDir,"S4-1.0-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
 
-cmbfisher3 = getFisher(bigDataDir,"S4-1.5-0.05"+noatm,gridName,cal,cosmoFisher,derivSet)
-cmbfisher2 = getFisher(bigDataDir,"S4-1.5-0.1"+noatm,gridName,cal,cosmoFisher,derivSet)
-cmbfisher15 = getFisher(bigDataDir,"S4-1.5-0.2"+noatm,gridName,cal,cosmoFisher,derivSet)
-cmbfisher1 = getFisher(bigDataDir,"S4-1.5-0.3"+noatm,gridName,cal,cosmoFisher,derivSet)
-cmbfisher0 = getFisher(bigDataDir,"S4-1.5-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
-cmbfisher01 = getFisher(bigDataDir,"S4-1.5-0.7"+noatm,gridName,cal,cosmoFisher,derivSet)
+# cmbfisher3 = getFisher(bigDataDir,"S4-1.5-0.05"+noatm,gridName,cal,cosmoFisher,derivSet)
+# cmbfisher2 = getFisher(bigDataDir,"S4-1.5-0.1"+noatm,gridName,cal,cosmoFisher,derivSet)
+# cmbfisher15 = getFisher(bigDataDir,"S4-1.5-0.2"+noatm,gridName,cal,cosmoFisher,derivSet)
+# cmbfisher1 = getFisher(bigDataDir,"S4-1.5-0.3"+noatm,gridName,cal,cosmoFisher,derivSet)
+# cmbfisher0 = getFisher(bigDataDir,"S4-1.5-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+# cmbfisher01 = getFisher(bigDataDir,"S4-1.5-0.7"+noatm,gridName,cal,cosmoFisher,derivSet)
 
 # cmbfisher3 = getFisher(bigDataDir,"SO-3m"+noatm,gridName,cal,cosmoFisher,derivSet)
 # cmbfisher2 = getFisher(bigDataDir,"SO-5m"+noatm,gridName,cal,cosmoFisher,derivSet)
@@ -82,7 +83,12 @@ s82zs = As2*s82
 outDir = "/gpfs01/astro/www/msyriac/web/work/"
 
 
-zbins = np.append(np.arange(0.,2.5,0.5),3.0)
+#zbins = np.append(np.arange(0.,2.5,0.5),3.0)
+#zbins = np.append(np.arange(2.,3.0,0.2),3.0)
+zbins = np.array([1.2,3.0])#np.arange(1.5,3.0,0.1)
+
+#zbins = np.append(np.arange(2.,2.5,0.5),3.0)
+
 #zbins = np.arange(0.,3.5,0.5)
 #zbins = np.arange(0.,3.1,0.1)
 
@@ -96,8 +102,10 @@ colList = ['C0','C1','C2','C3','C4','C5']
 
 from matplotlib.patches import Rectangle
 currentAxis = plt.gca()
+#for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher15,cmbfisher0],['3.0\'','2.0\'','1.0\''],colList)):
+for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher15,cmbfisher1,cmbfisher0],['3.0\'','2.0\'','1.5\'','1.0\''],colList)):
 #for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1,cmbfisher0],['3.0\'','2.5\'','2.0\'','1.5\'','1.0\''],colList)):
-for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1,cmbfisher0,cmbfisher01],['0.05','0.1','0.2','0.3','0.4','0.7'],colList)):
+#for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1,cmbfisher0,cmbfisher01],['0.05','0.1','0.2','0.3','0.4','0.7'],colList)):
 #for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1],['SO-SZ + CMB Halo Lensing (P only) 3m','5m','6m','7m'],['coral','forestgreen','gold','indigo'])):
     inv = np.linalg.inv(f)
     err = np.sqrt(np.diagonal(inv))[len(origParams):]
@@ -118,6 +126,7 @@ for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1
         xerr = (zright-zleft)/2.
         xerrs.append(xerr)
         s8now = np.mean(s81zs[np.logical_and(zrange>=zleft,zrange<zright)])
+        print lab,zleft,zright, s8now, yerr*100./s8now, "%"
         #s8now = np.mean(s81zs[np.logical_and(zrange>=zleft,zrange<zright)])/s81
         #yerrsq = (1./sum([1/x**2. for x in errselect]))
         #yerr = (s8now/s80mean)*np.sqrt(yerrsq/s8now**2. + yerrsq0/s80mean**2.)
@@ -137,7 +146,7 @@ pl.add(zrange,s81zs/s81zs,color='black',alpha=0.5,ls="--")#,label="$w=-1$")
 
 pl.legendOn(labsize=9)
 #pl._ax.set_ylim(0.9,1.1) # res
-pl._ax.set_ylim(0.95,1.05) # fsky
+#pl._ax.set_ylim(0.95,1.05) # fsky
 #pl._ax.text(0.8,.82,"Madhavacheril et. al. in prep")
 pl.done(outDir+"S4_"+cal+"_fsky.png")
 #pl.done(outDir+"s8SO.png")

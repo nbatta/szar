@@ -6,6 +6,7 @@ from szar.counts import rebinN,getA
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle
+from szar.fisher import getFisher
 
 
 expName = sys.argv[1]
@@ -92,32 +93,46 @@ sId = expName + "_" + gridName + "_v" + version
 #sovernsquare =  np.dstack([sovernsquareEach]*(len(qbins)-1))
 
 
-# Populate Fisher
-for param1,param2 in paramCombs:
-    if param1=='tau' or param2=='tau': continue
+try:
+    priorNameList = Config.get(fishSection,'prior_names').split(',')
+    priorValueList = listFromConfig(Config,fishSection,'prior_values')
+except:
+    priorNameList = []
+    priorValueList = []
     
-    new_z_edges, dN1 = rebinN(np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param1+".npy"),pzcutoff,z_edges)
-    new_z_edges, dN2 = rebinN(np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param2+".npy"),pzcutoff,z_edges)
-    dN1 = dN1[:,:,:]*fsky
-    dN2 = dN2[:,:,:]*fsky
+##########################
+# Populate Fisher
+Fisher = getFisher(N_fid,paramList,priorNameList,priorValueList,bigDataDir,saveId,pzcutoff,z_edges,fsky)
+##########################
 
 
-    i = paramList.index(param1)
-    j = paramList.index(param2)
+# Populate Fisher
+# for param1,param2 in paramCombs:
+#     if param1=='tau' or param2=='tau': continue
+#     print param1,param2
+    
+#     new_z_edges, dN1 = rebinN(np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param1+".npy"),pzcutoff,z_edges)
+#     new_z_edges, dN2 = rebinN(np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param2+".npy"),pzcutoff,z_edges)
+#     dN1 = dN1[:,:,:]*fsky
+#     dN2 = dN2[:,:,:]*fsky
 
-    assert not(np.any(np.isnan(dN1)))
-    assert not(np.any(np.isnan(dN2)))
-    assert not(np.any(np.isnan(N_fid)))
+
+#     i = paramList.index(param1)
+#     j = paramList.index(param2)
+
+#     assert not(np.any(np.isnan(dN1)))
+#     assert not(np.any(np.isnan(dN2)))
+#     assert not(np.any(np.isnan(N_fid)))
 
 
-    with np.errstate(divide='ignore'):
-        FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid))#+(N_fid*N_fid*sovernsquare)))
+#     with np.errstate(divide='ignore'):
+#         FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid))#+(N_fid*N_fid*sovernsquare)))
 
-    Fell = FellBlock.sum()
+#     Fell = FellBlock.sum()
         
        
-    Fisher[i,j] = Fell
-    Fisher[j,i] = Fell    
+#     Fisher[i,j] = Fell
+#     Fisher[j,i] = Fell    
 
 
 

@@ -193,17 +193,26 @@ if rank==0:
         pl.add(ellkk,4.*Clkk/2./np.pi)
 
 
-        from orphics.tools.stats import bin1D
-        dls = np.diff(ls)[0]
-        bin_edges_nls = np.arange(ls[0]-dls/2.,ls[-1]+dls*3./2.,dls)
-        binner1d = bin1D(bin_edges_nls)
-        ellcls , clkk_binned = binner1d.binned(ellkk,Clkk)
+        # from orphics.tools.stats import bin1D
+        # dls = np.diff(ls)[0]
+        # bin_edges_nls = np.arange(ls[0]-dls/2.,ls[-1]+dls*3./2.,dls)
 
-        pl.add(ellcls,4.*clkk_binned/2./np.pi,ls="none",marker="x")
+        # print ls
+        # print dls
+        # print bin_edges_nls
+        # print bin_edges
+        
+        # binner1d = bin1D(bin_edges_nls)
+        # ellcls , clkk_binned = binner1d.binned(ellkk,Clkk)
+
+        clfunc = interp1d(ellkk,Clkk,bounds_error=False,fill_value="extrapolate")
+        clkk_binned = clfunc(ls)
+
+        pl.add(ls,4.*clkk_binned/2./np.pi,ls="none",marker="x")
         pl.add(ls,4.*Nls/2./np.pi,ls="--")
         np.savetxt(bigDataDir+"nlsave_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
 
-        Nls += clkk_binned[:]
+        Nls += clkk_binned
         np.savetxt(bigDataDir+"nlsaveTot_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
         
         pl.add(ls,4.*Nls/2./np.pi,ls="-.")

@@ -25,7 +25,7 @@ dzs = []
 
 mindicesList = [60,80,120,160]
 
-from orphics.tools.output import Plotter
+from orphics.tools.io import Plotter
 pl = Plotter(labelX="$z$",labelY="S/N per cluster",ftsize=14)
 
 for gridFile,ls,lab,outPlot in zip(gridList,['-','--'],['CMB lensing','optical lensing'],['cmb','owl']):
@@ -78,7 +78,7 @@ for gridFile,ls,lab,outPlot in zip(gridList,['-','--'],['CMB lensing','optical l
 pl.legendOn(loc='upper right',labsize=10)
 pl.done(outDir+"slice.pdf")
     
-sys.exit()
+#sys.exit()
 
 outmgrid = np.arange(min(mmins),max(mmaxes),min(dms))
 outzgrid = np.arange(min(zmins),max(zmaxes),min(dzs))
@@ -118,7 +118,7 @@ pl.legendOn(loc='upper right',labsize=8)
 pl.done(outDir+"slice.pdf")
 
 
-from orphics.tools.output import Plotter
+from orphics.tools.io import Plotter
 pgrid = np.rot90(1./jointgrid)
 pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
 pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],levels=[1.0,3.0,5.0],labsize=14)
