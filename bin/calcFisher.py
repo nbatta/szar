@@ -186,6 +186,11 @@ try:
 except:
     pass
 
+try:
+    print "sigR 1-sigma : "+ str(errDict['sigR'])
+except:
+    pass
+
 
 
 

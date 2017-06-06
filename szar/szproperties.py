@@ -14,7 +14,7 @@ class SZ_Cluster_Model:
                  fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1., \
                  dell=10,pmaxN=5,numps=1000,nMax=1, \
                  ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1, \
-                 qmin=6., \
+                 qmin=5., \
                  ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',fg=True):
 
         self.cc = clusterCosmology

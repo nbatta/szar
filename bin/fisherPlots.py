@@ -11,6 +11,8 @@ def getFisher(expName,gridName,calName,saveName,inParamList,suffix):
     saveId = expName + "_" + gridName+ "_" + calName + "_" + suffix
 
     paramList,FisherTot = pickle.load(open(bigDataDir+"savedFisher_"+saveId+"_"+saveName+".pkl",'rb'))
+    print paramList
+    print inParamList
     assert paramList==inParamList
     return FisherTot
 
@@ -25,14 +27,15 @@ bigDataDir = Config.get('general','bigDataDirectory')
 
 
 #fishSection = "mnu-w0-wa"
-fishSection = "s8"
+fishSection = "lcdm"
 
 noatm = ""
 #noatm = "-noatm"
 #cal = "CMB_all_miscentered"
 cal = "CMB_all"
 #cal = "owl2"
-derivSet = "v0.3_ysig_0.127"
+#derivSet = "v0.3_ysig_0.127"
+derivSet = "v0.5_pzcut"
 gridName = "grid-default"
 
 cosmoFisher = Config.get('fisher-'+fishSection,'saveSuffix')
@@ -47,7 +50,7 @@ for (key, val) in Config.items('params'):
 
 """RES STUDY"""
 #cmbfisher3 = getFisher("S4-3.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
-cmbfisher3 = getFisher("SO-v2"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
+cmbfisher3 = getFisher("S4-1.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
 # cmbfisher5 = getFisher("S4-2.5-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
 #cmbfisher6 = getFisher("S4-2.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
 # cmbfisher7 = getFisher("S4-1.5-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)

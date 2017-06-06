@@ -63,7 +63,7 @@ if rank==0:
     Config.optionxform=str
     Config.read(iniFile)
     version = Config.get('general','version')
-    pzcut = Config.get('general','photoZCutOff')
+    pzcut = Config.getfloat('general','photoZCutOff')
 
     fparams = {}   
     for (key, val) in Config.items('params'):
