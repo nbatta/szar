@@ -82,7 +82,9 @@ cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
 from matplotlib.patches import Rectangle
 
 
-expList = ['S4-2.0-0.4']#,'S4-1.5-0.4','S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1','S4-1.5-0.05']
+expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
+#expList = ['S4-2.0-0.4']#,'S4-1.5-0.4','S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1','S4-1.5-0.05']
+#expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
 pad = 0.05
 
 pl = Plotter(labelX="$z$",labelY="$N(z)$",ftsize=12,scaleY='log')

@@ -35,7 +35,7 @@ noatm = ""
 cal = "CMB_all"
 #cal = "owl2"
 #derivSet = "v0.3_ysig_0.127"
-derivSet = "v0.5_pzcut"
+derivSet = "v0.5"
 gridName = "grid-default"
 
 cosmoFisher = Config.get('fisher-'+fishSection,'saveSuffix')
