@@ -86,7 +86,7 @@ assert numcores==(HMF.zarr.size+1), "ERROR: Need " + str((HMF.zarr.size+1))+" co
 HMF.sigN = siggrid.copy()
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
 
-h = 0.01
+h = 0.05
 # s80, As = getA(fparams,constDict,zrange,kmax=11.)
 # s8zs = As*s80
 

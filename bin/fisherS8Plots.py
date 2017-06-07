@@ -27,9 +27,10 @@ noatm = ""
 #noatm = "-noatm"
 cal = "CMB_all"
 #cal = "owl2"
-derivSet = "0.3_ysig_0.127"
-#gridName = "grid-default"
-gridName = "grid-1.2"
+#derivSet = "0.3_ysig_0.127"
+derivSet = "0.5"
+gridName = "grid-default"
+#gridName = "grid-1.2"
 
 
 cosmoFisher = Config.get('fisher-'+fishSection,'saveSuffix')
@@ -85,7 +86,8 @@ outDir = "/gpfs01/astro/www/msyriac/web/work/"
 
 #zbins = np.append(np.arange(0.,2.5,0.5),3.0)
 #zbins = np.append(np.arange(2.,3.0,0.2),3.0)
-zbins = np.array([1.2,3.0])#np.arange(1.5,3.0,0.1)
+zbins = np.array([0.5,3.0])#np.arange(1.5,3.0,0.1)
+#zbins = zrange
 
 #zbins = np.append(np.arange(2.,2.5,0.5),3.0)
 
@@ -109,6 +111,7 @@ for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher15,cmbfisher1,cmbfisher0
 #for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1],['SO-SZ + CMB Halo Lensing (P only) 3m','5m','6m','7m'],['coral','forestgreen','gold','indigo'])):
     inv = np.linalg.inv(f)
     err = np.sqrt(np.diagonal(inv))[len(origParams):]
+    #print err
     #if lab=='0.1': continue #print err
     zcents = []
     errcents = []
@@ -126,14 +129,14 @@ for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher15,cmbfisher1,cmbfisher0
         xerr = (zright-zleft)/2.
         xerrs.append(xerr)
         s8now = np.mean(s81zs[np.logical_and(zrange>=zleft,zrange<zright)])
-        print lab,zleft,zright, s8now, yerr*100./s8now, "%"
+        print lab,zleft,zright, yerr,s8now, yerr*100./s8now, "%"
         #s8now = np.mean(s81zs[np.logical_and(zrange>=zleft,zrange<zright)])/s81
         #yerrsq = (1./sum([1/x**2. for x in errselect]))
         #yerr = (s8now/s80mean)*np.sqrt(yerrsq/s8now**2. + yerrsq0/s80mean**2.)
         errcents.append(yerr)
         ms8.append(s8now)
         currentAxis.add_patch(Rectangle((zcent - xerr+pad, 1. - yerr/s8now), 2*xerr-pad/2., 2.*yerr/s8now, facecolor=col))
-
+    print "====================="
     pl._ax.fill_between(zrange, 1., 1.,label=lab,alpha=0.75,color=col)
     
 
