@@ -76,7 +76,7 @@ class ILC_simple:
         cls_tsz = self.fgs.tSZ(self.evalells,self.freq[0],self.freq[0]) / self.cc.c['TCMBmuK']**2. \
                 / ((self.evalells+1.)*self.evalells) * 2.* np.pi
 
-        cls_yy = cls_tsz / (f_nu(self.cc.c,self.freq[0]))**2
+        cls_yy = cls_tsz / (f_nu(self.cc.c,self.freq[0]))**2  # Normalized to get Cell^yy
 
         LF = orphics.tools.gaussianCov.LensForecast()
         LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz)
@@ -88,17 +88,21 @@ class ILC_simple:
 
         return ellMids,cls_out,np.sqrt(errs2),sn
 
-    def Forecast_Cellcmb(self,bin_edges):
+    def Forecast_Cellcmb(self,bin_edges,fsky):
 
-        els_int = np.arange(2,lmax,1.)
+        ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1]) / 2
 
+        cls_cmb = self.cc.clttfunc(self.evalells)
 
+        LF = orphics.tools.gaussianCov.LensForecast()
+        LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb)
 
-        els = 1.
-        cls = 1.
-        errs = 1.
+        sn = LF.sn(bin_edges,fsky,"tt")
+        errs2 = LF.sigmaClSquared("tt",bin_edges,fsky)
 
-        return els,cls,errs,sn2
+        cls_out = np.interp(ellMids,self.evalells,cls_cmb)
+
+        return ellMids,cls_out,np.sqrt(errs2),sn
 
     def PlotyWeights(self):
         
