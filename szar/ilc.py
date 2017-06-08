@@ -31,6 +31,7 @@ class ILC_simple:
         self.W_ll_tsz = np.array(len(self.evalells),len(freqs))
         self.W_ll_cmb = np.array(len(self.evalells),len(freqs))
         self.f_nu_arr = np.array(freqs)*0.0
+        self.freq = freqs
 
         for ii in xrange(len(freqs)):
             self.f_nu_arr[ii] = f_nu(self.cc.c,freqs[ii])
@@ -68,15 +69,26 @@ class ILC_simple:
             self.N_ll_tsz[ii] = np.dot(np.transpose(self.W_ll_tsz[ii,:]),np.dot(N_ll_for_tsz,self.W_ll_tsz[ii,:]))
             self.N_ll_cmb[ii] = np.dot(np.transpose(self.W_ll_cmb[ii,:]),np.dot(N_ll_for_cmb,self.W_ll_cmb[ii,:]))
 
-    def Forecast_Cellyy(self,els):
-        
-        cls = self.fgs.tSZ(self.evalells,freqs[0],freqs[0]) / self.cc.c['TCMBmuK']**2. \
-             / ((self.evalells+1.)*self.evalells) * 2.* np.pi
+    def Forecast_Cellyy(self,bin_edges):
 
+        ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1]) / 2
 
-        return cls,errs,sn2
+        cls_tsz = self.fgs.tSZ(self.evalells,self.freq[0],self.freq[0]) / self.cc.c['TCMBmuK']**2. \
+                / ((self.evalells+1.)*self.evalells) * 2.* np.pi
 
-    def Cellcmb(self):
+        cls_yy = cls_tsz / (f_nu(self.cc.c,self.freq[0]))**2
+
+        LF = orphics.tools.gaussianCov.LensForecast()
+        LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz)
+
+        sn = LF.sn(bin_edges,self.fsky,"yy")
+        errs = LF.sigmaClSquared("yy",bin_edges,self.fsky)
+
+        cls_out = np.interp(ellMids,self.evalells,cls_yy)
+
+        return ellMids,cls_out,np.sqrt(errs),sn
+
+    def Cellcmb(self,bin_edges):
 
         els_int = np.arange(2,lmax,1.)
 
