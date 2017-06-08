@@ -45,14 +45,6 @@ class fgNoises(object):
         else:
             self.tsz_template = None
 
-        if tsz_cib_addison_template_csv is not None:
-            ells,cls = np.loadtxt(tsz_cib_addison_template_csv,delimiter=',',unpack=True)
-            self.tsz_cib_template = interp1d(ells,cls,bounds_error=False,fill_value=0.)
-        else:
-            self.tsz_cib_template = None
-
-
-
     def g_nu(self,nu):
         beta = (nu*1e9) * self.c['H_CGS'] / (self.c['K_CGS']*self.c['TCMB'])
         ans = 2.* self.c['H_CGS']**2 * (nu*1e9)**4 / (self.c['C']**2 *self.c['K_CGS'] * self.c['TCMB']**2) \

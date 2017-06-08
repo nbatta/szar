@@ -15,7 +15,7 @@ class SZ_Cluster_Model:
                  dell=10,pmaxN=5,numps=1000,nMax=1, \
                  ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1, \
                  qmin=5., \
-                 ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',fg=True):
+                 ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',fg=True,tsz_cib=False):
 
         self.cc = clusterCosmology
         self.P0 = clusterDict['P0']
@@ -53,6 +53,11 @@ class SZ_Cluster_Model:
                       fgs.cib_c(self.evalells,freq,freq) + fgs.ksz_temp(self.evalells)) \
                       / self.cc.c['TCMBmuK']**2. / ((self.evalells+1.)*self.evalells) * 2.* np.pi
             nells += totfg
+
+            if (tsz_cib):
+                tszcib = fgs.tSZ_CIB(self.evalells,freq,freq) \
+                         / self.cc.c['TCMBmuK']**2. / ((self.evalells+1.)*self.evalells) * 2.* np.pi
+                nells += tszcib
 
             self.nlinv += (freq_fac)/nells
             self.nlinv_cmb += (1./(inst_noise+totfg))
