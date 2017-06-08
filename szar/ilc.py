@@ -11,7 +11,7 @@ class ILC_simple:
     def __init__(self,clusterCosmology, \
                  fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1., \
                  dell=1.,ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt', \
-                 tsz_cib_file='input/sz_x_cib_template.dat' fg=True):
+                 tsz_cib_file='input/sz_x_cib_template.dat',fg=True):
 
         self.cc = clusterCosmology
 
@@ -69,7 +69,7 @@ class ILC_simple:
             self.N_ll_tsz[ii] = np.dot(np.transpose(self.W_ll_tsz[ii,:]),np.dot(N_ll_for_tsz,self.W_ll_tsz[ii,:]))
             self.N_ll_cmb[ii] = np.dot(np.transpose(self.W_ll_cmb[ii,:]),np.dot(N_ll_for_cmb,self.W_ll_cmb[ii,:]))
 
-    def Forecast_Cellyy(self,bin_edges):
+    def Forecast_Cellyy(self,bin_edges,fsky):
 
         ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1]) / 2
 
@@ -81,14 +81,14 @@ class ILC_simple:
         LF = orphics.tools.gaussianCov.LensForecast()
         LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz)
 
-        sn = LF.sn(bin_edges,self.fsky,"yy")
-        errs = LF.sigmaClSquared("yy",bin_edges,self.fsky)
+        sn = LF.sn(bin_edges,fsky,"yy")
+        errs2 = LF.sigmaClSquared("yy",bin_edges,fsky)
 
         cls_out = np.interp(ellMids,self.evalells,cls_yy)
 
-        return ellMids,cls_out,np.sqrt(errs),sn
+        return ellMids,cls_out,np.sqrt(errs2),sn
 
-    def Cellcmb(self,bin_edges):
+    def Forecast_Cellcmb(self,bin_edges):
 
         els_int = np.arange(2,lmax,1.)
 
