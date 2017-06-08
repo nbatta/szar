@@ -1,0 +1,176 @@
+from orphics.tools.io import Plotter
+import flipper.liteMap as lm
+from szar.counts import ClusterCosmology
+from orphics.tools.io import dictFromSection,listFromConfig
+from ConfigParser import SafeConfigParser 
+from alhazen.halos import NFWMatchedFilterSN
+import numpy as np
+from orphics.tools.cmb import loadTheorySpectraFromCAMB
+from alhazen.quadraticEstimator import NlGenerator,getMax
+
+Mexp = np.log10(2.e14)
+z = 0.7
+c = 1.18
+
+overdensity=500.
+critical=True
+atClusterZ=True
+
+
+beamList = np.arange(0.5,5.0,0.2)
+
+expName = "S4-1.0-0.4"
+
+# Mexp = np.log10(2.e14)
+# z = 0.7
+# c = 3.2
+
+# overdensity=180.
+# critical=False
+# atClusterZ=False
+
+
+clusterParams = 'cluster_params' # from ini file
+cosmologyName = 'params' # from ini file
+
+iniFile = "../szar/input/pipeline.ini"
+Config = SafeConfigParser()
+Config.optionxform=str
+Config.read(iniFile)
+
+
+cosmoDict = dictFromSection(Config,cosmologyName)
+constDict = dictFromSection(Config,'constants')
+clusterDict = dictFromSection(Config,clusterParams)
+
+
+bigDataDir = Config.get('general','bigDataDirectory')
+
+
+beam = listFromConfig(Config,expName,'beams')
+noise = listFromConfig(Config,expName,'noises')
+freq = listFromConfig(Config,expName,'freqs')
+lkneeT,lkneeP = listFromConfig(Config,expName,'lknee')
+alphaT,alphaP = listFromConfig(Config,expName,'alpha')
+tellmin,tellmax = listFromConfig(Config,expName,'tellrange')
+pellmin,pellmax = listFromConfig(Config,expName,'pellrange')
+try:
+    doFg = Config.getboolean(expName,'do_foregrounds')
+except:
+    print "NO FG OPTION FOUND IN INI. ASSUMING TRUE."
+    doFg = True
+
+miscentering = Config.getboolean(lensName,'miscenter')
+delens = Config.getboolean(lensName,'delens')
+freq_to_use = Config.getfloat(lensName,'freq')
+ind = np.where(np.isclose(freq,freq_to_use))
+beamFind = np.array(beam)[ind]
+noiseFind = np.array(noise)[ind]
+assert beamFind.size==1
+assert noiseFind.size==1
+
+
+testFreq = freq_to_use
+from szar.foregrounds import fgNoises
+fgs = fgNoises(constDict,ksz_battaglia_test_csv="data/ksz_template_battaglia.csv",tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
+tcmbmuk = constDict['TCMB'] * 1.0e6
+ksz = lambda x: fgs.ksz_temp(x)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
+radio = lambda x: fgs.rad_ps(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
+cibp = lambda x: fgs.cib_p(x,testFreq,testFreq) /x/(x+1.)*2.*np.pi/ tcmbmuk**2.
+cibc = lambda x: fgs.cib_c(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
+tsz = lambda x: fgs.tSZ(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
+
+fgFunc =  lambda x: ksz(x)+radio(x)+cibp(x)+cibc(x)+tsz(x)
+
+beamTX = 5.0
+noiseTX = 42.0
+tellminX = 2
+tellmaxX = 3000
+lkneeTX = 0
+alphaTX = 1
+fgFuncX = None
+
+
+noiseTY = noiseFind
+noisePX = np.sqrt(2.)*noiseTY
+noisePY = np.sqrt(2.)*noiseTY
+pellminX = pellmin
+pellmaxX = pellmax
+pellminY = pellmin
+pellmaxY = pellmax
+tellminY = tellmin
+tellmaxY = tellmax
+lkneeTY = lkneeT
+lkneePX = lkneePY = lkneeP
+alphaTY = alphaT
+alphaPX = alphaPY = alphaP
+
+
+
+import flipper.liteMap as lm
+from alhazen.quadraticEstimator import NlGenerator,getMax
+deg = 5.
+px = 1.0
+dell = 10
+gradCut = 2000
+kellmin = 10
+lmap = lm.makeEmptyCEATemplate(raSizeDeg=deg, decSizeDeg=deg,pixScaleXarcmin=px,pixScaleYarcmin=px)
+kellmax = max(tellmax,pellmax)
+from orphics.theory.cosmology import Cosmology
+cc = Cosmology(lmax=int(kellmax),pickling=True)
+theory = cc.theory
+bin_edges = np.arange(kellmin,kellmax,dell)
+myNls = NlGenerator(lmap,theory,bin_edges,gradCut=gradCut)
+
+from scipy.interpolate import interp1d
+
+from orphics.tools.io import Plotter
+ellkk = np.arange(2,9000,1)
+Clkk = theory.gCl("kk",ellkk)    
+clfunc = interp1d(ellkk,Clkk,bounds_error=False,fill_value="extrapolate")
+
+kellmax = 8000
+
+cc = ClusterCosmology(cosmoDict,constDict,kellmax,pickling=True)
+theory = cc.theory
+
+for lensName in ["CMB_all","CMB_pol"]
+for doFg in [False,True]:
+    for beamNow in beamList:
+
+
+        pols = Config.get(lensName,'polList').split(',')
+
+        if doFg:
+            fgFuncY = fgFunc
+        else:
+            fgFuncY = None
+
+        beamPX = beamTY = beamPY = beamNow
+        beamY = beamTY
+
+
+        nTX,nPX,nTY,nPY = myNls.updateNoiseAdvanced(beamTX,noiseTX,beamPX,noisePX,tellminX,tellmaxX,pellminX,pellmaxX,beamTY,noiseTY,beamPY,noisePY,tellminY,tellmaxY,pellminY,pellmaxY,(lkneeTX,lkneePX),(alphaTX,alphaPX),(lkneeTY,lkneePY),(alphaTY,alphaPY),None,None,None,None,None,None,None,None,fgFuncX,fgFuncY,None,None,None,None,None,None,None,None)
+
+
+        ls,Nls,ells,dclbb,efficiency = myNls.getNlIterative(pols,kellmin,kellmax,tellmax,pellmin,pellmax,dell=dell,halo=True)
+
+        ls = ls[1:-1]
+        Nls = Nls[1:-1]
+
+
+        clkk_binned = clfunc(ls)
+
+
+
+        Nls += clkk_binned
+
+
+
+
+
+
+        sn,k,std = NFWMatchedFilterSN(cc,Mexp,c,z,ells=ls,Nls=Nls,kellmax=kellmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ)
+
+        print sn*np.sqrt(1000.)
+
