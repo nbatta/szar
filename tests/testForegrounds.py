@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
-from szar.counts import ClusterCosmology
+from szar.counts import ClusterCosmology,f_nu
 from szar.szproperties import SZ_Cluster_Model
 from szar.foregrounds import fgNoises
 import sys,os
@@ -47,16 +47,38 @@ SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms
 outDir = "tests/"
 ls = np.arange(2,8000,10)
 
-
-
 ksz = fgs.ksz_temp(ls)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
 # kszAlt = fgs.ksz_battaglia_test(ls)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
 
 print_ells = [100,200,300,400,500,600]
 
+fq_mat   = np.matlib.repmat(freqs,len(freqs),1)
+fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
+
+f_nu_arr = np.array(freqs)*0.0
+for ii in xrange(len(freqs)):
+    #f_nu_arr[ii] =
+#    print 'outside', 
+#    blah = f_nu(cc.c,freqs[ii])
+#    print blah, np.size(blah)
+    f_nu_arr[ii] = f_nu(cc.c,freqs[ii])
+
+#print np.size(f_nu_arr)
+
+#print fq_mat
+#print fq_mat_t
+
+radio_mat = fgs.rad_ps(print_ells[4],fq_mat,fq_mat_t) / cc.c['TCMBmuK']**2.
+
+print "contraction", np.dot(np.transpose(f_nu_arr),np.dot(np.linalg.inv(radio_mat),f_nu_arr))
+
+#print fgs.rad_ps(ls[10],fq_mat_t,fq_mat)/ls[10]/(ls[10]+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
+
+#print fgs.rad_ps(ls[10],fq_mat_t,fq_mat)*0.0 + 1.
+
 for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
     totCl = 0.
-
+    #print testFreq
     noise = noise_func(ls,fwhm,noiseT,lknee,alpha) / cc.c['TCMBmuK']**2.
     
     radio = fgs.rad_ps(ls,testFreq,testFreq)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
