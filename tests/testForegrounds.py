@@ -1,7 +1,9 @@
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
-from szar.counts import ClusterCosmology,SZ_Cluster_Model,fgNoises
+from szar.counts import ClusterCosmology
+from szar.szproperties import SZ_Cluster_Model
+from szar.foregrounds import fgNoises
 import sys,os
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle
@@ -41,7 +43,8 @@ fsky = Config.getfloat(experimentName,'fsky')
 SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
 
 
-outDir = os.environ['WWW']+"plots/"
+#outDir = os.environ['WWW']+"plots/"
+outDir = "tests/"
 ls = np.arange(2,8000,10)
 
 
@@ -49,6 +52,7 @@ ls = np.arange(2,8000,10)
 ksz = fgs.ksz_temp(ls)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
 # kszAlt = fgs.ksz_battaglia_test(ls)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
 
+print_ells = [100,200,300,400,500,600]
 
 for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
     totCl = 0.
@@ -59,6 +63,9 @@ for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
     cibp = fgs.cib_p(ls,testFreq,testFreq) /ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
     cibc = fgs.cib_c(ls,testFreq,testFreq)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
     tsz = fgs.tSZ(ls,testFreq,testFreq)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
+    tsz_cib = np.abs(fgs.tSZ_CIB(ls,testFreq,testFreq)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.)
+
+    print ls[print_ells],tsz[print_ells],tsz_cib[print_ells],tsz[print_ells]/tsz_cib[print_ells] 
 
     totCl = cc.theory.lCl('TT',ls)+ksz+radio+cibp+cibc+noise
     oldtotCl = cc.theory.lCl('TT',ls)+noise
@@ -69,6 +76,7 @@ for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
     pl.add(ls,noise*ls**2.,label="noise "+str(noiseT)+"uK'")
     pl.add(ls,ksz*ls**2.,label="ksz",alpha=0.2,ls="--")
     pl.add(ls,tsz*ls**2.,label="tsz",alpha=0.2,ls="--")
+    pl.add(ls,tsz_cib*ls**2.,label="tsz-cib",alpha=0.2,ls="--")
     # pl.add(ls,kszAlt*ls**2.,label="ksz",alpha=0.5,ls="--")
     pl.add(ls,radio*ls**2.,label="radio",alpha=0.2,ls="--")
     pl.add(ls,cibp*ls**2.,label="cibp",alpha=0.2,ls="--")
@@ -76,7 +84,7 @@ for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
     pl.add(ls,totCl*ls**2.,label="total")
     pl.add(ls,oldtotCl*ls**2.,label="total w/o fg",alpha=0.7,ls="--")
     pl.legendOn(loc='lower left',labsize=10)
-    pl.done(outDir+"cltt_"+str(testFreq)+".png")
+    pl.done(outDir+"cltt_test"+str(testFreq)+".png")
         
 
 
