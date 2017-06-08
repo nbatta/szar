@@ -157,8 +157,10 @@ if rank==0:
         lkneePX = lkneePY = lkneeP
         alphaTY = alphaT
         alphaPX = alphaPY = alphaP
-        fgFuncY = fgFunc
-        
+        if doFg:
+            fgFuncY = fgFunc
+        else:
+            fgFuncY = None
         
 
         import flipper.liteMap as lm
