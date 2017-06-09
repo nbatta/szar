@@ -1,9 +1,10 @@
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
-from szar.counts import ClusterCosmology,f_nu
+from szar.counts import ClusterCosmology
 from szar.szproperties import SZ_Cluster_Model
-from szar.foregrounds import fgNoises
+from szar.foregrounds import fgNoises, f_nu
+from szar.ilc import ILC_simple
 import sys,os
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle
@@ -42,6 +43,13 @@ fsky = Config.getfloat(experimentName,'fsky')
 
 SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
 
+ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
+
+lsedges = np.arange(100,8001,100)
+
+el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellyy(lsedges,0.4)
+
+print el_ilc, cls_ilc, err_ilc, s2n
 
 #outDir = os.environ['WWW']+"plots/"
 outDir = "tests/"
@@ -55,9 +63,13 @@ print_ells = [100,200,300,400,500,600]
 fq_mat   = np.matlib.repmat(freqs,len(freqs),1)
 fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
 
-f_nu_arr = np.array(freqs)*0.0
-for ii in xrange(len(freqs)):
-    f_nu_arr[ii] = f_nu(cc.c,freqs[ii])
+#f_nu_arr2 = np.array(freqs)*0.0
+#for ii in xrange(len(freqs)):
+#    f_nu_arr2[ii] = f_nu_old(cc.c,freqs[ii])
+
+f_nu_arr = f_nu(cc.c,np.array(freqs))
+
+print "TEST", np.sum(f_nu_arr - f_nu_arr2)
 
 #print fq_mat
 #print fq_mat_t
