@@ -45,11 +45,13 @@ SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms
 
 ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
 
-lsedges = np.arange(100,8001,100)
+lsedges = np.arange(100,6001,100)
 
 el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellyy(lsedges,0.4)
 
 print el_ilc, cls_ilc, err_ilc, s2n
+
+print 'S/N' , np.sqrt(np.sum((cls_ilc/err_ilc)**2))
 
 #outDir = os.environ['WWW']+"plots/"
 outDir = "tests/"
@@ -69,7 +71,7 @@ fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
 
 f_nu_arr = f_nu(cc.c,np.array(freqs))
 
-print "TEST", np.sum(f_nu_arr - f_nu_arr2)
+#print "TEST", np.sum(f_nu_arr - f_nu_arr2)
 
 #print fq_mat
 #print fq_mat_t

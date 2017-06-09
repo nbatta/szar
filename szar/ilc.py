@@ -32,26 +32,27 @@ class ILC_simple:
         self.W_ll_cmb = np.zeros([len(self.evalells),len(np.array(freqs))])
         self.freq = freqs
 
-
-        f_nu_tsz = f_nu(self.cc.c,np.array(freqs))
+        f_nu_tsz = f_nu(self.cc.c,np.array(freqs)) #* self.cc.c['TCMBmuK']
         f_nu_cmb = f_nu_tsz*0.0 + 1.
 
         for ii in xrange(len(self.evalells)):
 
             cmb_els = fq_mat*0.0 + self.cc.clttfunc(self.evalells[ii])
             
+
             inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha) / self.cc.c['TCMBmuK']**2.)
         
-            nells = np.outer(inst_noise,inst_noise)
+            nells = np.diag(inst_noise)#np.outer(inst_noise,inst_noise)
+            #nells = np.outer(inst_noise,inst_noise)
+            
 
-            totfg = ((self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
-                      self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t))
-                      / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi )
+            totfg = (self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
+                      self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) \
+                      / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi 
 
             ksz = fq_mat*0.0 + self.fgs.ksz_temp(self.evalells[ii]) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
 
             tsz = self.fgs.tSZ(self.evalells[ii],fq_mat,fq_mat_t) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi            
-
             N_ll_for_tsz = nells + totfg + cmb_els + ksz 
             N_ll_for_cmb = nells + totfg + tsz
         
@@ -63,8 +64,21 @@ class ILC_simple:
             self.W_ll_cmb[ii,:] = 1./np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_cmb_inv,f_nu_cmb)) \
                                   * np.dot(np.transpose(f_nu_cmb),N_ll_for_cmb_inv)
 
-            self.N_ll_tsz[ii] = np.dot(np.transpose(self.W_ll_tsz[ii,:]),np.dot(N_ll_for_tsz,self.W_ll_tsz[ii,:]))
+            self.N_ll_tsz[ii] = np.dot(np.transpose(self.W_ll_tsz[ii,:]),np.dot(N_ll_for_tsz,self.W_ll_tsz[ii,:])) #* self.cc.c['TCMBmuK']**2.
             self.N_ll_cmb[ii] = np.dot(np.transpose(self.W_ll_cmb[ii,:]),np.dot(N_ll_for_cmb,self.W_ll_cmb[ii,:]))
+
+            if (ii == 3000):
+                print "NOISE"
+                print 'ell', self.evalells[ii]
+                print 'inst', nells[4,4] * self.evalells[ii]**2
+                print 'cmb',  cmb_els[4,4] * self.evalells[ii]**2
+                print 'fg', totfg[4,4] * self.evalells[ii]**2
+                print 'ksz', ksz[4,4] * self.evalells[ii]**2
+                print 'tsz', tsz[4,4] * self.evalells[ii]**2
+                print 'noise mat', N_ll_for_tsz[4,4] * self.evalells[ii]**2
+                print 'wieghts', self.W_ll_tsz[ii,:]
+                print 'reduced noise', self.N_ll_tsz[ii] * self.evalells[ii]**2 #* self.cc.c['TCMBmuK']**2.
+                
 
     def Forecast_Cellyy(self,ellBinEdges,fsky):
 
