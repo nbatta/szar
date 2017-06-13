@@ -79,6 +79,14 @@ class ILC_simple:
 #                print 'wieghts', self.W_ll_tsz[ii,:]
 #                print 'reduced noise', self.N_ll_tsz[ii] * self.evalells[ii]**2 #* self.cc.c['TCMBmuK']**2.
                 
+    def Noise_ellyy(self):
+        
+        return self.evalells,self.N_ll_tsz
+
+    def Noise_ellcmb(self):
+
+        return self.evalells,self.N_ll_cmb
+
 
     def Forecast_Cellyy(self,ellBinEdges,fsky):
 
@@ -93,8 +101,8 @@ class ILC_simple:
         LF = LensForecast()
         LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz)
 
-        sn = LF.sn(ellBinEdges,fsky,"yy")
-        errs2 = LF.sigmaClSquared("yy",ellBinEdges,fsky)
+        sn,errs2 = LF.sn(ellBinEdges,fsky,"yy")
+        #errs2 = LF.sigmaClSquared("yy",ellBinEdges,fsky)
 
         cls_out = np.interp(ellMids,self.evalells,cls_yy)
 
@@ -110,8 +118,8 @@ class ILC_simple:
         LF = LensForecast()
         LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb)
 
-        sn = LF.sn(ellBinEdges,fsky,"tt")
-        errs2 = LF.sigmaClSquared("tt",ellBinEdges,fsky)
+        sn,errs2 = LF.sn(ellBinEdges,fsky,"tt")
+        #errs2 = LF.sigmaClSquared("tt",ellBinEdges,fsky)
 
         cls_out = np.interp(ellMids,self.evalells,cls_cmb)
 

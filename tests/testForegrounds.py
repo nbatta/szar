@@ -32,7 +32,7 @@ cc = ClusterCosmology(fparams,constDict,lmax=8000,pickling=True)#clTTFixFile=clt
 fgs = fgNoises(cc.c,ksz_battaglia_test_csv="data/ksz_template_battaglia.csv",tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
 
 
-experimentName = "SO-6m"
+experimentName = "S4-6m"
 beams = listFromConfig(Config,experimentName,'beams')
 noises = listFromConfig(Config,experimentName,'noises')
 freqs = listFromConfig(Config,experimentName,'freqs')
@@ -44,6 +44,8 @@ fsky = Config.getfloat(experimentName,'fsky')
 SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
 
 ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
+ILC2 = ILC_simple(clusterCosmology=cc, rms_noises = noises[3:],fwhms=beams[3:],freqs=freqs[3:],lmax=lmax,lknee=lknee,alpha=alpha)
+ILC3 = ILC_simple(clusterCosmology=cc, rms_noises = noises[3:6],fwhms=beams[3:6],freqs=freqs[3:6],lmax=lmax,lknee=lknee,alpha=alpha)
 
 lsedges = np.arange(100,2001,100)
 
@@ -58,6 +60,17 @@ outDir = "tests/"
 outfile1 = outDir + experimentName + "_y_weights.png"
 ILC.PlotyWeights(outfile1)
 
+eln,nl = ILC.Noise_ellyy()
+eln2,nl2 = ILC2.Noise_ellyy()
+eln3,nl3 = ILC3.Noise_ellyy()
+
+pl = Plotter()
+#pl.add(eln,nl*eln**2,label="Full")
+pl.add(eln2,nl2/nl,label="90 - 270 / Full")
+pl.add(eln3,nl3/nl,label="90 - 220 / Full")
+pl.legendOn(loc='upper left',labsize=10)
+pl.done(outDir+"noise_test.png")
+
 #outDir = os.environ['WWW']+"plots/"
 
 ls = np.arange(2,8000,10)
@@ -66,6 +79,10 @@ ksz = fgs.ksz_temp(ls)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
 # kszAlt = fgs.ksz_battaglia_test(ls)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
 
 print_ells = [100,200,300,400,500,600]
+
+print "freqs", freqs
+print "freqs", freqs[3:]
+print "freqs", freqs[3:6]
 
 fq_mat   = np.matlib.repmat(freqs,len(freqs),1)
 fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
