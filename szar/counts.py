@@ -155,12 +155,11 @@ def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,z_edges,fsky,lmax=1000):
 
     return powers
 
-def f_nu(constDict,nu):
-    c = constDict
-    mu = c['H_CGS']*(1e9*nu)/(c['K_CGS']*c['TCMB'])
-    ans = mu*coth(mu/2.0) - 4.0
-    return np.float(ans)
-
+#def f_nu(constDict,nu):
+#    c = constDict
+#    mu = c['H_CGS']*(1e9*nu)/(c['K_CGS']*c['TCMB'])
+#    ans = mu/np.tanh(mu/2.0) - 4.0
+#    return ans
 
 class ClusterCosmology(Cosmology):
     def __init__(self,paramDict=cosmo.defaultCosmology,constDict=cosmo.defaultConstants,lmax=None,clTTFixFile=None,skipCls=False,pickling=False):
