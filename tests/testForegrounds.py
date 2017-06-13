@@ -45,16 +45,21 @@ SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms
 
 ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
 
-lsedges = np.arange(100,6001,100)
+lsedges = np.arange(100,2001,100)
 
-el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellyy(lsedges,0.4)
+el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,0.4)
 
 print el_ilc, cls_ilc, err_ilc, s2n
 
 print 'S/N' , np.sqrt(np.sum((cls_ilc/err_ilc)**2))
 
-#outDir = os.environ['WWW']+"plots/"
 outDir = "tests/"
+
+outfile1 = outDir + experimentName + "_y_weights.png"
+ILC.PlotyWeights(outfile1)
+
+#outDir = os.environ['WWW']+"plots/"
+
 ls = np.arange(2,8000,10)
 
 ksz = fgs.ksz_temp(ls)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.

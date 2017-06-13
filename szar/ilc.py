@@ -67,17 +67,17 @@ class ILC_simple:
             self.N_ll_tsz[ii] = np.dot(np.transpose(self.W_ll_tsz[ii,:]),np.dot(N_ll_for_tsz,self.W_ll_tsz[ii,:])) #* self.cc.c['TCMBmuK']**2.
             self.N_ll_cmb[ii] = np.dot(np.transpose(self.W_ll_cmb[ii,:]),np.dot(N_ll_for_cmb,self.W_ll_cmb[ii,:]))
 
-            if (ii == 3000):
-                print "NOISE"
-                print 'ell', self.evalells[ii]
-                print 'inst', nells[4,4] * self.evalells[ii]**2
-                print 'cmb',  cmb_els[4,4] * self.evalells[ii]**2
-                print 'fg', totfg[4,4] * self.evalells[ii]**2
-                print 'ksz', ksz[4,4] * self.evalells[ii]**2
-                print 'tsz', tsz[4,4] * self.evalells[ii]**2
-                print 'noise mat', N_ll_for_tsz[4,4] * self.evalells[ii]**2
-                print 'wieghts', self.W_ll_tsz[ii,:]
-                print 'reduced noise', self.N_ll_tsz[ii] * self.evalells[ii]**2 #* self.cc.c['TCMBmuK']**2.
+#            if (ii == 3000):
+#                print "NOISE"
+#                print 'ell', self.evalells[ii]
+#                print 'inst', nells[4,4] * self.evalells[ii]**2
+#                print 'cmb',  cmb_els[4,4] * self.evalells[ii]**2
+#                print 'fg', totfg[4,4] * self.evalells[ii]**2
+#                print 'ksz', ksz[4,4] * self.evalells[ii]**2
+#                print 'tsz', tsz[4,4] * self.evalells[ii]**2
+#                print 'noise mat', N_ll_for_tsz[4,4] * self.evalells[ii]**2
+#                print 'wieghts', self.W_ll_tsz[ii,:]
+#                print 'reduced noise', self.N_ll_tsz[ii] * self.evalells[ii]**2 #* self.cc.c['TCMBmuK']**2.
                 
 
     def Forecast_Cellyy(self,ellBinEdges,fsky):
@@ -117,14 +117,22 @@ class ILC_simple:
 
         return ellMids,cls_out,np.sqrt(errs2),sn
 
-    def PlotyWeights(self):
+    def PlotyWeights(self,outfile):
         
-        self.W_ll_cmb[:,]
-
-        #plot
+        #plot weights
         pl = Plotter()
-        pl._ax.set_ylim(-3.6,-0.8)
-        pl.add(np.log10(M),np.log10(N[:,0]*M/(self.cc.rhoc0om)),color='black')
-        pl.add(np.log10(M),np.log10(N_8[:,0]*M/(self.cc.rhoc0om)),color='black')
-        pl.add(np.log10(M),np.log10(N_32[:,0]*M/(self.cc.rhoc0om)),color='black')
-        pl.done("output/tinkervals.png")
+        for ii in xrange(len(self.freq)):
+            pl.add(self.evalells,self.W_ll_tsz[:,ii],label=str(self.freq[ii])+' GHz')
+        pl.legendOn(loc='lower left',labsize=10)
+        pl.done(outfile)
+
+    def PlotcmbWeights(self,outfile):
+        
+        #plot weights
+        pl = Plotter()
+        for ii in xrange(len(self.freq)):
+            pl.add(self.evalells,self.W_ll_cmb[:,ii],label=str(self.freq[ii])+' GHz')
+        pl.legendOn(loc='lower left',labsize=10)
+        pl.done(outfile)
+
+
