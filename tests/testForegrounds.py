@@ -58,11 +58,18 @@ print 'S/N' , np.sqrt(np.sum((cls_ilc/err_ilc)**2))
 outDir = "tests/"
 
 outfile1 = outDir + experimentName + "_y_weights.png"
+outfile2 = outDir + experimentName + "_cmb_weights.png"
+
 ILC.PlotyWeights(outfile1)
+ILC.PlotcmbWeights(outfile2)
 
 eln,nl = ILC.Noise_ellyy()
 eln2,nl2 = ILC2.Noise_ellyy()
 eln3,nl3 = ILC3.Noise_ellyy()
+
+elnc,nlc = ILC.Noise_ellcmb()
+elnc2,nlc2 = ILC2.Noise_ellcmb()
+elnc3,nlc3 = ILC3.Noise_ellcmb()
 
 pl = Plotter()
 #pl.add(eln,nl*eln**2,label="Full")
@@ -70,6 +77,12 @@ pl.add(eln2,nl2/nl,label="90 - 270 / Full")
 pl.add(eln3,nl3/nl,label="90 - 220 / Full")
 pl.legendOn(loc='upper left',labsize=10)
 pl.done(outDir+"noise_test.png")
+
+pl = Plotter()
+pl.add(elnc2,nlc2/nlc,label="90 - 270 / Full")
+pl.add(elnc3,nlc3/nlc,label="90 - 220 / Full")
+pl.legendOn(loc='upper left',labsize=10)
+pl.done(outDir+"noise_test_CMB.png")
 
 #outDir = os.environ['WWW']+"plots/"
 
