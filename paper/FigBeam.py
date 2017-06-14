@@ -7,7 +7,9 @@ from alhazen.halos import NFWMatchedFilterSN
 import numpy as np
 from orphics.tools.cmb import loadTheorySpectraFromCAMB
 from alhazen.quadraticEstimator import NlGenerator,getMax
+import sys, os
 
+out_dir = os.environ["WWW"]+"paper/"
 Mexp = np.log10(2.e14)
 z = 0.7
 c = 1.18
@@ -17,9 +19,18 @@ critical=True
 atClusterZ=True
 
 
-beamList = np.arange(0.5,5.0,0.2)
+deg = 5.
+px = 1.0
+
+# deg = 1. # !!!!
+# px = 2.0
+
+
+dbeam = 0.1
+beamList = np.arange(0.5,5.0+dbeam,dbeam)
 
 expName = "S4-1.0-0.4"
+freq_to_use = 150.
 
 # Mexp = np.log10(2.e14)
 # z = 0.7
@@ -60,9 +71,6 @@ except:
     print "NO FG OPTION FOUND IN INI. ASSUMING TRUE."
     doFg = True
 
-miscentering = Config.getboolean(lensName,'miscenter')
-delens = Config.getboolean(lensName,'delens')
-freq_to_use = Config.getfloat(lensName,'freq')
 ind = np.where(np.isclose(freq,freq_to_use))
 beamFind = np.array(beam)[ind]
 noiseFind = np.array(noise)[ind]
@@ -109,8 +117,6 @@ alphaPX = alphaPY = alphaP
 
 import flipper.liteMap as lm
 from alhazen.quadraticEstimator import NlGenerator,getMax
-deg = 5.
-px = 1.0
 dell = 10
 gradCut = 2000
 kellmin = 10
@@ -134,43 +140,78 @@ kellmax = 8000
 cc = ClusterCosmology(cosmoDict,constDict,kellmax,pickling=True)
 theory = cc.theory
 
-for lensName in ["CMB_all","CMB_pol"]
-for doFg in [False,True]:
-    for beamNow in beamList:
+pl = Plotter(labelX="Beam (arcmin)",labelY="$\\sigma(M)/M$ for $N=1000$",ftsize=12)
+
+for miscenter in [False,True]:
+    for lensName,linestyle in zip(["CMB_all","CMB_pol"],["-","--"]): 
+        for doFg in [False,True]:
+            
+            if lensName=="CMB_pol" and not(doFg): continue
+            if lensName=="CMB_all" and not(doFg) and miscenter: continue
+            sns = []
+            for beamNow in beamList:
 
 
-        pols = Config.get(lensName,'polList').split(',')
+                pols = Config.get(lensName,'polList').split(',')
 
-        if doFg:
-            fgFuncY = fgFunc
-        else:
-            fgFuncY = None
+                if doFg:
+                    fgFuncY = fgFunc
+                else:
+                    fgFuncY = None
 
-        beamPX = beamTY = beamPY = beamNow
-        beamY = beamTY
-
-
-        nTX,nPX,nTY,nPY = myNls.updateNoiseAdvanced(beamTX,noiseTX,beamPX,noisePX,tellminX,tellmaxX,pellminX,pellmaxX,beamTY,noiseTY,beamPY,noisePY,tellminY,tellmaxY,pellminY,pellmaxY,(lkneeTX,lkneePX),(alphaTX,alphaPX),(lkneeTY,lkneePY),(alphaTY,alphaPY),None,None,None,None,None,None,None,None,fgFuncX,fgFuncY,None,None,None,None,None,None,None,None)
+                beamPX = beamTY = beamPY = beamNow
+                beamY = beamTY
 
 
-        ls,Nls,ells,dclbb,efficiency = myNls.getNlIterative(pols,kellmin,kellmax,tellmax,pellmin,pellmax,dell=dell,halo=True)
-
-        ls = ls[1:-1]
-        Nls = Nls[1:-1]
+                nTX,nPX,nTY,nPY = myNls.updateNoiseAdvanced(beamTX,noiseTX,beamPX,noisePX,tellminX,tellmaxX,pellminX,pellmaxX,beamTY,noiseTY,beamPY,noisePY,tellminY,tellmaxY,pellminY,pellmaxY,(lkneeTX,lkneePX),(alphaTX,alphaPX),(lkneeTY,lkneePY),(alphaTY,alphaPY),None,None,None,None,None,None,None,None,fgFuncX,fgFuncY,None,None,None,None,None,None,None,None)
 
 
-        clkk_binned = clfunc(ls)
+                ls,Nls,ells,dclbb,efficiency = myNls.getNlIterative(pols,kellmin,kellmax,tellmax,pellmin,pellmax,dell=dell,halo=True)
+
+                ls = ls[1:-1]
+                Nls = Nls[1:-1]
 
 
-
-        Nls += clkk_binned
+                clkk_binned = clfunc(ls)
 
 
 
+                Nls += clkk_binned
 
 
 
-        sn,k,std = NFWMatchedFilterSN(cc,Mexp,c,z,ells=ls,Nls=Nls,kellmax=kellmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ)
+                if miscenter:
+                    ray = beamNow/2.
+                else:
+                    ray = None
 
-        print sn*np.sqrt(1000.)
 
+                sn,k,std = NFWMatchedFilterSN(cc,Mexp,c,z,ells=ls,Nls=Nls,kellmax=kellmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,rayleighSigmaArcmin=ray)
+
+                print sn*np.sqrt(1000.)
+                sns.append(1./(sn*np.sqrt(1000.)))
+
+
+
+            fgpart = ""
+            mispart = ""
+            if miscenter:
+                mispart = ", miscentered"
+                col = "C0"
+            else:
+                col = "C1"
+            if lensName=="CMB_all":
+                lenspart = "T+P"
+            else:
+                lenspart = "P only"
+            if not(doFg):
+                fgpart = ", no foregrounds"
+                col = "black"
+                al = 0.5
+            else:
+                al=1.0
+                
+            lab = lenspart + fgpart + mispart
+            pl.add(beamList,sns,label=lab,ls=linestyle,alpha=al,color=col)
+pl.legendOn(loc="upper left",labsize=10)
+pl.done(out_dir+"FigBeam.pdf")

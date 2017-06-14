@@ -103,9 +103,54 @@ try:
 except:
     baoFile = ''
 
+    
+    
 # Number of non-SZ params (params that will be in Planck/BAO)
 numCosmo = Config.getint(fishSection,'numCosmo')
+
+
+try:
+    priorNameList = Config.get(fishSection,'prior_names').split(',')
+    priorValueList = listFromConfig(Config,fishSection,'prior_values')
+except:
+    priorNameList = []
+    priorValueList = []
+
+
+if "CMB" in calName:
+    paramList.append("sigR")
+    try:
+        priorNameList.append("sigR")
+        beam = listFromConfig(Config,expName,'beams')
+        freq = listFromConfig(Config,expName,'freqs')
+        freq_to_use = Config.getfloat(calName,'freq')
+        ind = np.where(np.isclose(freq,freq_to_use))
+        beamFind = np.array(beam)[ind]
+        priorValueList.append(beamFind/2.)
+        print "Added sigR prior ", priorValueList[-1]
+    except:
+        print "Couldn't add sigR prior. Is this CMB lensing? Exiting."
+        sys.exit(1)
+
+if "owl" in calName:
+    if not("b_wl") in paramList:
+        print "OWL but b_wl not found in paramList. Adding with a 1% prior."
+        paramList.append("b_wl")
+        priorNameList.append("b_wl")
+        priorValueList.append(1./(0.01**2.))
+        
+    
+##########################
+# Populate Fisher
+Fisher = getFisher(N_fid,paramList,priorNameList,priorValueList,bigDataDir,saveId,pzcutoff,z_edges,fsky)
+##########################
+
+
+
 numLeft = len(paramList) - numCosmo
+
+
+
 fisherPlanck = 0.
 if planckFile!='':
     try:
@@ -116,19 +161,6 @@ if planckFile!='':
 
 
 
-
-
-try:
-    priorNameList = Config.get(fishSection,'prior_names').split(',')
-    priorValueList = listFromConfig(Config,fishSection,'prior_values')
-except:
-    priorNameList = []
-    priorValueList = []
-    
-##########################
-# Populate Fisher
-Fisher = getFisher(N_fid,paramList,priorNameList,priorValueList,bigDataDir,saveId,pzcutoff,z_edges,fsky)
-##########################
 
 
 fisherBAO = Fisher.copy()*0.
@@ -142,6 +174,24 @@ if baoFile!='':
 
 FisherTot = Fisher + fisherPlanck
 FisherTot += fisherBAO
+
+import traceback
+try:
+    otherFishers = Config.get(fishSection,'otherFishers').split(',')
+    for otherFisherFile in otherFishers:
+        try:
+            other_fisher = np.loadtxt(otherFisherFile)
+        except:
+            other_fisher = np.loadtxt(otherFisherFile,delimiter=',')
+        other_fisher = np.pad(other_fisher,pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.)
+        FisherTot += other_fisher
+            
+        
+except:
+    traceback.print_exc()
+    print "No other fishers found."
+
+    
 
 # from orphics.tools.io import Plotter
 # import os

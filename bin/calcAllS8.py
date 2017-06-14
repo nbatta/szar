@@ -2,8 +2,8 @@ import os
 cmdRoot = "python bin/calcS8Fisher.py "
 
 #expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-1.5-0.7','S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1','S4-1.5-0.05','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
-expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-2.0-0.4','S4-3.0-0.4']
-calList = ['CMB_all']#,'CMB_pol','CMB_all_miscentered','CMB_pol_miscentered']
+expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
+calList = ['CMB_all','CMB_pol']#,'CMB_all_miscentered','CMB_pol_miscentered']
 
 #expList = ['S4','SO']
 #expList = ['S4']
@@ -19,8 +19,8 @@ atmList = ['']#,'-noatm']
 #calList = ['CMB_pol']#,'CMB_pol','owl1']
 #calList = ['owl1']#,'CMB_pol','owl1']
 
-#gridList = ['grid-default']
-gridList = ['grid-1.5','grid-1.2','grid-mid']
+gridList = ['grid-default']
+#gridList = ['grid-1.5','grid-1.2','grid-mid']
 
 
 for exp in expList:

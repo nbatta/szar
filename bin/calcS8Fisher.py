@@ -99,40 +99,26 @@ try:
 except:
     priorNameList = []
     priorValueList = []
-    
+
+if "sigR" in paramList:
+    try:
+        priorNameList.append("sigR")
+        beam = listFromConfig(Config,expName,'beams')
+        freq = listFromConfig(Config,expName,'freqs')
+        freq_to_use = Config.getfloat(calName,'freq')
+        ind = np.where(np.isclose(freq,freq_to_use))
+        beamFind = np.array(beam)[ind]
+        priorValueList.append(beamFind/2.)
+        print "Added sigR prior ", priorValueList[-1]
+    except:
+        print "Couldn't add sigR prior. Is this CMB lensing? Exiting."
+        sys.exit(1)
+        
+        
 ##########################
 # Populate Fisher
 Fisher = getFisher(N_fid,paramList,priorNameList,priorValueList,bigDataDir,saveId,pzcutoff,z_edges,fsky)
 ##########################
-
-
-# Populate Fisher
-# for param1,param2 in paramCombs:
-#     if param1=='tau' or param2=='tau': continue
-#     print param1,param2
-    
-#     new_z_edges, dN1 = rebinN(np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param1+".npy"),pzcutoff,z_edges)
-#     new_z_edges, dN2 = rebinN(np.load(bigDataDir+"dNdp_mzq_"+saveId+"_"+param2+".npy"),pzcutoff,z_edges)
-#     dN1 = dN1[:,:,:]*fsky
-#     dN2 = dN2[:,:,:]*fsky
-
-
-#     i = paramList.index(param1)
-#     j = paramList.index(param2)
-
-#     assert not(np.any(np.isnan(dN1)))
-#     assert not(np.any(np.isnan(dN2)))
-#     assert not(np.any(np.isnan(N_fid)))
-
-
-#     with np.errstate(divide='ignore'):
-#         FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid))#+(N_fid*N_fid*sovernsquare)))
-
-#     Fell = FellBlock.sum()
-        
-       
-#     Fisher[i,j] = Fell
-#     Fisher[j,i] = Fell    
 
 
 
@@ -146,6 +132,7 @@ except:
 # Number of non-SZ params (params that will be in Planck/BAO)
 numCosmo = Config.getint(fishSection,'numCosmo')
 numLeft = len(paramList) - numCosmo
+
 
 fisherPlanck = 0.
 if planckFile!='':
