@@ -1,5 +1,6 @@
 import matplotlib
 matplotlib.use('Agg')
+import traceback
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle
 import numpy as np
@@ -116,7 +117,6 @@ except:
     priorNameList = []
     priorValueList = []
 
-
 if "CMB" in calName:
     paramList.append("sigR")
     try:
@@ -129,6 +129,7 @@ if "CMB" in calName:
         priorValueList.append(beamFind/2.)
         print "Added sigR prior ", priorValueList[-1]
     except:
+        traceback.print_exc()
         print "Couldn't add sigR prior. Is this CMB lensing? Exiting."
         sys.exit(1)
 
@@ -175,7 +176,6 @@ if baoFile!='':
 FisherTot = Fisher + fisherPlanck
 FisherTot += fisherBAO
 
-import traceback
 try:
     otherFishers = Config.get(fishSection,'otherFishers').split(',')
     for otherFisherFile in otherFishers:

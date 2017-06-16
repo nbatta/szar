@@ -284,6 +284,7 @@ else:
     Mexp_edges = None
     z_edges = None
     doFg = None
+    dotsz_cib = None
 
 if rank==0: print "Broadcasting..."
 #doRayDeriv = comm.bcast(doRayDeriv, root = 0)

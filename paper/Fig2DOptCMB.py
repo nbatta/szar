@@ -41,7 +41,9 @@ gridNames = ["grid-default","grid-default","grid-owl2","grid-owl1"]
 fplots = FisherPlots()
 fplots.startFig() 
 
-for fishSection,alphas in zip(["mnu-w0-wa","mnu-w0"],[[1,1,1,1],[0.3,0.3,0.3,0.3]]):
+#for fishSection,alphas in zip(["mnu-w0-wa","mnu-w0"],[[1,1,1,1],[0.3,0.3,0.3,0.3]]):
+#for fishSection,alphas in zip(["mnu-w0-wa"],[[1,1,1,1]]):
+for fishSection,alphas in zip(["mnu-w0"],[[1,1,1,1]]):
 
     if fishSection == "mnu-w0": labs = itertools.repeat(None)
     
@@ -65,5 +67,4 @@ for fishSection,alphas in zip(["mnu-w0-wa","mnu-w0"],[[1,1,1,1],[0.3,0.3,0.3,0.3
 
     fplots.plotPair(fishSection,['mnu','w0'],cals,labels=labs,xlims=[-0.1,0.2],ylims=[-1.12,-0.88],cols=cols,lss=lss,loc='lower left',alphas=alphas)
 
-
-fplots.done(saveFile=out_dir+"Fig2DOptCMB.png")
+fplots.done(saveFile=out_dir+"Fig2DOptCMBB.png")

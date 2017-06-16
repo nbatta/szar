@@ -9,7 +9,8 @@ outDir = "/gpfs01/astro/www/msyriac/paper/"
 
 gridList = []
 gridList.append("/astro/astronfs01/workarea/msyriac/data/SZruns/v0.5/lensgrid_S4-1.0-0.4_grid-default_CMB_all_v0.5_pzcut3.pkl")
-gridList.append("/astro/astronfs01/workarea/msyriac/data/SZruns/v0.5/lensgrid_grid-owl3_owl3.pkl")
+#gridList.append("/astro/astronfs01/workarea/msyriac/data/SZruns/v0.5/lensgrid_grid-owl3_owl3.pkl")
+gridList.append("/astro/astronfs01/workarea/msyriac/data/SZruns/v0.5/lensgrid_grid-owl2_owl2.pkl")
 
 grids = {}
 mmins = []
@@ -75,7 +76,7 @@ for gridFile,ls,lab,outPlot in zip(gridList,['-','--'],['CMB lensing','optical l
     plt.gca().set_color_cycle(None)
 
 pl.legendOn(loc='upper right',labsize=14)
-pl.done(outDir+"slice.pdf")
+pl.done(outDir+"FigSN.pdf")
     
 sys.exit()
 
