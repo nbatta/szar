@@ -105,7 +105,13 @@ if rank==0:
     except:
         print "NO FG OPTION FOUND IN INI. ASSUMING TRUE."
         doFg = True
-        
+
+    try:
+        dotsz_cib = Config.getboolean(expName,'do_tsz_cib')
+    except:
+        print "NO tSZ_CIB OPTION FOUND IN INI. ASSUMING FALSE."
+        dotsz_cib = False
+
     lmax = int(Config.getfloat(expName,'lmax'))
     constDict = dictFromSection(Config,'constants')
 
@@ -282,6 +288,7 @@ else:
 if rank==0: print "Broadcasting..."
 #doRayDeriv = comm.bcast(doRayDeriv, root = 0)
 doFg = comm.bcast(doFg, root = 0)
+dotsz_cib = comm.bcast(dotsz_cib, root = 0)
 pzcut = comm.bcast(pzcut, root = 0)
 rayFid = comm.bcast(rayFid, root = 0)
 rayStep = comm.bcast(rayStep, root = 0)
@@ -312,7 +319,7 @@ if rank==0: print "Broadcasted."
 cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
 if doSZ:
     HMF = Halo_MF(cc,mgrid,zgrid,kh=kh,powerZK=pk)
-    SZCluster = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lkneeT,alpha=alphaT,fg=doFg)
+    SZCluster = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lkneeT,alpha=alphaT,fg=doFg,tsz_cib=dotsz_cib)
 
 numms = mgrid.size
 numzs = zgrid.size
