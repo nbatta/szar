@@ -48,7 +48,7 @@ ILC3 = ILC_simple(clusterCosmology=cc, rms_noises = noises[:4],fwhms=beams[:4],f
 ILC4 = ILC_simple(clusterCosmology=cc, rms_noises = noises[:3],fwhms=beams[:3],freqs=freqs[:3],lmax=lmax,lknee=lknee,alpha=alpha)
 
 print freqs[:3]
-lsedges = np.arange(100,8001,100)
+lsedges = np.arange(100,8001,50)
 
 el_il,  cls_il,  err_il,  s2ny  = ILC.Forecast_Cellyy(lsedges,fsky)
 el_il2, cls_il2, err_il2, s2ny2 = ILC2.Forecast_Cellyy(lsedges,fsky)
@@ -88,31 +88,55 @@ pl = Plotter(labelX="$\ell$",labelY="Noise Ratio",ftsize=12,figsize=(8,6))
 pl.add(eln2,nl2/nl,label="90 - 350 / Full")
 pl.add(eln3,nl3/nl,label="90 - 270 / Full")
 pl.add(eln4,nl4/nl,label="90 - 220 / Full")
-pl.legendOn(loc='upper left',labsize=10)
+pl.legendOn(loc='upper right',labsize=10)
 pl.done(outDir+experimentName+"_y_noise_ratio.png")
 
 pl = Plotter(labelX="$\ell$",labelY="Noise Ratio",ftsize=12,figsize=(8,6))
 pl.add(elnc2,nlc2/nlc,label="90 - 350 / Full")
 pl.add(elnc3,nlc3/nlc,label="90 - 270 / Full")
 pl.add(elnc4,nlc4/nlc,label="90 - 220 / Full")
-pl.legendOn(loc='upper left',labsize=10)
+pl.legendOn(loc='upper right',labsize=10)
 pl.done(outDir+experimentName+"_cmb_noise_ratio.png")
 
 pl = Plotter(labelX="$\ell$",labelY="Error Ratio",ftsize=12,figsize=(8,6))
 pl.add(el_il2,err_il2/err_il,label="90 - 350 / Full")
 pl.add(el_il3,err_il3/err_il,label="90 - 270 / Full")
 pl.add(el_il4,err_il4/err_il,label="90 - 220 / Full")
-pl.legendOn(loc='upper left',labsize=10)
+pl.legendOn(loc='upper right',labsize=10)
 pl.done(outDir+experimentName+"_y_error_ratio.png")
 
 pl = Plotter(labelX="$\ell$",labelY="Noise Ratio",ftsize=12,figsize=(8,6))
 pl.add(el_ilc2,err_ilc2/err_ilc,label="90 - 350 / Full")
 pl.add(el_ilc3,err_ilc3/err_ilc,label="90 - 270 / Full")
 pl.add(el_ilc4,err_ilc4/err_ilc,label="90 - 220 / Full")
-pl.legendOn(loc='upper left',labsize=10)
+pl.legendOn(loc='upper right',labsize=10)
 pl.done(outDir+experimentName+"_cmb_error_ratio.png")
 
+ellfac = el_ilc*(el_ilc + 1.) / (2.*np.pi) * 1e12 * constDict['TCMB']**2
+ellfac2 = eln*(eln + 1.) / (2.*np.pi) * 1e12 * constDict['TCMB']**2
 
+pl = Plotter(labelX="$\ell$",labelY="$C_\ell \, (1 + \ell) \ell / 2\pi \, [\mu \mathrm{K}]$",ftsize=12,figsize=(8,6),scaleY='log')
+pl._ax.set_ylim(1,10000)
+pl._ax.set_xlim(100.,5000.)
+pl.add(el_ilc,cls_ilc*ellfac,color='black')
+pl.add(eln,nl*ellfac2,label="$N_\ell$ Full")
+pl.add(eln4,nl4*ellfac2,label="$N_\ell$ 90 - 220")
+pl.addErr(el_ilc,cls_ilc*ellfac,err_ilc*ellfac,label="Full")
+pl.addErr(el_ilc4+10,cls_ilc4*ellfac,err_ilc4*ellfac,label="90 - 220")
+pl.legendOn(loc='upper right',labsize=10)
+pl.done(outDir+experimentName+"_cmb_cls.png")
+ls = np.arange(2,8000,10)
+
+pl = Plotter(labelX="$\ell$",labelY="$C_\ell \, (1 + \ell) \ell / 2\pi \, [\mu \mathrm{K}]$",ftsize=12,figsize=(8,6),scaleY='log')
+pl._ax.set_ylim(0.1,1000)
+pl._ax.set_xlim(100.,8000.)
+pl.add(el_il,cls_il*ellfac,color='black')
+pl.add(elnc,nlc*ellfac2,label="$N_\ell$ Full")
+pl.add(elnc4,nlc4*ellfac2,label="$N_\ell$ 90 - 220")
+pl.addErr(el_il,cls_il*ellfac,err_il*ellfac,label="Full")
+pl.addErr(el_il4+10,cls_il4*ellfac,err_il4*ellfac,label="90 - 220")
+pl.legendOn(loc='upper right',labsize=10)
+pl.done(outDir+experimentName+"_y_cls.png")
 ls = np.arange(2,8000,10)
 
 #ksz = fgs.ksz_temp(ls)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.

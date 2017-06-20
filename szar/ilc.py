@@ -101,12 +101,12 @@ class ILC_simple:
         LF = LensForecast()
         LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz)
 
-        sn,errs2 = LF.sn(ellBinEdges,fsky,"yy")
+        sn,errs = LF.sn(ellBinEdges,fsky,"yy") # not squared
         #errs2 = LF.sigmaClSquared("yy",ellBinEdges,fsky)
 
         cls_out = np.interp(ellMids,self.evalells,cls_yy)
 
-        return ellMids,cls_out,np.sqrt(errs2),sn
+        return ellMids,cls_out,errs,sn
 
     def Forecast_Cellcmb(self,ellBinEdges,fsky):
 
@@ -118,12 +118,12 @@ class ILC_simple:
         LF = LensForecast()
         LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb)
 
-        sn,errs2 = LF.sn(ellBinEdges,fsky,"tt")
+        sn,errs = LF.sn(ellBinEdges,fsky,"tt")
         #errs2 = LF.sigmaClSquared("tt",ellBinEdges,fsky)
 
         cls_out = np.interp(ellMids,self.evalells,cls_cmb)
 
-        return ellMids,cls_out,np.sqrt(errs2),sn
+        return ellMids,cls_out,errs,sn
 
     def PlotyWeights(self,outfile):
         
