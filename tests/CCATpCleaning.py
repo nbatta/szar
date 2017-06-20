@@ -47,6 +47,7 @@ ILC2 = ILC_simple(clusterCosmology=cc, rms_noises = noises[:5],fwhms=beams[:5],f
 ILC3 = ILC_simple(clusterCosmology=cc, rms_noises = noises[:4],fwhms=beams[:4],freqs=freqs[:4],lmax=lmax,lknee=lknee,alpha=alpha)
 ILC4 = ILC_simple(clusterCosmology=cc, rms_noises = noises[:3],fwhms=beams[:3],freqs=freqs[:3],lmax=lmax,lknee=lknee,alpha=alpha)
 
+print freqs[:3]
 lsedges = np.arange(100,8001,100)
 
 el_il,  cls_il,  err_il,  s2ny  = ILC.Forecast_Cellyy(lsedges,fsky)
@@ -97,12 +98,19 @@ pl.add(elnc4,nlc4/nlc,label="90 - 220 / Full")
 pl.legendOn(loc='upper left',labsize=10)
 pl.done(outDir+experimentName+"_cmb_noise_ratio.png")
 
-pl = Plotter(labelX="$\ell$",labelY="Noise Ratio",ftsize=12,figsize=(8,6))
-pl.add(eln2,nl2/nl,label="90 - 350 / Full")
-pl.add(eln3,nl3/nl,label="90 - 270 / Full")
-pl.add(eln4,nl4/nl,label="90 - 220 / Full")
+pl = Plotter(labelX="$\ell$",labelY="Error Ratio",ftsize=12,figsize=(8,6))
+pl.add(el_il2,err_il2/err_il,label="90 - 350 / Full")
+pl.add(el_il3,err_il3/err_il,label="90 - 270 / Full")
+pl.add(el_il4,err_il4/err_il,label="90 - 220 / Full")
 pl.legendOn(loc='upper left',labsize=10)
-pl.done(outDir+experimentName+"_y_noise_ratio.png")
+pl.done(outDir+experimentName+"_y_error_ratio.png")
+
+pl = Plotter(labelX="$\ell$",labelY="Noise Ratio",ftsize=12,figsize=(8,6))
+pl.add(el_ilc2,err_ilc2/err_ilc,label="90 - 350 / Full")
+pl.add(el_ilc3,err_ilc3/err_ilc,label="90 - 270 / Full")
+pl.add(el_ilc4,err_ilc4/err_ilc,label="90 - 220 / Full")
+pl.legendOn(loc='upper left',labsize=10)
+pl.done(outDir+experimentName+"_cmb_error_ratio.png")
 
 
 ls = np.arange(2,8000,10)
