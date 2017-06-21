@@ -43,6 +43,10 @@ fsky = Config.getfloat(experimentName,'fsky')
 
 SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
 
+print SZProfExample.nl / SZProfExample.nl_new
+
+print "ignore beyond here"
+
 ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
 ILC2 = ILC_simple(clusterCosmology=cc, rms_noises = noises[3:],fwhms=beams[3:],freqs=freqs[3:],lmax=lmax,lknee=lknee,alpha=alpha)
 ILC3 = ILC_simple(clusterCosmology=cc, rms_noises = noises[3:6],fwhms=beams[3:6],freqs=freqs[3:6],lmax=lmax,lknee=lknee,alpha=alpha)

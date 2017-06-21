@@ -15,7 +15,7 @@ class SZ_Cluster_Model:
                  dell=10,pmaxN=5,numps=1000,nMax=1, \
                  ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1, \
                  qmin=5., \
-                 ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',fg=True,tsz_cib=False):
+                 ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',tsz_cib_file='input/sz_x_cib_template.dat',fg=True,tsz_cib=False):
 
         self.cc = clusterCosmology
         self.P0 = clusterDict['P0']
@@ -32,7 +32,7 @@ class SZ_Cluster_Model:
         lnYmax = np.log(ymax)
         self.lnY = np.arange(lnYmin,lnYmax,dlnY)
 
-        fgs = fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file)
+        fgs = fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
 
         self.dell = 10
         self.nlinv = 0.
@@ -75,27 +75,32 @@ class SZ_Cluster_Model:
             fq_mat   = freqs
             fq_mat_t = freqs
 
-        self.nl2 = self.evalells*0
-        self.nells_inv = self.evalells*0 
+        self.nl_new = self.evalells*0.0
 
         for ii in xrange(len(self.evalells)):
             cmb_els = fq_mat*0.0 + self.cc.clttfunc(self.evalells[ii])
             inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha) / self.cc.c['TCMBmuK']**2.)
             nells = np.diag(inst_noise)
-            totfg = (self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t)                      + self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t)) \
-                      / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
+            totfg = (fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) 
+                     + fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t)) \
+                     / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
 
             if (tsz_cib):
-                totfg += self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
+                totfg += fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
 
-            ksz = fq_mat*0.0 + self.fgs.ksz_temp(self.evalells[ii]) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
+            ksz = fq_mat*0.0 + fgs.ksz_temp(self.evalells[ii]) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
 
-            tsz = self.fgs.tSZ(self.evalells[ii],fq_mat,fq_mat_t) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
+            tsz = fgs.tSZ(self.evalells[ii],fq_mat,fq_mat_t) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
 
-            nells += totfg + cmb_els + ksz + tsz
+            nells += totfg + cmb_els + ksz #+ tsz
 
-            self.nells_inv[ii] = np.linalg.inv(np.dot(np.transpose(f_nu_tsz),np.dot(nells,f_nu_tsz)))
-            self.nl2[ii] = np.linalg.inv(self.nells_inv[ii])
+            if (ii == 30):
+                print nells, f_nu_tsz,
+                print np.dot(np.transpose(f_nu_tsz),np.dot(np.linalg.inv(nells),f_nu_tsz))
+                print 1./(np.dot(np.transpose(f_nu_tsz),np.dot(np.linalg.inv(nells),f_nu_tsz)))
+
+            self.nl_new[ii] = 1./(np.dot(np.transpose(f_nu_tsz),np.dot(np.linalg.inv(nells),f_nu_tsz)))
+            #self.nl2[ii] = np.linalg.inv(self.nells_inv[ii])
 
         # from orphics.tools.io import Plotter
         # pl = Plotter(scaleY='log')
