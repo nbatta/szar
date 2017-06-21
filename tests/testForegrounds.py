@@ -41,9 +41,13 @@ lknee = listFromConfig(Config,experimentName,'lknee')[0]
 alpha = listFromConfig(Config,experimentName,'alpha')[0]
 fsky = Config.getfloat(experimentName,'fsky')
 
-SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
+SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha,tsz_cib=True)
 
 print SZProfExample.nl / SZProfExample.nl_new
+
+pl = Plotter()
+pl.add(SZProfExample.evalells,SZProfExample.nl / SZProfExample.nl_new)
+pl.done("tests/new_nl_test.png")
 
 print "ignore beyond here"
 

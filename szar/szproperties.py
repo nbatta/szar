@@ -13,9 +13,9 @@ class SZ_Cluster_Model:
     def __init__(self,clusterCosmology,clusterDict, \
                  fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1., \
                  dell=10,pmaxN=5,numps=1000,nMax=1, \
-                 ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1, \
-                 qmin=5., \
-                 ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',tsz_cib_file='input/sz_x_cib_template.dat',fg=True,tsz_cib=False):
+                 ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1, qmin=5., \
+                 ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt', \
+                 tsz_cib_file='input/sz_x_cib_template.dat',fg=True,tsz_cib=False):
 
         self.cc = clusterCosmology
         self.P0 = clusterDict['P0']
@@ -87,20 +87,13 @@ class SZ_Cluster_Model:
 
             if (tsz_cib):
                 totfg += fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
+                totfg += fgs.tSZ(self.evalells[ii],fq_mat,fq_mat_t) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
 
             ksz = fq_mat*0.0 + fgs.ksz_temp(self.evalells[ii]) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
 
-            tsz = fgs.tSZ(self.evalells[ii],fq_mat,fq_mat_t) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
-
-            nells += totfg + cmb_els + ksz #+ tsz
-
-            if (ii == 30):
-                print nells, f_nu_tsz,
-                print np.dot(np.transpose(f_nu_tsz),np.dot(np.linalg.inv(nells),f_nu_tsz))
-                print 1./(np.dot(np.transpose(f_nu_tsz),np.dot(np.linalg.inv(nells),f_nu_tsz)))
+            nells += totfg + cmb_els + ksz
 
             self.nl_new[ii] = 1./(np.dot(np.transpose(f_nu_tsz),np.dot(np.linalg.inv(nells),f_nu_tsz)))
-            #self.nl2[ii] = np.linalg.inv(self.nells_inv[ii])
 
         # from orphics.tools.io import Plotter
         # pl = Plotter(scaleY='log')
