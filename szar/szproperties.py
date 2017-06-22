@@ -61,7 +61,7 @@ class SZ_Cluster_Model:
 
             self.nlinv += (freq_fac)/nells
             self.nlinv_cmb += (1./(inst_noise+totfg))
-        self.nl = 1./self.nlinv
+        self.nl_old = 1./self.nlinv
         self.nl_cmb = 1./self.nlinv_cmb
         self.nl_nofg = 1./self.nlinv_nofg
         self.nl_cmb_nofg = 1./self.nlinv_cmb_nofg
@@ -75,7 +75,7 @@ class SZ_Cluster_Model:
             fq_mat   = freqs
             fq_mat_t = freqs
 
-        self.nl_new = self.evalells*0.0
+        self.nl = self.evalells*0.0
 
         for ii in xrange(len(self.evalells)):
             cmb_els = fq_mat*0.0 + self.cc.clttfunc(self.evalells[ii])
@@ -93,7 +93,7 @@ class SZ_Cluster_Model:
 
             nells += totfg + cmb_els + ksz
 
-            self.nl_new[ii] = 1./(np.dot(np.transpose(f_nu_tsz),np.dot(np.linalg.inv(nells),f_nu_tsz)))
+            self.nl[ii] = 1./(np.dot(np.transpose(f_nu_tsz),np.dot(np.linalg.inv(nells),f_nu_tsz)))
 
         # from orphics.tools.io import Plotter
         # pl = Plotter(scaleY='log')
