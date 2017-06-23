@@ -32,7 +32,7 @@ cc = ClusterCosmology(fparams,constDict,lmax=8000,pickling=True)#clTTFixFile=clt
 fgs = fgNoises(cc.c,ksz_battaglia_test_csv="data/ksz_template_battaglia.csv",tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
 
 
-experimentName = "S4-6m"
+experimentName = "AdvAct-steve"
 beams = listFromConfig(Config,experimentName,'beams')
 noises = listFromConfig(Config,experimentName,'noises')
 freqs = listFromConfig(Config,experimentName,'freqs')
@@ -46,20 +46,50 @@ SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms
 #print SZProfExample.nl / SZProfExample.nl_new
 
 pl = Plotter()
-pl.add(SZProfExample.evalells,SZProfExample.nl / SZProfExample.nl_new)
+pl.add(SZProfExample.evalells,SZProfExample.nl_old / SZProfExample.nl)
 pl.done("tests/new_nl_test.png")
 
+#ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
+#ILC2 = ILC_simple(clusterCosmology=cc, rms_noises = noises[3:],fwhms=beams[3:],freqs=freqs[3:],lmax=lmax,lknee=lknee,alpha=alpha)
+#ILC3 = ILC_simple(clusterCosmology=cc, rms_noises = noises[3:6],fwhms=beams[3:6],freqs=freqs[3:6],lmax=lmax,lknee=lknee,alpha=alpha)
+
 ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
-ILC2 = ILC_simple(clusterCosmology=cc, rms_noises = noises[3:],fwhms=beams[3:],freqs=freqs[3:],lmax=lmax,lknee=lknee,alpha=alpha)
-ILC3 = ILC_simple(clusterCosmology=cc, rms_noises = noises[3:6],fwhms=beams[3:6],freqs=freqs[3:6],lmax=lmax,lknee=lknee,alpha=alpha)
 
-lsedges = np.arange(100,2001,100)
+lsedges = np.arange(300,8001,100)
+el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
+print s2n
 
-el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,0.4)
+ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=7000,lknee=lknee,alpha=alpha)
 
-print el_ilc, cls_ilc, err_ilc, s2n
+lsedges = np.arange(300,7001,100)
+el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
+print s2n
 
-print 'S/N' , np.sqrt(np.sum((cls_ilc/err_ilc)**2))
+ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=6000,lknee=lknee,alpha=alpha)
+
+lsedges = np.arange(300,6001,100)
+el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
+print s2n
+
+ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=5000,lknee=lknee,alpha=alpha)
+
+lsedges = np.arange(300,5001,100)
+el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
+print s2n
+
+ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=3000,lknee=lknee,alpha=alpha)
+
+lsedges = np.arange(300,3001,100)
+el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
+print s2n
+
+ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=2000,lknee=lknee,alpha=alpha)
+
+lsedges = np.arange(300,2001,100)
+el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
+print s2n
+
+#print 'S/N' , np.sqrt(np.sum((cls_ilc/err_ilc)**2))
 
 outDir = "tests/"
 
