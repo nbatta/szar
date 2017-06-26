@@ -41,6 +41,19 @@ gridName = "grid-default"
 cosmoFisher = Config.get('fisher-'+fishSection,'saveSuffix')
 paramList = Config.get('fisher-'+fishSection,'paramList').split(',')
 paramLatexList = Config.get('fisher-'+fishSection,'paramLatexList').split(',')
+
+
+if "CMB" in calName:
+    if not("sigR") in paramList:
+        paramList.append("sigR")
+        paramLatexList.append("$\sigma_R$")
+elif "owl" in calName:
+    if not("b_wl") in paramList:
+        paramList.append("b_wl")
+        paramLatexList.append("$b_{w}$")
+   
+
+
 fparams = {} 
 for (key, val) in Config.items('params'):
     param = val.split(',')[0]

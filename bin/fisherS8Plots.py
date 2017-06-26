@@ -38,11 +38,14 @@ origParams = Config.get('fisher-'+fishSection,'paramList').split(',')
 
 
 """RES STUDY"""
-cmbfisher3 = getFisher(bigDataDir,"S4-3.0-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+#cmbfisher3 = getFisher(bigDataDir,"S4-3.0-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
 #cmbfisher2 = getFisher(bigDataDir,"S4-2.5-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
-cmbfisher15 = getFisher(bigDataDir,"S4-2.0-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
-cmbfisher1 = getFisher(bigDataDir,"S4-1.5-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
-cmbfisher0 = getFisher(bigDataDir,"S4-1.0-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+#cmbfisher15 = getFisher(bigDataDir,"S4-2.0-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+#cmbfisher1 = getFisher(bigDataDir,"S4-1.5-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+#cmbfisher0 = getFisher(bigDataDir,"S4-1.0-0.4"+noatm,gridName,cal,cosmoFisher,derivSet)
+
+cmbfisher1 = getFisher(bigDataDir,"S4-1.5-0.4-0.85"+noatm,gridName,cal,cosmoFisher,derivSet)
+cmbfisher0 = getFisher(bigDataDir,"S4-1.0-0.4-0.95"+noatm,gridName,cal,cosmoFisher,derivSet)
 
 # cmbfisher3 = getFisher(bigDataDir,"S4-1.5-0.05"+noatm,gridName,cal,cosmoFisher,derivSet)
 # cmbfisher2 = getFisher(bigDataDir,"S4-1.5-0.1"+noatm,gridName,cal,cosmoFisher,derivSet)
@@ -84,9 +87,9 @@ s82zs = As2*s82
 outDir = "/gpfs01/astro/www/msyriac/web/work/"
 
 
-#zbins = np.append(np.arange(0.,2.5,0.5),3.0)
+zbins = np.append(np.arange(0.,2.5,0.5),3.0)
 #zbins = np.append(np.arange(2.,3.0,0.2),3.0)
-zbins = np.array([0.5,3.0])#np.arange(1.5,3.0,0.1)
+#zbins = np.array([0.5,3.0])#np.arange(1.5,3.0,0.1)
 #zbins = zrange
 
 #zbins = np.append(np.arange(2.,2.5,0.5),3.0)
@@ -105,7 +108,8 @@ colList = ['C0','C1','C2','C3','C4','C5']
 from matplotlib.patches import Rectangle
 currentAxis = plt.gca()
 #for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher15,cmbfisher0],['3.0\'','2.0\'','1.0\''],colList)):
-for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher15,cmbfisher1,cmbfisher0],['3.0\'','2.0\'','1.5\'','1.0\''],colList)):
+#for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher15,cmbfisher1,cmbfisher0],['3.0\'','2.0\'','1.5\'','1.0\''],colList)):
+for i,(f,lab,col) in enumerate(zip([cmbfisher1,cmbfisher0],['1.5\'','1.0\''],colList)):
 #for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1,cmbfisher0],['3.0\'','2.5\'','2.0\'','1.5\'','1.0\''],colList)):
 #for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1,cmbfisher0,cmbfisher01],['0.05','0.1','0.2','0.3','0.4','0.7'],colList)):
 #for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1],['SO-SZ + CMB Halo Lensing (P only) 3m','5m','6m','7m'],['coral','forestgreen','gold','indigo'])):
