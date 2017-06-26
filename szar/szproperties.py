@@ -13,9 +13,9 @@ class SZ_Cluster_Model:
     def __init__(self,clusterCosmology,clusterDict, \
                  fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1., \
                  dell=10,pmaxN=5,numps=1000,nMax=1, \
-                 ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1, \
-                 qmin=5., \
-                 ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',fg=True,tsz_cib=False):
+                 ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1, qmin=5., \
+                 ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt', \
+                 tsz_cib_file='input/sz_x_cib_template.dat',fg=True,tsz_cib=False):
 
         self.cc = clusterCosmology
         self.P0 = clusterDict['P0']
@@ -32,7 +32,7 @@ class SZ_Cluster_Model:
         lnYmax = np.log(ymax)
         self.lnY = np.arange(lnYmin,lnYmax,dlnY)
 
-        fgs = fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file)
+        fgs = fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
 
         self.dell = 10
         self.nlinv = 0.
@@ -61,11 +61,39 @@ class SZ_Cluster_Model:
 
             self.nlinv += (freq_fac)/nells
             self.nlinv_cmb += (1./(inst_noise+totfg))
-        self.nl = 1./self.nlinv
+        self.nl_old = 1./self.nlinv
         self.nl_cmb = 1./self.nlinv_cmb
         self.nl_nofg = 1./self.nlinv_nofg
         self.nl_cmb_nofg = 1./self.nlinv_cmb_nofg
 
+        f_nu_tsz = f_nu(self.cc.c,np.array(freqs))
+ 
+        if (len(freqs) > 1):
+            fq_mat   = np.matlib.repmat(freqs,len(freqs),1)
+            fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
+        else:
+            fq_mat   = freqs
+            fq_mat_t = freqs
+
+        self.nl = self.evalells*0.0
+
+        for ii in xrange(len(self.evalells)):
+            cmb_els = fq_mat*0.0 + self.cc.clttfunc(self.evalells[ii])
+            inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha) / self.cc.c['TCMBmuK']**2.)
+            nells = np.diag(inst_noise)
+            totfg = (fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) 
+                     + fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t)) \
+                     / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
+
+            if (tsz_cib):
+                totfg += fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
+                totfg += fgs.tSZ(self.evalells[ii],fq_mat,fq_mat_t) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi / 2. # factor of two accounts for resolved halos
+
+            ksz = fq_mat*0.0 + fgs.ksz_temp(self.evalells[ii]) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
+
+            nells += totfg + cmb_els + ksz
+
+            self.nl[ii] = 1./(np.dot(np.transpose(f_nu_tsz),np.dot(np.linalg.inv(nells),f_nu_tsz)))
 
         # from orphics.tools.io import Plotter
         # pl = Plotter(scaleY='log')

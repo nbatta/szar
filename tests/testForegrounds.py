@@ -32,7 +32,7 @@ cc = ClusterCosmology(fparams,constDict,lmax=8000,pickling=True)#clTTFixFile=clt
 fgs = fgNoises(cc.c,ksz_battaglia_test_csv="data/ksz_template_battaglia.csv",tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
 
 
-experimentName = "S4-6m"
+experimentName = "AdvAct-steve"
 beams = listFromConfig(Config,experimentName,'beams')
 noises = listFromConfig(Config,experimentName,'noises')
 freqs = listFromConfig(Config,experimentName,'freqs')
@@ -41,19 +41,55 @@ lknee = listFromConfig(Config,experimentName,'lknee')[0]
 alpha = listFromConfig(Config,experimentName,'alpha')[0]
 fsky = Config.getfloat(experimentName,'fsky')
 
-SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
+SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha,tsz_cib=True)
+
+#print SZProfExample.nl / SZProfExample.nl_new
+
+pl = Plotter()
+pl.add(SZProfExample.evalells,SZProfExample.nl_old / SZProfExample.nl)
+pl.done("tests/new_nl_test.png")
+
+#ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
+#ILC2 = ILC_simple(clusterCosmology=cc, rms_noises = noises[3:],fwhms=beams[3:],freqs=freqs[3:],lmax=lmax,lknee=lknee,alpha=alpha)
+#ILC3 = ILC_simple(clusterCosmology=cc, rms_noises = noises[3:6],fwhms=beams[3:6],freqs=freqs[3:6],lmax=lmax,lknee=lknee,alpha=alpha)
 
 ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
-ILC2 = ILC_simple(clusterCosmology=cc, rms_noises = noises[3:],fwhms=beams[3:],freqs=freqs[3:],lmax=lmax,lknee=lknee,alpha=alpha)
-ILC3 = ILC_simple(clusterCosmology=cc, rms_noises = noises[3:6],fwhms=beams[3:6],freqs=freqs[3:6],lmax=lmax,lknee=lknee,alpha=alpha)
 
-lsedges = np.arange(100,2001,100)
+lsedges = np.arange(300,8001,100)
+el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
+print s2n
 
-el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,0.4)
+ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=7000,lknee=lknee,alpha=alpha)
 
-print el_ilc, cls_ilc, err_ilc, s2n
+lsedges = np.arange(300,7001,100)
+el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
+print s2n
 
-print 'S/N' , np.sqrt(np.sum((cls_ilc/err_ilc)**2))
+ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=6000,lknee=lknee,alpha=alpha)
+
+lsedges = np.arange(300,6001,100)
+el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
+print s2n
+
+ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=5000,lknee=lknee,alpha=alpha)
+
+lsedges = np.arange(300,5001,100)
+el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
+print s2n
+
+ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=3000,lknee=lknee,alpha=alpha)
+
+lsedges = np.arange(300,3001,100)
+el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
+print s2n
+
+ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=2000,lknee=lknee,alpha=alpha)
+
+lsedges = np.arange(300,2001,100)
+el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
+print s2n
+
+#print 'S/N' , np.sqrt(np.sum((cls_ilc/err_ilc)**2))
 
 outDir = "tests/"
 
@@ -121,6 +157,8 @@ print "contraction", np.dot(np.transpose(f_nu_arr),np.dot(np.linalg.inv(radio_ma
 
 print "noise", noise_func(print_ells[4],np.array(beams),np.array(noises),lknee,alpha) / cc.c['TCMBmuK']**2.
 
+fac_norm = ls*(ls+1.)/(2.*np.pi) * cc.c['TCMBmuK']**2
+
 for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
     totCl = 0.
     #print testFreq
@@ -138,18 +176,20 @@ for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
     oldtotCl = cc.theory.lCl('TT',ls)+noise
     
     pl = Plotter(scaleY='log')
+    pl._ax.set_ylim(1,10000)
+    pl._ax.set_xlim(100.,9000.)
     pl.add(ls,cc.theory.uCl('TT',ls)*ls**2.,alpha=0.3,ls="--")
     pl.add(ls,cc.theory.lCl('TT',ls)*ls**2.)
-    pl.add(ls,noise*ls**2.,label="noise "+str(noiseT)+"uK'")
-    pl.add(ls,ksz*ls**2.,label="ksz",alpha=0.2,ls="--")
-    pl.add(ls,tsz*ls**2.,label="tsz",alpha=0.2,ls="--")
-    pl.add(ls,tsz_cib*ls**2.,label="tsz-cib",alpha=0.2,ls="--")
+    pl.add(ls,noise*fac_norm,label="noise "+str(noiseT)+"uK'")
+    pl.add(ls,ksz*fac_norm,label="ksz",alpha=0.2,ls="--")
+    pl.add(ls,tsz*fac_norm,label="tsz",alpha=0.2,ls="--")
+    pl.add(ls,tsz_cib*fac_norm,label="tsz-cib",alpha=0.2,ls="--")
     # pl.add(ls,kszAlt*ls**2.,label="ksz",alpha=0.5,ls="--")
-    pl.add(ls,radio*ls**2.,label="radio",alpha=0.2,ls="--")
-    pl.add(ls,cibp*ls**2.,label="cibp",alpha=0.2,ls="--")
-    pl.add(ls,cibc*ls**2.,label="cibc",alpha=0.2,ls="--")
-    pl.add(ls,totCl*ls**2.,label="total")
-    pl.add(ls,oldtotCl*ls**2.,label="total w/o fg",alpha=0.7,ls="--")
+    pl.add(ls,radio*fac_norm,label="radio",alpha=0.2,ls="--")
+    pl.add(ls,cibp*fac_norm,label="cibp",alpha=0.2,ls="--")
+    pl.add(ls,cibc*fac_norm,label="cibc",alpha=0.2,ls="--")
+    pl.add(ls,totCl*fac_norm,label="total")
+    pl.add(ls,oldtotCl*fac_norm,label="total w/o fg",alpha=0.7,ls="--")
     pl.legendOn(loc='lower left',labsize=10)
     pl.done(outDir+"cltt_test"+str(testFreq)+".png")
         
