@@ -68,7 +68,7 @@ cmbfisher3 = getFisher("S4-1.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,der
 #cmbfisher6 = getFisher("S4-2.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
 # cmbfisher7 = getFisher("S4-1.5-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
 #cmbfisher8 = getFisher("S4-1.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
-fplots = FisherPlots(paramList,paramLatexList,fparams)
+fplots = FisherPlots()#paramList,paramLatexList,fparams)
 fplots.addFisher('cmb3',cmbfisher3)
 # fplots.addFisher('cmb5',cmbfisher5)
 #fplots.addFisher('cmb6',cmbfisher6)
