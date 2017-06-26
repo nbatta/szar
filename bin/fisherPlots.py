@@ -46,7 +46,7 @@ paramLatexList = Config.get('fisher-'+fishSection,'paramLatexList').split(',')
 if "CMB" in cal:
     if not("sigR") in paramList:
         paramList.append("sigR")
-        paramLatexList.append("\sigma_R")
+        paramLatexList.append("sigma_R")
 elif "owl" in cal:
     if not("b_wl") in paramList:
         paramList.append("b_wl")
