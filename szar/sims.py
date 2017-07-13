@@ -50,8 +50,8 @@ class BattagliaSims(object):
                 temp = np.fromfile(file=fd, dtype=np.float32)
             data = np.reshape(temp,(self.NumClust,4))
 
-            self.trueM500overh[snap] = data[:,2]*1.e10 # Msun
-            self.trueR500overh[snap] = data[:,3]*(1.+self.snapToZ(snapNum))/1.e3 # physical Kpc -> comoving Mpc R500
+            self.trueM500overh[snap] = data[:,2]*1.e10 # Msun/h
+            self.trueR500overh[snap] = data[:,3]*(1.+self.snapToZ(snapNum))/1.e3 # physical Kpc/h -> comoving Mpc R500
 
     def mapReader(self,plotRel=False):
         snapMax = 5
@@ -74,9 +74,10 @@ class BattagliaSims(object):
         
                 print "totmass ", "{:.2E}".format(projM500)
 
-                pl = Plotter()
-                pl.plot2d(szMap)
-                pl.done("output/sz.png")
+                if not(plotRel):
+                    pl = Plotter()
+                    pl.plot2d(szMap)
+                    pl.done("output/sz.png")
 
 
             if plotRel: pl.add(trueMs,expMs,ls="none",marker="o")#,label=str(snap))
