@@ -158,14 +158,15 @@ class SZ_Cluster_Model:
 
     def Prof_tilde(self,ell,M,z):
         dr = 0.01
-        R500 = self.cc.rdel_c(M,z,500.).flatten()[0]
-        DA_z = self.cc.results.angular_diameter_distance(z)
+        R500 = self.cc.rdel_c(M,z,500.).flatten()[0] / (self.cc.H0/100.) # Mpc No hs
+        DA_z = self.cc.results.angular_diameter_distance(z) # No hs
         rr = np.arange(dr,R500*5.0,dr)
-        M_fac = M / (3e14) * (100./70.)
-        P500 = 1.65e-3 * (100./70.)**2 * M_fac**(2./3.) * self.cc.E_z(z) #keV cm^3
+        M_fac = M / (3e14) * (100./self.cc.H0)
+        P500 = 1.65e-3 * (100./self.cc.H0)**2 * M_fac**(2./3.) * self.cc.E_z(z) #keV cm^3
         intgrl = P500*np.sum(self.GNFW(rr/R500)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
         ans = 4.0*np.pi/DA_z**2 * intgrl
         ans *= self.cc.c['SIGMA_T']/(self.cc.c['ME']*self.cc.c['C']**2)*self.cc.c['MPC2CM']*self.cc.c['eV_2_erg']*1000.0
+        #factor of 1000 to convert keV to eV
 
         return ans
 
@@ -182,7 +183,6 @@ class SZ_Cluster_Model:
         DA_z = self.cc.results.angular_diameter_distance(z)
         rr = np.arange(dr,R500*5.0,dr)
         M_fac = M / (3e14) * (100./70.)
-        #P500 = 1.65e-3 * (100./70.)**2 * M_fac**(2./3.) * self.cc.E_z(z) #keV cm^3 
         tau500 = 1.
         intgrl = tau500*np.sum(self.GNFWtau(rr/R500,P0,xc,gm,al,bt)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
         ans = 4.0*np.pi/DA_z**2 * intgrl

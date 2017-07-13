@@ -32,20 +32,17 @@ class ILC_simple:
         self.W_ll_cmb = np.zeros([len(self.evalells),len(np.array(freqs))])
         self.freq = freqs
 
-        f_nu_tsz = f_nu(self.cc.c,np.array(freqs)) #* self.cc.c['TCMBmuK']
+        f_nu_tsz = f_nu(self.cc.c,np.array(freqs)) 
         f_nu_cmb = f_nu_tsz*0.0 + 1.
 
         for ii in xrange(len(self.evalells)):
 
             cmb_els = fq_mat*0.0 + self.cc.clttfunc(self.evalells[ii])
-            
 
             inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha) / self.cc.c['TCMBmuK']**2.)
         
-            nells = np.diag(inst_noise)#np.outer(inst_noise,inst_noise)
-            #nells = np.outer(inst_noise,inst_noise)
+            nells = np.diag(inst_noise)
             
-
             totfg = (self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
                       self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) \
                       / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi 
@@ -64,21 +61,9 @@ class ILC_simple:
             self.W_ll_cmb[ii,:] = 1./np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_cmb_inv,f_nu_cmb)) \
                                   * np.dot(np.transpose(f_nu_cmb),N_ll_for_cmb_inv)
 
-            self.N_ll_tsz[ii] = np.dot(np.transpose(self.W_ll_tsz[ii,:]),np.dot(N_ll_for_tsz,self.W_ll_tsz[ii,:])) #* self.cc.c['TCMBmuK']**2.
+            self.N_ll_tsz[ii] = np.dot(np.transpose(self.W_ll_tsz[ii,:]),np.dot(N_ll_for_tsz,self.W_ll_tsz[ii,:]))
             self.N_ll_cmb[ii] = np.dot(np.transpose(self.W_ll_cmb[ii,:]),np.dot(N_ll_for_cmb,self.W_ll_cmb[ii,:]))
 
-#            if (ii == 3000):
-#                print "NOISE"
-#                print 'ell', self.evalells[ii]
-#                print 'inst', nells[4,4] * self.evalells[ii]**2
-#                print 'cmb',  cmb_els[4,4] * self.evalells[ii]**2
-#                print 'fg', totfg[4,4] * self.evalells[ii]**2
-#                print 'ksz', ksz[4,4] * self.evalells[ii]**2
-#                print 'tsz', tsz[4,4] * self.evalells[ii]**2
-#                print 'noise mat', N_ll_for_tsz[4,4] * self.evalells[ii]**2
-#                print 'wieghts', self.W_ll_tsz[ii,:]
-#                print 'reduced noise', self.N_ll_tsz[ii] * self.evalells[ii]**2 #* self.cc.c['TCMBmuK']**2.
-                
     def Noise_ellyy(self):
         
         return self.evalells,self.N_ll_tsz
@@ -97,12 +82,10 @@ class ILC_simple:
 
         cls_yy = cls_tsz / (f_nu(self.cc.c,self.freq[0]))**2  # Normalized to get Cell^yy
 
-#        LF = orphics.theory.gaussianCov.LensForecast()
         LF = LensForecast()
         LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz)
 
         sn,errs = LF.sn(ellBinEdges,fsky,"yy") # not squared
-        #errs2 = LF.sigmaClSquared("yy",ellBinEdges,fsky)
 
         cls_out = np.interp(ellMids,self.evalells,cls_yy)
 
@@ -114,12 +97,10 @@ class ILC_simple:
 
         cls_cmb = self.cc.clttfunc(self.evalells)
 
-#        LF = orphics.thoery.gaussianCov.LensForecast()
         LF = LensForecast()
         LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb)
 
-        sn,errs = LF.sn(ellBinEdges,fsky,"tt")
-        #errs2 = LF.sigmaClSquared("tt",ellBinEdges,fsky)
+        sn,errs = LF.sn(ellBinEdges,fsky,"tt") # not squared
 
         cls_out = np.interp(ellMids,self.evalells,cls_cmb)
 
