@@ -14,6 +14,8 @@ class BattagliaSims(object):
 
     def __init__(self,constDict,rootPath="/astro/astronfs01/workarea/msyriac/clusterSims/Battaglia/"):
 
+        # snap 35 to 54
+        
         cosmoDict = {}
         lmax = 2000
         cosmoDict['H0'] = 72.0
@@ -27,7 +29,7 @@ class BattagliaSims(object):
         cosmoDict['As'] = 2.e-9
         
 
-        self.cc = ClusterCosmology(cosmoDict,constDict,lmax)
+        self.cc = ClusterCosmology(cosmoDict,constDict,lmax,pickling=True)
         self.TCMB = 2.7255e6
 
         self.root = rootPath
@@ -41,8 +43,8 @@ class BattagliaSims(object):
 
         # True masses
         self.NumClust= 300
-        self.trueM500overh = {}
-        self.trueR500overh = {}
+        self.trueM500 = {}
+        self.trueR500 = {}
         for snapNum in self.allSnaps:
             snap = str(snapNum)
             f1 = self.root+'cluster_image_info/CLUSTER_MAP_INFO2PBC.L165.256.FBN2_'+snap+'500.d'
@@ -50,8 +52,8 @@ class BattagliaSims(object):
                 temp = np.fromfile(file=fd, dtype=np.float32)
             data = np.reshape(temp,(self.NumClust,4))
 
-            self.trueM500overh[snap] = data[:,2]*1.e10 # Msun/h
-            self.trueR500overh[snap] = data[:,3]*(1.+self.snapToZ(snapNum))/1.e3 # physical Kpc/h -> comoving Mpc R500
+            self.trueM500[snap] = data[:,2]*1.e10 /self.cc.h # Msun   #/h
+            self.trueR500[snap] = data[:,3]*(1.+self.snapToZ(snapNum))/1.e3 #/ self.cc.h # physical Kpc/h -> comoving Mpc R500
 
     def mapReader(self,plotRel=False):
         snapMax = 5
@@ -98,6 +100,7 @@ class BattagliaSims(object):
         fileY = self.root + "GEN_Cluster_"+str(massIndex)+"L165.256.FBN2_snap"+str(snap)+"_comovFINE.d"
 
         z = self.snapToZ(snap)
+        print "Snap ", snap , " corresponds to redshift ", z
 
         stampWidthMpc = 8. / self.cc.h
         comovingMpc = self.cc.results.comoving_radial_distance(z)
@@ -107,16 +110,16 @@ class BattagliaSims(object):
 
         areaPixKpc2 = (pixWidthArcmin*comovingMpc*1.e3*np.pi/180./60.)**2.#areaKpc2(pixWidthArcmin)
         # areaPixKpc2_test = (stampWidthMpc/PIX*1.e3)**2.#areaKpc2(pixWidthArcmin)
-        # print areaPixKpc2, areaPixKpc2_test
+        # print areaPixKpc2, areaPixKpc2_test, np.sqrt(areaPixKpc2)*self.cc.h
 
-        #sys.exit()
+        # sys.exit()
 
         maps = {}
         for filen,tag in zip([fileDM,fileStar,fileGas,fileY],["dm","stars","gas","y"]):
             with open(filen, 'rb') as fd:
                 temp = np.fromfile(file=fd, dtype=np.float32)
 
-            fac = 1.
+            fac = self.cc.h # 1.
             if tag!="y":
                 fac = 1.e10*self.cc.h 
     
@@ -144,62 +147,69 @@ class BattagliaSims(object):
         modmapArc = modRMap*60.*180./np.pi
 
 
-        trueR500 = self.trueR500overh[str(snap)][massIndex]/self.cc.h
+        trueR500 = self.trueR500[str(snap)][massIndex] #/self.cc.h
         withinArc = trueR500*60.*180./comovingMpc/np.pi
         withinMap = totMass[np.where(modmapArc<withinArc)]
         projectedM500 = withinMap.sum()  *areaPixKpc2 #/ (3.9**2.) # *areaKpc2(arc) check h!!!
 
-        trueM500 = self.trueM500overh[str(snap)][massIndex]/self.cc.h
+        trueM500 = self.trueM500[str(snap)][massIndex] #/self.cc.h
+
+        #assert projectedM500>trueM500
 
         freqfac = f_nu(self.cc.c,freqGHz)
         print freqfac
         szMapuK = maps['y']*freqfac*self.TCMB
 
-        cmbZ = sourceZ
-        comL  = self.cc.results.comoving_radial_distance(z) 
-        comS  = self.cc.results.comoving_radial_distance(cmbZ) 
-        comLS = comS-comL
+        # cmbZ = sourceZ
+        # comL  = self.cc.results.comoving_radial_distance(z) 
+        # comS  = self.cc.results.comoving_radial_distance(cmbZ) 
+        # comLS = comS-comL
 
-        const12 = 9.571e-20 # 2G/c^2 in Mpc / solar mass 
-        sigmaCr = comS/np.pi/const12/comLS/comL/1e6 # Msolar/kpc2
+        # const12 = 9.571e-20 # 2G/c^2 in Mpc / solar mass 
+        # sigmaCr = comS/np.pi/const12/comLS/comL/1e6 # Msolar/kpc2
+
+
+        cmbZ = sourceZ
+        comL  = self.cc.results.angular_diameter_distance(z) 
+        comS  = self.cc.results.angular_diameter_distance(cmbZ) 
+        comLS = self.cc.results.angular_diameter_distance2(z,cmbZ) 
+
+        const12 = 2.*9.571e-20 #4G/c^2 in Mpc / solar mass 
+        sigmaCr = comS/np.pi/const12/comLS/comL/1e6/(1.+z)**2. # Msolar/kpc2
+
+
 
         kappa = totMass/sigmaCr # not sure if totMass needs to be rescaled?
 
         return maps, z, kappa, szMapuK, projectedM500, trueM500, trueR500, t.pixScaleX, t.pixScaleY
 
     
-def getKappaSZ(bSims,snap,massIndex,px,thetaMapshape):
-    from enlib import enmap,utils,lensing,powspec
-    arcmin =  utils.arcmin
-    b = bSims
-    PIX = 2048
-    maps, z, kappaSimDat, szMapuKDat, projectedM500, trueM500, trueR500, pxInRad, pxInRad = b.getMaps(snap,massIndex,freqGHz=150.)
-    pxIn = pxInRad * 180.*60./np.pi
-    hwidth = PIX*pxIn/2.
-    
-    # input pixelization
-    shapeSim, wcsSim = enmap.geometry(pos=[[-hwidth*arcmin,-hwidth*arcmin],[hwidth*arcmin,hwidth*arcmin]], res=pxIn*arcmin, proj="car")
-    kappaSim = enmap.enmap(kappaSimDat,wcsSim)
-    szMapuK = enmap.enmap(szMapuKDat,wcsSim)
-    
-    # downgrade to native
-    shapeOut, wcsOut = enmap.geometry(pos=[[-hwidth*arcmin,-hwidth*arcmin],[hwidth*arcmin,hwidth*arcmin]], res=px*arcmin, proj="car")
-    kappaMap = enmap.project(kappaSim,shapeOut,wcsOut)
-    szMap = enmap.project(szMapuK,shapeOut,wcsOut)
+    def getKappaSZ(self,snap,massIndex,shape,wcs,apodWidthArcmin=None):
 
-    # print thetaMapshape
-    # print szMap.shape
-    diffPad = ((np.array(thetaMapshape) - np.array(szMap.shape))/2.+0.5).astype(int)
-    
-    apodWidth = 25
-    # kappaMap = enmap.pad(kappaMap,diffPad)[:-1,:-1]
-    # szMap = enmap.pad(szMap,diffPad)[:-1,:-1]
-    kappaMap = enmap.pad(enmap.apod(kappaMap,apodWidth),diffPad)[:-1,:-1]
-    szMap = enmap.pad(enmap.apod(szMap,apodWidth),diffPad)[:-1,:-1]
-    print szMap.shape
-    assert szMap.shape==thetaMapshape
+        from enlib import enmap,utils
+        arcmin =  utils.arcmin
+        PIX = 2048
+        maps, z, kappaSimDat, szMapuKDat, projectedM500, trueM500, trueR500, pxInRad, pxInRad = self.getMaps(snap,massIndex,freqGHz=150.)
+        pxIn = pxInRad * 180.*60./np.pi
+        hwidth = PIX*pxIn/2.
 
-    print z, projectedM500
-    
-    # print "kappaint ", kappaMap[thetaMap*60.*180./np.pi<10.].mean()
-    return kappaMap,szMap,projectedM500,z
+        # input pixelization
+        shapeSim, wcsSim = enmap.geometry(pos=[[-hwidth*arcmin,-hwidth*arcmin],[hwidth*arcmin,hwidth*arcmin]], res=pxIn*arcmin, proj="car")
+        kappaMap = enmap.enmap(kappaSimDat,wcsSim)
+        szMap = enmap.enmap(szMapuKDat,wcsSim)
+
+
+        if apodWidthArcmin is not None:
+            apodWidth = int(apodWidthArcmin/pxIn)
+            kappaMap = enmap.apod(kappaMap,apodWidth)
+            szMap = enmap.apod(szMap,apodWidth)
+
+
+        kappaMap = enmap.project(kappaMap, shape, wcs)
+        szMap = enmap.project(szMap, shape, wcs)
+        
+        assert szMap.shape==shape
+        assert kappaMap.shape==shape
+
+        # print "kappaint ", kappaMap[thetaMap*60.*180./np.pi<10.].mean()
+        return kappaMap,szMap,projectedM500,z
