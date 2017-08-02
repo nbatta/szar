@@ -31,7 +31,7 @@ cc = ClusterCosmology(fparams,constDict,lmax=8000,pickling=True)#clTTFixFile=clt
 
 fgs = fgNoises(cc.c,ksz_battaglia_test_csv="data/ksz_template_battaglia.csv",tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
 
-experimentName = "CCATP"
+experimentName = "CMB-probe-S4-1.5"
 beams = listFromConfig(Config,experimentName,'beams')
 noises = listFromConfig(Config,experimentName,'noises')
 freqs = listFromConfig(Config,experimentName,'freqs')
@@ -43,9 +43,11 @@ fsky = Config.getfloat(experimentName,'fsky')
 SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
 
 ILC  = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
-ILC2 = ILC_simple(clusterCosmology=cc, rms_noises = noises[:5],fwhms=beams[:5],freqs=freqs[:5],lmax=lmax,lknee=lknee,alpha=alpha)
-ILC3 = ILC_simple(clusterCosmology=cc, rms_noises = noises[:4],fwhms=beams[:4],freqs=freqs[:4],lmax=lmax,lknee=lknee,alpha=alpha)
-ILC4 = ILC_simple(clusterCosmology=cc, rms_noises = noises[:3],fwhms=beams[:3],freqs=freqs[:3],lmax=lmax,lknee=lknee,alpha=alpha)
+ILC2 = ILC_simple(clusterCosmology=cc, rms_noises = noises[:10],fwhms=beams[:10],freqs=freqs[:10],lmax=lmax,lknee=lknee,alpha=alpha)
+ILC3 = ILC_simple(clusterCosmology=cc, rms_noises = noises[:8],fwhms=beams[:8],freqs=freqs[:8],lmax=lmax,lknee=lknee,alpha=alpha)
+ILC4 = ILC_simple(clusterCosmology=cc, rms_noises = noises[:6],fwhms=beams[:6],freqs=freqs[:6],lmax=lmax,lknee=lknee,alpha=alpha)
+
+#5,4,3 CCATp
 
 print freqs[:3]
 lsedges = np.arange(100,8001,50)
