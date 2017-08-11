@@ -52,17 +52,17 @@ ILC4 = ILC_simple(clusterCosmology=cc, rms_noises = noises[:6],fwhms=beams[:6],f
 print freqs[:3]
 lsedges = np.arange(100,8001,50)
 
-el_il,  cls_il,  err_il,  s2ny  = ILC.Forecast_Cellyy(lsedges,fsky,constraint='cib')
-el_il2, cls_il2, err_il2, s2ny2 = ILC2.Forecast_Cellyy(lsedges,fsky,constraint='cib')
-el_il3, cls_il3, err_il3, s2ny3 = ILC3.Forecast_Cellyy(lsedges,fsky,constraint='cib')
-el_il4, cls_il4, err_il4, s2ny4 = ILC4.Forecast_Cellyy(lsedges,fsky,constraint='cib')
+el_il,  cls_il,  err_il,  s2ny  = ILC.Forecast_Cellyy(lsedges,fsky,constraint="cmb")
+el_il2, cls_il2, err_il2, s2ny2 = ILC2.Forecast_Cellyy(lsedges,fsky,constraint="cmb")
+el_il3, cls_il3, err_il3, s2ny3 = ILC3.Forecast_Cellyy(lsedges,fsky,constraint="cmb")
+el_il4, cls_il4, err_il4, s2ny4 = ILC4.Forecast_Cellyy(lsedges,fsky,constraint="cmb")
 
 print 'S/N y', s2ny, s2ny2,s2ny3, s2ny4
 
-el_ilc,  cls_ilc,  err_ilc,  s2n  = ILC.Forecast_Cellcmb(lsedges,fsky,constraint='tsz')
-el_ilc2, cls_ilc2, err_ilc2, s2n2 = ILC2.Forecast_Cellcmb(lsedges,fsky,constraint='tsz')
-el_ilc3, cls_ilc3, err_ilc3, s2n3 = ILC3.Forecast_Cellcmb(lsedges,fsky,constraint='tsz')
-el_ilc4, cls_ilc4, err_ilc4, s2n4 = ILC4.Forecast_Cellcmb(lsedges,fsky,constraint='tsz')
+el_ilc,  cls_ilc,  err_ilc,  s2n  = ILC.Forecast_Cellcmb(lsedges,fsky,constraint="tsz")
+el_ilc2, cls_ilc2, err_ilc2, s2n2 = ILC2.Forecast_Cellcmb(lsedges,fsky,constraint="tsz")
+el_ilc3, cls_ilc3, err_ilc3, s2n3 = ILC3.Forecast_Cellcmb(lsedges,fsky,constraint="tsz")
+el_ilc4, cls_ilc4, err_ilc4, s2n4 = ILC4.Forecast_Cellcmb(lsedges,fsky,constraint="tsz")
 
 print 'S/N CMB', s2n, s2n2, s2n3, s2n4
 

@@ -160,7 +160,7 @@ class ILC_simple:
 
         return ellMids,cls_out,errs,sn
 
-    def Forecast_Cellcmb(self,ellBinEdges,fsky,constraint=='None'):
+    def Forecast_Cellcmb(self,ellBinEdges,fsky,constraint='None'):
 
         ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1]) / 2
 
@@ -169,7 +169,7 @@ class ILC_simple:
         LF = LensForecast()
         if (constraint=='None'):
             LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb)
-        elif (constraint=='cmb'):
+        elif (constraint=='tsz'):
             LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb_c_tsz)
         else:
             return "Wrong option"
