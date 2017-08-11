@@ -31,17 +31,18 @@ class ILC_simple:
         self.N_ll_tsz = self.evalells*0.0
         self.N_ll_cmb_c_tsz = self.evalells*0.0
         self.N_ll_tsz_c_cmb = self.evalells*0.0
-        #self.N_ll_tsz_c_cib = self.evalells*0.0
+        self.N_ll_tsz_c_cib = self.evalells*0.0
 
         self.W_ll_tsz = np.zeros([len(self.evalells),len(np.array(freqs))])
         self.W_ll_cmb = np.zeros([len(self.evalells),len(np.array(freqs))])
-        #self.W_ll_tsz_c_cib = np.zeros([len(self.evalells),len(np.array(freqs))])
+        self.W_ll_tsz_c_cib = np.zeros([len(self.evalells),len(np.array(freqs))])
         self.W_ll_tsz_c_cmb = np.zeros([len(self.evalells),len(np.array(freqs))])
         self.W_ll_cmb_c_tsz = np.zeros([len(self.evalells),len(np.array(freqs))])
         self.freq = freqs
 
         f_nu_tsz = f_nu(self.cc.c,np.array(freqs)) 
         f_nu_cmb = f_nu_tsz*0.0 + 1.
+        f_nu_cib = self.fgs.f_nu_cib(np.array(freqs))
 
         for ii in xrange(len(self.evalells)):
 
@@ -55,19 +56,30 @@ class ILC_simple:
                       self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) \
                       / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi 
 
+            totfg_cib = (self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) \
+                      / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
+
+
             ksz = fq_mat*0.0 + self.fgs.ksz_temp(self.evalells[ii]) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
 
             tsz = self.fgs.tSZ(self.evalells[ii],fq_mat,fq_mat_t) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi            
+
+            cib = (self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t)) \
+                     / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
+
             N_ll_for_tsz = nells + totfg + cmb_els + ksz 
             N_ll_for_cmb = nells + totfg + tsz
 
             N_ll_for_tsz_c_cmb = nells + totfg 
             N_ll_for_cmb_c_tsz =  N_ll_for_tsz_c_cmb
-        
+            N_ll_for_tsz_c_cib = nells + totfg_cib + cmb_els + ksz
+
             N_ll_for_tsz_inv = np.linalg.inv(N_ll_for_tsz)
             N_ll_for_cmb_inv = np.linalg.inv(N_ll_for_cmb)
             N_ll_for_tsz_c_cmb_inv = np.linalg.inv(N_ll_for_tsz_c_cmb)
             N_ll_for_cmb_c_tsz_inv = N_ll_for_tsz_c_cmb_inv
+            N_ll_for_tsz_c_cib_inv = np.linalg.inv(N_ll_for_tsz_c_cib)
+
 
             self.W_ll_tsz[ii,:] = 1./np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_inv,f_nu_tsz)) \
                                   * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_inv)
@@ -76,6 +88,14 @@ class ILC_simple:
 
             self.N_ll_tsz[ii] = np.dot(np.transpose(self.W_ll_tsz[ii,:]),np.dot(N_ll_for_tsz,self.W_ll_tsz[ii,:]))
             self.N_ll_cmb[ii] = np.dot(np.transpose(self.W_ll_cmb[ii,:]),np.dot(N_ll_for_cmb,self.W_ll_cmb[ii,:]))
+
+            self.W_ll_tsz_c_cmb[ii,:] = (np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)) \
+                                             * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_c_cmb_inv) \
+                                             - np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)) \
+                                             * np.dot(np.transpose(f_nu_cmb),N_ll_for_tsz_c_cmb_inv)) / \
+                                        (np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)) \
+                                             * np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_tsz)) \
+                                             - (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)))**2)
 
             self.W_ll_tsz_c_cmb[ii,:] = (np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)) \
                                              * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_c_cmb_inv) \
