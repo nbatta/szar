@@ -52,17 +52,17 @@ ILC4 = ILC_simple(clusterCosmology=cc, rms_noises = noises[:6],fwhms=beams[:6],f
 print freqs[:3]
 lsedges = np.arange(100,8001,50)
 
-el_il,  cls_il,  err_il,  s2ny  = ILC.Forecast_Cellyy_c_cmb(lsedges,fsky)
-el_il2, cls_il2, err_il2, s2ny2 = ILC2.Forecast_Cellyy_c_cmb(lsedges,fsky)
-el_il3, cls_il3, err_il3, s2ny3 = ILC3.Forecast_Cellyy_c_cmb(lsedges,fsky)
-el_il4, cls_il4, err_il4, s2ny4 = ILC4.Forecast_Cellyy_c_cmb(lsedges,fsky)
+el_il,  cls_il,  err_il,  s2ny  = ILC.Forecast_Cellyy(lsedges,fsky,constraint='cib')
+el_il2, cls_il2, err_il2, s2ny2 = ILC2.Forecast_Cellyy(lsedges,fsky,constraint='cib')
+el_il3, cls_il3, err_il3, s2ny3 = ILC3.Forecast_Cellyy(lsedges,fsky,constraint='cib')
+el_il4, cls_il4, err_il4, s2ny4 = ILC4.Forecast_Cellyy(lsedges,fsky,constraint='cib')
 
 print 'S/N y', s2ny, s2ny2,s2ny3, s2ny4
 
-el_ilc,  cls_ilc,  err_ilc,  s2n  = ILC.Forecast_Cellcmb_c_tsz(lsedges,fsky)
-el_ilc2, cls_ilc2, err_ilc2, s2n2 = ILC2.Forecast_Cellcmb_c_tsz(lsedges,fsky)
-el_ilc3, cls_ilc3, err_ilc3, s2n3 = ILC3.Forecast_Cellcmb_c_tsz(lsedges,fsky)
-el_ilc4, cls_ilc4, err_ilc4, s2n4 = ILC4.Forecast_Cellcmb_c_tsz(lsedges,fsky)
+el_ilc,  cls_ilc,  err_ilc,  s2n  = ILC.Forecast_Cellcmb(lsedges,fsky,constraint='tsz')
+el_ilc2, cls_ilc2, err_ilc2, s2n2 = ILC2.Forecast_Cellcmb(lsedges,fsky,constraint='tsz')
+el_ilc3, cls_ilc3, err_ilc3, s2n3 = ILC3.Forecast_Cellcmb(lsedges,fsky,constraint='tsz')
+el_ilc4, cls_ilc4, err_ilc4, s2n4 = ILC4.Forecast_Cellcmb(lsedges,fsky,constraint='tsz')
 
 print 'S/N CMB', s2n, s2n2, s2n3, s2n4
 
@@ -76,15 +76,15 @@ outfile2 = outDir + experimentName + "_cmb_weights_constrained.png"
 ILC.PlotyWeights(outfile1)
 ILC.PlotcmbWeights(outfile2)
 
-eln,nl = ILC.Noise_ellyy_c_cmb()
-eln2,nl2 = ILC2.Noise_ellyy_c_cmb()
-eln3,nl3 = ILC3.Noise_ellyy_c_cmb()
-eln4,nl4 = ILC4.Noise_ellyy_c_cmb()
+eln,nl = ILC.Noise_ellyy(constraint='cib')
+eln2,nl2 = ILC2.Noise_ellyy(constraint='cib')
+eln3,nl3 = ILC3.Noise_ellyy(constraint='cib')
+eln4,nl4 = ILC4.Noise_ellyy(constraint='cib')
 
-elnc,nlc = ILC.Noise_ellcmb()
-elnc2,nlc2 = ILC2.Noise_ellcmb_c_tsz()
-elnc3,nlc3 = ILC3.Noise_ellcmb_c_tsz()
-elnc4,nlc4 = ILC4.Noise_ellcmb_c_tsz()
+elnc,nlc = ILC.Noise_ellcmb(constraint='tsz')
+elnc2,nlc2 = ILC2.Noise_ellcmb(constraint='tsz')
+elnc3,nlc3 = ILC3.Noise_ellcmb(constraint='tsz')
+elnc4,nlc4 = ILC4.Noise_ellcmb(constraint='tsz')
 
 pl = Plotter(labelX="$\ell$",labelY="Noise Ratio",ftsize=12,figsize=(8,6))
 pl.add(eln2,nl2/nl,label="90 - 350 / Full")

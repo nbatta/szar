@@ -71,7 +71,7 @@ class ILC_simple:
             N_ll_for_cmb = nells + totfg + tsz
 
             N_ll_for_tsz_c_cmb = nells + totfg 
-            N_ll_for_cmb_c_tsz =  N_ll_for_tsz_c_cmb
+            N_ll_for_cmb_c_tsz = N_ll_for_tsz_c_cmb
             N_ll_for_tsz_c_cib = nells + totfg_cib + cmb_els + ksz
 
             N_ll_for_tsz_inv = np.linalg.inv(N_ll_for_tsz)
@@ -97,13 +97,13 @@ class ILC_simple:
                                              * np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_tsz)) \
                                              - (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)))**2)
 
-            self.W_ll_tsz_c_cmb[ii,:] = (np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)) \
-                                             * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_c_cmb_inv) \
-                                             - np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)) \
-                                             * np.dot(np.transpose(f_nu_cmb),N_ll_for_tsz_c_cmb_inv)) / \
-                                        (np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)) \
-                                             * np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_tsz)) \
-                                             - (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)))**2)
+            self.W_ll_tsz_c_cib[ii,:] = (np.dot(np.transpose(f_nu_cib),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
+                                             * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_c_cib_inv) \
+                                             - np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
+                                             * np.dot(np.transpose(f_nu_cib),N_ll_for_tsz_c_cib_inv)) / \
+                                        (np.dot(np.transpose(f_nu_cib),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
+                                             * np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_tsz)) \
+                                             - (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)))**2)
 
             self.W_ll_cmb_c_tsz[ii,:] = (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_cmb_c_tsz_inv,f_nu_tsz)) \
                                              * np.dot(np.transpose(f_nu_cmb),N_ll_for_cmb_c_tsz_inv) \
@@ -115,26 +115,27 @@ class ILC_simple:
 
             self.N_ll_tsz_c_cmb[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cmb[ii,:]),np.dot(N_ll_for_tsz_c_cmb,self.W_ll_tsz_c_cmb[ii,:]))
             self.N_ll_cmb_c_tsz[ii] = np.dot(np.transpose(self.W_ll_cmb_c_tsz[ii,:]),np.dot(N_ll_for_cmb_c_tsz,self.W_ll_cmb_c_tsz[ii,:]))
+            self.N_ll_tsz_c_cib[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cib[ii,:]),np.dot(N_ll_for_tsz_c_cib,self.W_ll_tsz_c_cib[ii,:]))
 
+    def Noise_ellyy(self,constraint='None'):
+        if (constraint=='None'):
+            return self.evalells,self.N_ll_tsz
+        elif (constraint=='cmb'):
+            return self.evalells,self.N_ll_tsz_c_cmb
+        elif (constraint=='cib'):
+            return self.evalells,self.N_ll_tsz_c_cib
+        else:
+            return "Wrong option"
 
-    def Noise_ellyy(self):
-        
-        return self.evalells,self.N_ll_tsz
+    def Noise_ellcmb(self,constraint='None'):
+        if (constraint=='None'):
+            return self.evalells,self.N_ll_cmb
+        elif (constraint=='tsz'):
+            return self.evalells,self.N_ll_cmb_c_tsz
+        else:
+            return "Wrong option"
 
-    def Noise_ellcmb(self):
-
-        return self.evalells,self.N_ll_cmb
-
-    def Noise_ellyy_c_cmb(self):
-
-        return self.evalells,self.N_ll_tsz_c_cmb
-
-    def Noise_ellcmb_c_tsz(self):
-
-        return self.evalells,self.N_ll_cmb_c_tsz
-
-
-    def Forecast_Cellyy(self,ellBinEdges,fsky):
+    def Forecast_Cellyy(self,ellBinEdges,fsky,constraint='None'):
 
         ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1]) / 2
 
@@ -144,7 +145,14 @@ class ILC_simple:
         cls_yy = cls_tsz / (f_nu(self.cc.c,self.freq[0]))**2  # Normalized to get Cell^yy
 
         LF = LensForecast()
-        LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz)
+        if (constraint=='None'):
+            LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz)
+        elif (constraint=='cmb'):
+            LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz_c_cmb)
+        elif (constraint=='cib'):
+            LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz_c_cib)
+        else:
+            return "Wrong option"
 
         sn,errs = LF.sn(ellBinEdges,fsky,"yy") # not squared
 
@@ -152,47 +160,19 @@ class ILC_simple:
 
         return ellMids,cls_out,errs,sn
 
-    def Forecast_Cellcmb(self,ellBinEdges,fsky):
+    def Forecast_Cellcmb(self,ellBinEdges,fsky,constraint=='None'):
 
         ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1]) / 2
 
         cls_cmb = self.cc.clttfunc(self.evalells)
 
         LF = LensForecast()
-        LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb)
-
-        sn,errs = LF.sn(ellBinEdges,fsky,"tt") # not squared
-
-        cls_out = np.interp(ellMids,self.evalells,cls_cmb)
-
-        return ellMids,cls_out,errs,sn
-
-    def Forecast_Cellyy_c_cmb(self,ellBinEdges,fsky):
-
-        ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1]) / 2
-
-        cls_tsz = self.fgs.tSZ(self.evalells,self.freq[0],self.freq[0]) / self.cc.c['TCMBmuK']**2. \
-                / ((self.evalells+1.)*self.evalells) * 2.* np.pi
-
-        cls_yy = cls_tsz / (f_nu(self.cc.c,self.freq[0]))**2  # Normalized to get Cell^yy 
-
-        LF = LensForecast()
-        LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz_c_cmb)
-
-        sn,errs = LF.sn(ellBinEdges,fsky,"yy") # not squared 
-
-        cls_out = np.interp(ellMids,self.evalells,cls_yy)
-
-        return ellMids,cls_out,errs,sn
-
-    def Forecast_Cellcmb_c_tsz(self,ellBinEdges,fsky):
-
-        ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1]) / 2
-
-        cls_cmb = self.cc.clttfunc(self.evalells)
-
-        LF = LensForecast()
-        LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb_c_tsz)
+        if (constraint=='None'):
+            LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb)
+        elif (constraint=='cmb'):
+            LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb_c_tsz)
+        else:
+            return "Wrong option"
 
         sn,errs = LF.sn(ellBinEdges,fsky,"tt") # not squared
 
