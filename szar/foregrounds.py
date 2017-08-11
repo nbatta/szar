@@ -85,6 +85,15 @@ class fgNoises(object):
         ans = self.c['A_cibc'] * (ell/self.c['ell0sec']) ** (2.-self.c['n_cib']) * mu1 * mu2 / mu0**2
         return ans
 
+    def f_nu_cib(self,nu1,nu2):
+        mu1 = nu1**self.c['al_cib']*self.B_nu(self.c['Td'],nu1) * self.g_nu(nu1)
+        mu2 = nu2**self.c['al_cib']*self.B_nu(self.c['Td'],nu2) * self.g_nu(nu2)
+        mu0 = self.c['nu0']**self.c['al_cib']*self.B_nu(self.c['Td'],self.c['nu0']) \
+            * self.g_nu(self.c['nu0'])
+        ans = mu1 * mu2 / mu0**2
+
+        return ans
+
     def tSZ_CIB(self,ell,nu1,nu2):
         mu1 = nu1**self.c['al_cib']*self.B_nu(self.c['Td'],nu1) * self.g_nu(nu1)
         mu2 = nu2**self.c['al_cib']*self.B_nu(self.c['Td'],nu2) * self.g_nu(nu2)

@@ -28,8 +28,16 @@ class ILC_simple:
         self.evalells = np.arange(2,lmax,self.dell)
         self.N_ll_tsz = self.evalells*0.0
         self.N_ll_cmb = self.evalells*0.0
+        self.N_ll_tsz = self.evalells*0.0
+        self.N_ll_cmb_c_tsz = self.evalells*0.0
+        self.N_ll_tsz_c_cmb = self.evalells*0.0
+        #self.N_ll_tsz_c_cib = self.evalells*0.0
+
         self.W_ll_tsz = np.zeros([len(self.evalells),len(np.array(freqs))])
         self.W_ll_cmb = np.zeros([len(self.evalells),len(np.array(freqs))])
+        #self.W_ll_tsz_c_cib = np.zeros([len(self.evalells),len(np.array(freqs))])
+        self.W_ll_tsz_c_cmb = np.zeros([len(self.evalells),len(np.array(freqs))])
+        self.W_ll_cmb_c_tsz = np.zeros([len(self.evalells),len(np.array(freqs))])
         self.freq = freqs
 
         f_nu_tsz = f_nu(self.cc.c,np.array(freqs)) 
@@ -52,9 +60,14 @@ class ILC_simple:
             tsz = self.fgs.tSZ(self.evalells[ii],fq_mat,fq_mat_t) / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi            
             N_ll_for_tsz = nells + totfg + cmb_els + ksz 
             N_ll_for_cmb = nells + totfg + tsz
+
+            N_ll_for_tsz_c_cmb = nells + totfg 
+            N_ll_for_cmb_c_tsz =  N_ll_for_tsz_c_cmb
         
             N_ll_for_tsz_inv = np.linalg.inv(N_ll_for_tsz)
             N_ll_for_cmb_inv = np.linalg.inv(N_ll_for_cmb)
+            N_ll_for_tsz_c_cmb_inv = np.linalg.inv(N_ll_for_tsz_c_cmb)
+            N_ll_for_cmb_c_tsz_inv = N_ll_for_tsz_c_cmb_inv
 
             self.W_ll_tsz[ii,:] = 1./np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_inv,f_nu_tsz)) \
                                   * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_inv)
@@ -64,6 +77,26 @@ class ILC_simple:
             self.N_ll_tsz[ii] = np.dot(np.transpose(self.W_ll_tsz[ii,:]),np.dot(N_ll_for_tsz,self.W_ll_tsz[ii,:]))
             self.N_ll_cmb[ii] = np.dot(np.transpose(self.W_ll_cmb[ii,:]),np.dot(N_ll_for_cmb,self.W_ll_cmb[ii,:]))
 
+            self.W_ll_tsz_c_cmb[ii,:] = (np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)) \
+                                             * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_c_cmb_inv) \
+                                             - np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)) \
+                                             * np.dot(np.transpose(f_nu_cmb),N_ll_for_tsz_c_cmb_inv)) / \
+                                        (np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)) \
+                                             * np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_tsz)) \
+                                             - (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)))**2)
+
+            self.W_ll_cmb_c_tsz[ii,:] = (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_cmb_c_tsz_inv,f_nu_tsz)) \
+                                             * np.dot(np.transpose(f_nu_cmb),N_ll_for_cmb_c_tsz_inv) \
+                                             - np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_cmb_c_tsz_inv,f_nu_tsz)) \
+                                             * np.dot(np.transpose(f_nu_tsz),N_ll_for_cmb_c_tsz_inv)) / \
+                                        (np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_cmb_c_tsz_inv,f_nu_cmb)) \
+                                             * np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_cmb_c_tsz_inv,f_nu_tsz)) \
+                                             - (np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_cmb_c_tsz_inv,f_nu_tsz)))**2)
+
+            self.N_ll_tsz_c_cmb[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cmb[ii,:]),np.dot(N_ll_for_tsz_c_cmb,self.W_ll_tsz_c_cmb[ii,:]))
+            self.N_ll_cmb_c_tsz[ii] = np.dot(np.transpose(self.W_ll_cmb_c_tsz[ii,:]),np.dot(N_ll_for_cmb_c_tsz,self.W_ll_cmb_c_tsz[ii,:]))
+
+
     def Noise_ellyy(self):
         
         return self.evalells,self.N_ll_tsz
@@ -71,6 +104,14 @@ class ILC_simple:
     def Noise_ellcmb(self):
 
         return self.evalells,self.N_ll_cmb
+
+    def Noise_ellyy_c_cmb(self):
+
+        return self.evalells,self.N_ll_tsz_c_cmb
+
+    def Noise_ellcmb_c_tsz(self):
+
+        return self.evalells,self.N_ll_cmb_c_tsz
 
 
     def Forecast_Cellyy(self,ellBinEdges,fsky):
@@ -99,6 +140,39 @@ class ILC_simple:
 
         LF = LensForecast()
         LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb)
+
+        sn,errs = LF.sn(ellBinEdges,fsky,"tt") # not squared
+
+        cls_out = np.interp(ellMids,self.evalells,cls_cmb)
+
+        return ellMids,cls_out,errs,sn
+
+    def Forecast_Cellyy_c_cmb(self,ellBinEdges,fsky):
+
+        ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1]) / 2
+
+        cls_tsz = self.fgs.tSZ(self.evalells,self.freq[0],self.freq[0]) / self.cc.c['TCMBmuK']**2. \
+                / ((self.evalells+1.)*self.evalells) * 2.* np.pi
+
+        cls_yy = cls_tsz / (f_nu(self.cc.c,self.freq[0]))**2  # Normalized to get Cell^yy 
+
+        LF = LensForecast()
+        LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz_c_cmb)
+
+        sn,errs = LF.sn(ellBinEdges,fsky,"yy") # not squared 
+
+        cls_out = np.interp(ellMids,self.evalells,cls_yy)
+
+        return ellMids,cls_out,errs,sn
+
+    def Forecast_Cellcmb_c_tsz(self,ellBinEdges,fsky):
+
+        ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1]) / 2
+
+        cls_cmb = self.cc.clttfunc(self.evalells)
+
+        LF = LensForecast()
+        LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb_c_tsz)
 
         sn,errs = LF.sn(ellBinEdges,fsky,"tt") # not squared
 
