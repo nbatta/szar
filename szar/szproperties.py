@@ -9,6 +9,13 @@ from orphics.tools.stats import timeit
 def gaussian(xx, mu, sig):
     return 1./(sig * np.sqrt(2*np.pi)) * np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
 
+def gaussian2D(xx, mu_x, sig_x,yy,mu_y, sig_y, rho):
+    exp0 = -1./(2.*(1.-rho**2))
+    exp1 = (xx - mu_x)**2 / (sig_x**2.)
+    exp2 = (yy - mu_y)**2 / (sig_y**2.)
+    exp3 = 2*rho *(xx - mu_x)/sig_x *(yy - mu_y)/sig_y
+    return 1./(sig_x*sig_y*2.0*np.pi*np.sqrt(1. - rho**2)) * np.exp(exp0*(exp1+exp2-exp3))
+
 class SZ_Cluster_Model:
     def __init__(self,clusterCosmology,clusterDict, \
                  fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1., \
@@ -218,6 +225,22 @@ class SZ_Cluster_Model:
 
         return P_func
 
+    def Pfunc_qarr_corr(self,sigN,M,z_arr,q_arr,Mexp,mass_err):
+
+        M_wl = 10**self.Mexp
+
+        lnY = self.lnY
+
+        P_func = np.zeros((M.size,z_arr.size,q_arr.size,M_wl.size))
+        M_arr =  np.outer(M,np.ones([z_arr.size]))
+
+        # P_func(M,z,q)
+        for i in xrange(z_arr.size):
+            for kk in xrange(q_arr.size):
+                for jj in xrange(m_wl.size):
+                    P_func[:,i,kk,jj] = self.P_of_qn_corr(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr[kk],M_wl,mass_err[:,i])
+        return P_func
+
     def Y_M(self,MM,zz):
         DA_z = self.cc.results.angular_diameter_distance(zz) * (self.cc.H0/100.)
 
@@ -269,11 +292,29 @@ class SZ_Cluster_Model:
             ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
         return ans
 
+    def P_of_qn_corr(self,lnY,MM,zz,sigma_N,qarr,M_wl,mass_error):
+        lnYa = np.outer(np.ones(len(MM)),lnY)
+        rho = scaling['rho_corr']
+
+        sig_thresh = self.q_prob_corr(qarr,lnYa,sigma_N,Mwl,MM,Merr,rho)
+        P_Y = self.P_of_Y(lnYa,MM, zz)
+        ans = MM*0.0
+        for ii in xrange(len(MM)):
+            ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
+        return ans
+
     def q_prob (self,q_arr,lnY,sigma_N):
         #Gaussian error probablity for SZ S/N 
         sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
         Y = np.exp(lnY)
         ans = gaussian(q_arr,Y/sigma_Na,1.)
+        return ans
+
+    def q_prob_corr (self,q_arr,lnY,sigma_N,Mwl,MM,Merr,rho):
+        #Gaussian error probablity for SZ S/N
+        sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
+        Y = np.exp(lnY)
+        ans = gaussian2D(q_arr,Y/sigma_Na,1.,Mwl*self.scaling['b_wl'],MM,Merr*MM,rho)
         return ans
 
     def Mwl_prob (self,Mwl,M,Merr):
