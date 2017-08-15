@@ -338,6 +338,10 @@ class Halo_MF:
         print "Calculating P_func_qarr. This takes a while..."
         self.Pfunc_qarr = SZCluster.Pfunc_qarr(self.sigN.copy(),self.M,self.zarr,q_arr)
 
+    def updatePfunc_qarr_corr(self,SZCluster,q_arr):
+        print "Calculating P_func_qarr. This takes a while..."
+        self.Pfunc_qarr_corr = SZCluster.Pfunc_qarr_corr(self.sigN.copy(),self.M,self.zarr,q_arr,self.Mexp)
+
     def N_of_z_SZ(self,fsky,SZCluster):
         # this is dN/dz(z) with selection
 
