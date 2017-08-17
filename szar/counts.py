@@ -414,36 +414,6 @@ class Halo_MF:
         dn_dVdm = self.dn_dM(self.M200,200.)
         dV_dz = self.dVdz
 
-        # N = M_arr.copy()*0.
-        # print "Checking norm of mass calibration..."
-        # mexp_int = m_wl
-        # m_int_edges = self.M_edges
-        # #mass_err *= 1.e-1
-
-        # # mexp_int_edges = np.arange(9.0,16.0,0.01)
-        # # m_int_edges = 10**mexp_int_edges
-        # # m_int = (m_int_edges[1:]+m_int_edges[:-1])/2.
-        # # mexp_int = np.log10(m_int)
-        # for i in xrange (z_arr.size):
-        #     for j in xrange (self.Mexp.size):
-        #         N[j,i] = np.dot(SZCluster.Mwl_prob(10**(mexp_int),M_arr[j,i],mass_err[j,i]),np.diff(m_int_edges))
-        # from orphics.tools.io import Plotter
-        # import os
-        # mmin = self.Mexp.min()
-        # mmax = self.Mexp.max()
-        # zmin = self.zarr.min()
-        # zmax = self.zarr.max()
-        # pgrid = np.rot90(N)
-        # pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
-        # pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],labsize=14,aspect="auto")
-        # pl.done(os.environ['WWW']+"normMassCalib.png")
-
-        # pgrid = mass_err
-        # pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
-        # pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],labsize=14,aspect="auto")
-        # pl.done(os.environ['WWW']+"massgrid.png")
-
-        # sys.exit()
         
         # \int dm  dn/dzdm
         for kk in xrange(q_arr.size):
@@ -454,6 +424,36 @@ class Halo_MF:
         
         return dNdzmq
 
+    def N_of_mqz_SZ_corr (self,mass_err,q_edges,SZCluster):
+        # this is 3D grid for fisher matrix
+        # Index MZQ
+
+        q_arr = (q_edges[1:]+q_edges[:-1])/2.
+
+        z_arr = self.zarr
+        M_arr =  np.outer(self.M,np.ones([len(z_arr)]))
+        dNdzmq = np.zeros([len(self.M),len(z_arr),len(q_arr)])
+
+        m_wl = self.Mexp
+        
+        if self.sigN is None: self.updateSigN(SZCluster)
+        if self.Pfunc_qarr is None: self.updatePfunc_qarr(SZCluster,q_arr)
+        P_func = self.Pfunc_qarr
+
+        dn_dVdm = self.dn_dM(self.M200,200.)
+        dV_dz = self.dVdz
+
+        
+        # \int dm  dn/dzdm
+        for kk in xrange(q_arr.size):
+            for jj in xrange(m_wl.size):
+                for i in xrange (z_arr.size):
+                    dM = np.diff(self.M200_edges[:,i])
+                    dNdzmq[jj,i,kk] = np.dot(dn_dVdm[:,i]*P_func[:,i,kk]*SZCluster.Mwl_prob(10**(m_wl[jj]),M_arr[:,i],mass_err[:,i]),dM) * dV_dz[i]*4.*np.pi
+        
+        return dNdzmq
+
+    
     def Cl_ell(self,ell,SZCluster):
         #fix the mass and redshift ranges 
         M = self.M#10**np.arange(11.0, 16, .1)

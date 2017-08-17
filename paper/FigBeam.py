@@ -29,7 +29,7 @@ px = 1.0
 dbeam = 0.1
 beamList = np.arange(0.5,5.0+dbeam,dbeam)
 
-expName = "S4-1.0-0.4"
+expName = "S4-1.0-paper"
 freq_to_use = 150.
 
 # Mexp = np.log10(2.e14)
@@ -140,7 +140,7 @@ kellmax = 8000
 cc = ClusterCosmology(cosmoDict,constDict,kellmax,pickling=True)
 theory = cc.theory
 
-pl = Plotter(labelX="Beam (arcmin)",labelY="$\\sigma(M)/M$ for $N=1000$",ftsize=12)
+pl = Plotter(labelX="Beam (arcmin)",labelY="$\\sigma(M)/M$ for $N=1000$",ftsize=16)
 
 for miscenter in [False,True]:
     for lensName,linestyle in zip(["CMB_all","CMB_pol"],["-","--"]): 
@@ -213,5 +213,5 @@ for miscenter in [False,True]:
                 
             lab = lenspart + fgpart + mispart
             pl.add(beamList,sns,label=lab,ls=linestyle,alpha=al,color=col)
-pl.legendOn(loc="upper left",labsize=10)
+pl.legendOn(loc="upper left",labsize=12)
 pl.done(out_dir+"FigBeam.pdf")

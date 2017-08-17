@@ -42,8 +42,8 @@ fplots = FisherPlots()
 fplots.startFig() 
 
 #for fishSection,alphas in zip(["mnu-w0-wa","mnu-w0"],[[1,1,1,1],[0.3,0.3,0.3,0.3]]):
-#for fishSection,alphas in zip(["mnu-w0-wa"],[[1,1,1,1]]):
-for fishSection,alphas in zip(["mnu-w0"],[[1,1,1,1]]):
+for fishSection,alphas in zip(["mnu-w0-wa"],[[1,1,1,1]]):
+#for fishSection,alphas in zip(["mnu-w0"],[[1,1,1,1]]):
 
     #if fishSection == "mnu-w0": labs = itertools.repeat(None)
     
@@ -68,4 +68,4 @@ for fishSection,alphas in zip(["mnu-w0"],[[1,1,1,1]]):
     #fplots.plotPair(fishSection,['mnu','w0'],cals,labels=labs,xlims=[-0.1,0.2],ylims=[-1.12,-0.88],cols=cols,lss=lss,loc='lower left',alphas=alphas)
     fplots.plotPair(fishSection,['mnu','w0'],cals,labels=labs,xlims=[-0.05,0.15],ylims=[-1.1,-0.86],cols=cols,lss=lss,loc='lower left',alphas=alphas)
 
-fplots.done(saveFile=out_dir+"Fig2DOptCMBTalk.png")
+fplots.done(saveFile=out_dir+"Fig2DOptCMBTalk2.png")

@@ -78,7 +78,7 @@ print "Total number of clusters: ", N_fid.sum() #getTotN(N_fid,mgrid,zgrid,qbins
 
 
 # Fisher params
-fishSection = 'fisher-lcdm'
+fishSection = 'fisher-lcdm-paper'
 zlist = ["S8Z"+str(i) for i in range(len(zrange))]
 origParams = Config.get(fishSection,'paramList').split(',')
 paramList = origParams+zlist

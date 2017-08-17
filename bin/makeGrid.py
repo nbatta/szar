@@ -109,8 +109,8 @@ if rank==0:
     try:
         dotsz_cib = Config.getboolean(expName,'do_tsz_cib')
     except:
-        print "NO tSZ_CIB OPTION FOUND IN INI. ASSUMING FALSE."
-        dotsz_cib = False
+        print "NO tSZ_CIB OPTION FOUND IN INI. ASSUMING TRUE."
+        dotsz_cib = True
 
     lmax = int(Config.getfloat(expName,'lmax'))
     constDict = dictFromSection(Config,'constants')

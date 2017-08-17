@@ -3,6 +3,11 @@ from szar.counts import rebinN
 import numpy as np
 
 
+def fisher_from_szar_config(Config,expName,fishName,TCMB=2.7255e6,beamsOverride=None,noisesOverride=None,lkneeTOverride=None,lkneePOverride=None,alphaTOverride=None,alphaPOverride=None,tellminOverride=None,pellminOverride=None,tellmaxOverride=None,pellmaxOverride=None):
+    pass
+
+
+
 def getFisher(N_fid,paramList,priorNameList,priorValueList,bigDataDir,saveId,pzcutoff,z_edges,fsky):
     numParams = len(paramList)
     Fisher = np.zeros((numParams,numParams))
