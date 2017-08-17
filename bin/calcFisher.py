@@ -10,35 +10,10 @@ from orphics.tools.io import Plotter, nostdout
 import matplotlib.pyplot as plt
 from szar.fisher import getFisher
 from szar.counts import rebinN
-
+import szar.fisher as sfisher
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
 
-
-def getExpN(Config,bigDataDir,version,expName,gridName,mexp_edges,z_edges):
-    experimentName = expName
-    cosmoDict = dictFromSection(Config,"params")
-    constDict = dictFromSection(Config,'constants')
-    clusterDict = dictFromSection(Config,'cluster_params')
-    clttfile = Config.get("general","clttfile")
-    cc = ClusterCosmology(cosmoDict,constDict,clTTFixFile = clttfile)
-
-    beam = listFromConfig(Config,experimentName,'beams')
-    noise = listFromConfig(Config,experimentName,'noises')
-    freq = listFromConfig(Config,experimentName,'freqs')
-    lmax = int(Config.getfloat(experimentName,'lmax'))
-    lknee = float(Config.get(experimentName,'lknee').split(',')[0])
-    alpha = float(Config.get(experimentName,'alpha').split(',')[0])
-    fsky = Config.getfloat(experimentName,'fsky')
-    SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
-    hmf = Halo_MF(cc,mexp_edges,z_edges)
-    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
-
-    hmf.sigN = siggrid.copy()
-    Ns = np.multiply(hmf.N_of_z_SZ(fsky,SZProf),np.diff(z_edges).reshape(1,z_edges.size-1)).ravel()
-    #Ns = np.multiply(hmf.N_of_z()*fsky,np.diff(z_edges).reshape(1,z_edges.size-1)).ravel()
-
-    return Ns.sum()
 
 expName = sys.argv[1]
 gridName = sys.argv[2]
@@ -53,20 +28,10 @@ bigDataDir = Config.get('general','bigDataDirectory')
 
 version = Config.get('general','version')
 pzcutoff = Config.getfloat('general','photoZCutOff')
-saveId = expName + "_" + gridName + "_" + calName + "_v" + version
+saveId = sfisher.save_id(expName,gridName,calName,version)
+derivRoot = sfisher.deriv_root(bigDataDir,saveId)
+    
 
-
-
-# get s/n q-bins
-qs = listFromConfig(Config,'general','qbins')
-qspacing = Config.get('general','qbins_spacing')
-if qspacing=="log":
-    qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
-elif qspacing=="linear":
-    qbins = np.linspace(qs[0],qs[1],int(qs[2]))
-else:
-    raise ValueError
-dq = np.diff(qbins)
 
 fsky = Config.getfloat(expName,'fsky')
 
@@ -75,26 +40,15 @@ ms = listFromConfig(Config,gridName,'mexprange')
 mexp_edges = np.arange(ms[0],ms[1]+ms[2],ms[2])
 zs = listFromConfig(Config,gridName,'zrange')
 z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
-dm = np.diff(10**mexp_edges)
-dz = np.diff(z_edges)
 
 # Fisher params
 fishSection = 'fisher-'+fishName
-paramList = Config.get(fishSection,'paramList').split(',')
 saveName = Config.get(fishSection,'saveSuffix')
 
-# Fiducial number counts
-new_z_edges, N_fid = rebinN(np.load(bigDataDir+"N_mzq_"+saveId+"_fid"+".npy"),pzcutoff,z_edges)
-
-N_fid = N_fid[:,:,:]*fsky
-print "Effective number of clusters: ", N_fid.sum() #getTotN(N_fid,mgrid,zgrid,qbins)
 with nostdout():
-    actualN = getExpN(Config,bigDataDir,version,expName,gridName,mexp_edges,z_edges)
+    actualN = sfisher.counts_from_config(Config,bigDataDir,version,expName,gridName,mexp_edges,z_edges)
 
 print "Actual number of clusters: ", actualN
-sId = expName + "_" + gridName  + "_v" + version
-#sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
-#sovernsquare =  np.dstack([sovernsquareEach]*len(qbins))
 
 
 # Planck and BAO Fishers
@@ -110,40 +64,9 @@ except:
 numCosmo = Config.getint(fishSection,'numCosmo')
 
 
-try:
-    priorNameList = Config.get(fishSection,'prior_names').split(',')
-    priorValueList = listFromConfig(Config,fishSection,'prior_values')
-except:
-    priorNameList = []
-    priorValueList = []
-
-if "CMB" in calName:
-    paramList.append("sigR")
-    try:
-        priorNameList.append("sigR")
-        beam = listFromConfig(Config,expName,'beams')
-        freq = listFromConfig(Config,expName,'freqs')
-        freq_to_use = Config.getfloat(calName,'freq')
-        ind = np.where(np.isclose(freq,freq_to_use))
-        beamFind = np.array(beam)[ind]
-        priorValueList.append(beamFind/2.)
-        print "Added sigR prior ", priorValueList[-1]
-    except:
-        traceback.print_exc()
-        print "Couldn't add sigR prior. Is this CMB lensing? Exiting."
-        sys.exit(1)
-
-if "owl" in calName:
-    if not("b_wl") in paramList:
-        print "OWL but b_wl not found in paramList. Adding with a 1% prior."
-        paramList.append("b_wl")
-        priorNameList.append("b_wl")
-        priorValueList.append(1./(0.01**2.))
-        
-    
 ##########################
 # Populate Fisher
-Fisher = getFisher(N_fid,paramList,priorNameList,priorValueList,bigDataDir,saveId,pzcutoff,z_edges,fsky)
+Fisher, paramList = sfisher.cluster_fisher_from_config(Config,expName,gridName,calName,fishName)
 ##########################
 
 
@@ -158,7 +81,7 @@ if planckFile!='':
         fisherPlanck = np.loadtxt(planckFile)
     except:
         fisherPlanck = np.loadtxt(planckFile,delimiter=',')
-    fisherPlanck = np.pad(fisherPlanck,pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.)
+    fisherPlanck = sfisher.pad_fisher(fisherPlanck,numLeft)
 
 
 
@@ -170,7 +93,7 @@ if baoFile!='':
         fisherBAO = np.loadtxt(baoFile)
     except:
         fisherBAO = np.loadtxt(baoFile,delimiter=',')
-    fisherBAO = np.pad(fisherBAO,pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.)
+    fisherBAO = sfisher.pad_fisher(fisherBAO,numLeft)
 
 
 FisherTot = Fisher + fisherPlanck
@@ -183,7 +106,7 @@ try:
             other_fisher = np.loadtxt(otherFisherFile)
         except:
             other_fisher = np.loadtxt(otherFisherFile,delimiter=',')
-        other_fisher = np.pad(other_fisher,pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.)
+        other_fisher = sfisher.pad_fisher(other_fisher,numLeft)
         FisherTot += other_fisher
             
         

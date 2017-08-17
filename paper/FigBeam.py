@@ -63,8 +63,8 @@ noise = listFromConfig(Config,expName,'noises')
 freq = listFromConfig(Config,expName,'freqs')
 lkneeT,lkneeP = listFromConfig(Config,expName,'lknee')
 alphaT,alphaP = listFromConfig(Config,expName,'alpha')
-tellmin,tellmax = listFromConfig(Config,expName,'tellrange')
-pellmin,pellmax = listFromConfig(Config,expName,'pellrange')
+tellmin,tellmax = listFromConfig(Config,expName,'halo_tellrange')
+pellmin,pellmax = listFromConfig(Config,expName,'halo_pellrange')
 try:
     doFg = Config.getboolean(expName,'do_foregrounds')
 except:

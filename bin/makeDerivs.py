@@ -30,6 +30,7 @@ if debug: print "Starting common module imports..."
 from mpi4py import MPI
 from szar.counts import ClusterCosmology,Halo_MF,getNmzq
 from szar.szproperties import SZ_Cluster_Model
+import szar.fisher as sfisher
 import numpy as np
     
 if debug: print "Finished common module imports."
@@ -208,7 +209,7 @@ dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbin_edges,SZProf)
 
 if rank==0: 
     #np.save(bigDataDir+"N_dzmq_"+saveId+"_fid",dN_dmqz)
-    np.save(bigDataDir+"N_mzq_"+saveId+"_fid",getNmzq(dN_dmqz,mexp_edges,z_edges,qbin_edges))
+    np.save(sfisher.fid_file(bigDataDir,saveId),getNmzq(dN_dmqz,mexp_edges,z_edges,qbin_edges))
     dUps = {}
     dDns = {}
 
@@ -233,7 +234,7 @@ if rank==0:
         dNdp = (Nup-Ndn)/stepSizes[param]
         np.save(bigDataDir+"Nup_mzq_"+saveId+"_"+param,Nup)
         np.save(bigDataDir+"Ndn_mzq_"+saveId+"_"+param,Ndn)
-        np.save(bigDataDir+"dNdp_mzq_"+saveId+"_"+param,dNdp)
+        np.save(sfisher.deriv_root(bigDataDir,saveId)+param,dNdp)
         
 else:
     data = dN_dmqz.astype(np.float64)
