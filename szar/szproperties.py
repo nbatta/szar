@@ -294,7 +294,7 @@ class SZ_Cluster_Model:
 
     def P_of_qn_corr(self,lnY,MM,zz,sigma_N,qarr,M_wl,mass_error):
         lnYa = np.outer(np.ones(len(MM)),lnY)
-        rho = scaling['rho_corr']
+        rho = self.scaling['rho_corr']
 
         sig_thresh = self.q_prob_corr(qarr,lnYa,sigma_N,Mwl,MM,Merr,rho)
         P_Y = self.P_of_Y(lnYa,MM, zz)
