@@ -7,7 +7,7 @@ from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 from ConfigParser import SafeConfigParser 
 import cPickle as pickle
 from szar.fisher import getFisher
-
+import szar.fisher as sfisher
 
 expName = sys.argv[1]
 gridName = sys.argv[2]
@@ -32,8 +32,9 @@ for (key, val) in Config.items('params'):
 
 
 bigDataDir = Config.get('general','bigDataDirectory')
+saveId = sfisher.save_id(expName,gridName,calName,version)
+derivRoot = sfisher.deriv_root(bigDataDir,saveId)
 
-saveId = expName + "_" + gridName + "_" + calName + "_v" + version
 
 from orphics.tools.io import dictFromSection, listFromConfig
 fsky = Config.getfloat(expName,'fsky')
@@ -117,7 +118,7 @@ if "sigR" in paramList:
         
 ##########################
 # Populate Fisher
-Fisher = getFisher(N_fid,paramList,priorNameList,priorValueList,bigDataDir,saveId,pzcutoff,z_edges,fsky)
+Fisher = getFisher(N_fid,paramList,priorNameList,priorValueList,derivRoot,pzcutoff,z_edges,fsky)
 ##########################
 
 

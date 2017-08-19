@@ -32,9 +32,6 @@ saveId = sfisher.save_id(expName,gridName,calName,version)
 derivRoot = sfisher.deriv_root(bigDataDir,saveId)
     
 
-
-fsky = Config.getfloat(expName,'fsky')
-
 # get mass and z grids
 ms = listFromConfig(Config,gridName,'mexprange')
 mexp_edges = np.arange(ms[0],ms[1]+ms[2],ms[2])
@@ -51,76 +48,12 @@ with nostdout():
 print "Actual number of clusters: ", actualN
 
 
-# Planck and BAO Fishers
-planckFile = Config.get(fishSection,'planckFile')
-try:
-    baoFile = Config.get(fishSection,'baoFile')
-except:
-    baoFile = ''
-
-    
-    
-# Number of non-SZ params (params that will be in Planck/BAO)
-numCosmo = Config.getint(fishSection,'numCosmo')
-
-
 ##########################
 # Populate Fisher
-Fisher, paramList = sfisher.cluster_fisher_from_config(Config,expName,gridName,calName,fishName)
+FisherTot, paramList = sfisher.cluster_fisher_from_config(Config,expName,gridName,calName,fishName)
 ##########################
 
 
-
-numLeft = len(paramList) - numCosmo
-
-
-
-fisherPlanck = 0.
-if planckFile!='':
-    try:
-        fisherPlanck = np.loadtxt(planckFile)
-    except:
-        fisherPlanck = np.loadtxt(planckFile,delimiter=',')
-    fisherPlanck = sfisher.pad_fisher(fisherPlanck,numLeft)
-
-
-
-
-
-fisherBAO = Fisher.copy()*0.
-if baoFile!='':
-    try:
-        fisherBAO = np.loadtxt(baoFile)
-    except:
-        fisherBAO = np.loadtxt(baoFile,delimiter=',')
-    fisherBAO = sfisher.pad_fisher(fisherBAO,numLeft)
-
-
-FisherTot = Fisher + fisherPlanck
-FisherTot += fisherBAO
-
-try:
-    otherFishers = Config.get(fishSection,'otherFishers').split(',')
-    for otherFisherFile in otherFishers:
-        try:
-            other_fisher = np.loadtxt(otherFisherFile)
-        except:
-            other_fisher = np.loadtxt(otherFisherFile,delimiter=',')
-        other_fisher = sfisher.pad_fisher(other_fisher,numLeft)
-        FisherTot += other_fisher
-            
-        
-except:
-    traceback.print_exc()
-    print "No other fishers found."
-
-    
-
-# from orphics.tools.io import Plotter
-# import os
-# pl = Plotter()
-# pl.plot2d(np.log10(np.abs(fisherPlanck)))
-# pl.done(os.environ['WWW']+"fisher.png")          
 
 Finv = np.linalg.inv(FisherTot)
 

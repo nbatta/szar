@@ -31,7 +31,7 @@ Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
 
 
-fishSection = "mnu-w0-wa"
+fishSection = "mnu-w0-wa-paper"
 #fishSection = "lcdm"
 
 noatm = ""
