@@ -19,6 +19,7 @@ expName = "S4-1.0-paper"
 cmbGrid = "grid-default"
 cmbCal = "CMB_all"
 owlCal = "owl2"
+saveCalName = "CMB_all_joint"
 
 fidcmb_file = sfisher.mass_grid_name_cmb(bigDataDir,expName,cmbGrid,cmbCal,version)
 upcmb_file = sfisher.mass_grid_name_cmb_up(bigDataDir,expName,cmbGrid,cmbCal,version)
@@ -38,7 +39,8 @@ mindicesList = [60,80,120,160]
 
 from orphics.tools.io import Plotter
     
-for cmbfile,cmbtype in zip([fidcmb_file,upcmb_file,dncmb_file],['fid','up','dn']):
+for cmbfile,cmbtype,savefunc in zip([fidcmb_file,upcmb_file,dncmb_file],['fid','up','dn'], \
+                                    [sfisher.mass_grid_name_cmb,sfisher.mass_grid_name_cmb_up,sfisher.mass_grid_name_cmb_dn]):
 
 
     grids = {}
@@ -148,3 +150,6 @@ for cmbfile,cmbtype in zip([fidcmb_file,upcmb_file,dncmb_file],['fid','up','dn']
     #savefile = "/astro/astronfs01/workarea/msyriac/data/SZruns/v0.6/lensgridRayDn_S4-1.0-0._grid-default_CMB_all_joint_v0.5.pkl"
     #pickle.dump((outmedges,outzedges,jointgrid),open(savefile,'wb'))
 
+    
+    save_file = save_func(bigDataDir,expName,cmbGrid,saveCalName,version)
+    pickle.dump((outmedges,outzedges,jointgrid),open(save_file,'wb'))
