@@ -11,7 +11,7 @@ def getFisher(bigDataDir,expName,gridName,calName,saveName,version):
     saveId = expName + "_" + gridName+ "_" + calName + "_v" + version
 
     paramList,FisherTot = pickle.load(open(bigDataDir+"savedS8Fisher_"+saveId+"_"+saveName+".pkl",'rb'))
-    return FisherTot
+    return paramList,FisherTot
 
 
 
@@ -39,12 +39,15 @@ origParams = Config.get('fisher-'+fishSection,'paramList').split(',')
 
 
 """RES STUDY"""
-cmbfisher3 = getFisher(bigDataDir,"S4-3.0-paper"+noatm,gridName,cal,cosmoFisher,derivSet)
-cmbfisher2 = getFisher(bigDataDir,"S4-2.5-paper"+noatm,gridName,cal,cosmoFisher,derivSet)
-cmbfisher15 = getFisher(bigDataDir,"S4-2.0-paper"+noatm,gridName,cal,cosmoFisher,derivSet)
-cmbfisher1 = getFisher(bigDataDir,"S4-1.5-paper"+noatm,gridName,cal,cosmoFisher,derivSet)
-cmbfisher0 = getFisher(bigDataDir,"S4-1.0-paper"+noatm,gridName,cal,cosmoFisher,derivSet)
+ps,cmbfisher3 = getFisher(bigDataDir,"S4-3.0-paper"+noatm,gridName,cal,cosmoFisher,derivSet)
+ps,cmbfisher2 = getFisher(bigDataDir,"S4-2.5-paper"+noatm,gridName,cal,cosmoFisher,derivSet)
+ps,cmbfisher15 = getFisher(bigDataDir,"S4-2.0-paper"+noatm,gridName,cal,cosmoFisher,derivSet)
+ps,cmbfisher1 = getFisher(bigDataDir,"S4-1.5-paper"+noatm,gridName,cal,cosmoFisher,derivSet)
+ps,cmbfisher0 = getFisher(bigDataDir,"S4-1.0-paper"+noatm,gridName,cal,cosmoFisher,derivSet)
 
+
+pindex = ps.index("S8Z0")
+print ps[pindex:]
 
 
 from szar.counts import getA
@@ -89,7 +92,7 @@ lablist = ['S4 3.0\'','S4 2.5\'','S4 2.0\'','S4 1.5\'','S4 1.0\'']
 currentAxis = plt.gca()
 for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1,cmbfisher0],lablist,colList)):
     inv = np.linalg.inv(f)
-    err = np.sqrt(np.diagonal(inv))[len(origParams):]
+    err = np.sqrt(np.diagonal(inv))[pindex:]
     zcents = []
     errcents = []
     xerrs = []
@@ -135,7 +138,7 @@ colList = ['C0','C1','C2','C3','C4','C5']
 currentAxis = plt.gca()
 for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1,cmbfisher0],lablist,colList)):
     inv = np.linalg.inv(f)
-    err = np.sqrt(np.diagonal(inv))[len(origParams):]
+    err = np.sqrt(np.diagonal(inv))[pindex:]
     zcents = []
     errcents = []
     xerrs = []

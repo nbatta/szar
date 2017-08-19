@@ -21,14 +21,6 @@ Config.read(iniFile)
 version = Config.get('general','version')
 pzcutoff = Config.getfloat('general','photoZCutOff')
 
-fparams = {}   # the 
-for (key, val) in Config.items('params'):
-    if ',' in val:
-        param, step = val.split(',')
-        fparams[key] = float(param)
-    else:
-        fparams[key] = float(val)
-
 
 
 bigDataDir = Config.get('general','bigDataDirectory')
@@ -39,22 +31,9 @@ derivRoot = sfisher.deriv_root(bigDataDir,saveId)
 from orphics.tools.io import dictFromSection, listFromConfig
 fsky = Config.getfloat(expName,'fsky')
 
-# get s/n q-bins
-qs = listFromConfig(Config,'general','qbins')
-qspacing = Config.get('general','qbins_spacing')
-if qspacing=="log":
-    qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2])+1)
-elif qspacing=="linear":
-    qbins = np.linspace(qs[0],qs[1],int(qs[2])+1)
-else:
-    raise ValueError
-
 
 
 from orphics.tools.io import listFromConfig
-zs = listFromConfig(Config,gridName,'zrange')
-z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
-zrange = (z_edges[1:]+z_edges[:-1])/2.
 
 
 NFid_mzq = np.load(bigDataDir+"N_mzq_"+saveId+"_fid_sigma8.npy")
@@ -72,80 +51,26 @@ except:
 
     
 import itertools
-new_z_edges, N_fid = rebinN(NFid_mzq,pzcutoff,z_edges)
-N_fid = N_fid*fsky
-print "Total number of clusters: ", N_fid.sum() #getTotN(N_fid,mgrid,zgrid,qbins)
 
 
 
 # Fisher params
-fishSection = 'fisher-lcdm-paper'
-zlist = ["S8Z"+str(i) for i in range(len(zrange))]
+fishName = 'lcdm-paper'
+fishSection = "fisher-"+fishName
 origParams = Config.get(fishSection,'paramList').split(',')
-paramList = origParams+zlist
+
+
 saveName = Config.get(fishSection,'saveSuffix')
-numParams = len(paramList)
-Fisher = np.zeros((numParams,numParams))
-paramCombs = itertools.combinations_with_replacement(paramList,2)
-
-
-sId = expName + "_" + gridName + "_v" + version
-#sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
-#sovernsquare =  np.dstack([sovernsquareEach]*(len(qbins)-1))
-
-
-try:
-    priorNameList = Config.get(fishSection,'prior_names').split(',')
-    priorValueList = listFromConfig(Config,fishSection,'prior_values')
-except:
-    priorNameList = []
-    priorValueList = []
-
-if "sigR" in paramList:
-    try:
-        priorNameList.append("sigR")
-        beam = listFromConfig(Config,expName,'beams')
-        freq = listFromConfig(Config,expName,'freqs')
-        freq_to_use = Config.getfloat(calName,'freq')
-        ind = np.where(np.isclose(freq,freq_to_use))
-        beamFind = np.array(beam)[ind]
-        priorValueList.append(beamFind/2.)
-        print "Added sigR prior ", priorValueList[-1]
-    except:
-        print "Couldn't add sigR prior. Is this CMB lensing? Exiting."
-        sys.exit(1)
-        
-        
 ##########################
 # Populate Fisher
-Fisher = getFisher(N_fid,paramList,priorNameList,priorValueList,derivRoot,pzcutoff,z_edges,fsky)
+Fisher, paramList = sfisher.cluster_fisher_from_config(Config,expName,gridName,calName,fishName,s8=True)
 ##########################
 
 
-
-# Planck and BAO Fishers
-planckFile = Config.get(fishSection,'planckFile')
-try:
-    baoFile = Config.get(fishSection,'baoFile')
-except:
-    baoFile = ''
 
 # Number of non-SZ params (params that will be in Planck/BAO)
 numCosmo = Config.getint(fishSection,'numCosmo')
 numLeft = len(paramList) - numCosmo
-
-
-fisherPlanck = 0.
-if planckFile!='':
-    try:
-        fisherPlanck = np.loadtxt(planckFile)
-    except:
-        fisherPlanck = np.loadtxt(planckFile,delimiter=',')
-    fisherPlanck = np.pad(fisherPlanck,pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.)
-
-if baoFile!='':
-    raise NotImplementedError
-
 
 
 # pl = Plotter()
@@ -154,17 +79,17 @@ if baoFile!='':
 # sys.exit()
 
 
-f = Fisher+fisherPlanck #[11:,11:]#+fisherPlanck
+f = Fisher
 
 pickle.dump((paramList,f),open(bigDataDir+"savedS8Fisher_"+saveId+"_"+saveName+".pkl",'wb'))
 
 
 
-# inv = np.linalg.inv(f)
+inv = np.linalg.inv(f)
 
-# err = np.sqrt(np.diagonal(inv))[len(origParams):]
+err = np.sqrt(np.diagonal(inv))[len(origParams):]
 
-# print err
+print err
 
 # import camb
 # from szar.counts import ClusterCosmology

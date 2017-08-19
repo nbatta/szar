@@ -5,7 +5,7 @@ import numpy as np
 from alhazen.halos import NFWMatchedFilterSN
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
-
+import szar.fisher as sfisher
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 numcores = comm.Get_size()    
@@ -459,10 +459,9 @@ else:
                 MerrGridDn += data.copy()
                 
 
-        pickle.dump((Mexp_edges,z_edges,MerrGrid),open(bigDataDir+"lensgrid_"+expName+"_"+gridName+"_"+lensName+ "_v" + version+suffix+".pkl",'wb'))
-        if True:#doRayDeriv:
-            pickle.dump((Mexp_edges,z_edges,MerrGridUp),open(bigDataDir+"lensgridRayUp_"+expName+"_"+gridName+"_"+lensName+ "_v" + version+suffix+".pkl",'wb'))
-            pickle.dump((Mexp_edges,z_edges,MerrGridDn),open(bigDataDir+"lensgridRayDn_"+expName+"_"+gridName+"_"+lensName+ "_v" + version+suffix+".pkl",'wb'))
+        pickle.dump((Mexp_edges,z_edges,MerrGrid),open(sfisher.mass_grid_name_cmb(bigDataDir,expName,gridName,lensName,version+suffix),'wb'))
+        pickle.dump((Mexp_edges,z_edges,MerrGridUp),open(sfisher.mass_grid_name_cmb_up(bigDataDir,expName,gridName,lensName,version+suffix),'wb'))
+        pickle.dump((Mexp_edges,z_edges,MerrGridDn),open(sfisher.mass_grid_name_cmb_dn(bigDataDir,expName,gridName,lensName,version+suffix),'wb'))
         
     if doSZ:
         for i in range(1,numcores):

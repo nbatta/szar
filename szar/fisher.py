@@ -7,6 +7,19 @@ from szar.szproperties import SZ_Cluster_Model
 import cPickle as pickle
 import traceback
 
+
+def mass_grid_name_cmb_up(bigDataDir,expName,gridName,calName,version):
+    return bigDataDir+"lensgridRayUp_"+expName+"_"+gridName+"_"+calName+ "_v" + version+".pkl"
+
+def mass_grid_name_cmb_dn(bigDataDir,expName,gridName,calName,version):
+    return bigDataDir+"lensgridRayDn_"+expName+"_"+gridName+"_"+calName+ "_v" + version+".pkl"
+
+def mass_grid_name_cmb(bigDataDir,expName,gridName,calName,version):
+    return bigDataDir+"lensgrid_"+expName+"_"+gridName+"_"+calName+ "_v" + version+".pkl"
+
+def mass_grid_name_owl(bigDataDir,calName):
+    return bigDataDir+"lensgrid_grid-"+calName+"_"+calName+".pkl"
+
 def hash_func(*argv):
     import hashlib
     hinval = ""
@@ -111,7 +124,7 @@ def priors_from_config(Config,expName,calName,fishName,paramList):
     
 
 def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
-                               overridePlanck=None,overrideBAO=None,overrideOther=None,pickling=True):
+                               overridePlanck=None,overrideBAO=None,overrideOther=None,pickling=True,s8=False):
 
 
     """
@@ -141,8 +154,15 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     # Fisher params
     fishSection = 'fisher-'+fishName
     paramList = Config.get(fishSection,'paramList').split(',')
+
+    
+    
     zs = listFromConfig(Config,gridName,'zrange')
     z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
+
+
+    
+    
 
     saveId = save_id(expName,gridName,calName,version)
     derivRoot = deriv_root(bigDataDir,saveId)
@@ -152,11 +172,19 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     print "Effective number of clusters: ", N_fid.sum()
 
     paramList, priorNameList, priorValueList = priors_from_config(Config,expName,calName,fishName,paramList)
+
+    if s8:
+        zrange = (z_edges[1:]+z_edges[:-1])/2.
+        zlist = ["S8Z"+str(i) for i in range(len(zrange))]
+        paramList = paramList+zlist
+
+    
     Fisher = getFisher(N_fid,paramList,priorNameList,priorValueList,derivRoot,pzcutoff,z_edges,fsky)
 
     # Number of non-SZ params (params that will be in Planck/BAO)
     numCosmo = Config.getint(fishSection,'numCosmo')
     numLeft = len(paramList) - numCosmo
+
 
     try:
         do_cmb_fisher = Config.getboolean(fishSection,"do_cmb_fisher")
@@ -187,7 +215,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
         if pickling:
             import time
             hashval = hash_func(cmbParamList,expName,lensName,time.strftime('%Y%m%d'))
-            pkl_file = "output/"+hashval+".pkl"
+            pkl_file = "output/pickledFisher_"+hashval+".pkl"
 
             try:
                 cmb_fisher = pickle.load(open(pkl_file,'rb'))
@@ -203,11 +231,13 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
                 dCls[paramName] = np.loadtxt(cmbDerivRoot+'_dCls_'+paramName+'.csv',delimiter=',')
 
             print "Calculating CMB fisher matrix..."
-            cmb_fisher = pad_fisher(pyfish.fisher_from_config(fidCls,dCls,cmbParamList,Config,expName,lensName),numLeft)
+            cmb_fisher = pyfish.fisher_from_config(fidCls,dCls,cmbParamList,Config,expName,lensName)
             if pickling:
                 print "Pickling CMB fisher..."
                 pickle.dump(cmb_fisher,open(pkl_file,'wb'))
-    
+
+
+        cmb_fisher = pad_fisher(cmb_fisher,numLeft)
     else:
         cmb_fisher = 0.    
 

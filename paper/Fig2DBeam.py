@@ -36,7 +36,7 @@ fishSection = "mnu-w0-wa-paper"
 
 noatm = ""
 cal = "CMB_all"
-derivSet = "v0.5"
+derivSet = "v0.6"
 gridName = "grid-default"
 
 cosmoFisher = Config.get('fisher-'+fishSection,'saveSuffix')
@@ -68,11 +68,11 @@ for (key, val) in Config.items('params'):
 
 
 """RES STUDY"""
-cmbfisher3 = getFisher("S4-3.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
-cmbfisher5 = getFisher("S4-2.5-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
-cmbfisher6 = getFisher("S4-2.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
-cmbfisher7 = getFisher("S4-1.5-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
-cmbfisher8 = getFisher("S4-1.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
+cmbfisher3 = getFisher("S4-3.0-paper"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
+cmbfisher5 = getFisher("S4-2.5-paper"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
+cmbfisher6 = getFisher("S4-2.0-paper"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
+cmbfisher7 = getFisher("S4-1.5-paper"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
+cmbfisher8 = getFisher("S4-1.0-paper"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
 #fplots = FisherPlots(paramList,paramLatexList,fparams)
 
 fplots = FisherPlots()
@@ -90,11 +90,19 @@ fplots.addFisher(fishSection,"cmb6",cmbfisher6.copy())
 fplots.addFisher(fishSection,"cmb7",cmbfisher7.copy())
 fplots.addFisher(fishSection,"cmb8",cmbfisher8.copy())
 
+CB_color_cycle = ['#1C110A','#E4D6A7','#E9B44C','#9B2915','#50A2A7'][::-1]
+import matplotlib as mpl
+mpl.rcParams['axes.color_cycle'] = CB_color_cycle
+
+
 #paramList = ['mnu','wa','w0','b_ym','tau','H0']
 paramList = ['mnu','H0','tau','b_ym','alpha_ym','Ysig','gamma_ym','beta_ym','gammaYsig','betaYsig','wa','w0']
-#fplots.plotTri(fishSection,paramList,['cmb8'],labels=['S4-1.0-0.4'],saveFile=out_dir+"Fig2DBeam.png",loc='upper right')
-fplots.plotTri(fishSection,paramList,['cmb3','cmb5','cmb6','cmb7','cmb8'],labels=['S4-3.0-0.4','S4-2.5-0.4','S4-2.0-0.4','S4-1.5-0.4','S4-1.0-0.4'],saveFile=out_dir+"Fig2DBeam.png",loc='upper right')
-#fplots.plotTri(paramList,['cmb3','cmb5','cmb6','cmb7','cmb8'],labels=['S4-3.0-0.4','S4-2.5-0.4','S4-2.0-0.4','S4-1.5-0.4','S4-1.0-0.4'],saveFile=out_dir+"Fig2DBeam.png",loc='upper right')
+#fplots.plotTri(fishSection,paramList,['cmb8'],labels=['S4-1.0-paper'],saveFile=out_dir+"Fig2DBeam.png",loc='upper right')
+
+labList = ['S4 1.0\'','S4 1.5\'','S4 2.0\'','S4 2.5\'','S4 3.0\''][::-1]
+
+fplots.plotTri(fishSection,paramList,['cmb3','cmb5','cmb6','cmb7','cmb8'],labels=labList,saveFile=out_dir+"Fig2DBeam.png",loc='upper right')
+#fplots.plotTri(paramList,['cmb3','cmb5','cmb6','cmb7','cmb8'],labels=['S4-3.0-paper','S4-2.5-paper','S4-2.0-paper','S4-1.5-paper','S4-1.0-paper'],saveFile=out_dir+"Fig2DBeam.png",loc='upper right')
 
 
 # def plotTri(self,section,paramList,setNames,cols=itertools.repeat(None),lss=itertools.repeat(None),labels=itertools.repeat(None),saveFile="default.png",levels=[2.],xlims=None,ylims=None,loc='upper right',centerMarker=True,**kwargs):
