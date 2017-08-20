@@ -321,3 +321,9 @@ class SZ_Cluster_Model:
         #Gaussian error probablity for weak lensing mass 
         ans = gaussian(Mwl*self.scaling['b_wl'],M,Merr*M)
         return ans
+
+#    def Mwl_prob (self,Mwl,M,Merr):
+        #Gaussian error probablity for weak lensing mass 
+#        ans = gaussian(Mwl,M,Merr*M) * gaussian(Mwl,M,self.scaling['b_wl']*M)
+#        return ans
+
