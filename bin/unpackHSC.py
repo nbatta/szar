@@ -56,4 +56,5 @@ pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
 pl.plot2d(pgrid,extent=[mgrid.min(),mgrid.max(),zgrid.min(),zgrid.max()],levels=[3.0,5.0],labsize=14,aspect="auto")
 pl.done(outDir+"interpHSCgrid.png")
 
-pickle.dump((Mexp_edges,z_edges,outmerr),open(bigDataDir+"lensgrid_"+gridName+"_"+calName+".pkl",'wb'))
+import szar.fisher as sfisher
+pickle.dump((Mexp_edges,z_edges,outmerr),open(sfisher.mass_grid_name_owl(bigDataDir,calName),'wb'))

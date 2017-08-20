@@ -57,7 +57,8 @@ ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freq
 
 lsedges = np.arange(300,8001,100)
 el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
-print s2n
+el_ilc_c, cls_ilc_c, err_ilc_c, s2n_c = ILC.Forecast_Cellcmb_c_tsz(lsedges,fsky)
+print s2n,s2n_c
 
 ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=7000,lknee=lknee,alpha=alpha)
 

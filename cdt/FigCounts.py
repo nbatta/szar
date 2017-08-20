@@ -24,17 +24,12 @@ bigDataDir = Config.get('general','bigDataDirectory')
 clttfile = Config.get('general','clttfile')
 
 gridName = "grid-default"
-version = Config.get('general','version')
+version = "0.5"
 
 
 from orphics.tools.io import dictFromSection, listFromConfig
 constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,'cluster_params')
-
-#CB_color_cycle = ['#DCD6F7','#A6B1E1','#B4869F','#985F6F','#4E4C67'][::-1]
-CB_color_cycle = ['#1C110A','#E4D6A7','#E9B44C','#9B2915','#50A2A7']
-import matplotlib as mpl
-mpl.rcParams['axes.color_cycle'] = CB_color_cycle
 
 fparams = {} 
 for (key, val) in Config.items('params'):
@@ -50,13 +45,12 @@ cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
 from matplotlib.patches import Rectangle
 
 
-expList = ['S4-1.0-paper','S4-1.5-paper','S4-2.0-paper','S4-2.5-paper','S4-3.0-paper']
-labList = ['S4 1.0\'','S4 1.5\'','S4 2.0\'','S4 2.5\'','S4 3.0\'']
+expList = ['S4-highres','S4-lowres']
+labList = ['S4 1.0\' 0.95uK\'','S4 1.5\' 0.85uK\'']
 pad = 0.05
 
-pl = Plotter(labelX="$z$",labelY="$N(z)$",ftsize=20,scaleY='log',figsize=(6,4),thk=2,labsize=16)
+pl = Plotter(labelX="$z$",labelY="$N(z)$",ftsize=12,scaleY='log',figsize=(6,4))
 #pl = Plotter(labelX="$z$",labelY="$N(z)$",ftsize=12)
-
 
 colList = ['C0','C1','C2','C3','C4']
 Ndict = {}
@@ -84,7 +78,7 @@ for expName,col,labres in zip(expList,colList,labList):
 
     currentAxis = plt.gca()
 
-    zbins = z_edges #np.arange(0.,3.5,0.5)
+    zbins = np.array([0.,1.0,2.0,3.0])#z_edges #np.arange(0.,3.5,0.5)
     k = 0
     Ndict[labres] = []
     for zleft,zright in zip(zbins[:-1],zbins[1:]):
@@ -104,45 +98,10 @@ for expName,col,labres in zip(expList,colList,labList):
     
     
 
-pl.legendOn(labsize=12,loc='upper right')
+pl.legendOn(labsize=9,loc='upper right')
 pl._ax.set_ylim(1,5.e4) 
 pl._ax.set_xlim(0.,3.)
-pl.done(out_dir+"FigCountsA.pdf")
+#pl.done(out_dir+"cdtCounts.png")
 
 
 
-pl = Plotter(labelX="$z$",labelY="Ratio",ftsize=20,figsize=(6,2),scaleY='log',thk=2,labsize=16)
-
-colList = ['C0','C1','C2','C3','C4']
-Nref = Ndict['S4 3.0\'']
-#Nref = Ndict['S4 2.0\'']
-expList = ['S4-1.0-paper','S4-1.5-paper','S4-2.0-paper','S4-2.5-paper']
-labList = ['S4 1.0\'','S4 1.5\'','S4 2.0\'','S4 2.5\'']
-
-for expName,col,labres in zip(expList,colList,labList):
-
-
-    currentAxis = plt.gca()
-
-    k = 0
-    for zleft,zright in zip(zbins[:-1],zbins[1:]):
-        zcent = (zleft+zright)/2.
-        xerr = (zright-zleft)/2.
-        N = Ndict[labres][k]/Nref[k]
-        print zleft,zright,N
-        if k==0:
-            lab = labres
-        else:
-            lab = None
-            
-        
-        currentAxis.add_patch(Rectangle((zcent - xerr+pad, 1+pad), 2*xerr-pad/2., N, facecolor=col,label=lab))#,alpha=0.5))
-        k+=1
-    
-    
-
-#pl.legendOn(labsize=9,loc='upper right')
-pl._ax.axhline(y=1.,color=colList[-1],ls="--")
-pl._ax.set_ylim(0.9,200) 
-pl._ax.set_xlim(0.,3.)
-pl.done(out_dir+"FigCountsB.pdf")

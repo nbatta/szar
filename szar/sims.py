@@ -12,7 +12,7 @@ from orphics.tools.io import Plotter
             
 class BattagliaSims(object):
 
-    def __init__(self,constDict,rootPath="/astro/astronfs01/workarea/msyriac/clusterSims/Battaglia/"):
+    def __init__(self,constDict,rootPath="/gpfs01/astro/workarea/msyriac/sims/ClusterSims/"):
 
         # snap 35 to 54
         

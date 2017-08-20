@@ -19,6 +19,43 @@ from orphics.analysis.flatMaps import interpolateGrid
 
 import szar._fast as fast
 
+def bin_ndarray(ndarray, new_shape, operation='sum'):
+    """
+    Bins an ndarray in all axes based on the target shape, by summing or
+        averaging.
+
+    Number of output dimensions must match number of input dimensions and 
+        new axes must divide old ones.
+
+    Example
+    -------
+    >>> m = np.arange(0,100,1).reshape((10,10))
+    >>> n = bin_ndarray(m, new_shape=(5,5), operation='sum')
+    >>> print(n)
+
+    [[ 22  30  38  46  54]
+     [102 110 118 126 134]
+     [182 190 198 206 214]
+     [262 270 278 286 294]
+     [342 350 358 366 374]]
+
+    """
+    operation = operation.lower()
+    if not operation in ['sum', 'mean']:
+        raise ValueError("Operation not supported.")
+    if ndarray.ndim != len(new_shape):
+        raise ValueError("Shape mismatch: {} -> {}".format(ndarray.shape,
+                                                           new_shape))
+    compression_pairs = [(d, c//d) for d,c in zip(new_shape,
+                                                  ndarray.shape)]
+    flattened = [l for p in compression_pairs for l in p]
+    ndarray = ndarray.reshape(flattened)
+    for i in range(len(new_shape)):
+        op = getattr(ndarray, operation)
+        ndarray = op(-1*(i+1))
+    return ndarray
+
+
 def getA(fparams,constDict,zrange,kmax=11.):
     cc = ClusterCosmology(fparams,constDict,skipCls=True)
     if zrange[0]>=1.e-8: zrange = np.insert(zrange,0,0)
@@ -32,18 +69,23 @@ def getA(fparams,constDict,zrange,kmax=11.):
 
 
 def rebinN(Nmzq,pzCutoff,zbin_edges):
-    return zbin_edges, Nmzq
-    # if pzCutoff>=zbin_edges[-2]: return zbin_edges,Nmzq
-    # orig = Nmzq.copy()
-    # indexUpTo = np.where(pzCutoff>=zbin_edges)[0][-1]
- 
-    # rebinned = np.hstack((Nmzq[:,:indexUpTo,:],Nmzq[:,indexUpTo:,:].sum(axis=1).reshape((orig.shape[0],1,orig.shape[2]))))
-
-    # new_z_edges = np.append(zbin_edges[:indexUpTo+1],zbin_edges[-1])
-    # assert rebinned.shape[1]==(new_z_edges.size-1)
-    # assert new_z_edges.size<zbin_edges.size
+    #return zbin_edges, Nmzq  #.sum(axis=0) # !!!
+    x,y,z = Nmzq.shape
+    #print x
+    Nmzq = bin_ndarray(Nmzq, (37,y,z), operation='sum')
+    #return zbin_edges, bin_ndarray(Nmzq, (37,y,z), operation='sum')
     
-    # return new_z_edges,rebinned
+    if pzCutoff>=zbin_edges[-2]: return zbin_edges,Nmzq
+    orig = Nmzq.copy()
+    indexUpTo = np.where(pzCutoff>=zbin_edges)[0][-1]
+ 
+    rebinned = np.hstack((Nmzq[:,:indexUpTo,:],Nmzq[:,indexUpTo:,:].sum(axis=1).reshape((orig.shape[0],1,orig.shape[2]))))
+
+    new_z_edges = np.append(zbin_edges[:indexUpTo+1],zbin_edges[-1])
+    assert rebinned.shape[1]==(new_z_edges.size-1)
+    assert new_z_edges.size<zbin_edges.size
+    
+    return new_z_edges,rebinned
 
 def getTotN(Nmzq,mexp_edges,z_edges,q_edges,returnNz=False):
     """Get total number of clusters given N/DmDqDz
@@ -339,6 +381,10 @@ class Halo_MF:
         print "Calculating P_func_qarr. This takes a while..."
         self.Pfunc_qarr = SZCluster.Pfunc_qarr(self.sigN.copy(),self.M,self.zarr,q_arr)
 
+    def updatePfunc_qarr_corr(self,SZCluster,q_arr):
+        print "Calculating P_func_qarr. This takes a while..."
+        self.Pfunc_qarr_corr = SZCluster.Pfunc_qarr_corr(self.sigN.copy(),self.M,self.zarr,q_arr,self.Mexp)
+
     def N_of_z_SZ(self,fsky,SZCluster):
         # this is dN/dz(z) with selection
 
@@ -408,39 +454,9 @@ class Halo_MF:
         if self.Pfunc_qarr is None: self.updatePfunc_qarr(SZCluster,q_arr)
         P_func = self.Pfunc_qarr
 
-        dn_dVdm = self.dn_dM(self.M200,200.)
+        dn_dVdm = self.dn_dM(self.M200,200.) 
         dV_dz = self.dVdz
 
-        # N = M_arr.copy()*0.
-        # print "Checking norm of mass calibration..."
-        # mexp_int = m_wl
-        # m_int_edges = self.M_edges
-        # #mass_err *= 1.e-1
-
-        # # mexp_int_edges = np.arange(9.0,16.0,0.01)
-        # # m_int_edges = 10**mexp_int_edges
-        # # m_int = (m_int_edges[1:]+m_int_edges[:-1])/2.
-        # # mexp_int = np.log10(m_int)
-        # for i in xrange (z_arr.size):
-        #     for j in xrange (self.Mexp.size):
-        #         N[j,i] = np.dot(SZCluster.Mwl_prob(10**(mexp_int),M_arr[j,i],mass_err[j,i]),np.diff(m_int_edges))
-        # from orphics.tools.io import Plotter
-        # import os
-        # mmin = self.Mexp.min()
-        # mmax = self.Mexp.max()
-        # zmin = self.zarr.min()
-        # zmax = self.zarr.max()
-        # pgrid = np.rot90(N)
-        # pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
-        # pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],labsize=14,aspect="auto")
-        # pl.done(os.environ['WWW']+"normMassCalib.png")
-
-        # pgrid = mass_err
-        # pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
-        # pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],labsize=14,aspect="auto")
-        # pl.done(os.environ['WWW']+"massgrid.png")
-
-        # sys.exit()
         
         # \int dm  dn/dzdm
         for kk in xrange(q_arr.size):
@@ -451,6 +467,36 @@ class Halo_MF:
         
         return dNdzmq
 
+    def N_of_mqz_SZ_corr (self,mass_err,q_edges,SZCluster):
+        # this is 3D grid for fisher matrix
+        # Index MZQ
+
+        q_arr = (q_edges[1:]+q_edges[:-1])/2.
+
+        z_arr = self.zarr
+        M_arr =  np.outer(self.M,np.ones([len(z_arr)]))
+        dNdzmq = np.zeros([len(self.M),len(z_arr),len(q_arr)])
+
+        m_wl = self.Mexp
+        
+        if self.sigN is None: self.updateSigN(SZCluster)
+        if self.Pfunc_qarr is None: self.updatePfunc_qarr(SZCluster,q_arr)
+        P_func = self.Pfunc_qarr
+
+        dn_dVdm = self.dn_dM(self.M200,200.)
+        dV_dz = self.dVdz
+
+        
+        # \int dm  dn/dzdm
+        for kk in xrange(q_arr.size):
+            for jj in xrange(m_wl.size):
+                for i in xrange (z_arr.size):
+                    dM = np.diff(self.M200_edges[:,i])
+                    dNdzmq[jj,i,kk] = np.dot(dn_dVdm[:,i]*P_func[:,i,kk]*SZCluster.Mwl_prob(10**(m_wl[jj]),M_arr[:,i],mass_err[:,i]),dM) * dV_dz[i]*4.*np.pi
+        
+        return dNdzmq
+
+    
     def Cl_ell(self,ell,SZCluster):
         #fix the mass and redshift ranges 
         M = self.M#10**np.arange(11.0, 16, .1)

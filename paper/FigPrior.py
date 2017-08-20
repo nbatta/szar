@@ -107,13 +107,13 @@ priorList['betaYsig'] = 1.0
 
 
 import os
-if fishName=='mnu':            
-    pl = Plotter(labelY="$\sigma("+paramLatexList[paramList.index(fishName)]+")$",labelX="Iteration",ftsize=12)
-elif fishName=='w0':
-    pl = Plotter(labelY="$\\frac{\sigma("+paramLatexList[paramList.index(fishName)]+")}{"+paramLatexList[paramList.index(fishName)]+"}\%$",labelX="Iteration",ftsize=12)
+if 'mnu' in fishName:            
+    pl = Plotter(labelY="$\sigma("+paramLatexList[paramList.index("mnu")]+")$",labelX="Iteration",ftsize=12)
+elif 'w0' in fishName:
+    pl = Plotter(labelY="$\\frac{\sigma("+paramLatexList[paramList.index("w0")]+")}{"+paramLatexList[paramList.index("w0")]+"}\%$",labelX="Iteration",ftsize=12)
 
 
-for doBAO in [False,True]:    
+for doBAO in [False]:#,True]:    
 
     priorNameList = []
     priorValueList = []
@@ -170,10 +170,10 @@ for doBAO in [False,True]:
             for i,param in enumerate(paramList):
                 errDict[param] = errs[i]
 
-            if fishName=='mnu':            
-                constraint = errDict[fishName]*1000
-            elif fishName=='w0':
-                constraint = errDict[fishName]*100
+            if 'mnu' in fishName:            
+                constraint = errDict['mnu']*1000
+            elif 'w0' in fishName:
+                constraint = errDict['w0']*100
             sigs.append(constraint)
             if (np.abs(preVal-constraint)*100./constraint)<pertol:
                 print (constraint-preVal)*100./constraint
@@ -194,4 +194,4 @@ for doBAO in [False,True]:
     plt.gca().set_color_cycle(None)
 
 pl.legendOn(loc='upper right',labsize=8)
-pl.done(os.environ['WWW']+"paper/FigPrior_"+fishName+"_desi.pdf")
+pl.done(os.environ['WWW']+"paper/FigPrior_"+fishName+"_tau.pdf")
