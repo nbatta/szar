@@ -7,6 +7,34 @@ from szar.szproperties import SZ_Cluster_Model
 import cPickle as pickle
 import traceback
 
+
+def mass_grid_name_cmb_up(bigDataDir,expName,gridName,calName,version):
+    return bigDataDir+"lensgridRayUp_"+expName+"_"+gridName+"_"+calName+ "_v" + version+".pkl"
+
+def mass_grid_name_cmb_dn(bigDataDir,expName,gridName,calName,version):
+    return bigDataDir+"lensgridRayDn_"+expName+"_"+gridName+"_"+calName+ "_v" + version+".pkl"
+
+def mass_grid_name_cmb(bigDataDir,expName,gridName,calName,version):
+    return bigDataDir+"lensgrid_"+expName+"_"+gridName+"_"+calName+ "_v" + version+".pkl"
+
+def mass_grid_name_owl(bigDataDir,calName):
+    return bigDataDir+"lensgrid_grid-"+calName+"_"+calName+".pkl"
+
+def hash_func(*argv):
+    import hashlib
+    hinval = ""
+    for arg in argv:
+        if isinstance(arg,list):
+            hinval += "".join(arg)
+        elif isinstance(arg,str):
+            hinval += arg
+        elif arg is None:
+            hinval += "None"
+        else:
+            raise ValueError
+            
+    return hashlib.md5(hinval).hexdigest()
+
 def pad_fisher(fisher,num_pad):
     return np.pad(fisher,pad_width=((0,num_pad),(0,num_pad)),mode="constant",constant_values=0.)
 
@@ -25,7 +53,13 @@ def deriv_root(bigDataDir,saveId):
 def fid_file(bigDataDir,saveId):
     return bigDataDir+"N_mzq_"+saveId+"_fid"+".npy"
 
-def counts_from_config(Config,bigDataDir,version,expName,gridName,mexp_edges,z_edges):
+def counts_from_config(Config,bigDataDir,version,expName,gridName,mexp_edges,z_edges,lkneeTOverride=None,alphaTOverride=None):
+    suffix = ""
+    if lkneeTOverride is not None:
+        suffix += "_"+str(lkneeTOverride)
+    if alphaTOverride is not None:
+        suffix += "_"+str(alphaTOverride)
+    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+suffix+".pkl",'rb'))
     experimentName = expName
     cosmoDict = dictFromSection(Config,"params")
     constDict = dictFromSection(Config,'constants')
@@ -42,7 +76,9 @@ def counts_from_config(Config,bigDataDir,version,expName,gridName,mexp_edges,z_e
     fsky = Config.getfloat(experimentName,'fsky')
     SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
     hmf = Halo_MF(cc,mexp_edges,z_edges)
-    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
+
+
+    
 
     hmf.sigN = siggrid.copy()
     Ns = np.multiply(hmf.N_of_z_SZ(fsky,SZProf),np.diff(z_edges).reshape(1,z_edges.size-1)).ravel()
@@ -88,7 +124,7 @@ def priors_from_config(Config,expName,calName,fishName,paramList):
     
 
 def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
-                               overridePlanck=None,overrideBAO=None,overrideOther=None):
+                               overridePlanck=None,overrideBAO=None,overrideOther=None,pickling=True,s8=False):
 
 
     """
@@ -118,8 +154,15 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     # Fisher params
     fishSection = 'fisher-'+fishName
     paramList = Config.get(fishSection,'paramList').split(',')
+
+    
+    
     zs = listFromConfig(Config,gridName,'zrange')
     z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
+
+
+    
+    
 
     saveId = save_id(expName,gridName,calName,version)
     derivRoot = deriv_root(bigDataDir,saveId)
@@ -129,11 +172,19 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     print "Effective number of clusters: ", N_fid.sum()
 
     paramList, priorNameList, priorValueList = priors_from_config(Config,expName,calName,fishName,paramList)
+
+    if s8:
+        zrange = (z_edges[1:]+z_edges[:-1])/2.
+        zlist = ["S8Z"+str(i) for i in range(len(zrange))]
+        paramList = paramList+zlist
+
+    
     Fisher = getFisher(N_fid,paramList,priorNameList,priorValueList,derivRoot,pzcutoff,z_edges,fsky)
 
     # Number of non-SZ params (params that will be in Planck/BAO)
     numCosmo = Config.getint(fishSection,'numCosmo')
     numLeft = len(paramList) - numCosmo
+
 
     try:
         do_cmb_fisher = Config.getboolean(fishSection,"do_cmb_fisher")
@@ -153,20 +204,62 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
         
     if do_cmb_fisher:
 
+        
         import pyfisher.clFisher as pyfish
         # Load fiducials and derivatives
         cmbDerivRoot = Config.get("general","cmbDerivRoot")
         cmbParamList = paramList[:numCosmo]
-        fidCls = np.loadtxt(cmbDerivRoot+'_fCls.csv',delimiter=',')
-        dCls = {}
-        for paramName in cmbParamList:
-            dCls[paramName] = np.loadtxt(cmbDerivRoot+'_dCls_'+paramName+'.csv',delimiter=',')
 
-        print "Calculating CMB fisher matrix..."
-        cmb_fisher = pad_fisher(pyfish.fisher_from_config(fidCls,dCls,cmbParamList,Config,expName,lensName),numLeft)
-    
+
+        cmb_fisher_loaded = False
+        if pickling:
+            import time
+            hashval = hash_func(cmbParamList,expName,lensName,time.strftime('%Y%m%d'))
+            pkl_file = "output/pickledFisher_"+hashval+".pkl"
+
+            try:
+                cmb_fisher = pickle.load(open(pkl_file,'rb'))
+                cmb_fisher_loaded = True
+                print "Loaded pickled CMB fisher."
+            except:
+                pass
+            
+        if not(cmb_fisher_loaded):
+            fidCls = np.loadtxt(cmbDerivRoot+'_fCls.csv',delimiter=',')
+            dCls = {}
+            for paramName in cmbParamList:
+                dCls[paramName] = np.loadtxt(cmbDerivRoot+'_dCls_'+paramName+'.csv',delimiter=',')
+
+            print "Calculating CMB fisher matrix..."
+            cmb_fisher = pyfish.fisher_from_config(fidCls,dCls,cmbParamList,Config,expName,lensName)
+            if pickling:
+                print "Pickling CMB fisher..."
+                pickle.dump(cmb_fisher,open(pkl_file,'wb'))
+
+
+        cmb_fisher = pad_fisher(cmb_fisher,numLeft)
     else:
         cmb_fisher = 0.    
+
+
+
+
+    try:
+        otherFishers = Config.get(fishSection,'otherFishers').split(',')
+    except:
+        traceback.print_exc()
+        print "No other fishers found."
+        otherFishers = []
+    for otherFisherFile in otherFishers:
+        try:
+            other_fisher = np.loadtxt(otherFisherFile)
+        except:
+            other_fisher = np.loadtxt(otherFisherFile,delimiter=',')
+        other_fisher = pad_fisher(other_fisher,numLeft)
+        Fisher += other_fisher
+            
+        
+
 
 
     Fisher = Fisher + cmb_fisher

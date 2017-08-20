@@ -30,6 +30,7 @@ if debug: print "Starting common module imports..."
 from mpi4py import MPI
 from szar.counts import ClusterCosmology,Halo_MF,getNmzq
 from szar.szproperties import SZ_Cluster_Model
+import szar.fisher as sfisher
 import numpy as np
     
 if debug: print "Finished common module imports."
@@ -89,8 +90,8 @@ if rank==0:
 
     version = Config.get('general','version')
 
-    calFileUp = bigDataDir+"lensgridRayUp_"+expName+"_"+gridName+"_"+calName+ "_v" + version+".pkl"
-    calFileDn = bigDataDir+"lensgridRayDn_"+expName+"_"+gridName+"_"+calName+ "_v" + version+".pkl"
+    calFileUp = sfisher.mass_grid_name_cmb_up(bigDataDir,expName,gridName,calName,version) 
+    calFileDn = sfisher.mass_grid_name_cmb_dn(bigDataDir,expName,gridName,calName,version)
     
     # load the mass calibration grid
     mexp_edges, z_edges, lndMUp = pickle.load(open(calFileUp,"rb"))
