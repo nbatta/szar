@@ -39,7 +39,7 @@ mindicesList = [60,80,120,160]
 
 from orphics.tools.io import Plotter
     
-for cmbfile,cmbtype,savefunc in zip([fidcmb_file,upcmb_file,dncmb_file],['fid','up','dn'], \
+for cmbfile,cmbtype,save_func in zip([fidcmb_file,upcmb_file,dncmb_file],['fid','up','dn'], \
                                     [sfisher.mass_grid_name_cmb,sfisher.mass_grid_name_cmb_up,sfisher.mass_grid_name_cmb_dn]):
 
 

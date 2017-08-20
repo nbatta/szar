@@ -5,8 +5,8 @@ cmdRoot = "python bin/calcFisher.py "
 #calList = ['CMB_all','CMB_pol','CMB_all_miscentered','CMB_pol_miscentered']
 
 expList = ['S4-1.0-paper','S4-1.5-paper','S4-2.0-paper','S4-2.5-paper','S4-3.0-paper']
-#calList = ['CMB_all','CMB_pol']#,'CMB_pol','owl1','owl2']
-calList = ['owl1','owl2']#,'CMB_pol','owl1','owl2']
+calList = ['CMB_all']#,'CMB_pol']#,'CMB_pol','owl1','owl2']
+#calList = ['owl1','owl2']#,'CMB_pol','owl1','owl2']
 
 #expList = ['S4','SO']
 #expList = ['S4']

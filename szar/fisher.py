@@ -8,6 +8,24 @@ import cPickle as pickle
 import traceback
 
 
+def marginalized_errs(Fisher,paramList):
+
+    # ind = paramList.index("b_wl")
+    # print Fisher[ind,ind]
+    # Fisher[ind,ind] = 1./0.01**2.
+    #print Fisher[ind,ind]
+    
+    Finv = np.linalg.inv(Fisher)
+
+    errs = np.sqrt(np.diagonal(Finv))
+    errDict = {}
+    for i,param in enumerate(paramList):
+        errDict[param] = errs[i]
+
+    return errDict
+
+
+
 def mass_grid_name_cmb_up(bigDataDir,expName,gridName,calName,version):
     return bigDataDir+"lensgridRayUp_"+expName+"_"+gridName+"_"+calName+ "_v" + version+".pkl"
 
@@ -30,6 +48,8 @@ def hash_func(*argv):
             hinval += arg
         elif arg is None:
             hinval += "None"
+        elif isinstance(arg,bool):
+            hinval += str(arg)
         else:
             raise ValueError
             
@@ -86,7 +106,7 @@ def counts_from_config(Config,bigDataDir,version,expName,gridName,mexp_edges,z_e
     return Ns.sum()
 
 
-def priors_from_config(Config,expName,calName,fishName,paramList):
+def priors_from_config(Config,expName,calName,fishName,paramList,tauOverride=None):
     fishSection = 'fisher-'+fishName
 
     try:
@@ -95,6 +115,16 @@ def priors_from_config(Config,expName,calName,fishName,paramList):
     except:
         priorNameList = []
         priorValueList = []
+
+
+    if tauOverride is not None:
+        try:
+            tauind = priorNameList.index('tau')
+            priorValueList[tauind] = tauOverride
+        except ValueError:
+            priorNameList.append("tau")
+            priorValueList.append(tauOverride)
+            
 
     if "CMB" in calName:
         assert "sigR" not in paramList
@@ -113,18 +143,26 @@ def priors_from_config(Config,expName,calName,fishName,paramList):
             print "Couldn't add sigR prior. Is this CMB lensing? Exiting."
             sys.exit(1)
 
-    if "owl" in calName:
-        if not("b_wl") in paramList:
-            print "OWL but b_wl not found in paramList. Adding with a 1% prior."
-            paramList.append("b_wl")
-            priorNameList.append("b_wl")
-            priorValueList.append(1./(0.01**2.))
+
+    # if not("b_wl" in paramList):
+    #     print "OWL but b_wl not found in paramList. Adding with a 1% prior."
+    #     paramList.append("b_wl")
+        #priorNameList.append("b_wl")
+        #priorValueList.append(0.01)
+    
+    # if "owl" in calName:
+    #     if not("b_wl" in paramList):
+    #         print "OWL but b_wl not found in paramList. Adding with a 1% prior."
+    #         paramList.append("b_wl")
+    #         priorNameList.append("b_wl")
+    #         priorValueList.append(0.01)
             
     return paramList, priorNameList, priorValueList
     
 
 def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
-                               overridePlanck=None,overrideBAO=None,overrideOther=None,pickling=True,s8=False):
+                               overridePlanck=None,overrideBAO=None,overrideOther=None,pickling=True,s8=False,
+                               tauOverride=None,do_clkk_override=None):
 
 
     """
@@ -168,10 +206,10 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     derivRoot = deriv_root(bigDataDir,saveId)
     # Fiducial number counts
     new_z_edges, N_fid = rebinN(np.load(fid_file(bigDataDir,saveId)),pzcutoff,z_edges)
-    N_fid = N_fid[:,:,:]*fsky
+    N_fid = N_fid*fsky
     print "Effective number of clusters: ", N_fid.sum()
 
-    paramList, priorNameList, priorValueList = priors_from_config(Config,expName,calName,fishName,paramList)
+    paramList, priorNameList, priorValueList = priors_from_config(Config,expName,calName,fishName,paramList,tauOverride)
 
     if s8:
         zrange = (z_edges[1:]+z_edges[:-1])/2.
@@ -196,6 +234,9 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     except:
         do_clkk_fisher = False
 
+    if do_clkk_override is not None:
+        do_clkk_fisher = do_clkk_override
+        
     if do_clkk_fisher:
         assert do_cmb_fisher, "Sorry, currently Clkk fisher requires CMB fisher to be True as well."
         lensName = Config.get(fishSection,"clkk_section")
@@ -214,7 +255,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
         cmb_fisher_loaded = False
         if pickling:
             import time
-            hashval = hash_func(cmbParamList,expName,lensName,time.strftime('%Y%m%d'))
+            hashval = hash_func(cmbParamList,expName,lensName,do_clkk_fisher,time.strftime('%Y%m%d'))
             pkl_file = "output/pickledFisher_"+hashval+".pkl"
 
             try:
@@ -278,8 +319,8 @@ def getFisher(N_fid,paramList,priorNameList,priorValueList,derivRoot,pzcutoff,z_
         if not(param1=='tau' or param2=='tau'): 
             new_z_edges, dN1 = rebinN(np.load(derivRoot+param1+".npy"),pzcutoff,z_edges)
             new_z_edges, dN2 = rebinN(np.load(derivRoot+param2+".npy"),pzcutoff,z_edges)
-            dN1 = dN1[:,:,:]*fsky
-            dN2 = dN2[:,:,:]*fsky
+            dN1 = dN1*fsky
+            dN2 = dN2*fsky
 
 
             assert not(np.any(np.isnan(dN1)))
