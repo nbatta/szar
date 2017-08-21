@@ -20,71 +20,15 @@ iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
-bigDataDir = Config.get('general','bigDataDirectory')
-
-version = Config.get('general','version')
-pzcutoff = Config.getfloat('general','photoZCutOff')
-saveId = expName + "_" + gridName + "_" + calName + "_v" + version
 
 
-
-# get s/n q-bins
-qs = listFromConfig(Config,'general','qbins')
-qspacing = Config.get('general','qbins_spacing')
-if qspacing=="log":
-    qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
-elif qspacing=="linear":
-    qbins = np.linspace(qs[0],qs[1],int(qs[2]))
-else:
-    raise ValueError
-dq = np.diff(qbins)
-
-fsky = Config.getfloat(expName,'fsky')
-
-# get mass and z grids
-ms = listFromConfig(Config,gridName,'mexprange')
-mexp_edges = np.arange(ms[0],ms[1]+ms[2],ms[2])
-zs = listFromConfig(Config,gridName,'zrange')
-z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
-dm = np.diff(10**mexp_edges)
-dz = np.diff(z_edges)
-
-# Fisher params
 fishSection = 'fisher-'+fishName
 paramList = Config.get(fishSection,'paramList').split(',')
 paramLatexList = Config.get(fishSection,'paramLatexList').split(',')
 saveName = Config.get(fishSection,'saveSuffix')
 
-# Fiducial number counts
-new_z_edges, N_fid = rebinN(np.load(bigDataDir+"N_mzq_"+saveId+"_fid"+".npy"),pzcutoff,z_edges)
 
-N_fid = N_fid[:,:,:]*fsky
-print "Total number of clusters: ", N_fid.sum() #getTotN(N_fid,mgrid,zgrid,qbins)
-
-
-sId = expName + "_" + gridName  + "_v" + version
-#sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
-#sovernsquare =  np.dstack([sovernsquareEach]*len(qbins))
-
-
-# Planck and BAO Fishers
-planckFile = Config.get(fishSection,'planckFile')
-try:
-    baoFile = Config.get(fishSection,'baoFile')
-except:
-    baoFile = ''
-
-# Number of non-SZ params (params that will be in Planck/BAO)
-numCosmo = Config.getint(fishSection,'numCosmo')
-numLeft = len(paramList) - numCosmo
-fisherPlanck = 0.
-if planckFile!='':
-    try:
-        fisherPlanck = np.loadtxt(planckFile)
-    except:
-        fisherPlanck = np.loadtxt(planckFile,delimiter=',')
-    fisherPlanck = np.pad(fisherPlanck,pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.)
-
+FisherTot, paramList = sfisher.cluster_fisher_from_config(Config,expName,gridName,calName,fishName)
 
 
 from collections import OrderedDict
@@ -95,9 +39,7 @@ priorList['omch2'] = 0.002
 priorList['ombh2'] = 0.00023
 priorList['ns'] = 0.006
 priorList['As'] = 5.e-12
-
 priorList['alpha_ym'] = 0.179
-#priorList['b_wl'] = 0.1
 priorList['b_ym'] = 0.08
 priorList['beta_ym'] = 0.1
 priorList['gamma_ym'] = 0.1
@@ -113,7 +55,7 @@ elif 'w0' in fishName:
     pl = Plotter(labelY="$\\frac{\sigma("+paramLatexList[paramList.index("w0")]+")}{"+paramLatexList[paramList.index("w0")]+"}\%$",labelX="Iteration",ftsize=12)
 
 
-for doBAO in [False]:#,True]:    
+for doBAO in [False,True]:    
 
     priorNameList = []
     priorValueList = []
