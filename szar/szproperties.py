@@ -316,14 +316,14 @@ class SZ_Cluster_Model:
         Y = np.exp(lnY)
         ans = gaussian2D(q_arr,Y/sigma_Na,1.,Mwl*self.scaling['b_wl'],MM,Merr*MM,rho)
         return ans
-
+    
     def Mwl_prob (self,Mwl,M,Merr):
         #Gaussian error probablity for weak lensing mass 
-        ans = gaussian(Mwl*self.scaling['b_wl'],M,Merr*M)
+        ans = gaussian(Mwl*self.scaling['b_wl'],M,Merr*M)*self.scaling['b_wl']
         return ans
 
-#    def Mwl_prob (self,Mwl,M,Merr):
-        #Gaussian error probablity for weak lensing mass 
-#        ans = gaussian(Mwl,M,Merr*M) * gaussian(Mwl,M,self.scaling['b_wl']*M)
-#        return ans
+    # def Mwl_prob (self,Mwl,M,Merr):
+    #     #Gaussian error probablity for weak lensing mass 
+    #     ans = gaussian(Mwl,M,(Merr+0.01)*M) #* gaussian(Mwl,M,0.01*M)
+    #     return ans
 

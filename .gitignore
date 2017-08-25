@@ -1,3 +1,7 @@
 *.log
 *.hostfile
 *#*
+*.txt
+*.csv
+*.pkl
+*.dat

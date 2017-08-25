@@ -96,12 +96,13 @@ mpl.rcParams['axes.color_cycle'] = CB_color_cycle
 
 
 #paramList = ['mnu','wa','w0','b_ym','tau','H0']
-paramList = ['mnu','H0','tau','b_ym','alpha_ym','Ysig','gamma_ym','beta_ym','gammaYsig','betaYsig','wa','w0']
+#paramList = ['mnu','H0','tau','b_ym','alpha_ym','Ysig','gamma_ym','beta_ym','gammaYsig','betaYsig','wa','w0']
+paramList = ['mnu','H0','tau','b_ym','alpha_ym','Ysig','gamma_ym','beta_ym','gammaYsig','betaYsig','wa','w0','b_wl']
 #fplots.plotTri(fishSection,paramList,['cmb8'],labels=['S4-1.0-paper'],saveFile=out_dir+"Fig2DBeam.png",loc='upper right')
 
 labList = ['S4 1.0\'','S4 1.5\'','S4 2.0\'','S4 2.5\'','S4 3.0\''][::-1]
 
-fplots.plotTri(fishSection,paramList,['cmb3','cmb5','cmb6','cmb7','cmb8'],labels=labList,saveFile=out_dir+"Fig2DBeam.png",loc='upper right')
+fplots.plotTri(fishSection,paramList,['cmb3','cmb5','cmb6','cmb7','cmb8'],labels=labList,saveFile=out_dir+"Fig2DBeamTest.png",loc='upper right')
 #fplots.plotTri(paramList,['cmb3','cmb5','cmb6','cmb7','cmb8'],labels=['S4-3.0-paper','S4-2.5-paper','S4-2.0-paper','S4-1.5-paper','S4-1.0-paper'],saveFile=out_dir+"Fig2DBeam.png",loc='upper right')
 
 

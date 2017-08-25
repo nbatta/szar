@@ -19,6 +19,43 @@ from orphics.analysis.flatMaps import interpolateGrid
 
 import szar._fast as fast
 
+def bin_ndarray(ndarray, new_shape, operation='sum'):
+    """
+    Bins an ndarray in all axes based on the target shape, by summing or
+        averaging.
+
+    Number of output dimensions must match number of input dimensions and 
+        new axes must divide old ones.
+
+    Example
+    -------
+    >>> m = np.arange(0,100,1).reshape((10,10))
+    >>> n = bin_ndarray(m, new_shape=(5,5), operation='sum')
+    >>> print(n)
+
+    [[ 22  30  38  46  54]
+     [102 110 118 126 134]
+     [182 190 198 206 214]
+     [262 270 278 286 294]
+     [342 350 358 366 374]]
+
+    """
+    operation = operation.lower()
+    if not operation in ['sum', 'mean']:
+        raise ValueError("Operation not supported.")
+    if ndarray.ndim != len(new_shape):
+        raise ValueError("Shape mismatch: {} -> {}".format(ndarray.shape,
+                                                           new_shape))
+    compression_pairs = [(d, c//d) for d,c in zip(new_shape,
+                                                  ndarray.shape)]
+    flattened = [l for p in compression_pairs for l in p]
+    ndarray = ndarray.reshape(flattened)
+    for i in range(len(new_shape)):
+        op = getattr(ndarray, operation)
+        ndarray = op(-1*(i+1))
+    return ndarray
+
+
 def getA(fparams,constDict,zrange,kmax=11.):
     cc = ClusterCosmology(fparams,constDict,skipCls=True)
     if zrange[0]>=1.e-8: zrange = np.insert(zrange,0,0)
@@ -32,18 +69,23 @@ def getA(fparams,constDict,zrange,kmax=11.):
 
 
 def rebinN(Nmzq,pzCutoff,zbin_edges):
-    return zbin_edges, Nmzq
-    # if pzCutoff>=zbin_edges[-2]: return zbin_edges,Nmzq
-    # orig = Nmzq.copy()
-    # indexUpTo = np.where(pzCutoff>=zbin_edges)[0][-1]
- 
-    # rebinned = np.hstack((Nmzq[:,:indexUpTo,:],Nmzq[:,indexUpTo:,:].sum(axis=1).reshape((orig.shape[0],1,orig.shape[2]))))
-
-    # new_z_edges = np.append(zbin_edges[:indexUpTo+1],zbin_edges[-1])
-    # assert rebinned.shape[1]==(new_z_edges.size-1)
-    # assert new_z_edges.size<zbin_edges.size
+    #return zbin_edges, Nmzq  #.sum(axis=0) # !!!
+    x,y,z = Nmzq.shape
+    #print x
+    Nmzq = bin_ndarray(Nmzq, (37,y,z), operation='sum')
+    #return zbin_edges, bin_ndarray(Nmzq, (37,y,z), operation='sum')
     
-    # return new_z_edges,rebinned
+    if pzCutoff>=zbin_edges[-2]: return zbin_edges,Nmzq
+    orig = Nmzq.copy()
+    indexUpTo = np.where(pzCutoff>=zbin_edges)[0][-1]
+ 
+    rebinned = np.hstack((Nmzq[:,:indexUpTo,:],Nmzq[:,indexUpTo:,:].sum(axis=1).reshape((orig.shape[0],1,orig.shape[2]))))
+
+    new_z_edges = np.append(zbin_edges[:indexUpTo+1],zbin_edges[-1])
+    assert rebinned.shape[1]==(new_z_edges.size-1)
+    assert new_z_edges.size<zbin_edges.size
+    
+    return new_z_edges,rebinned
 
 def getTotN(Nmzq,mexp_edges,z_edges,q_edges,returnNz=False):
     """Get total number of clusters given N/DmDqDz
@@ -162,8 +204,9 @@ def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,z_edges,fsky,lmax=1000):
 #    return ans
 
 class ClusterCosmology(Cosmology):
-    def __init__(self,paramDict=cosmo.defaultCosmology,constDict=cosmo.defaultConstants,lmax=None,clTTFixFile=None,skipCls=False,pickling=False):
-        Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls,pickling)
+    def __init__(self,paramDict=cosmo.defaultCosmology,constDict=cosmo.defaultConstants,lmax=None,
+                 clTTFixFile=None,skipCls=False,pickling=False,fill_zero=True):
+        Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls,pickling,fill_zero)
         self.rhoc0om = self.rho_crit0H100*self.om
         
     def E_z(self,z):
@@ -411,7 +454,7 @@ class Halo_MF:
         if self.Pfunc_qarr is None: self.updatePfunc_qarr(SZCluster,q_arr)
         P_func = self.Pfunc_qarr
 
-        dn_dVdm = self.dn_dM(self.M200,200.)
+        dn_dVdm = self.dn_dM(self.M200,200.) 
         dV_dz = self.dVdz
 
         

@@ -9,6 +9,7 @@ from orphics.tools.io import Plotter
 import matplotlib.pyplot as plt
 from szar.fisher import getFisher
 from szar.counts import rebinN
+import szar.fisher as sfisher
 
 
 expName = sys.argv[1]
@@ -20,84 +21,38 @@ iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
+
 bigDataDir = Config.get('general','bigDataDirectory')
 
-version = Config.get('general','version')
-pzcutoff = Config.getfloat('general','photoZCutOff')
-saveId = expName + "_" + gridName + "_" + calName + "_v" + version
-
-
-
-# get s/n q-bins
-qs = listFromConfig(Config,'general','qbins')
-qspacing = Config.get('general','qbins_spacing')
-if qspacing=="log":
-    qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
-elif qspacing=="linear":
-    qbins = np.linspace(qs[0],qs[1],int(qs[2]))
-else:
-    raise ValueError
-dq = np.diff(qbins)
-
-fsky = Config.getfloat(expName,'fsky')
-
-# get mass and z grids
-ms = listFromConfig(Config,gridName,'mexprange')
-mexp_edges = np.arange(ms[0],ms[1]+ms[2],ms[2])
-zs = listFromConfig(Config,gridName,'zrange')
-z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
-dm = np.diff(10**mexp_edges)
-dz = np.diff(z_edges)
-
-# Fisher params
 fishSection = 'fisher-'+fishName
 paramList = Config.get(fishSection,'paramList').split(',')
 paramLatexList = Config.get(fishSection,'paramLatexList').split(',')
 saveName = Config.get(fishSection,'saveSuffix')
+version = Config.get('general','version') 
+pzcutoff = Config.getfloat('general','photoZCutOff')
+fsky = Config.getfloat(expName,'fsky')
 
+zs = listFromConfig(Config,gridName,'zrange')
+z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
+
+saveId = sfisher.save_id(expName,gridName,calName,version)
+derivRoot = sfisher.deriv_root(bigDataDir,saveId)
 # Fiducial number counts
-new_z_edges, N_fid = rebinN(np.load(bigDataDir+"N_mzq_"+saveId+"_fid"+".npy"),pzcutoff,z_edges)
-
-N_fid = N_fid[:,:,:]*fsky
-print "Total number of clusters: ", N_fid.sum() #getTotN(N_fid,mgrid,zgrid,qbins)
-
-
-sId = expName + "_" + gridName  + "_v" + version
-#sovernsquareEach = np.loadtxt(bigDataDir+"sampleVarGrid_"+sId+".txt")
-#sovernsquare =  np.dstack([sovernsquareEach]*len(qbins))
-
-
-# Planck and BAO Fishers
-planckFile = Config.get(fishSection,'planckFile')
-try:
-    baoFile = Config.get(fishSection,'baoFile')
-except:
-    baoFile = ''
-
-# Number of non-SZ params (params that will be in Planck/BAO)
-numCosmo = Config.getint(fishSection,'numCosmo')
-numLeft = len(paramList) - numCosmo
-fisherPlanck = 0.
-if planckFile!='':
-    try:
-        fisherPlanck = np.loadtxt(planckFile)
-    except:
-        fisherPlanck = np.loadtxt(planckFile,delimiter=',')
-    fisherPlanck = np.pad(fisherPlanck,pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.)
+new_z_edges, N_fid = sfisher.rebinN(np.load(sfisher.fid_file(bigDataDir,saveId)),pzcutoff,z_edges)
+N_fid = N_fid*fsky
+print "Effective number of clusters: ", N_fid.sum()
 
 
 
 from collections import OrderedDict
 priorList = OrderedDict()
-priorList['tau'] = 0.1
+priorList['tau'] = 0.01
 priorList['H0'] = 10.0
 priorList['omch2'] = 0.002
 priorList['ombh2'] = 0.00023
 priorList['ns'] = 0.006
 priorList['As'] = 5.e-12
-
 priorList['alpha_ym'] = 0.179
-#priorList['b_wl'] = 0.1
 priorList['b_ym'] = 0.08
 priorList['beta_ym'] = 0.1
 priorList['gamma_ym'] = 0.1
@@ -113,7 +68,9 @@ elif 'w0' in fishName:
     pl = Plotter(labelY="$\\frac{\sigma("+paramLatexList[paramList.index("w0")]+")}{"+paramLatexList[paramList.index("w0")]+"}\%$",labelX="Iteration",ftsize=12)
 
 
-for doBAO in [False]:#,True]:    
+#for doBAO in [False,True]:    
+for fishSection in ["fisher-"+fishName,"fisher-"+fishName+"-DESI"]:
+
 
     priorNameList = []
     priorValueList = []
@@ -144,24 +101,87 @@ for doBAO in [False]:#,True]:
 
             ##########################
             # Populate Fisher
-            Fisher = getFisher(N_fid,paramList,priorNameList,priorValueList,bigDataDir,saveId,pzcutoff,z_edges,fsky)
+            Fisher = sfisher.getFisher(N_fid,paramList,priorNameList,priorValueList,derivRoot,pzcutoff,z_edges,fsky)
             ##########################
 
+            # Number of non-SZ params (params that will be in Planck/BAO)
+            numCosmo = Config.getint(fishSection,'numCosmo')
+            numLeft = len(paramList) - numCosmo
+
+            try:
+                otherFishers = Config.get(fishSection,'otherFishers').split(',')
+            except:
+                traceback.print_exc()
+                print "No other fishers found."
+                otherFishers = []
+            for otherFisherFile in otherFishers:
+                try:
+                    other_fisher = np.loadtxt(otherFisherFile)
+                except:
+                    other_fisher = np.loadtxt(otherFisherFile,delimiter=',')
+                other_fisher = sfisher.pad_fisher(other_fisher,numLeft)
+                Fisher += other_fisher
 
             
-            fisherBAO = Fisher.copy()*0.
-            if doBAO:
-                if baoFile!='':
+
+
+            try:
+                do_cmb_fisher = Config.getboolean(fishSection,"do_cmb_fisher")
+            except:
+                do_cmb_fisher = False
+
+            try:
+                do_clkk_fisher = Config.getboolean(fishSection,"do_clkk_fisher")
+            except:
+                do_clkk_fisher = False
+
+
+            if do_clkk_fisher:
+                assert do_cmb_fisher, "Sorry, currently Clkk fisher requires CMB fisher to be True as well."
+                lensName = Config.get(fishSection,"clkk_section")
+            else:
+                lensName = None
+
+            if do_cmb_fisher:
+
+
+                import pyfisher.clFisher as pyfish
+                # Load fiducials and derivatives
+                cmbDerivRoot = Config.get("general","cmbDerivRoot")
+                cmbParamList = paramList[:numCosmo]
+
+
+                cmb_fisher_loaded = False
+                if True:
+                    import time
+                    hashval = sfisher.hash_func(cmbParamList,expName,lensName,do_clkk_fisher,time.strftime('%Y%m%d'))
+                    pkl_file = "output/pickledFisher_"+hashval+".pkl"
+
                     try:
-                        fisherBAO = np.loadtxt(baoFile)
+                        cmb_fisher = pickle.load(open(pkl_file,'rb'))
+                        cmb_fisher_loaded = True
+                        print "Loaded pickled CMB fisher."
                     except:
-                        fisherBAO = np.loadtxt(baoFile,delimiter=',') 
-                    fisherBAO = np.pad(fisherBAO[:numCosmo,:numCosmo],pad_width=((0,numLeft),(0,numLeft)),mode="constant",constant_values=0.) # !!!!
-                        
+                        pass
 
-            FisherTot = Fisher + fisherPlanck
-            FisherTot += fisherBAO
+                if not(cmb_fisher_loaded):
+                    fidCls = np.loadtxt(cmbDerivRoot+'_fCls.csv',delimiter=',')
+                    dCls = {}
+                    for paramName in cmbParamList:
+                        dCls[paramName] = np.loadtxt(cmbDerivRoot+'_dCls_'+paramName+'.csv',delimiter=',')
 
+                    print "Calculating CMB fisher matrix..."
+                    cmb_fisher = pyfish.fisher_from_config(fidCls,dCls,cmbParamList,Config,expName,lensName)
+                    if True:
+                        print "Pickling CMB fisher..."
+                        pickle.dump(cmb_fisher,open(pkl_file,'wb'))
+
+
+                cmb_fisher = sfisher.pad_fisher(cmb_fisher,numLeft)
+            else:
+                cmb_fisher = 0.    
+
+            FisherTot = Fisher+cmb_fisher
 
             Finv = np.linalg.inv(FisherTot)
 
@@ -183,7 +203,7 @@ for doBAO in [False]:#,True]:
             k+=1
 
         priorLabel = paramLatexList[paramList.index(prior)]
-        if doBAO:
+        if "DESI" in fishSection:
             lab = None
             lss = "--"
         else:
