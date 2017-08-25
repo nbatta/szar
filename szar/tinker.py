@@ -124,6 +124,13 @@ def sigma_sq_integral(R_grid, power_spt, k_val):
     
     return np.trapz((1/(2*np.pi**2))*to_integ, k_val, axis = 0, dx=1e-6)
 
+def fnl_correction(sigma2,fnl):
+    d_c = 1.686
+    S3 = 3.15e-4 * fnl / (sigma2**(0.838/2.0))
+    del_cor = np.sqrt(1 - d_c*S3/3.0)
+    ans = np.exp(S3 * d_c**3/(sigma2*6.0))*(d_c**2/(6.0*del_cor)*(-0.838*S3)+del_cor)
+    return ans
+
 def dn_dlogM(M, z, rho, delta, k, P, comoving=False):
     """
     M      is  (nM)  or  (nM, nz)
@@ -163,8 +170,6 @@ def dn_dlogM(M, z, rho, delta, k, P, comoving=False):
     return tf * rho * dlogs / dM
 ###
 
-
-# In[ ]:
 
 
 
