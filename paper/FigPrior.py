@@ -12,6 +12,7 @@ from szar.counts import rebinN
 import szar.fisher as sfisher
 
 
+
 expName = sys.argv[1]
 gridName = sys.argv[2]
 calName = sys.argv[3]
@@ -56,16 +57,16 @@ priorList['alpha_ym'] = 0.179
 priorList['b_ym'] = 0.08
 priorList['beta_ym'] = 0.1
 priorList['gamma_ym'] = 0.1
-priorList['Ysig'] = 0.0127
-priorList['gammaYsig'] = 0.1
+priorList['Ysig'] = 0.127
+priorList['gammaYsig'] = 1.0
 priorList['betaYsig'] = 1.0
 
 
 import os
 if 'mnu' in fishName:            
-    pl = Plotter(labelY="$\sigma("+paramLatexList[paramList.index("mnu")]+")$",labelX="Iteration",ftsize=12)
+    pl = Plotter(labelY="$\sigma("+paramLatexList[paramList.index("mnu")]+")$ (meV)",labelX="Iteration",ftsize=20)
 elif 'w0' in fishName:
-    pl = Plotter(labelY="$\\frac{\sigma("+paramLatexList[paramList.index("w0")]+")}{"+paramLatexList[paramList.index("w0")]+"}\%$",labelX="Iteration",ftsize=12)
+    pl = Plotter(labelY="$\\frac{\sigma("+paramLatexList[paramList.index("w0")]+")}{"+paramLatexList[paramList.index("w0")]+"}\%$",labelX="Iteration",ftsize=20)
 
 
 #for doBAO in [False,True]:    
@@ -80,6 +81,7 @@ for fishSection in ["fisher-"+fishName,"fisher-"+fishName+"-DESI"]:
     pertol = 0.1
     mink = 5
     perRange = np.logspace(-4,2,numlogs)[::-1]
+    #perRange = np.logspace(-8,2,numlogs)[::-1]
 
 
 
@@ -213,5 +215,5 @@ for fishSection in ["fisher-"+fishName,"fisher-"+fishName+"-DESI"]:
         pl.add(xs,sigs,label=lab,ls=lss)
     plt.gca().set_color_cycle(None)
 
-pl.legendOn(loc='upper right',labsize=8)
+pl.legendOn(loc='upper right',labsize=11)
 pl.done(os.environ['WWW']+"paper/FigPrior_"+fishName+"_tau.pdf")

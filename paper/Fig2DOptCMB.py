@@ -42,8 +42,8 @@ fplots = FisherPlots()
 fplots.startFig() 
 
 #for fishSection,alphas in zip(["mnu-w0-wa","mnu-w0"],[[1,1,1,1],[0.3,0.3,0.3,0.3]]):
-#for fishSection,alphas in zip(["mnu-w0-wa-paper"],[[1,1,1,1]]):
-for fishSection,alphas in zip(["mnu-w0"],[[1,1,1,1]]):
+for fishSection,alphas in zip(["mnu-w0-wa-paper"],[[1,1,1,1]]):
+#for fishSection,alphas in zip(["mnu-w0-paper"],[[1,1,1,1]]):
 
     if fishSection == "mnu-w0-wa-paper":
         labs = itertools.repeat(None)

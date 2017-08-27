@@ -31,8 +31,10 @@ from orphics.tools.io import dictFromSection, listFromConfig
 constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,'cluster_params')
 
-#CB_color_cycle = ['#DCD6F7','#A6B1E1','#B4869F','#985F6F','#4E4C67'][::-1]
-CB_color_cycle = ['#1C110A','#E4D6A7','#E9B44C','#9B2915','#50A2A7']
+#CB_color_cycle = ['#1C110A','#E4D6A7','#E9B44C','#9B2915','#50A2A7']
+CB_color_cycle = ['#1C110A','#B561A7','#E4D6A7','#9B2915','#50A2A7']
+
+
 import matplotlib as mpl
 mpl.rcParams['axes.color_cycle'] = CB_color_cycle
 

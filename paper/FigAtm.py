@@ -53,6 +53,9 @@ for expName,col,lab in zip(expList,collist,lablist):
         labnow = lab if ls=="-" else None
         pl.add(lkneeList,Ns,label=labnow,color=col,ls=ls)
 
+
+        print alpha,(Ns[-1]-Ns[0])*100./Ns[0], " %"
+
 pl.legendOn(labsize=12,loc="lower left")
 pl._ax.axvline(x=3500.,color="k",alpha=0.5,ls="--")
 pl.done(out_dir+"FigAtm.pdf")

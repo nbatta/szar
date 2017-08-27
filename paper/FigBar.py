@@ -4,6 +4,12 @@ import sys, os
 from ConfigParser import SafeConfigParser 
 import szar.fisher as sfisher
 
+
+CB_color_cycle = ['#4E598C','#AF1B3F','#7A306C','#EFC69B','#1B263B']
+import matplotlib as mpl
+mpl.rcParams['axes.color_cycle'] = CB_color_cycle
+
+
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
@@ -22,8 +28,12 @@ al = 1.0
 objects = ('$\\Sigma m_{\\nu}}$', '$\\Sigma m_{\\nu}$+$w$', '$\\Sigma m_{\\nu}$+$w$+$w_a$')
 y_pos = np.arange(len(objects))
 
-fishall = ["","-DESI","-DESI-clkk","-DESI-bbtau","-DESI-cvltau"]
-laball = ["S4","S4+DESI","S4+DESI+Clkk","S4+DESI+$\\sigma(\\tau)=0.006$","S4+DESI+$\\sigma(\\tau)=0.002$"]
+#fishall = ["","-DESI","-DESI-clkk","-DESI-bbtau","-DESI-cvltau"]
+#laball = ["S4","S4+DESI","S4+DESI+Clkk","S4+DESI+$\\sigma(\\tau)=0.006$","S4+DESI+$\\sigma(\\tau)=0.002$"]
+
+fishall = ["","-DESI","-DESI-bbtau","-DESI-cvltau"]
+laball = ["S4","S4+DESI","S4+DESI+$\\sigma(\\tau)=0.006$","S4+DESI+$\\sigma(\\tau)=0.002$"]
+
 
 performance = {}
 for cal, grid in zip(calList,gridList):
@@ -52,7 +62,7 @@ for cal, grid in zip(calList,gridList):
             margerrs = sfisher.marginalized_errs(Fisher,paramList)
             print margerrs['mnu']*1000.
             performance[cal][fish_suff].append(margerrs['mnu']*1000.)
-            print margerrs['b_wl']*100.
+            #print margerrs['b_wl']*100.
 
     pl = io.Plotter(labelY='$\\sigma(\\Sigma m_{\\nu})$ (meV)',ftsize=18)
     for fish_suff,lab in zip(fishall,laball):
@@ -60,9 +70,11 @@ for cal, grid in zip(calList,gridList):
         
     pl._ax.set_xticks(y_pos)#y_pos, objects)
     pl._ax.set_xticklabels(objects)
-    pl._ax.set_ylim(0,60)
-    pl._ax.axhline(y=20,ls="--",color="k")
-    pl._ax.axhline(y=12,ls="--",color="k")
+    pl._ax.set_ylim(0,62)
+    min_mass = 58.
+    pl._ax.axhline(y=min_mass,ls="-",color="k",alpha=0.3)
+    pl._ax.axhline(y=min_mass/3.,ls="--",color="k")
+    pl._ax.axhline(y=min_mass/5.,ls="-.",color="k")
     pl.legendOn(labsize=16)
     pl.done(out_dir+"FigBar"+cal+".pdf")
 
