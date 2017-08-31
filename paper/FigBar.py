@@ -15,7 +15,7 @@ Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
 
-out_dir = os.environ['WWW']+"paper/"
+#out_dir = os.environ['WWW']+"paper/"
 
 expName = "S4-1.0-paper"
 

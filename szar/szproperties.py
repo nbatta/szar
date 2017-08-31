@@ -294,9 +294,8 @@ class SZ_Cluster_Model:
 
     def P_of_qn_corr(self,lnY,MM,zz,sigma_N,qarr,M_wl,mass_error):
         lnYa = np.outer(np.ones(len(MM)),lnY)
-        rho = self.scaling['rho_corr']
 
-        sig_thresh = self.q_prob_corr(qarr,lnYa,sigma_N,Mwl,MM,Merr,rho)
+        sig_thresh = self.q_prob_corr(qarr,lnYa,sigma_N,Mwl,MM,Merr)
         P_Y = self.P_of_Y(lnYa,MM, zz)
         ans = MM*0.0
         for ii in xrange(len(MM)):
@@ -310,8 +309,9 @@ class SZ_Cluster_Model:
         ans = gaussian(q_arr,Y/sigma_Na,1.)
         return ans
 
-    def q_prob_corr (self,q_arr,lnY,sigma_N,Mwl,MM,Merr,rho):
+    def q_prob_corr (self,q_arr,lnY,sigma_N,Mwl,MM,Merr):
         #Gaussian error probablity for SZ S/N
+        rho = self.scaling['rho_corr']
         sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
         Y = np.exp(lnY)
         ans = gaussian2D(q_arr,Y/sigma_Na,1.,Mwl*self.scaling['b_wl'],MM,Merr*MM,rho)
