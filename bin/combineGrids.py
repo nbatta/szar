@@ -15,7 +15,7 @@ Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
 version = Config.get('general','version')
 
-expName = "S4-1.0-paper"
+expName = sys.argv[1] #"S4-1.0-paper"
 cmbGrid = "grid-default"
 cmbCal = "CMB_all"
 owlCal = "owl2"
