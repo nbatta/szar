@@ -10,7 +10,7 @@ from ConfigParser import SafeConfigParser
 #expList = ['SO-v2A','SO-v2A-6m','SO-v2B','SO-v2B-6m','SO-v2D','SO-v2D-6m','SO-v2E','SO-v2E-6m']
 #expList = ['AdvAct-s16_ud','AdvAct-s16_dp','AdvAct-s16_md','AdvAct-s16_wd','AdvAct-s16_uw']
 #expList = ['SO-v2C','SO-v2C-6m']
-expList = ['SO-v2-6m','SO-v2-6m-min','SO-v2-6m-max']
+expList = ['S4-1.0-CDT','S4-1.5-CDT']
 
 #'SO-5m-noatm','SO-6m-noatm','SO-7m-noatm',
 #expList = ['AdvAct']
