@@ -16,13 +16,14 @@ expList = ['S4-1.0-CDT','S4-1.5-CDT']
 #expList = ['AdvAct']
 calList = ['CMB_all_CDT']#,'owl1']#,'owl1']
 
-#gridList = ["grid-owl2"]
+gridName = "grid-default"
 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
+version = Config.get('general','version')
 
 manualParamList = Config.get('general','manualParams').split(',')
 
@@ -43,8 +44,7 @@ for exp in expList:
 
     for cal in calList:
 
-        gridName = "grid-"+cal
-        massGridName = bigDataDir+"lensgrid_grid-"+cal+"_"+cal+".pkl"
+        massGridName = bigDataDir+"lensgrid_"+exp+"_"+gridName+"_"+cal+ "_v" + version+".pkl"
         #massGridName = bigDataDir+"lensgrid_"+exp+"_grid-"+cal+"_"+cal+".pkl"
 
         #cmd = "mpirun -np "+str(numCores)+" python bin/makeDerivs.py allParams "+exp+" "+gridName+" "+cal+" "+massGridName+" > output"+str(time.time())+"_cmbderiv_"+exp+"_"+cal+".log  &"
