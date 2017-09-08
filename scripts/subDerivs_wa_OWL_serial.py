@@ -6,7 +6,7 @@ from ConfigParser import SafeConfigParser
 #numCores = 2*numParams+1
 #expList = ['SO-v2-6m'] #'S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1']
 #expList = ['SO-v2-6m','SO-v2']
-expList = ['SO-v2-6m','SO-v2-6m-min','SO-v2-6m-max']
+expList = ['S4-1.0-CDT','S4-1.5-CDT']
 #expList = ['SO-v2-6m','SO-v2','SO-v2-6m-noatm','SO-v2-noatm'] #'S4-1.5-#expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-1.5-0.7','S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1','S4-1.5-0.05','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4','SO-v2','SO-v2-6m']
 #expList = ['SO-5m','SO-6m','SO-7m','S4-5m','S4-6m','S4-7m']
 #calList = ['CMB_all','CMB_pol','CMB_all_miscentered','CMB_pol_miscentered']
