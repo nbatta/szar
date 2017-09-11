@@ -383,7 +383,7 @@ class Halo_MF:
 
     def updatePfunc_qarr_corr(self,SZCluster,q_arr,mass_err):
         print "Calculating P_func_qarr. This takes a while..."
-        self.Pfunc_qarr_corr = SZCluster.Pfunc_qarr_corr(self.sigN.copy(),self.M,self.zarr,q_arr,mass_err)
+        self.Pfunc_qarr_corr = SZCluster.Pfunc_qarr_corr(self.sigN.copy(),self.M,self.zarr,q_arr,self.Mexp,mass_err)
 
     def N_of_z_SZ(self,fsky,SZCluster):
         # this is dN/dz(z) with selection
@@ -480,7 +480,7 @@ class Halo_MF:
         m_wl = self.Mexp
         
         if self.sigN is None: self.updateSigN(SZCluster)
-        if self.Pfunc_qarr is None: self.updatePfunc_qarr(SZCluster,q_arr,mass_err)
+        if self.Pfunc_qarr is None: self.updatePfunc_qarr_corr(SZCluster,q_arr,mass_err)
         P_func = self.Pfunc_qarr
 
         dn_dVdm = self.dn_dM(self.M200,200.)
