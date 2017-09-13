@@ -313,10 +313,11 @@ class SZ_Cluster_Model:
         #Gaussian error probablity for SZ S/N
         rho = self.scaling['rho_corr']
         sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
+        Mwla = np.outer(Mwl)
         Y = np.exp(lnY)
         print "size"
-        print q_arr.size, Mwl.size, MM.size 
-        ans = gaussian2D(q_arr,Y/sigma_Na,1.,Mwl*self.scaling['b_wl'],MM,Merr*MM,rho)
+        print Y.size, Mwla.size, MMa.size 
+        ans = gaussian2D(q_arr,Y/sigma_Na,1.,Mwl*self.scaling['b_wl'],MMa,Merra*MMa,rho)
         return ans
     
     def Mwl_prob (self,Mwl,M,Merr):

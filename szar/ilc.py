@@ -97,13 +97,13 @@ class ILC_simple:
                                              * np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_tsz)) \
                                              - (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)))**2)
 
-            self.W_ll_tsz_c_cib[ii,:] = (np.dot(np.transpose(f_nu_cib),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
-                                             * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_c_cib_inv) \
-                                             - np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
-                                             * np.dot(np.transpose(f_nu_cib),N_ll_for_tsz_c_cib_inv)) / \
-                                        (np.dot(np.transpose(f_nu_cib),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
-                                             * np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_tsz)) \
-                                             - (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)))**2)
+#            self.W_ll_tsz_c_cib[ii,:] = (np.dot(np.transpose(f_nu_cib),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
+#                                             * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_c_cib_inv) \
+#                                             - np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
+#                                             * np.dot(np.transpose(f_nu_cib),N_ll_for_tsz_c_cib_inv)) / \
+#                                        (np.dot(np.transpose(f_nu_cib),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
+#                                             * np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_tsz)) \
+#                                             - (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)))**2)
 
             self.W_ll_cmb_c_tsz[ii,:] = (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_cmb_c_tsz_inv,f_nu_tsz)) \
                                              * np.dot(np.transpose(f_nu_cmb),N_ll_for_cmb_c_tsz_inv) \
@@ -115,7 +115,7 @@ class ILC_simple:
 
             self.N_ll_tsz_c_cmb[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cmb[ii,:]),np.dot(N_ll_for_tsz_c_cmb,self.W_ll_tsz_c_cmb[ii,:]))
             self.N_ll_cmb_c_tsz[ii] = np.dot(np.transpose(self.W_ll_cmb_c_tsz[ii,:]),np.dot(N_ll_for_cmb_c_tsz,self.W_ll_cmb_c_tsz[ii,:]))
-            self.N_ll_tsz_c_cib[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cib[ii,:]),np.dot(N_ll_for_tsz_c_cib,self.W_ll_tsz_c_cib[ii,:]))
+#            self.N_ll_tsz_c_cib[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cib[ii,:]),np.dot(N_ll_for_tsz_c_cib,self.W_ll_tsz_c_cib[ii,:]))
 
     def Noise_ellyy(self,constraint='None'):
         if (constraint=='None'):
