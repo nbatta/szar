@@ -48,7 +48,7 @@ class ILC_simple:
 
             cmb_els = fq_mat*0.0 + self.cc.clttfunc(self.evalells[ii])
 
-            inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha) / self.cc.c['TCMBmuK']**2.)
+            inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,TCMB=1.) / self.cc.c['TCMBmuK']**2.)
         
             nells = np.diag(inst_noise)
             
@@ -97,13 +97,13 @@ class ILC_simple:
                                              * np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_tsz)) \
                                              - (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)))**2)
 
-#            self.W_ll_tsz_c_cib[ii,:] = (np.dot(np.transpose(f_nu_cib),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
-#                                             * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_c_cib_inv) \
-#                                             - np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
-#                                             * np.dot(np.transpose(f_nu_cib),N_ll_for_tsz_c_cib_inv)) / \
-#                                        (np.dot(np.transpose(f_nu_cib),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
-#                                             * np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_tsz)) \
-#                                             - (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)))**2)
+            self.W_ll_tsz_c_cib[ii,:] = (np.dot(np.transpose(f_nu_cib),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
+                                             * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_c_cib_inv) \
+                                             - np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
+                                             * np.dot(np.transpose(f_nu_cib),N_ll_for_tsz_c_cib_inv)) / \
+                                        (np.dot(np.transpose(f_nu_cib),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
+                                             * np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_tsz)) \
+                                             - (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)))**2)
 
             self.W_ll_cmb_c_tsz[ii,:] = (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_cmb_c_tsz_inv,f_nu_tsz)) \
                                              * np.dot(np.transpose(f_nu_cmb),N_ll_for_cmb_c_tsz_inv) \
@@ -115,7 +115,7 @@ class ILC_simple:
 
             self.N_ll_tsz_c_cmb[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cmb[ii,:]),np.dot(N_ll_for_tsz_c_cmb,self.W_ll_tsz_c_cmb[ii,:]))
             self.N_ll_cmb_c_tsz[ii] = np.dot(np.transpose(self.W_ll_cmb_c_tsz[ii,:]),np.dot(N_ll_for_cmb_c_tsz,self.W_ll_cmb_c_tsz[ii,:]))
-#            self.N_ll_tsz_c_cib[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cib[ii,:]),np.dot(N_ll_for_tsz_c_cib,self.W_ll_tsz_c_cib[ii,:]))
+            self.N_ll_tsz_c_cib[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cib[ii,:]),np.dot(N_ll_for_tsz_c_cib,self.W_ll_tsz_c_cib[ii,:]))
 
     def Noise_ellyy(self,constraint='None'):
         if (constraint=='None'):
@@ -144,12 +144,14 @@ class ILC_simple:
 
         cls_yy = cls_tsz / (f_nu(self.cc.c,self.freq[0]))**2  # Normalized to get Cell^yy
 
-        LF = LensForecast()
         if (constraint=='None'):
+            LF = LensForecast()
             LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz)
         elif (constraint=='cmb'):
+            LF = LensForecast()
             LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz_c_cmb)
         elif (constraint=='cib'):
+            LF = LensForecast()
             LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz_c_cib)
         else:
             return "Wrong option"
@@ -166,10 +168,11 @@ class ILC_simple:
 
         cls_cmb = self.cc.clttfunc(self.evalells)
 
-        LF = LensForecast()
         if (constraint=='None'):
+            LF = LensForecast()
             LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb)
         elif (constraint=='tsz'):
+            LF = LensForecast()
             LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb_c_tsz)
         else:
             return "Wrong option"
