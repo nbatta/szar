@@ -144,14 +144,12 @@ class ILC_simple:
 
         cls_yy = cls_tsz / (f_nu(self.cc.c,self.freq[0]))**2  # Normalized to get Cell^yy
 
+        LF = LensForecast()
         if (constraint=='None'):
-            LF = LensForecast()
             LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz)
         elif (constraint=='cmb'):
-            LF = LensForecast()
             LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz_c_cmb)
         elif (constraint=='cib'):
-            LF = LensForecast()
             LF.loadGenericCls("yy",self.evalells,cls_yy,self.evalells,self.N_ll_tsz_c_cib)
         else:
             return "Wrong option"
@@ -168,11 +166,10 @@ class ILC_simple:
 
         cls_cmb = self.cc.clttfunc(self.evalells)
 
+        LF = LensForecast()
         if (constraint=='None'):
-            LF = LensForecast()
             LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb)
         elif (constraint=='tsz'):
-            LF = LensForecast()
             LF.loadGenericCls("tt",self.evalells,cls_cmb,self.evalells,self.N_ll_cmb_c_tsz)
         else:
             return "Wrong option"

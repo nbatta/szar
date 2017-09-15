@@ -6,6 +6,7 @@ import time
 import cPickle as pickle
 
 from tinker import dn_dlogM
+from tinker import dsigma_dkmax_dM
 from tinker import tinker_params
 import tinker as tinker
 from szar.foregrounds import fgNoises
@@ -304,9 +305,6 @@ class Halo_MF:
 
 
         return kh, powerZK
-
-
-    
     
     def _initdVdz(self,z_arr):
         #dV/dzdOmega
@@ -325,6 +323,14 @@ class Halo_MF:
         dn_dlnm = dn_dlogM(M,self.zarr,self.cc.rhoc0om,delts,self.kh,self.pk,'comoving')
         dn_dm = dn_dlnm/M
         return dn_dm
+
+    def dsig2_dk_dm(self,M):
+        #range of ks the contribute that are relevant for the Mass Function 
+        kmax, dsig_dk_dm = dsigma_dkmax_dM(M,self.zarr,self.cc.rhoc0om,self.kh,self.pk,'comoving')
+        dsig2_dk = dsig_dk_dm**2
+        pk = np.diff(dsig2_dk)
+        kmid = np.diff(kmax)+kmax[::-1]
+        return kmid,pk
     
     def N_of_Mz(self,M,delta):
         #dN/dzdOmega
@@ -365,7 +371,6 @@ class Halo_MF:
         M = self.M
 
         YM = self.zeroTemplate
-            
 
         for i in xrange(zs.size):
             for j in xrange(M.size):

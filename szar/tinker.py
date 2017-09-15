@@ -170,6 +170,36 @@ def dn_dlogM(M, z, rho, delta, k, P, comoving=False):
     return tf * rho * dlogs / dM
 ###
 
+def dsigma_dkmax_dM(M, z, rho, k, P, comoving=False):
+    """
+    M      is  (nM)  or  (nM, nz)
+    z      is  (nz)
+    rho    is  (nz)
+    delta  is  (nz)  or  scalar
+    k      is  (nk)
+    P      is  (nz,nk)
+
+    Somewhat awkwardly, k and P are comoving.  rho really isn't.
+    
+    return is  (nM,nz)
+    """
+    if M.ndim == 1:
+        M = M[:,None]
+    # Radius associated to mass, co-moving
+    R = radius_from_mass(M, rho)
+    if not comoving:  # if you do this make sure rho still has shape of z.
+        R =  R * np.transpose(1+z)
+    # Fluctuations on those scales (P and k are comoving)
+    sigma_k = np.zeros(len(k)-3)
+    kmax_out = np.zeros(len(k)-3)
+    for ii in xrange(len(k)-3):
+        iii = ii + 3
+        sigma_k[iii] = sigma_sq_integral(R, P(:iii), k(:iii))**.5
+        kmax_out[iii] = k[iii]
+ 
+    return kmax_out, sigma_k
+###
+
 
 
 
