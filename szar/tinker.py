@@ -194,7 +194,7 @@ def dsigma_dkmax_dM(M, z, rho, k, P, comoving=False):
     kmax_out = np.zeros(len(k)-3)
     for ii in xrange(len(k)-3):
         iii = ii + 3
-        sigma_k[iii] = sigma_sq_integral(R, P(:iii), k(:iii))**.5
+        sigma_k[iii] = sigma_sq_integral(R, P[:iii], k[:iii])**.5
         kmax_out[iii] = k[iii]
  
     return kmax_out, sigma_k
