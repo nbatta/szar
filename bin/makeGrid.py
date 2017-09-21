@@ -5,7 +5,7 @@ import numpy as np
 from alhazen.halos import NFWMatchedFilterSN
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
-
+import szar.fisher as sfisher
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 numcores = comm.Get_size()    
@@ -26,6 +26,8 @@ if rank==0:
     parser.add_argument('expName', type=str,help='The name of the experiment in input/pipeline.ini')
     parser.add_argument('gridName', type=str,help='The name of the grid in input/pipeline.ini')
     parser.add_argument('lensName', nargs='?',type=str,help='The name of the CMB lensing calibration in input/pipeline.ini. Not required if using --skip-lensing option.',default="")
+    parser.add_argument("-l", "--lknee",type=float,help='Optional lknee_T override.',default=None)
+    parser.add_argument("-a", "--alpha",type=float,help='Optional alpha_T override.',default=None)
     parser.add_argument('--skip-lensing', dest='skipLens', action='store_const', \
                         const=True, default=False, \
                         help='Skip CMB lensing matched filter.')
@@ -44,6 +46,17 @@ if rank==0:
     expName = args.expName
     gridName = args.gridName
     lensName = args.lensName
+    lkneeTOverride = args.lknee
+    alphaTOverride = args.alpha
+
+    suffix = ""
+    if lkneeTOverride is not None:
+        suffix += "_"+str(lkneeTOverride)
+        print "Overriding lknee with ", lkneeTOverride
+    if alphaTOverride is not None:
+        suffix += "_"+str(alphaTOverride)
+        print "Overriding alpha with ", alphaTOverride
+
     
     #doRayDeriv = not(args.skipRay)
     doLens = not(args.skipLens)
@@ -97,9 +110,11 @@ if rank==0:
     noise = listFromConfig(Config,expName,'noises')
     freq = listFromConfig(Config,expName,'freqs')
     lkneeT,lkneeP = listFromConfig(Config,expName,'lknee')
+    if lkneeTOverride is not None: lkneeT = lkneeTOverride
     alphaT,alphaP = listFromConfig(Config,expName,'alpha')
-    tellmin,tellmax = listFromConfig(Config,expName,'tellrange')
-    pellmin,pellmax = listFromConfig(Config,expName,'pellrange')
+    if alphaTOverride is not None: alphaT = alphaTOverride
+    tellmin,tellmax = listFromConfig(Config,expName,'halo_tellrange')
+    pellmin,pellmax = listFromConfig(Config,expName,'halo_pellrange')
     try:
         doFg = Config.getboolean(expName,'do_foregrounds')
     except:
@@ -109,8 +124,8 @@ if rank==0:
     try:
         dotsz_cib = Config.getboolean(expName,'do_tsz_cib')
     except:
-        print "NO tSZ_CIB OPTION FOUND IN INI. ASSUMING FALSE."
-        dotsz_cib = False
+        print "NO tSZ_CIB OPTION FOUND IN INI. ASSUMING TRUE."
+        dotsz_cib = True
 
     lmax = int(Config.getfloat(expName,'lmax'))
     constDict = dictFromSection(Config,'constants')
@@ -444,10 +459,9 @@ else:
                 MerrGridDn += data.copy()
                 
 
-        pickle.dump((Mexp_edges,z_edges,MerrGrid),open(bigDataDir+"lensgrid_"+expName+"_"+gridName+"_"+lensName+ "_v" + version+".pkl",'wb'))
-        if True:#doRayDeriv:
-            pickle.dump((Mexp_edges,z_edges,MerrGridUp),open(bigDataDir+"lensgridRayUp_"+expName+"_"+gridName+"_"+lensName+ "_v" + version+".pkl",'wb'))
-            pickle.dump((Mexp_edges,z_edges,MerrGridDn),open(bigDataDir+"lensgridRayDn_"+expName+"_"+gridName+"_"+lensName+ "_v" + version+".pkl",'wb'))
+        pickle.dump((Mexp_edges,z_edges,MerrGrid),open(sfisher.mass_grid_name_cmb(bigDataDir,expName,gridName,lensName,version+suffix),'wb'))
+        pickle.dump((Mexp_edges,z_edges,MerrGridUp),open(sfisher.mass_grid_name_cmb_up(bigDataDir,expName,gridName,lensName,version+suffix),'wb'))
+        pickle.dump((Mexp_edges,z_edges,MerrGridDn),open(sfisher.mass_grid_name_cmb_dn(bigDataDir,expName,gridName,lensName,version+suffix),'wb'))
         
     if doSZ:
         for i in range(1,numcores):
@@ -457,4 +471,4 @@ else:
             siggrid += data.copy()
 
 
-        pickle.dump((Mexp_edges,z_edges,siggrid),open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'wb'))
+        pickle.dump((Mexp_edges,z_edges,siggrid),open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+suffix+".pkl",'wb'))

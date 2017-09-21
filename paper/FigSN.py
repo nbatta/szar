@@ -8,9 +8,9 @@ import numpy as np
 outDir = "/gpfs01/astro/www/msyriac/paper/"
 
 gridList = []
-gridList.append("/astro/astronfs01/workarea/msyriac/data/SZruns/v0.5/lensgrid_S4-1.0-0.4_grid-default_CMB_all_v0.5_pzcut3.pkl")
+gridList.append("/gpfs01/astro/workarea/msyriac/data/SZruns/v0.6/lensgrid_S4-1.0-paper_grid-default_CMB_all_v0.6_pzcut3.pkl")
 #gridList.append("/astro/astronfs01/workarea/msyriac/data/SZruns/v0.5/lensgrid_grid-owl3_owl3.pkl")
-gridList.append("/astro/astronfs01/workarea/msyriac/data/SZruns/v0.5/lensgrid_grid-owl2_owl2.pkl")
+gridList.append("/gpfs01/astro/workarea/msyriac/data/SZruns/v0.6/lensgrid_grid-owl2_owl2.pkl")
 
 grids = {}
 mmins = []
@@ -19,6 +19,13 @@ zmins = []
 zmaxes = []
 dms = []
 dzs = []
+
+
+# CB_color_cycle = ['#1C110A','#E4D6A7','#E9B44C','#9B2915','#50A2A7']
+# import matplotlib as mpl
+# mpl.rcParams['axes.color_cycle'] = CB_color_cycle
+
+collist = ["C0","C1","C3","C4"]
 
 mindicesList = [60,80,120,160]
 
@@ -64,16 +71,16 @@ for gridFile,ls,lab,outPlot in zip(gridList,['-','--'],['CMB lensing','optical l
     # pl.add(zgrid,sngrid[np.where(np.isclose(mexpgrid,14.5,rtol=rtol)),:].ravel(),ls=ls,label=lab+" 10^14.5 Msol/h")
     # pl.add(zgrid,sngrid[np.where(np.isclose(mexpgrid,14.7,rtol=rtol)),:].ravel(),ls=ls,label=lab+" 10^14.7 Msol/h")
 
-    for ind in mindicesList:
+    for ind,col in zip(mindicesList,collist):
         if "CMB" in lab:
             labadd = '{:02.1f}'.format(10**(mexpgrid[ind])/1e14)+" $10^{14}  M_{\odot}/h$"
         else:
             labadd = None
-        pl.add(zgrid,sngrid[ind,:].ravel(),ls=ls,label=labadd)
+        pl.add(zgrid,sngrid[ind,:].ravel(),ls=ls,label=labadd,color=col)
         print mexpgrid[ind]
 
     
-    plt.gca().set_color_cycle(None)
+    #plt.gca().set_color_cycle(None)
 
 pl.legendOn(loc='upper right',labsize=14)
 pl.done(outDir+"FigSN.pdf")

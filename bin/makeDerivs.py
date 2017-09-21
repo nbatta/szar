@@ -30,6 +30,7 @@ if debug: print "Starting common module imports..."
 from mpi4py import MPI
 from szar.counts import ClusterCosmology,Halo_MF,getNmzq
 from szar.szproperties import SZ_Cluster_Model
+import szar.fisher as sfisher
 import numpy as np
     
 if debug: print "Finished common module imports."
@@ -139,6 +140,7 @@ if rank==0:
         raise ValueError
 
     massMultiplier = Config.getfloat('general','mass_calib_factor')
+    YWLcorrflag = Config.getfloat('general','ywl_corr_flag')
     if debug: print "Finished rank 0 work."
 
 else:
@@ -160,6 +162,7 @@ else:
     alpha = None
     massMultiplier = None
     siggrid = None
+    YWLcorrflag = None
 
 if rank==0: print "Broadcasting..."
 inParamList = comm.bcast(inParamList, root = 0)
@@ -180,6 +183,7 @@ lknee = comm.bcast(lknee, root = 0)
 alpha = comm.bcast(alpha, root = 0)
 massMultiplier = comm.bcast(massMultiplier, root = 0)
 siggrid = comm.bcast(siggrid, root = 0)
+YWLcorrflag = comm.bcast(YWLcorrflag, root = 0)
 if rank==0: print "Broadcasted."
 
 myParamIndex = (rank+1)/2-1
@@ -202,13 +206,14 @@ cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(cc,mexp_edges,z_edges)
 HMF.sigN = siggrid.copy()
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
-dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbin_edges,SZProf)
-
-
+if (YWLcorrflag == 1):
+    dN_dmqz = HMF.N_of_mqz_SZ_corr(lndM*massMultiplier,qbin_edges,SZProf)
+else:
+    dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbin_edges,SZProf)
 
 if rank==0: 
     #np.save(bigDataDir+"N_dzmq_"+saveId+"_fid",dN_dmqz)
-    np.save(bigDataDir+"N_mzq_"+saveId+"_fid",getNmzq(dN_dmqz,mexp_edges,z_edges,qbin_edges))
+    np.save(sfisher.fid_file(bigDataDir,saveId),getNmzq(dN_dmqz,mexp_edges,z_edges,qbin_edges))
     dUps = {}
     dDns = {}
 
@@ -233,7 +238,7 @@ if rank==0:
         dNdp = (Nup-Ndn)/stepSizes[param]
         np.save(bigDataDir+"Nup_mzq_"+saveId+"_"+param,Nup)
         np.save(bigDataDir+"Ndn_mzq_"+saveId+"_"+param,Ndn)
-        np.save(bigDataDir+"dNdp_mzq_"+saveId+"_"+param,dNdp)
+        np.save(sfisher.deriv_root(bigDataDir,saveId)+param,dNdp)
         
 else:
     data = dN_dmqz.astype(np.float64)

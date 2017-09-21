@@ -32,7 +32,7 @@ cc = ClusterCosmology(fparams,constDict,lmax=8000,pickling=True)#clTTFixFile=clt
 fgs = fgNoises(cc.c,ksz_battaglia_test_csv="data/ksz_template_battaglia.csv",tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
 
 
-experimentName = "AdvAct-steve"
+experimentName = "SO-v2-6m"
 beams = listFromConfig(Config,experimentName,'beams')
 noises = listFromConfig(Config,experimentName,'noises')
 freqs = listFromConfig(Config,experimentName,'freqs')
@@ -57,7 +57,8 @@ ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freq
 
 lsedges = np.arange(300,8001,100)
 el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
-print s2n
+el_ilc_c, cls_ilc_c, err_ilc_c, s2n_c = ILC.Forecast_Cellcmb(lsedges,fsky,constraint='tsz')
+print s2n,s2n_c
 
 ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=7000,lknee=lknee,alpha=alpha)
 
@@ -100,25 +101,25 @@ ILC.PlotyWeights(outfile1)
 ILC.PlotcmbWeights(outfile2)
 
 eln,nl = ILC.Noise_ellyy()
-eln2,nl2 = ILC2.Noise_ellyy()
-eln3,nl3 = ILC3.Noise_ellyy()
+#eln2,nl2 = ILC2.Noise_ellyy()
+#eln3,nl3 = ILC3.Noise_ellyy()
 
 elnc,nlc = ILC.Noise_ellcmb()
-elnc2,nlc2 = ILC2.Noise_ellcmb()
-elnc3,nlc3 = ILC3.Noise_ellcmb()
+#elnc2,nlc2 = ILC2.Noise_ellcmb()
+#elnc3,nlc3 = ILC3.Noise_ellcmb()
 
-pl = Plotter()
-#pl.add(eln,nl*eln**2,label="Full")
-pl.add(eln2,nl2/nl,label="90 - 270 / Full")
-pl.add(eln3,nl3/nl,label="90 - 220 / Full")
-pl.legendOn(loc='upper left',labsize=10)
-pl.done(outDir+"noise_test.png")
+#pl = Plotter()
+##pl.add(eln,nl*eln**2,label="Full")
+#pl.add(eln2,nl2/nl,label="90 - 270 / Full")
+#pl.add(eln3,nl3/nl,label="90 - 220 / Full")
+#pl.legendOn(loc='upper left',labsize=10)
+#pl.done(outDir+"noise_test.png")
 
-pl = Plotter()
-pl.add(elnc2,nlc2/nlc,label="90 - 270 / Full")
-pl.add(elnc3,nlc3/nlc,label="90 - 220 / Full")
-pl.legendOn(loc='upper left',labsize=10)
-pl.done(outDir+"noise_test_CMB.png")
+#pl = Plotter()
+#pl.add(elnc2,nlc2/nlc,label="90 - 270 / Full")
+#pl.add(elnc3,nlc3/nlc,label="90 - 220 / Full")
+#pl.legendOn(loc='upper left',labsize=10)
+#pl.done(outDir+"noise_test_CMB.png")
 
 #outDir = os.environ['WWW']+"plots/"
 
@@ -172,7 +173,7 @@ for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
 
     print ls[print_ells],tsz[print_ells],tsz_cib[print_ells],tsz[print_ells]/tsz_cib[print_ells] 
 
-    totCl = cc.theory.lCl('TT',ls)+ksz+radio+cibp+cibc+noise
+    totCl = cc.theory.lCl('TT',ls)+ksz+radio+cibp+cibc+noise+tsz+tsz_cib
     oldtotCl = cc.theory.lCl('TT',ls)+noise
     
     pl = Plotter(scaleY='log')

@@ -124,6 +124,13 @@ def sigma_sq_integral(R_grid, power_spt, k_val):
     
     return np.trapz((1/(2*np.pi**2))*to_integ, k_val, axis = 0, dx=1e-6)
 
+def fnl_correction(sigma2,fnl):
+    d_c = 1.686
+    S3 = 3.15e-4 * fnl / (sigma2**(0.838/2.0))
+    del_cor = np.sqrt(1 - d_c*S3/3.0)
+    ans = np.exp(S3 * d_c**3/(sigma2*6.0))*(d_c**2/(6.0*del_cor)*(-0.838*S3)+del_cor)
+    return ans
+
 def dn_dlogM(M, z, rho, delta, k, P, comoving=False):
     """
     M      is  (nM)  or  (nM, nz)
@@ -163,8 +170,36 @@ def dn_dlogM(M, z, rho, delta, k, P, comoving=False):
     return tf * rho * dlogs / dM
 ###
 
+def dsigma_dkmax_dM(M, z, rho, k, P, comoving=False):
+    """
+    M      is  (nM)  or  (nM, nz)
+    z      is  (nz)
+    rho    is  (nz)
+    delta  is  (nz)  or  scalar
+    k      is  (nk)
+    P      is  (nz,nk)
 
-# In[ ]:
+    Somewhat awkwardly, k and P are comoving.  rho really isn't.
+    
+    return is  (nM,nz)
+    """
+    if M.ndim == 1:
+        M = M[:,None]
+    # Radius associated to mass, co-moving
+    R = radius_from_mass(M, rho)
+    if not comoving:  # if you do this make sure rho still has shape of z.
+        R =  R * np.transpose(1+z)
+    # Fluctuations on those scales (P and k are comoving)
+    sigma_k = np.zeros(len(k)-3)
+    kmax_out = np.zeros(len(k)-3)
+    for ii in xrange(len(k)-3):
+        iii = ii + 3
+        sigma_k[iii] = sigma_sq_integral(R, P[:iii], k[:iii])**.5
+        kmax_out[iii] = k[iii]
+ 
+    return kmax_out, sigma_k
+###
+
 
 
 

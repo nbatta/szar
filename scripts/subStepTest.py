@@ -13,13 +13,16 @@ Config.read(iniFile)
 
 stepdict = dictOfListsFromSection(Config,'steps')
 
-exp = "S4-1.0-0.4"
+exp = "S4-1.0-paper"
 grid = "grid-default"
 cal = "CMB_all"
 
-for key in stepdict.keys():
+# grid = "grid-owl2"
+# cal = "owl2"
 
-    cmd = "quick_wq.sh python tests/testSteps.py "+exp+" "+grid+" "+cal+ " " +key 
+for key in ['b_wl']: #stepdict.keys():
+
+    cmd = "quick_wq gen6 python tests/testSteps.py "+exp+" "+grid+" "+cal+ " " +key 
 
     print cmd
     os.system(cmd)
