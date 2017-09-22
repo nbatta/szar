@@ -1,5 +1,4 @@
 import numpy as np
-#from sympy.functions import coth
 from scipy.interpolate import interp1d
 
 def f_nu(constDict,nu):

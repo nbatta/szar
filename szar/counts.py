@@ -1,5 +1,4 @@
 import numpy as np
-from sympy.functions import coth
 import camb
 from camb import model
 import time

@@ -1,5 +1,4 @@
 import numpy as np
-from sympy.functions import coth
 from scipy.interpolate import interp1d
 from orphics.tools.cmb import noise_func
 from orphics.theory.gaussianCov import LensForecast
