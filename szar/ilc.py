@@ -47,7 +47,7 @@ class ILC_simple:
 
             cmb_els = fq_mat*0.0 + self.cc.clttfunc(self.evalells[ii])
 
-            inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,TCMB=1.) / self.cc.c['TCMBmuK']**2.)
+            inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,dimensionless=False) / self.cc.c['TCMBmuK']**2.)
         
             nells = np.diag(inst_noise)
             

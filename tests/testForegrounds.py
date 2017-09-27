@@ -156,14 +156,14 @@ print "contraction", np.dot(np.transpose(f_nu_arr),np.dot(np.linalg.inv(radio_ma
 
 #print fgs.rad_ps(ls[10],fq_mat_t,fq_mat)*0.0 + 1.
 
-print "noise", noise_func(print_ells[4],np.array(beams),np.array(noises),lknee,alpha) / cc.c['TCMBmuK']**2.
+print "noise", noise_func(print_ells[4],np.array(beams),np.array(noises),lknee,alpha,dimensionless=False) / cc.c['TCMBmuK']**2.
 
 fac_norm = ls*(ls+1.)/(2.*np.pi) * cc.c['TCMBmuK']**2
 
 for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
     totCl = 0.
     #print testFreq
-    noise = noise_func(ls,fwhm,noiseT,lknee,alpha) / cc.c['TCMBmuK']**2.
+    noise = noise_func(ls,fwhm,noiseT,lknee,alpha,dimensionless=False) / cc.c['TCMBmuK']**2.
     
     radio = fgs.rad_ps(ls,testFreq,testFreq)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
     cibp = fgs.cib_p(ls,testFreq,testFreq) /ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
