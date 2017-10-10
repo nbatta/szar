@@ -52,7 +52,7 @@ class SZ_Cluster_Model:
             freq_fac = (f_nu(self.cc.c,freq))**2
 
 
-            inst_noise = ( noise_func(self.evalells,fwhm,noise,lknee,alpha,TCMB=1.) / self.cc.c['TCMBmuK']**2.)
+            inst_noise = ( noise_func(self.evalells,fwhm,noise,lknee,alpha,dimensionless=False) / self.cc.c['TCMBmuK']**2.)
             nells = self.cc.clttfunc(self.evalells)+inst_noise
             self.nlinv_nofg += (freq_fac)/nells
             self.nlinv_cmb_nofg += (1./inst_noise)
@@ -87,7 +87,7 @@ class SZ_Cluster_Model:
 
         for ii in xrange(len(self.evalells)):
             cmb_els = fq_mat*0.0 + self.cc.clttfunc(self.evalells[ii])
-            inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,TCMB=1.) / self.cc.c['TCMBmuK']**2.)
+            inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,dimensionless=False) / self.cc.c['TCMBmuK']**2.)
             nells = np.diag(inst_noise)
             totfg = (fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) 
                      + fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t)) \

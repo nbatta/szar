@@ -1,5 +1,4 @@
 import numpy as np
-from sympy.functions import coth
 import camb
 from camb import model
 import time
@@ -205,9 +204,10 @@ def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,z_edges,fsky,lmax=1000):
 #    return ans
 
 class ClusterCosmology(Cosmology):
+    
     def __init__(self,paramDict=cosmo.defaultCosmology,constDict=cosmo.defaultConstants,lmax=None,
-                 clTTFixFile=None,skipCls=False,pickling=False,fill_zero=True):
-        Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls,pickling,fill_zero)
+                 clTTFixFile=None,skipCls=False,pickling=False,fill_zero=True,dimensionless=True):
+        Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls,pickling,fill_zero,dimensionless=dimensionless)
         self.rhoc0om = self.rho_crit0H100*self.om
         
     def E_z(self,z):

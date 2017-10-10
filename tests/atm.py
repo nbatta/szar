@@ -39,7 +39,7 @@ for expName,lab in zip(['S4-1.0-0.4-noatm','S4-1.0-0.4'],['S4 1arc no atm','S4 1
     beamFind = np.array(beam)[ind]
     noiseFind = np.array(noise)[ind]
 
-    nls = cmb.noise_func(ells,beamFind,noiseFind,lknee=lkneeT,alpha=alphaT,TCMB=TCMB)
+    nls = cmb.noise_func(ells,beamFind,noiseFind,lknee=lkneeT,alpha=alphaT,dimensionless=False)
 
 
     

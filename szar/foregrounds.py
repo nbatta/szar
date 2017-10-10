@@ -1,5 +1,4 @@
 import numpy as np
-#from sympy.functions import coth
 from scipy.interpolate import interp1d
 
 def f_nu(constDict,nu):
@@ -10,7 +9,7 @@ def f_nu(constDict,nu):
 
 def totTTNoise(ells,constDict,beamFWHM,noiseT,freq,lknee,alpha,tsz_battaglia_template_csv="data/sz_template_battaglia.csv",TCMB=2.7255e6):
     ls = ells
-    instrument = noise_func(ls,beamFWHM,noiseT,lknee,alpha)/ cc.c['TCMBmuK']**2.
+    instrument = noise_func(ls,beamFWHM,noiseT,lknee,alpha,dimensionless=False)/ cc.c['TCMBmuK']**2.
     fgs = fgNoises(constDict,tsz_battaglia_template_csv)
     ksz = fgs.ksz_temp(ls)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
     radio = fgs.rad_ps(ls,freq,freq)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
