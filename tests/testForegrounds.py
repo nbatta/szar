@@ -150,7 +150,7 @@ f_nu_arr = f_nu(cc.c,np.array(freqs))
 
 radio_mat = fgs.rad_ps(print_ells[4],fq_mat,fq_mat_t) / cc.c['TCMBmuK']**2.
 
-print "contraction", np.dot(np.transpose(f_nu_arr),np.dot(np.linalg.inv(radio_mat),f_nu_arr))
+#print "contraction", np.dot(np.transpose(f_nu_arr),np.dot(np.linalg.inv(radio_mat),f_nu_arr))
 
 #print fgs.rad_ps(ls[10],fq_mat_t,fq_mat)/ls[10]/(ls[10]+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
 
@@ -171,7 +171,12 @@ for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
     tsz = fgs.tSZ(ls,testFreq,testFreq)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
     tsz_cib = np.abs(fgs.tSZ_CIB(ls,testFreq,testFreq)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.)
 
+    pol_dust = fgs.gal_dust_pol(ls,testFreq,testFreq) /ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
+    pol_ps   = fgs.rad_pol_ps(ls,testFreq,testFreq) /ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
+    pol_sync = fgs.gal_sync_pol(ls,testFreq,testFreq) /ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
+
     print ls[print_ells],tsz[print_ells],tsz_cib[print_ells],tsz[print_ells]/tsz_cib[print_ells] 
+
 
     totCl = cc.theory.lCl('TT',ls)+ksz+radio+cibp+cibc+noise+tsz+tsz_cib
     oldtotCl = cc.theory.lCl('TT',ls)+noise
@@ -194,7 +199,19 @@ for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
     pl.legendOn(loc='lower left',labsize=10)
     pl.done(outDir+"cltt_test"+str(testFreq)+".png")
         
+    pl = Plotter(scaleY='log')
+    pl._ax.set_ylim(1,1000)
+    pl._ax.set_xlim(30.,5000.)
+    totClEE = cc.theory.lCl('EE',ls)+pol_dust+pol_sync+pol_ps
 
+    print ls[print_ells],pol_ps[print_ells],pol_sync[print_ells],pol_dust[print_ells],totClEE[print_ells]
+
+    pl.add(ls,cc.theory.lCl('EE',ls)*ls**2.)
+    pl.add(ls,pol_dust*fac_norm,ls="--")
+    pl.add(ls,pol_sync*fac_norm)
+    pl.add(ls,pol_ps*fac_norm)
+    pl.add(ls,totClEE*fac_norm)
+    pl.done(outDir+"clee_test"+str(testFreq)+".png")
 
 
 
