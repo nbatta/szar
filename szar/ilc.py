@@ -67,10 +67,10 @@ class ILC_simple:
                      / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
 
             N_ll_for_tsz = nells + totfg + cmb_els + ksz 
-            N_ll_for_cmb = nells + totfg + tsz
+            N_ll_for_cmb = nells + totfg + tsz + ksz
 
             N_ll_for_tsz_c_cmb = nells + totfg 
-            N_ll_for_cmb_c_tsz = N_ll_for_tsz_c_cmb
+            N_ll_for_cmb_c_tsz = N_ll_for_tsz_c_cmb + ksz
             N_ll_for_tsz_c_cib = nells + totfg_cib + cmb_els + ksz
 
             N_ll_for_tsz_inv = np.linalg.inv(N_ll_for_tsz)
