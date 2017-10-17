@@ -206,7 +206,7 @@ for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
 
     print ls[print_ells],pol_ps[print_ells],pol_sync[print_ells],pol_dust[print_ells],totClEE[print_ells]
 
-    pl.add(ls,cc.theory.lCl('EE',ls)*ls**2.)
+    pl.add(ls,cc.theory.lCl('EE',ls)*fac_norm,ls="--")
     pl.add(ls,pol_dust*fac_norm,ls="--")
     pl.add(ls,pol_sync*fac_norm)
     pl.add(ls,pol_ps*fac_norm)
