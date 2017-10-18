@@ -197,4 +197,19 @@ class ILC_simple:
         pl.legendOn(loc='lower left',labsize=10)
         pl.done(outfile)
 
+    def inner_app (self,ell,theta_a):
+        theta_a /= 60. #arcmin to degs
+        theta_a *= np.pi/180. #degs to rad 
+        xx = ell*theta_a
+        ans = 2./(xx)*j1(xx)
+        return ans
 
+    def outer_app (self,ell,theta_a,theta_b):
+        theta_a /= 60. #arcmin to degs
+        theta_a *= np.pi/180. #degs to rad 
+        theta_b /= 60. #arcmin to degs
+        theta_b *= np.pi/180. #degs to rad 
+        xx = ell*theta_a
+        yy = ell*theta_b
+        ans = 2./(yy*theta_b - xx*theta_a)*(theta_b*j1(yy)- theta_a*j1(xx))
+        return ans
