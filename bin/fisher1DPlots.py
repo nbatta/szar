@@ -12,13 +12,13 @@ def getFisher(expName,calName,saveName,inParamList,suffix):
     saveId = expName + "_" + gridName+ "_" + calName + "_" + suffix
 
     paramList,FisherTot = pickle.load(open(bigDataDir+"savedFisher_"+saveId+"_"+saveName+".pkl",'rb'))
-    try:
-        assert paramList==inParamList
-    except:
-        print expName, calName, saveName, suffix
-        print paramList
-        print inParamList
-        sys.exit()
+    #try:
+    #    assert paramList==inParamList
+    #except:
+    #    print expName, calName, saveName, suffix
+    #    print paramList
+    #    print inParamList
+    #    sys.exit()
     return FisherTot
 
 
