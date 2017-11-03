@@ -6,7 +6,7 @@ import sys, os, time
 from szar.counts import ClusterCosmology,SZ_Cluster_Model,Halo_MF
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 
 clusterParams = 'LACluster' # from ini file
 cosmologyName = 'LACosmology' # from ini file 
@@ -51,7 +51,7 @@ HMF = Halo_MF(cc,Mexpedge,zedge)
 #print SZ.f_nu(freq[0])
 #print SZ.f_nu_test(freq[0])
 
-print "PS test"
+print("PS test")
 
 #start = time.time()
 #print SZ.Prof_tilde(3000,MM,zz)
@@ -62,17 +62,17 @@ print "PS test"
 
 ll = np.arange(200,7000,200)
 start3 = time.time()
-print HMF.Cl_ell(ll,SZ)*ll**2 / (2.*np.pi) * 1e12
-print "Time for old", time.time() - start3
+print((HMF.Cl_ell(ll,SZ)*ll**2 / (2.*np.pi) * 1e12))
+print(("Time for old", time.time() - start3))
 
 lnYmin = np.log(1e-13)
 dlnY = 0.1
 lnY = np.arange(lnYmin,lnYmin+10.,dlnY)
 
-print SZ.P_of_q(lnY,np.array([0,MM]),zz,np.sqrt(var))
-print SZ.P_of_qn(lnY,np.array([0,MM]),zz,np.sqrt(var),5)
-print SZ.P_of_qn(lnY,np.array([0,MM]),zz,np.sqrt(var),6)
-print SZ.P_of_qn(lnY,np.array([0,MM]),zz,np.sqrt(var),7)
+print((SZ.P_of_q(lnY,np.array([0,MM]),zz,np.sqrt(var))))
+print((SZ.P_of_qn(lnY,np.array([0,MM]),zz,np.sqrt(var),5)))
+print((SZ.P_of_qn(lnY,np.array([0,MM]),zz,np.sqrt(var),6)))
+print((SZ.P_of_qn(lnY,np.array([0,MM]),zz,np.sqrt(var),7)))
 
 ells = np.arange(2,6000,10)
 

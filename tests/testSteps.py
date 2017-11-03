@@ -5,8 +5,8 @@ from szar.counts import ClusterCosmology,Halo_MF,getNmzq
 from szar.szproperties import SZ_Cluster_Model
 
 import sys,os
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 
 from orphics.tools.io import dictFromSection, listFromConfig,dictOfListsFromSection, Plotter
 
@@ -89,7 +89,7 @@ if True:
     vals = stepdict[key][:maxSteps]
     vals.sort()
     for val in vals:
-        print key, val
+        print((key, val))
         
         uppassparams = fparams.copy()
         dnpassparams = fparams.copy()

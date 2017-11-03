@@ -35,5 +35,5 @@ for exp in expList:
                         grid = "grid-default"
 
                     cmd = cmdRoot + exp+res+atm+" "+grid+" "+cal+" "+fisher
-                    print cmd
+                    print(cmd)
                     os.system(cmd)

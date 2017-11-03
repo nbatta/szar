@@ -4,7 +4,7 @@ import sys
 import numpy as np
 from szar.counts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,sampleVarianceOverNsquareOverBsquare,haloBias,getTotN
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 
 clusterParams = 'LACluster' # from ini file
 cosmologyName = 'LACosmology' # from ini file
@@ -41,7 +41,7 @@ from clusterlensing.halobias import bias as hbias
 zcents, hb = haloBias(mrange,zrange,cc.rhoc0om,hmf.kh,hmf.pk)
 
 oml = 1.-cc.om-cc.ob-cc.omnuh2/cc.h/cc.h
-print oml
+print(oml)
 # cbias = np.zeros((mrange.size,zcents.size))
 
 # for i,z in enumerate(zcents):
@@ -51,9 +51,9 @@ Mg,zg = np.meshgrid(10**mrange,zcents)
 cbias = hbias(Mg,zg,cc.h,cc.om,oml).T
 
 
-print cbias
-print hb.shape
-print cbias.shape
+print(cbias)
+print((hb.shape))
+print((cbias.shape))
 #sys.exit()
 
 pl = Plotter()
@@ -112,9 +112,9 @@ qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
 # pl.done("output/sgridfineMaster.png")
 
 Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/refactor/szgrid_S4-5m_grid-default.pkl"
-import cPickle as pickle
+import pickle as pickle
 md,zd,sgrid = pickle.load(open(Nfile,'rb'))
-print sgrid.shape
+print((sgrid.shape))
 pl = Plotter()
 pl.plot2d(sgrid)
 pl.done("output/sgridfineRefactor.png")
@@ -133,8 +133,8 @@ pl.done("output/sgridfineRefactor.png")
 outDir = "/gpfs01/astro/www/msyriac/"
 Nfile = "/astro/astronfs01/workarea/msyriac/data/SZruns/refactor/N_dzmq_S4-5m_grid-default_CMB_all_refactor_test_fid.npy"
 n = np.load(Nfile)
-print n.shape
-print getTotN(n,mrange,zrange,qbins,returnNz=False)*fsky
+print((n.shape))
+print((getTotN(n,mrange,zrange,qbins,returnNz=False)*fsky))
 nnoq = np.trapz(n,qbins,axis=2)*fsky
 pl = Plotter()
 pl.plot2d(nnoq)
@@ -154,7 +154,7 @@ dZ = np.diff(zrange)
 nnoq = nnoq[:-1,:]*dM
 nnoq = nnoq[:,:-1]*dZ
 
-print nnoq.shape
+print((nnoq.shape))
 
 outDir = "/gpfs01/astro/www/msyriac/"
 pl = Plotter()

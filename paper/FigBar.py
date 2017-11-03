@@ -1,7 +1,7 @@
 import orphics.tools.io as io
 import numpy as np
 import sys, os
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 import szar.fisher as sfisher
 
 
@@ -58,9 +58,9 @@ for cal, grid in zip(calList,gridList):
                 do_clkk_ov = None
             with io.nostdout():
                 Fisher, paramList = sfisher.cluster_fisher_from_config(Config,expName,grid,cal,fish+fish_suff_pass,tauOverride=tau,do_clkk_override=do_clkk_ov)
-            if fish=="mnu-paper": print paramList
+            if fish=="mnu-paper": print(paramList)
             margerrs = sfisher.marginalized_errs(Fisher,paramList)
-            print margerrs['mnu']*1000.
+            print((margerrs['mnu']*1000.))
             performance[cal][fish_suff].append(margerrs['mnu']*1000.)
             #print margerrs['b_wl']*100.
 

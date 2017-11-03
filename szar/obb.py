@@ -158,7 +158,7 @@ def rho_outtest(x,Mvir,theta, theta2):
     rvir = r200(Mvir)
     beta = rho_0/P_0 * Gravity*Mvir/rvir*c/gx(c)
     theta2_use = beta, x_f
-    print "inside rhoout", theta2_use
+    print(("inside rhoout", theta2_use))
     ans = rho_0*(theta_func(x,Mvir,theta,theta2_use))**nn
     return ans
 
@@ -348,7 +348,7 @@ def project_prof(tht,Mvir,theta,theta2): # theta2_0
     thta = (np.arange(NNR) + 1.)*dtht
     thta2 = (np.arange(NNR) + 1.)*dtht2
 
-    for kk in xrange(NNR):
+    for kk in range(NNR):
         rint = np.sqrt((rad)**2 + thta[kk]**2*AngDist(z)**2)
         rint2 = np.sqrt((rad2)**2 + thta2[kk]**2*AngDist(z)**2)
         

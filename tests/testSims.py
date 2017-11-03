@@ -1,6 +1,6 @@
 import szar.sims as s
 import orphics.tools.io as io
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from enlib import enmap,utils,lensing,powspec
 import os, sys
 import numpy as np
@@ -64,12 +64,12 @@ snap = 35
 massIndex = 1
 
 maps, z, kappa, szMapuK, projectedM500, trueM500, trueR500, pixScaleX, pixScaleY = sim.getMaps(snap,massIndex,freqGHz=150.,sourceZ=1100.)
-print  z, projectedM500, trueM500, trueR500, pixScaleX, pixScaleY
+print((z, projectedM500, trueM500, trueR500, pixScaleX, pixScaleY))
 kappaMap,szMap,projectedM500,z = sim.getKappaSZ(snap,massIndex,shape,wcs,apodWidth=500)
 
-print projectedM500,z
+print((projectedM500,z))
 
-print "done"
+print("done")
 
 out_dir = os.environ['WWW']
 
@@ -94,7 +94,7 @@ io.quickPlot2d(phi,out_dir+"phi.png")
 
 alpha_pix = enmap.grad_pixf(fphi)
 # alpha_pix2 = enmap.grad_pix(phi)
-print alpha_pix.shape
+print((alpha_pix.shape))
 # print alpha_pix2.shape
 
 io.quickPlot2d(alpha_pix[0],out_dir+"alpha_pixx.png")

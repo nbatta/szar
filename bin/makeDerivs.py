@@ -25,7 +25,7 @@ calibration error over mass.
 debug = False
 
 
-if debug: print "Starting common module imports..."
+if debug: print("Starting common module imports...")
 
 from mpi4py import MPI
 from szar.counts import ClusterCosmology,Halo_MF,getNmzq
@@ -33,7 +33,7 @@ from szar.szproperties import SZ_Cluster_Model
 import szar.fisher as sfisher
 import numpy as np
     
-if debug: print "Finished common module imports."
+if debug: print("Finished common module imports.")
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -47,13 +47,13 @@ numcores = comm.Get_size()
 # python modules
 if rank==0:
 
-    if debug: print "Starting rank 0 imports..."
+    if debug: print("Starting rank 0 imports...")
 
     import sys
-    from ConfigParser import SafeConfigParser 
-    import cPickle as pickle
+    from configparser import SafeConfigParser 
+    import pickle as pickle
 
-    if debug: print "Finished rank 0 imports. Starting rank 0 work..."
+    if debug: print("Finished rank 0 imports. Starting rank 0 work...")
     
 
     inParamList = sys.argv[1].split(',')
@@ -96,7 +96,7 @@ if rank==0:
     else:
         for param in inParamList:
             assert param in paramList, param + " not found in ini file with a specified step size."
-            assert param in stepSizes.keys(), param + " not found in stepSizes dict. Looks like a bug in the code."
+            assert param in list(stepSizes.keys()), param + " not found in stepSizes dict. Looks like a bug in the code."
 
 
 
@@ -145,7 +145,7 @@ if rank==0:
 
     massMultiplier = Config.getfloat('general','mass_calib_factor')
     YWLcorrflag = Config.getfloat('general','ywl_corr_flag')
-    if debug: print "Finished rank 0 work."
+    if debug: print("Finished rank 0 work.")
 
 else:
     inParamList = None
@@ -168,7 +168,7 @@ else:
     siggrid = None
     YWLcorrflag = None
 
-if rank==0: print "Broadcasting..."
+if rank==0: print("Broadcasting...")
 inParamList = comm.bcast(inParamList, root = 0)
 stepSizes = comm.bcast(stepSizes, root = 0)
 fparams = comm.bcast(fparams, root = 0)
@@ -188,7 +188,7 @@ alpha = comm.bcast(alpha, root = 0)
 massMultiplier = comm.bcast(massMultiplier, root = 0)
 siggrid = comm.bcast(siggrid, root = 0)
 YWLcorrflag = comm.bcast(YWLcorrflag, root = 0)
-if rank==0: print "Broadcasted."
+if rank==0: print("Broadcasted.")
 
 myParamIndex = (rank+1)/2-1
 passParams = fparams.copy()
@@ -205,7 +205,7 @@ elif rank%2==0:
     passParams[myParam] = fparams[myParam] - stepSizes[myParam]/2.
 
 
-if rank!=0: print rank,myParam,fparams[myParam],passParams[myParam]
+if rank!=0: print((rank,myParam,fparams[myParam],passParams[myParam]))
 cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(cc,mexp_edges,z_edges)
 HMF.sigN = siggrid.copy()
@@ -221,7 +221,7 @@ if rank==0:
     dUps = {}
     dDns = {}
 
-    print "Waiting for ups and downs..."
+    print("Waiting for ups and downs...")
     for i in range(1,numcores):
         data = np.empty(dN_dmqz.shape, dtype=np.float64)
         comm.Recv(data, source=i, tag=77)

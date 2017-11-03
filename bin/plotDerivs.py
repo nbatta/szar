@@ -2,7 +2,7 @@ import os, sys
 import numpy as np
 from orphics.tools.io import Plotter
 
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str

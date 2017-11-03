@@ -13,7 +13,7 @@ calList = ['owl2']#,'CMB_pol']
 #calList = ['testCal']
 
 
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
@@ -35,7 +35,7 @@ for exp in expList:
         cmd = "nohup wq sub -r \"mode:bycore;N:"+str(numCores)+";hostfile: auto;job_name: ohhaithere;priority:med\" -c \"source ~/.bash_profile ; source ~/.bashrc ; cd ~/repos/szar ; mpirun -hostfile %hostfile% python bin/makeWaDeriv.py "+exp+" "+grid+" "+cal+" "+massGridName+" \" > output"+str(time.time())+".log  &"
         #cmd = "nohup wq sub -r \"mode:bycore;N:"+str(numCores)+";hostfile: auto;job_name: ohhaithere;priority:med\" -c \"source ~/.bash_profile ; source ~/.bashrc ; cd ~/repos/szar ; mpirun -hostfile %hostfile% python bin/makeDerivs.py w0 "+exp+" "+cal+" "+massGridName+" \" > output"+str(time.time())+".log  &"
         
-        print cmd
+        print(cmd)
         os.system(cmd)
         time.sleep(0.3)
 

@@ -192,7 +192,7 @@ def dsigma_dkmax_dM(M, z, rho, k, P, comoving=False):
     # Fluctuations on those scales (P and k are comoving)
     sigma_k = np.zeros(len(k)-3)
     kmax_out = np.zeros(len(k)-3)
-    for ii in xrange(len(k)-3):
+    for ii in range(len(k)-3):
         iii = ii + 3
         sigma_k[iii] = sigma_sq_integral(R, P[:iii], k[:iii])**.5
         kmax_out[iii] = k[iii]

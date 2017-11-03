@@ -50,7 +50,7 @@ def Mass_con_del_2_del_mean200(Mdel,delta,z,rhocz,rhoc0om,ERRTOL):
     Mass = 2.*Mdel
     rdels = rdel_c(Mdel,z,delta,rhocz)
     ans = Mass*0.0
-    for i in xrange(len(Mdel)):
+    for i in range(len(Mdel)):
         while abs(ans[i]/Mass[i] - 1) > ERRTOL : 
             ans[i] = Mass[i]
             conz = con_M_rel_duffy200(Mass[i],z) #DUFFY

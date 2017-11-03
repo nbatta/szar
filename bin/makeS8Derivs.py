@@ -6,8 +6,8 @@ import sys, os, time
 from szar.counts import ClusterCosmology,Halo_MF,getNmzq,getA
 from szar.szproperties import SZ_Cluster_Model
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 from orphics.tools.io import Plotter
 from orphics.analysis.flatMaps import interpolateGrid
 
@@ -97,7 +97,7 @@ if rank==0:
     origPk = HMF.pk.copy()
 
     
-    print "Calculating derivatives for overall power ..."
+    print("Calculating derivatives for overall power ...")
     HMF.pk = origPk.copy()
     HMF.pk[:,:] *= (1.+h/2.)**2. 
     dNUp_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbins,SZProf)
@@ -125,7 +125,7 @@ else:
 
     
     i = rank-1
-    print "Calculating derivatives for redshift ", HMF.zarr[i]
+    print(("Calculating derivatives for redshift ", HMF.zarr[i]))
     HMF.pk = origPk.copy()
     HMF.pk[i,:] *= (1.+h/2.)**2. #((1.+h/2.)*s8zs[i])**2./s8zs[i]**2.
     dNUp_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)

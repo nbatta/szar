@@ -1,6 +1,6 @@
 import szar.sims as s
 import orphics.tools.io as io
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 # from enlib import enmap,utils,lensing,powspec
 import os, sys
 import numpy as np
@@ -17,7 +17,7 @@ sim = s.BattagliaSims(constDict)
 nbins = 5
 all = []
 for snap in range(35,55):
-    print len(sim.trueM500overh[str(snap)] )
+    print((len(sim.trueM500overh[str(snap)] )))
     plt.clf()
     all.append(np.log10(sim.trueM500overh[str(snap)]).flatten())
     n, bins, patches = plt.hist(np.log10(sim.trueM500overh[str(snap)]) , nbins, alpha=0.5)

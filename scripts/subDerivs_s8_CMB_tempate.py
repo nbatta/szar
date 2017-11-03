@@ -11,7 +11,7 @@ calList = ['CMB_all','CMB_pol','CMB_all_miscentered','CMB_pol_miscentered']
 
 gridName = "grid-default"
 
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
@@ -36,7 +36,7 @@ for exp in expList:
 
         cmd = "nohup wq sub -r \"mode:bycore;N:"+str(numCores)+";hostfile: auto;job_name: "+exp+"_"+cal+";priority:med\" -c \"source ~/.bash_profile ; source ~/.bashrc ; cd ~/repos/szar ; mpirun -hostfile %hostfile% python bin/makeS8Derivs.py "+exp+" "+gridName+" "+cal+" "+massGridName+" \" > output"+str(time.time())+"_cmbderiv_"+exp+"_"+cal+".log  &"
         
-        print cmd
+        print(cmd)
         os.system(cmd)
         time.sleep(0.3)
 

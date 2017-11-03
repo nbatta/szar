@@ -8,9 +8,9 @@ import sys, os, time
 from szar.counts import ClusterCosmology,Halo_MF,getTotN
 from szar.szproperties import SZ_Cluster_Model
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 from orphics.analysis.flatMaps import interpolateGrid
-import cPickle as pickle
+import pickle as pickle
 
 gridName = "grid-owl1-planck"
 calName = "owl1-planck" 
@@ -91,7 +91,7 @@ pl.add(zcents,Nzs)
 pl.done("nz.png")
 
 
-print HMF.Mass_err(fsky,lndM*24.0,SZProfExample)
+print((HMF.Mass_err(fsky,lndM*24.0,SZProfExample)))
 
 #print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts))
 #print "filtvar " , np.sqrt(SZProfExample.filter_variance(MM,zz))
@@ -131,14 +131,14 @@ dvdz = HMF.dVdz#(zbin)
 dndm = HMF.N_of_z_SZ(SZProf)
 
 sys.exit()
-print "Time for N of z " , time.time() - start3
+print(("Time for N of z " , time.time() - start3))
 
 
 # pl = Plotter()
 # pl.add(zbin[1:], dndm * dvdz[1:])
 # pl.done("output/dndm.png")
 
-print "Total number of clusters ", np.trapz(dndm ,zbin[:],np.diff(zbin[:]))*fsky
+print(("Total number of clusters ", np.trapz(dndm ,zbin[:],np.diff(zbin[:]))*fsky))
 
 #np.savetxt('output/dndm_dVdz_1muK_3_0arc.txt',np.transpose([zbin[1:],dndm,dvdz[1:]]))
 
@@ -154,4 +154,4 @@ dnqmz = HMF.N_of_mqz_SZ(outmerr,q_arr,SZProf)
 
 N,Nofz = getTotN(dnqmz,Mexp,zbin,q_arr,returnNz=True)
 
-print N*fsky
+print((N*fsky))

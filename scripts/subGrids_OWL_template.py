@@ -25,7 +25,7 @@ for exp in expList:
         cmd = "nohup mpirun -np "+str(numCores)+" python bin/makeGrid.py "+exp+" "+gridName+" --skip-lensing > output"+str(time.time())+"_szgrid_"+exp+".log  &"
         #cmd = "nohup mpirun python bin/makeGrid.py "+exp+" "+gridName+" --skip-lensing \" > output"+str(time.time())+"_szgrid_"+exp+".log  &"
 
-        print cmd
+        print(cmd)
         os.system(cmd)
         time.sleep(0.3)
 

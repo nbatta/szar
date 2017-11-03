@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use('Agg')
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 import sys, os
 import numpy as np
 
@@ -15,9 +15,9 @@ def getFisher(expName,gridName,calName,saveName,inParamList,suffix):
     try:
         assert paramList==inParamList
     except:
-        print "ERROR"
-        print paramList
-        print inParamList
+        print("ERROR")
+        print(paramList)
+        print(inParamList)
         sys.exit()
     return FisherTot
 
@@ -58,7 +58,7 @@ if "CMB" in cal:
 
 
 
-print paramList
+print(paramList)
 paramLatexList = Config.get('fisher-'+fishSection,'paramLatexList').split(',')
 fparams = {} 
 for (key, val) in Config.items('params'):

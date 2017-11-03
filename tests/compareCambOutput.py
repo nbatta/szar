@@ -14,7 +14,7 @@ matplotlib.use('Agg')
 import numpy as np
 from szar.counts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,SampleVariance
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 from orphics.tools.io import Plotter
 from scipy.interpolate import interp1d
 
@@ -58,7 +58,7 @@ for i,z in enumerate(zrange[::-1]):
     pcambeval = pcambfunc(keval)
     peval = pfunc(keval)
     pdiff = (pcambeval-peval)*100./peval
-    print z,pdiff
+    print((z,pdiff))
 
     if i%1==0:
         pl.add(keval,pdiff)

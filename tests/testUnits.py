@@ -1,6 +1,6 @@
 import unittest
 from orphics.tools.io import dictFromSection, listFromConfig
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 import numpy as np
 
 class TestHMF(unittest.TestCase):
@@ -22,8 +22,8 @@ class TestHMF(unittest.TestCase):
 
     
     def test_Mass_Err(self):
-        print self.marray
-        print self.zs
+        print((self.marray))
+        print((self.zs))
     def Halo_Tinker_test(self):
         
         #define parameters delta, M and z

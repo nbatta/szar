@@ -1,9 +1,9 @@
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from orphics.tools.io import Plotter
-import cPickle as pickle
+import pickle as pickle
 import sys
 
 from szar.counts import ClusterCosmology,Halo_MF,getNmzq
@@ -74,7 +74,7 @@ for expName,col,labres in zip(expList,colList,labList):
     
     SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
     Nofzs = np.multiply(HMF.N_of_z_SZ(fsky,SZProf),np.diff(z_edges).reshape(1,z_edges.size-1)).ravel()
-    print Nofzs.sum()
+    print((Nofzs.sum()))
 
     currentAxis = plt.gca()
 
@@ -85,7 +85,7 @@ for expName,col,labres in zip(expList,colList,labList):
         zcent = (zleft+zright)/2.
         xerr = (zright-zleft)/2.
         N = Nofzs[np.logical_and(zrange>zleft,zrange<=zright)].sum()
-        print zleft,zright,N
+        print((zleft,zright,N))
         if k==0:
             lab = labres
         else:

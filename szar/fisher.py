@@ -4,7 +4,7 @@ import numpy as np
 from orphics.tools.io import dictFromSection, listFromConfig
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
-import cPickle as pickle
+import pickle as pickle
 import traceback
 
 
@@ -125,22 +125,22 @@ def priors_from_config(Config,expName,calName,fishName,paramList,tauOverride=Non
             priorValueList.append(tauOverride)
             
 
-    if "CMB" in calName:
-        assert "sigR" not in paramList
-        paramList.append("sigR")
-        try:
-            priorNameList.append("sigR")
-            beam = listFromConfig(Config,expName,'beams')
-            freq = listFromConfig(Config,expName,'freqs')
-            freq_to_use = Config.getfloat(calName,'freq')
-            ind = np.where(np.isclose(freq,freq_to_use))
-            beamFind = np.array(beam)[ind]
-            priorValueList.append(beamFind/2.)
-            print "Added sigR prior ", priorValueList[-1]
-        except:
-            traceback.print_exc()
-            print "Couldn't add sigR prior. Is this CMB lensing? Exiting."
-            sys.exit(1)
+#    if "CMB" in calName:
+#        assert "sigR" not in paramList
+#        paramList.append("sigR")
+#        try:
+#            priorNameList.append("sigR")
+#            beam = listFromConfig(Config,expName,'beams')
+#            freq = listFromConfig(Config,expName,'freqs')
+#            freq_to_use = Config.getfloat(calName,'freq')
+#            ind = np.where(np.isclose(freq,freq_to_use))
+#            beamFind = np.array(beam)[ind]
+#            priorValueList.append(beamFind/2.)
+#            print "Added sigR prior ", priorValueList[-1]
+#        except:
+#            traceback.print_exc()
+#            print "Couldn't add sigR prior. Is this CMB lensing? Exiting."
+#            sys.exit(1)
 
 
     # if not("b_wl" in paramList):
@@ -221,7 +221,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
 
 
     
-    print "Effective number of clusters: ", N_fid.sum()
+    print("Effective number of clusters: ", N_fid.sum())
 
     paramList, priorNameList, priorValueList = priors_from_config(Config,expName,calName,fishName,paramList,tauOverride)
 
@@ -275,7 +275,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
             try:
                 cmb_fisher = pickle.load(open(pkl_file,'rb'))
                 cmb_fisher_loaded = True
-                print "Loaded pickled CMB fisher."
+                print("Loaded pickled CMB fisher.")
             except:
                 pass
             
@@ -285,10 +285,10 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
             for paramName in cmbParamList:
                 dCls[paramName] = np.loadtxt(cmbDerivRoot+'_dCls_'+paramName+'.csv',delimiter=',')
 
-            print "Calculating CMB fisher matrix..."
+            print("Calculating CMB fisher matrix...")
             cmb_fisher = pyfish.fisher_from_config(fidCls,dCls,cmbParamList,Config,expName,lensName)
             if pickling:
-                print "Pickling CMB fisher..."
+                print("Pickling CMB fisher...")
                 pickle.dump(cmb_fisher,open(pkl_file,'wb'))
 
 
@@ -303,7 +303,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
         otherFishers = Config.get(fishSection,'otherFishers').split(',')
     except:
         traceback.print_exc()
-        print "No other fishers found."
+        print("No other fishers found.")
         otherFishers = []
     for otherFisherFile in otherFishers:
         try:

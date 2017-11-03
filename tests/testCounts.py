@@ -8,9 +8,9 @@ import sys, os, time
 from szar.counts import ClusterCosmology,Halo_MF,getTotN
 from szar.szproperties import SZ_Cluster_Model
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 from orphics.analysis.flatMaps import interpolateGrid
-import cPickle as pickle
+import pickle as pickle
 
 zz = 0.5
 MM = 5.e14
@@ -70,7 +70,7 @@ SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms
 #sys.exit()
 
 
-print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts))
+print(("quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts))))
 #print "filtvar " , np.sqrt(SZProfExample.filter_variance(MM,zz))
 
 
@@ -78,17 +78,17 @@ print "quickvar " , np.sqrt(SZProfExample.quickVar(MM,zz,tmaxN=tmaxN,numts=numts
 
 
 
-print "y_m",SZProfExample.Y_M(MM,zz)
+print(("y_m",SZProfExample.Y_M(MM,zz)))
 
 
 R500 = cc.rdel_c(MM,zz,500.).flatten()[0]
-print R500
-print cc.rhoc(0)
-print cc.rhoc(zz)
+print(R500)
+print((cc.rhoc(0)))
+print((cc.rhoc(zz)))
 #sys.exit()
 DAz = cc.results.angular_diameter_distance(zz) * (cc.H0/100.) 
 thetc = R500/DAz
-print "thetc = ", thetc
+print(("thetc = ", thetc))
 
 
 
@@ -108,14 +108,14 @@ dvdz = HMF.dVdz#(zbin)
 dndm = HMF.N_of_z_SZ(SZProf)
 
 sys.exit()
-print "Time for N of z " , time.time() - start3
+print(("Time for N of z " , time.time() - start3))
 
 
 # pl = Plotter()
 # pl.add(zbin[1:], dndm * dvdz[1:])
 # pl.done("output/dndm.png")
 
-print "Total number of clusters ", np.trapz(dndm ,zbin[:],np.diff(zbin[:]))*fsky
+print(("Total number of clusters ", np.trapz(dndm ,zbin[:],np.diff(zbin[:]))*fsky))
 
 #np.savetxt('output/dndm_dVdz_1muK_3_0arc.txt',np.transpose([zbin[1:],dndm,dvdz[1:]]))
 
@@ -131,4 +131,4 @@ dnqmz = HMF.N_of_mqz_SZ(outmerr,q_arr,SZProf)
 
 N,Nofz = getTotN(dnqmz,Mexp,zbin,q_arr,returnNz=True)
 
-print N*fsky
+print((N*fsky))

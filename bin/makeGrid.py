@@ -15,8 +15,8 @@ numcores = comm.Get_size()
 if rank==0:
 
     import sys
-    from ConfigParser import SafeConfigParser 
-    import cPickle as pickle
+    from configparser import SafeConfigParser 
+    import pickle as pickle
 
 
     import argparse
@@ -52,10 +52,10 @@ if rank==0:
     suffix = ""
     if lkneeTOverride is not None:
         suffix += "_"+str(lkneeTOverride)
-        print "Overriding lknee with ", lkneeTOverride
+        print(("Overriding lknee with ", lkneeTOverride))
     if alphaTOverride is not None:
         suffix += "_"+str(alphaTOverride)
-        print "Overriding alpha with ", alphaTOverride
+        print(("Overriding alpha with ", alphaTOverride))
 
     
     #doRayDeriv = not(args.skipRay)
@@ -118,13 +118,13 @@ if rank==0:
     try:
         doFg = Config.getboolean(expName,'do_foregrounds')
     except:
-        print "NO FG OPTION FOUND IN INI. ASSUMING TRUE."
+        print("NO FG OPTION FOUND IN INI. ASSUMING TRUE.")
         doFg = True
 
     try:
         dotsz_cib = Config.getboolean(expName,'do_tsz_cib')
     except:
-        print "NO tSZ_CIB OPTION FOUND IN INI. ASSUMING TRUE."
+        print("NO tSZ_CIB OPTION FOUND IN INI. ASSUMING TRUE.")
         dotsz_cib = True
 
     lmax = int(Config.getfloat(expName,'lmax'))
@@ -301,7 +301,7 @@ else:
     doFg = None
     dotsz_cib = None
 
-if rank==0: print "Broadcasting..."
+if rank==0: print("Broadcasting...")
 #doRayDeriv = comm.bcast(doRayDeriv, root = 0)
 doFg = comm.bcast(doFg, root = 0)
 dotsz_cib = comm.bcast(dotsz_cib, root = 0)
@@ -329,7 +329,7 @@ kh = comm.bcast(kh, root = 0)
 pk = comm.bcast(pk, root = 0)
 Mexp_edges = comm.bcast(Mexp_edges, root = 0)
 z_edges = comm.bcast(z_edges, root = 0)
-if rank==0: print "Broadcasted."
+if rank==0: print("Broadcasted.")
 
 
 cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
@@ -357,13 +357,13 @@ if rank==0:
     lengths = [len(split) for split in splits]
     mintasks = min(lengths)
     maxtasks = max(lengths)
-    print "I have ",numcores, " cores to work with."
-    print "And I have ", numes, " tasks to do."
-    print "Each worker gets at least ", mintasks, " tasks and at most ", maxtasks, " tasks."
+    print(("I have ",numcores, " cores to work with."))
+    print(("And I have ", numes, " tasks to do."))
+    print(("Each worker gets at least ", mintasks, " tasks and at most ", maxtasks, " tasks."))
     zfrac = float(len(z_edges[np.where(z_edges>pzcut)]))/len(z_edges)
     buestguess = (0.5*int(doSZ)+((1.+(2.*zfrac))*5.0*int(doLens)))*maxtasks
-    print "My best guess is that this will take ", buestguess, " seconds."
-    print "Starting the slow part..."
+    print(("My best guess is that this will take ", buestguess, " seconds."))
+    print("Starting the slow part...")
 
 
 mySplitIndex = rank
@@ -440,13 +440,13 @@ if rank!=0:
         comm.Send(siggrid, dest=0, tag=78)
     
 else:
-    print "Waiting for workers..."
+    print("Waiting for workers...")
 
-    import cPickle as pickle
+    import pickle as pickle
 
     if doLens:
         for i in range(1,numcores):
-            print "Waiting for lens ", i ," / ", numcores
+            print(("Waiting for lens ", i ," / ", numcores))
             data = np.zeros(MerrGrid.shape, dtype=np.float64)
             comm.Recv(data, source=i, tag=77)
             MerrGrid += data.copy()
@@ -465,7 +465,7 @@ else:
         
     if doSZ:
         for i in range(1,numcores):
-            print "Waiting for sz ", i," / ", numcores
+            print(("Waiting for sz ", i," / ", numcores))
             data = np.zeros(siggrid.shape, dtype=np.float64)
             comm.Recv(data, source=i, tag=78)
             siggrid += data.copy()

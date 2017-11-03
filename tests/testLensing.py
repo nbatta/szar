@@ -9,7 +9,7 @@ import sys, os, time
 from szar.counts import ClusterCosmology,SZ_Cluster_Model,Halo_MF
 
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 
 import flipper.liteMap as lm
 
@@ -136,7 +136,7 @@ kmax = getMax(polComb,tellmax,pellmax)
 
 
 expectedSN = predictSN(polComb,noiseTY,noisePY,N,MM)
-print "Rough S/N ", expectedSN
+print(("Rough S/N ", expectedSN))
 
 # Make a CMB Noise Curve
 deg = 10.
@@ -162,6 +162,6 @@ bin_width = beamY
 
 dlndm = getDLnMCMB(ls,Nls,cc,log10Moverh,zz,concentration,arcStamp,pxStamp,arc_upto,bin_width=beamY,expectedSN=expectedSN,Nclusters=N,numSims=numSims,saveId="test",numPoints=1000,nsigma=nsigma,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ)
 
-print "S/N " , 1./dlndm
+print(("S/N " , 1./dlndm))
 
 

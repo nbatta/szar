@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use('Agg')
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 import numpy as np
 import sys
 from orphics.tools.io import dictFromSection, listFromConfig
@@ -41,7 +41,7 @@ derivRoot = sfisher.deriv_root(bigDataDir,saveId)
 # Fiducial number counts
 new_z_edges, N_fid = sfisher.rebinN(np.load(sfisher.fid_file(bigDataDir,saveId)),pzcutoff,z_edges)
 N_fid = N_fid*fsky
-print "Effective number of clusters: ", N_fid.sum()
+print(("Effective number of clusters: ", N_fid.sum()))
 
 
 
@@ -85,13 +85,13 @@ for fishSection in ["fisher-"+fishName,"fisher-"+fishName+"-DESI"]:
 
 
 
-    for prior in priorList.keys():
+    for prior in list(priorList.keys()):
         priorNameList.append(prior)
 
         preVal = np.inf
         priorRange = perRange*priorList[prior]/100.
         priorValueList.append(priorRange[0])
-        print priorNameList, priorValueList
+        print((priorNameList, priorValueList))
         sigs = []
         xs = []
         k = 0
@@ -114,7 +114,7 @@ for fishSection in ["fisher-"+fishName,"fisher-"+fishName+"-DESI"]:
                 otherFishers = Config.get(fishSection,'otherFishers').split(',')
             except:
                 traceback.print_exc()
-                print "No other fishers found."
+                print("No other fishers found.")
                 otherFishers = []
             for otherFisherFile in otherFishers:
                 try:
@@ -162,7 +162,7 @@ for fishSection in ["fisher-"+fishName,"fisher-"+fishName+"-DESI"]:
                     try:
                         cmb_fisher = pickle.load(open(pkl_file,'rb'))
                         cmb_fisher_loaded = True
-                        print "Loaded pickled CMB fisher."
+                        print("Loaded pickled CMB fisher.")
                     except:
                         pass
 
@@ -172,10 +172,10 @@ for fishSection in ["fisher-"+fishName,"fisher-"+fishName+"-DESI"]:
                     for paramName in cmbParamList:
                         dCls[paramName] = np.loadtxt(cmbDerivRoot+'_dCls_'+paramName+'.csv',delimiter=',')
 
-                    print "Calculating CMB fisher matrix..."
+                    print("Calculating CMB fisher matrix...")
                     cmb_fisher = pyfish.fisher_from_config(fidCls,dCls,cmbParamList,Config,expName,lensName)
                     if True:
-                        print "Pickling CMB fisher..."
+                        print("Pickling CMB fisher...")
                         pickle.dump(cmb_fisher,open(pkl_file,'wb'))
 
 
@@ -198,10 +198,10 @@ for fishSection in ["fisher-"+fishName,"fisher-"+fishName+"-DESI"]:
                 constraint = errDict['w0']*100
             sigs.append(constraint)
             if (np.abs(preVal-constraint)*100./constraint)<pertol:
-                print (constraint-preVal)*100./constraint
+                print(((constraint-preVal)*100./constraint))
                 if k>mink: break
             preVal = constraint
-            print prior, val,constraint
+            print((prior, val,constraint))
             k+=1
 
         priorLabel = paramLatexList[paramList.index(prior)]
