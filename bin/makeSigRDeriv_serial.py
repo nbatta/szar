@@ -3,8 +3,8 @@ from szar.szproperties import SZ_Cluster_Model
 import szar.fisher as sfisher
 import numpy as np
 import sys
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
     
 expName = sys.argv[1]
 gridName = sys.argv[2]
@@ -70,8 +70,8 @@ else:
 
 massMultiplier = Config.getfloat('general','mass_calib_factor')
 
-print "Broadcasting..."
-print "Broadcasted."
+print("Broadcasting...")
+print("Broadcasted.")
 
 cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(cc,mexp_edges,z_edges)

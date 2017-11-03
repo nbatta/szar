@@ -43,7 +43,7 @@ class ILC_simple:
         f_nu_cmb = f_nu_tsz*0.0 + 1.
         f_nu_cib = self.fgs.f_nu_cib(np.array(freqs))
 
-        for ii in xrange(len(self.evalells)):
+        for ii in range(len(self.evalells)):
 
             cmb_els = fq_mat*0.0 + self.cc.clttfunc(self.evalells[ii])
 
@@ -183,7 +183,7 @@ class ILC_simple:
         
         #plot weights
         pl = Plotter()
-        for ii in xrange(len(self.freq)):
+        for ii in range(len(self.freq)):
             pl.add(self.evalells,self.W_ll_tsz[:,ii],label=str(self.freq[ii])+' GHz')
         pl.legendOn(loc='lower left',labsize=10)
         pl.done(outfile)
@@ -192,7 +192,7 @@ class ILC_simple:
         
         #plot weights
         pl = Plotter()
-        for ii in xrange(len(self.freq)):
+        for ii in range(len(self.freq)):
             pl.add(self.evalells,self.W_ll_cmb[:,ii],label=str(self.freq[ii])+' GHz')
         pl.legendOn(loc='lower left',labsize=10)
         pl.done(outfile)

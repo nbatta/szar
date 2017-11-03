@@ -1,6 +1,6 @@
 import szar.sims as s
 import orphics.tools.io as io
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from enlib import enmap,utils,lensing,powspec
 import os, sys
 import numpy as np
@@ -81,7 +81,7 @@ jprofiles = []
 N = 0
 avgMass = 0.
 for massIndex in range(Nmax):
-    print massIndex
+    print(massIndex)
     if sim.trueM500[str(snap)][massIndex]<mThreshold: continue
     kappaMap,szMap,projectedM500,z = sim.getKappaSZ(snap,massIndex,shape,wcs,apodWidthArcmin=2.0)
 
@@ -102,13 +102,13 @@ for massIndex in range(Nmax):
     N+=1
     avgMass += sim.trueM500[str(snap)][massIndex]
 
-print N
+print(N)
     
 kappaStack /= N
 szStack /= N
 avgMass /= N
     
-print "done"
+print("done")
 
 out_dir = os.environ['WWW']+"plots/"
 
@@ -144,10 +144,10 @@ overdensity = 500.
 critical = True
 atClusterZ = True
 concentration = cc.Mdel_to_cdel(massOverh,zL,overdensity)
-print "Duffy Concentration : ", concentration
+print(("Duffy Concentration : ", concentration))
 
 
-print massOverh, zL, concentration
+print((massOverh, zL, concentration))
 comS = cc.results.comoving_radial_distance(cc.cmbZ)*cc.h
 comL = cc.results.comoving_radial_distance(zL)*cc.h
 winAtLens = (comS-comL)/comS

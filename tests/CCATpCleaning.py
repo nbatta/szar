@@ -6,8 +6,8 @@ from szar.szproperties import SZ_Cluster_Model
 from szar.foregrounds import fgNoises, f_nu
 from szar.ilc import ILC_simple
 import sys,os
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 from orphics.tools.io import dictFromSection, listFromConfig, Plotter
 from orphics.tools.cmb import noise_func
 
@@ -52,7 +52,7 @@ ILC4 = ILC_simple(clusterCosmology=cc, rms_noises = noises[:18],fwhms=beams[:18]
 
 #5,4,3 CCATp
 
-print freqs[:3]
+print((freqs[:3]))
 lsedges = np.arange(100,8001,50)
 
 if (cf == 0):
@@ -78,9 +78,9 @@ if (cf == 1):
     el_ilc3, cls_ilc3, err_ilc3, s2n3 = ILC3.Forecast_Cellcmb(lsedges,fsky,constraint="tsz")
     el_ilc4, cls_ilc4, err_ilc4, s2n4 = ILC4.Forecast_Cellcmb(lsedges,fsky,constraint="tsz")
 
-print 'S/N y', s2ny, s2ny2,s2ny3, s2ny4
+print(('S/N y', s2ny, s2ny2,s2ny3, s2ny4))
 
-print 'S/N CMB', s2n, s2n2, s2n3, s2n4
+print(('S/N CMB', s2n, s2n2, s2n3, s2n4))
 
 #print 'S/N' , np.sqrt(np.sum((cls_ilc/err_ilc)**2))
 

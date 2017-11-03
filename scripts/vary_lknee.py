@@ -25,7 +25,7 @@ for exp in expList:
             cmd = "nohup wq sub -r \"mode:bycore;N:"+str(numCores)+";hostfile: auto;job_name: "+exp+";priority:med\" -c \"source ~/.bash_profile ; source ~/.bashrc ; cd ~/repos/szar ; mpirun -hostfile %hostfile% python bin/makeGrid.py "+exp+" "+gridName+" --skip-lensing -l "+str(lknee)+" -a "+str(alpha)+" \" > output"+str(time.time())+"_szgrid_"+exp+".log  &"
 
 
-            print cmd
+            print(cmd)
             os.system(cmd)
             time.sleep(0.3)
 

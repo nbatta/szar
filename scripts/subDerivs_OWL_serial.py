@@ -1,6 +1,6 @@
 import time
 import os
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 
 
 #expList = ['S4-3m-noatm','S4-5m-noatm','S4-6m-noatm','S4-7m-noatm','SO-3m-noatm','SO-5m-noatm','SO-6m-noatm','SO-7m-noatm']#,'SO-6m','SO-7m','S4-5m','S4-6m','S4-7m']
@@ -51,7 +51,7 @@ for exp in expList:
         for paramsNow in paramList:
             cmd = "mpirun -np 3 python bin/makeDerivs.py "+paramsNow+" "+exp+" "+gridName+" "+cal+" "+massGridName
 
-            print cmd
+            print(cmd)
             os.system(cmd)
             time.sleep(0.3)
 

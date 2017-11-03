@@ -4,7 +4,7 @@ import numpy as np
 from orphics.tools.io import dictFromSection, listFromConfig
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
-import cPickle as pickle
+import pickle as pickle
 import traceback
 
 
@@ -207,7 +207,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     # Fiducial number counts
     new_z_edges, N_fid = rebinN(np.load(fid_file(bigDataDir,saveId)),pzcutoff,z_edges)
     N_fid = N_fid*fsky
-    print "Effective number of clusters: ", N_fid.sum()
+    print(("Effective number of clusters: ", N_fid.sum()))
 
     paramList, priorNameList, priorValueList = priors_from_config(Config,expName,calName,fishName,paramList,tauOverride)
 
@@ -261,7 +261,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
             try:
                 cmb_fisher = pickle.load(open(pkl_file,'rb'))
                 cmb_fisher_loaded = True
-                print "Loaded pickled CMB fisher."
+                print("Loaded pickled CMB fisher.")
             except:
                 pass
             
@@ -271,10 +271,10 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
             for paramName in cmbParamList:
                 dCls[paramName] = np.loadtxt(cmbDerivRoot+'_dCls_'+paramName+'.csv',delimiter=',')
 
-            print "Calculating CMB fisher matrix..."
+            print("Calculating CMB fisher matrix...")
             cmb_fisher = pyfish.fisher_from_config(fidCls,dCls,cmbParamList,Config,expName,lensName)
             if pickling:
-                print "Pickling CMB fisher..."
+                print("Pickling CMB fisher...")
                 pickle.dump(cmb_fisher,open(pkl_file,'wb'))
 
 
@@ -289,7 +289,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
         otherFishers = Config.get(fishSection,'otherFishers').split(',')
     except:
         traceback.print_exc()
-        print "No other fishers found."
+        print("No other fishers found.")
         otherFishers = []
     for otherFisherFile in otherFishers:
         try:

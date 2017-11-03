@@ -9,7 +9,7 @@ from szar.counts import ClusterCosmology,SZ_Cluster_Model,Halo_MF
 
 
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 
 zz = 0.5
 MM = 5.e14
@@ -26,7 +26,7 @@ experimentName = ["S42arc","S415arc","S41arc"]
 #experimentName = ["SO5m","SO6m","SO7m"]#,"SO5m_No270","SO6m_No270","SO7m_No270"]
 #experimentName = ["S45m"]
 
-for ii in xrange(len(experimentName)):
+for ii in range(len(experimentName)):
 
     iniFile = "input/params.ini"
     Config = SafeConfigParser()
@@ -84,7 +84,7 @@ for ii in xrange(len(experimentName)):
     #dNdmdz,dm = HMF.N_of_mz_SZ(zbin,beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
     #ans = HMF.N_of_mqz_SZ(mass_err,zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
 
-    print "Time for N of z " , time.time() - start3
+    print(("Time for N of z " , time.time() - start3))
 
     #np.save('output/dN_dzmq'+experimentName[ii]+cosmologyName,ans)
     #print np.max(ans)

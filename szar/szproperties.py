@@ -85,7 +85,7 @@ class SZ_Cluster_Model:
 
         self.nl = self.evalells*0.0
 
-        for ii in xrange(len(self.evalells)):
+        for ii in range(len(self.evalells)):
             cmb_els = fq_mat*0.0 + self.cc.clttfunc(self.evalells[ii])
             inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,dimensionless=False) / self.cc.c['TCMBmuK']**2.)
             nells = np.diag(inst_noise)
@@ -206,7 +206,7 @@ class SZ_Cluster_Model:
         P_func = np.outer(M,np.zeros([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
 
-        for i in xrange(z_arr.size):
+        for i in range(z_arr.size):
             P_func[:,i] = self.P_of_q(lnY,M_arr[:,i],z_arr[i],sigN[:,i])
             
 
@@ -220,8 +220,8 @@ class SZ_Cluster_Model:
         M_arr =  np.outer(M,np.ones([z_arr.size]))
 
         # P_func(M,z,q)
-        for i in xrange(z_arr.size):
-            for kk in xrange(q_arr.size):
+        for i in range(z_arr.size):
+            for kk in range(q_arr.size):
                 P_func[:,i,kk] = self.P_of_qn(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr[kk])
 
         return P_func
@@ -236,9 +236,9 @@ class SZ_Cluster_Model:
         M_arr =  np.outer(M,np.ones([z_arr.size]))
 
         # P_func(M,z,q)
-        for i in xrange(z_arr.size):
-            for kk in xrange(q_arr.size):
-                for jj in xrange(M_wl.size):
+        for i in range(z_arr.size):
+            for kk in range(q_arr.size):
+                for jj in range(M_wl.size):
                     P_func[:,i,kk,jj] = self.P_of_qn_corr(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr[kk],M_wl,mass_err[:,i])
         return P_func
 
@@ -279,7 +279,7 @@ class SZ_Cluster_Model:
         P_Y = self.P_of_Y(lnYa,MM, zz)
 
         ans = MM*0.0
-        for ii in xrange(len(MM)):
+        for ii in range(len(MM)):
             ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
         return ans
 
@@ -289,7 +289,7 @@ class SZ_Cluster_Model:
         sig_thresh = self.q_prob(qarr,lnYa,sigma_N)
         P_Y = self.P_of_Y(lnYa,MM, zz)
         ans = MM*0.0
-        for ii in xrange(len(MM)):
+        for ii in range(len(MM)):
             ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
         return ans
 
@@ -298,7 +298,7 @@ class SZ_Cluster_Model:
         sig_thresh = self.q_prob_corr(qarr,lnYa,sigma_N,Mwl,MM,Merr)
         P_Y = self.P_of_Y(lnYa,MM, zz)
         ans = MM*0.0
-        for ii in xrange(len(MM)):
+        for ii in range(len(MM)):
             ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
         return ans
 
@@ -315,8 +315,8 @@ class SZ_Cluster_Model:
         sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
         Mwla = np.outer(Mwl)
         Y = np.exp(lnY)
-        print "size"
-        print Y.size, Mwla.size, MMa.size 
+        print("size")
+        print((Y.size, Mwla.size, MMa.size)) 
         ans = gaussian2D(q_arr,Y/sigma_Na,1.,Mwl*self.scaling['b_wl'],MMa,Merra*MMa,rho)
         return ans
     

@@ -1,5 +1,5 @@
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 import sys, os
 import itertools
 
@@ -10,8 +10,8 @@ def getFisher(expName,gridName,calName,saveName,inParamList,suffix):
     saveId = expName + "_" + gridName+ "_" + calName + "_" + suffix
 
     paramList,FisherTot = pickle.load(open(bigDataDir+"savedFisher_"+saveId+"_"+saveName+".pkl",'rb'))
-    print paramList
-    print inParamList
+    print(paramList)
+    print(inParamList)
     #assert paramList==inParamList
     return FisherTot
 

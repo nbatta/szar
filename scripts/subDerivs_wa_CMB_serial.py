@@ -12,7 +12,7 @@ calList = ['CMB_all_CDT']#,'CMB_pol']
 
 grid = "grid-default"
 
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
@@ -28,7 +28,7 @@ for exp in expList:
 
         cmd = "mpirun -np 3 python bin/makeWaDeriv.py "+exp+" "+grid+" "+cal+" "+massGridName
         
-        print cmd
+        print(cmd)
         os.system(cmd)
         time.sleep(0.3)
 

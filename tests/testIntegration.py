@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import sys, os, time
 from szar.counts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,getTotN
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 from orphics.tools.io import Plotter
 from orphics.analysis.flatMaps import interpolateGrid
 
@@ -77,14 +77,14 @@ pl.add(zs,N2)
 
 Ntot0 = np.dot(N1,np.diff(z_edges))
 Ntot1 = np.dot(N2,np.diff(z_edges))
-print "All clusters in the Universe  ",Ntot0
-print "All clusters detectable at qmin ",SZProf.qmin," is ",Ntot1
+print(("All clusters in the Universe  ",Ntot0))
+print(("All clusters detectable at qmin ",SZProf.qmin," is ",Ntot1))
 
 
 sn,ntot = hmf.Mass_err(fsky,lndM,SZProf)
 outmerr = lndM
 
-print "All clusters according to Mass_err ", ntot
+print(("All clusters according to Mass_err ", ntot))
 
 # get s/n q-bins
 qs = listFromConfig(Config,'general','qbins')
@@ -111,8 +111,8 @@ dnqmz = hmf.N_of_mqz_SZ(outmerr,qbin_edges,SZProf)
 # N,Nofz = getTotNM200(dnqmz,M200_edges_z,z_edges,qbin_edges,returnNz=True)
 N,Nofz = getTotN(dnqmz,Mexp_edges,z_edges,qbin_edges,returnNz=True)
 
-print "All clusters according to dnqmz ",N*fsky
-print "All clusters according to \dzdnqmz ",np.dot(Nofz,np.diff(z_edges))*fsky
+print(("All clusters according to dnqmz ",N*fsky))
+print(("All clusters according to \dzdnqmz ",np.dot(Nofz,np.diff(z_edges))*fsky))
 
 pl.add(zs,Nofz*fsky,label="mqz")
 pl.legendOn()

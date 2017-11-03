@@ -1,8 +1,8 @@
 import matplotlib
 matplotlib.use('Agg')
 import traceback
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 import numpy as np
 import sys
 from orphics.tools.io import dictFromSection, listFromConfig
@@ -45,7 +45,7 @@ saveName = Config.get(fishSection,'saveSuffix')
 with nostdout():
     actualN = sfisher.counts_from_config(Config,bigDataDir,version,expName,gridName,mexp_edges,z_edges)
 
-print "Actual number of clusters: ", actualN
+print(("Actual number of clusters: ", actualN))
 
 
 ##########################
@@ -64,36 +64,36 @@ for i,param in enumerate(paramList):
 
 
 try:
-    print "(1-b) 1-sigma : "+ str(errDict['b_ym']*100./0.8) + " %"
+    print(("(1-b) 1-sigma : "+ str(errDict['b_ym']*100./0.8) + " %"))
 except:
     pass
 
 
 try:
-    print "Mnu 1-sigma : "+ str(errDict['mnu']*1000) + " meV"
+    print(("Mnu 1-sigma : "+ str(errDict['mnu']*1000) + " meV"))
 except:
     pass
 try:
-    print "w0 1-sigma : "+ str(errDict['w0']*100.) +" %"
+    print(("w0 1-sigma : "+ str(errDict['w0']*100.) +" %"))
 except:
     pass
 try:
-    print "wa 1-sigma : "+ str(errDict['wa']) 
-except:
-    pass
-
-try:
-    print "bMWL 1-sigma : "+ str(errDict['b_wl']*100.)  + " %"
+    print(("wa 1-sigma : "+ str(errDict['wa']))) 
 except:
     pass
 
 try:
-    print "sigma8 1-sigma : "+ str(errDict['S8All'])
+    print(("bMWL 1-sigma : "+ str(errDict['b_wl']*100.)  + " %"))
 except:
     pass
 
 try:
-    print "sigR 1-sigma : "+ str(errDict['sigR'])
+    print(("sigma8 1-sigma : "+ str(errDict['S8All'])))
+except:
+    pass
+
+try:
+    print(("sigR 1-sigma : "+ str(errDict['sigR'])))
 except:
     pass
 

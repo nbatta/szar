@@ -1,5 +1,5 @@
 import orphics.tools.cmb as cmb
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 from orphics.tools.io import dictFromSection, listFromConfig
 import orphics.tools.io as io
 from orphics.theory.cosmology import Cosmology
@@ -32,7 +32,7 @@ for expName,lab in zip(['S4-1.0-0.4-noatm','S4-1.0-0.4'],['S4 1arc no atm','S4 1
     lkneeT,lkneeP = listFromConfig(Config,expName,'lknee')
     alphaT,alphaP = listFromConfig(Config,expName,'alpha')
 
-    print expName,beam,noise,lkneeT,lkneeP,alphaT,alphaP
+    print((expName,beam,noise,lkneeT,lkneeP,alphaT,alphaP))
     
 
     ind = np.where(np.isclose(freq,freq_to_use))

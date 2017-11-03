@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use('Agg')
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 import numpy as np
 import sys
 from orphics.tools.io import dictFromSection, listFromConfig
@@ -59,7 +59,7 @@ saveName = Config.get(fishSection,'saveSuffix')
 new_z_edges, N_fid = rebinN(np.load(bigDataDir+"N_mzq_"+saveId+"_fid"+".npy"),pzcutoff,z_edges)
 
 N_fid = N_fid[:,:,:]*fsky
-print "Total number of clusters: ", N_fid.sum() #getTotN(N_fid,mgrid,zgrid,qbins)
+print(("Total number of clusters: ", N_fid.sum())) #getTotN(N_fid,mgrid,zgrid,qbins)
 
 
 sId = expName + "_" + gridName  + "_v" + version
@@ -123,13 +123,13 @@ perRange = np.logspace(-4,2,numlogs)[::-1]
 
 
 
-for prior in priorList.keys():
+for prior in list(priorList.keys()):
     priorNameList.append(prior)
 
     preVal = np.inf
     priorRange = perRange*priorList[prior]/100.
     priorValueList.append(priorRange[0])
-    print priorNameList, priorValueList
+    print((priorNameList, priorValueList))
     sigs = []
     xs = []
     k = 0
@@ -171,10 +171,10 @@ for prior in priorList.keys():
             constraint = errDict[fishName]*100
         sigs.append(constraint)
         if (np.abs(preVal-constraint)*100./constraint)<pertol:
-            print (constraint-preVal)*100./constraint
+            print(((constraint-preVal)*100./constraint))
             if k>mink: break
         preVal = constraint
-        print prior, val,constraint
+        print((prior, val,constraint))
         k+=1
 
     priorLabel = paramLatexList[paramList.index(prior)]

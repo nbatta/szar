@@ -1,8 +1,8 @@
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 import sys
 import numpy as np
 
@@ -47,7 +47,7 @@ ps,cmbfisher0 = getFisher(bigDataDir,"S4-1.0-paper"+noatm,gridName,cal,cosmoFish
 
 
 pindex = ps.index("S8Z0")
-print ps[pindex:]
+print((ps[pindex:]))
 
 
 from szar.counts import getA
@@ -66,11 +66,11 @@ z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 zrange = (z_edges[1:]+z_edges[:-1])/2.
 
 s81,As1 = getA(fparams,constDict,zrange)
-print s81
+print(s81)
 s81zs = As1*s81
 fparams['w0']=-0.97
 s82,As2 = getA(fparams,constDict,zrange)
-print s82
+print(s82)
 s82zs = As2*s82
 
 
@@ -79,7 +79,7 @@ outDir = "/gpfs01/astro/www/msyriac/paper/"
 
 zbins = zrange 
 #zbins = np.append(np.arange(2.,2.5,0.5),3.0)
-print zrange
+print(zrange)
 
 pl = Plotter(labelX="$z$",labelY="$\sigma_8(z)/\sigma_8(z)_{w=-1}$",ftsize=16)
 from matplotlib.patches import Rectangle
@@ -105,7 +105,7 @@ for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1
         try:
             errselect = err[np.logical_and(zrange>=zleft,zrange<zright)]
         except:
-            print lab, zleft, zright
+            print((lab, zleft, zright))
             sys.exit()
             
         zcent = (zleft+zright)/2.
@@ -114,14 +114,14 @@ for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1
         xerr = (zright-zleft)/2.
         xerrs.append(xerr)
         s8now = np.mean(s81zs[np.logical_and(zrange>=zleft,zrange<zright)])
-        print lab,zleft,zright, yerr,s8now, yerr*100./s8now, "%"
+        print((lab,zleft,zright, yerr,s8now, yerr*100./s8now, "%"))
         #s8now = np.mean(s81zs[np.logical_and(zrange>=zleft,zrange<zright)])/s81
         #yerrsq = (1./sum([1/x**2. for x in errselect]))
         #yerr = (s8now/s80mean)*np.sqrt(yerrsq/s8now**2. + yerrsq0/s80mean**2.)
         errcents.append(yerr)
         ms8.append(s8now)
         currentAxis.add_patch(Rectangle((zcent - xerr+pad, 1. - yerr/s8now), 2*xerr-pad/2., 2.*yerr/s8now, facecolor=col,alpha=0.3))
-    print "====================="
+    print("=====================")
     #pl._ax.fill_between(zrange, 1., 1.,label=lab,alpha=0.75,color=col)
 
 
@@ -129,7 +129,7 @@ for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1
 
 #zbins = zrange 
 zbins = np.append(np.arange(0.,2.5,0.5),3.0)
-print zbins
+print(zbins)
 #sys.exit()
 
 
@@ -155,14 +155,14 @@ for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1
         xerr = (zright-zleft)/2.
         xerrs.append(xerr)
         s8now = np.mean(s81zs[np.logical_and(zrange>=zleft,zrange<zright)])
-        print lab,zleft,zright, yerr,s8now, yerr*100./s8now, "%"
+        print((lab,zleft,zright, yerr,s8now, yerr*100./s8now, "%"))
         #s8now = np.mean(s81zs[np.logical_and(zrange>=zleft,zrange<zright)])/s81
         #yerrsq = (1./sum([1/x**2. for x in errselect]))
         #yerr = (s8now/s80mean)*np.sqrt(yerrsq/s8now**2. + yerrsq0/s80mean**2.)
         errcents.append(yerr)
         ms8.append(s8now)
         currentAxis.add_patch(Rectangle((zcent - xerr+pad, 1. - yerr/s8now), 2*xerr-pad/2., 2.*yerr/s8now, facecolor=col,alpha=1.0))
-    print "====================="
+    print("=====================")
     pl._ax.fill_between(zrange, 1., 1.,label=lab,alpha=0.75,color=col)
     
 

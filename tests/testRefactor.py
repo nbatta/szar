@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import sys, os, time
 from szar.counts import ClusterCosmology,SZ_Cluster_Model,Halo_MF,getTotN
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 from orphics.tools.io import Plotter
 from orphics.analysis.flatMaps import interpolateGrid
 
@@ -91,12 +91,12 @@ pl.add(zs,N1)
 pl.add(zs,N2)
 
 Ntot1 = np.trapz(N2,zs)
-print Ntot1
+print(Ntot1)
 
 
 sn,ntot = hmf.Mass_err(fsky,outmerr,SZProf)
 
-print ntot
+print(ntot)
 
 
 
@@ -107,11 +107,11 @@ q_arr = (qbin_edges[1:]+qbin_edges[:-1])/2.
 
 dnqmz = hmf.N_of_mqz_SZ(outmerr,qbin_edges,SZProf)
 
-print qbin_edges.shape
-print dnqmz.shape
+print((qbin_edges.shape))
+print((dnqmz.shape))
 N,Nofz = getTotN(dnqmz,Mexp_edges,z_edges,qbin_edges,returnNz=True)
 
-print N*fsky
+print((N*fsky))
 
 pl.add(zs,Nofz*fsky,label="mqz")
 pl.legendOn()

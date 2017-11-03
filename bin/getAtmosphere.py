@@ -8,6 +8,6 @@ def s(num):
 
 for beamFWHMArcmin in beamList:
     ttl,tta,ppl,ppa= getAtmosphere(beamFWHMArcmin,returnFunctions=False)
-    print beamFWHMArcmin
-    print s(ttl)+","+s(ppl)
-    print s(tta)+","+s(ppa)
+    print(beamFWHMArcmin)
+    print((s(ttl)+","+s(ppl)))
+    print((s(tta)+","+s(ppa)))

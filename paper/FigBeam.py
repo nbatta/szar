@@ -2,7 +2,7 @@ from orphics.tools.io import Plotter
 import flipper.liteMap as lm
 from szar.counts import ClusterCosmology
 from orphics.tools.io import dictFromSection,listFromConfig
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 from alhazen.halos import NFWMatchedFilterSN
 import numpy as np
 from orphics.tools.cmb import loadTheorySpectraFromCAMB
@@ -68,7 +68,7 @@ pellmin,pellmax = listFromConfig(Config,expName,'halo_pellrange')
 try:
     doFg = Config.getboolean(expName,'do_foregrounds')
 except:
-    print "NO FG OPTION FOUND IN INI. ASSUMING TRUE."
+    print("NO FG OPTION FOUND IN INI. ASSUMING TRUE.")
     doFg = True
 
 ind = np.where(np.isclose(freq,freq_to_use))
@@ -188,7 +188,7 @@ for miscenter in [False,True]:
 
                 sn,k,std = NFWMatchedFilterSN(cc,Mexp,c,z,ells=ls,Nls=Nls,kellmax=kellmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,rayleighSigmaArcmin=ray)
 
-                print sn*np.sqrt(1000.)
+                print((sn*np.sqrt(1000.)))
                 sns.append(1./(sn*np.sqrt(1000.)))
 
 
