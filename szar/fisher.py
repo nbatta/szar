@@ -101,9 +101,8 @@ def counts_from_config(Config,bigDataDir,version,expName,gridName,mexp_edges,z_e
     
 
     hmf.sigN = siggrid.copy()
-    Ns = np.multiply(hmf.N_of_z_SZ(fsky,SZProf),np.diff(z_edges).reshape(1,z_edges.size-1)).ravel()
-
-    return Ns.sum()
+    Ns = np.multiply(hmf.N_of_z_SZ(fsky,SZProf),np.diff(z_edges).reshape(1,z_edges.size-1))
+    return Ns.ravel().sum()
 
 
 def priors_from_config(Config,expName,calName,fishName,paramList,tauOverride=None):
@@ -205,8 +204,23 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     saveId = save_id(expName,gridName,calName,version)
     derivRoot = deriv_root(bigDataDir,saveId)
     # Fiducial number counts
-    new_z_edges, N_fid = rebinN(np.load(fid_file(bigDataDir,saveId)),pzcutoff,z_edges)
+    new_z_edges, N_fid = rebinN(np.load(fid_file(bigDataDir,saveId)),pzcutoff,z_edges)#,mass_bin=None)
     N_fid = N_fid*fsky
+
+
+    # get mass and z grids
+    # ms = listFromConfig(Config,gridName,'mexprange')
+    # mexp_edges = np.arange(ms[0],ms[1]+ms[2],ms[2])
+    # M_edges = 10**mexp_edges
+    # Masses = (M_edges[1:]+M_edges[:-1])/2.
+    # print Masses.shape
+    # print N_fid.shape
+    # print N_fid.sum()
+    # print N_fid[Masses>2.e14,:,:].sum()
+    # sys.exit()
+
+
+    
     print "Effective number of clusters: ", N_fid.sum()
 
     paramList, priorNameList, priorValueList = priors_from_config(Config,expName,calName,fishName,paramList,tauOverride)

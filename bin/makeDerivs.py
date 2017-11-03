@@ -104,8 +104,12 @@ if rank==0:
 
     numParams = len(inParamList)
     neededCores = 2*numParams+1
-    assert numcores==neededCores, "I need 2N+1 cores to do my job for N params. \
-    You gave me "+str(numcores)+ " core(s) for "+str(numParams)+" param(s)."
+    try:
+        assert numcores==neededCores, "I need 2N+1 cores to do my job for N params. \
+        You gave me "+str(numcores)+ " core(s) for "+str(numParams)+" param(s)."
+    except:
+        print inParamList
+        sys.exit(0)
 
 
     version = Config.get('general','version')

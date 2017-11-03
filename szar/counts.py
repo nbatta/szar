@@ -68,12 +68,11 @@ def getA(fparams,constDict,zrange,kmax=11.):
     return s8s[0],As
 
 
-def rebinN(Nmzq,pzCutoff,zbin_edges):
+def rebinN(Nmzq,pzCutoff,zbin_edges,mass_bin=37):
     #return zbin_edges, Nmzq  #.sum(axis=0) # !!!
     x,y,z = Nmzq.shape
     #print x
-    Nmzq = bin_ndarray(Nmzq, (37,y,z), operation='sum')
-    #return zbin_edges, bin_ndarray(Nmzq, (37,y,z), operation='sum')
+    if mass_bin is not None: Nmzq = bin_ndarray(Nmzq, (mass_bin,y,z), operation='sum')
     
     if pzCutoff>=zbin_edges[-2]: return zbin_edges,Nmzq
     orig = Nmzq.copy()

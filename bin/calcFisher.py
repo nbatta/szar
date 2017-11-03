@@ -42,8 +42,8 @@ z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 fishSection = 'fisher-'+fishName
 saveName = Config.get(fishSection,'saveSuffix')
 
-with nostdout():
-    actualN = sfisher.counts_from_config(Config,bigDataDir,version,expName,gridName,mexp_edges,z_edges)
+#with nostdout():
+actualN = sfisher.counts_from_config(Config,bigDataDir,version,expName,gridName,mexp_edges,z_edges)
 
 print "Actual number of clusters: ", actualN
 
