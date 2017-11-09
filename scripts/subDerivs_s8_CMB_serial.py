@@ -11,7 +11,7 @@ calList = ['CMB_all_CDT']#,'CMB_pol','CMB_all_miscentered','CMB_pol_miscentered'
 
 gridName = "grid-default"
 
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
@@ -34,7 +34,7 @@ for exp in expList:
 
         cmd = "python bin/makeS8Derivs_serial.py "+exp+" "+gridName+" "+cal+" "+massGridName
         
-        print cmd
+        print(cmd)
         os.system(cmd)
         time.sleep(0.3)
 

@@ -1,6 +1,6 @@
 import time
 import os
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 
 #numParams = 1
 #numCores = 2*numParams+1
@@ -37,7 +37,7 @@ for exp in expList:
         #cmd = "nohup wq sub -r \"mode:bycore;N:"+str(numCores)+";hostfile: auto;job_name: ohhaithere;priority:med\" -c \"source ~/.bash_profile ; source ~/.bashrc ; cd ~/repos/szar ; mpirun -hostfile %hostfile% python bin/makeWaDeriv.py "+exp+" "+grid+" "+cal+" "+massGridName+" \" > output"+str(time.time())+".log  &"
         #cmd = "nohup wq sub -r \"mode:bycore;N:"+str(numCores)+";hostfile: auto;job_name: ohhaithere;priority:med\" -c \"source ~/.bash_profile ; source ~/.bashrc ; cd ~/repos/szar ; mpirun -hostfile %hostfile% python bin/makeDerivs.py w0 "+exp+" "+cal+" "+massGridName+" \" > output"+str(time.time())+".log  &"
         
-        print cmd
+        print(cmd)
         os.system(cmd)
         time.sleep(0.3)
 

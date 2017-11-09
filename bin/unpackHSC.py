@@ -2,8 +2,8 @@ import numpy as np
 from orphics.tools.io import dictFromSection, listFromConfig, Plotter
 from orphics.analysis.flatMaps import interpolateGrid
 import sys, os
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 
 calName = sys.argv[1] #"owl1"
 gridName = "grid-"+calName
@@ -43,7 +43,7 @@ pl.plot2d(pgrid,extent=[MMexp.min(),MMexp.max(),zz.min(),zz.max()],levels=[3.0,5
 pl.done(outDir+"origHSCgrid.png")
 
 
-print hscgrid.shape
+print((hscgrid.shape))
 
 
 #outmerr = interpolateGrid(hscgrid,MM,zz,M,zgrid,regular=False,kind="cubic",bounds_error=False,fill_value=np.inf)

@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use('Agg')
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 import sys
 import numpy as np
 

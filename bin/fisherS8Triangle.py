@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use('Agg')
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 import sys
 import numpy as np
 
@@ -44,7 +44,7 @@ z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 zrange = (z_edges[1:]+z_edges[:-1])/2.
 zlist = ["S8Z"+str(i) for i in range(len(zrange))]
 paramList = Config.get('fisher-'+fishSection,'paramList').split(',')+["S8Z20"]#+zlist
-print paramList
+print(paramList)
 paramLatexList = Config.get('fisher-'+fishSection,'paramLatexList').split(',')
 fparams = {} 
 for (key, val) in Config.items('params'):
@@ -58,7 +58,7 @@ for (key, val) in Config.items('params'):
 cmbfisher3 = getFisher("S4-3.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
 cmbfisher2 = getFisher("S4-2.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
 cmbfisher1 = getFisher("S4-1.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
-print cmbfisher3.shape
+print((cmbfisher3.shape))
 # cmbfisher5 = getFisher("S4-2.5-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
 #cmbfisher6 = getFisher("S4-2.0-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)
 # cmbfisher7 = getFisher("S4-1.5-0.4"+noatm,gridName,cal,cosmoFisher,paramList,derivSet)

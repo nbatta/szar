@@ -42,7 +42,7 @@ for exp in expList:
 
         # cmd = "nohup wq sub -r \"mode:bycore;N:"+str(numCores)+";hostfile: auto;job_name: "+exp+"_"+cal+";priority:med\" -c \"source ~/.bash_profile ; source ~/.bashrc ; cd ~/repos/szar ; mpirun -hostfile %hostfile% python bin/makeCMBGrid.py "+exp+" "+cal+" \" > output"+str(time.time())+"_massgrid_"+exp+"_"+cal+".log  &"
 
-        print cmd
+        print(cmd)
         os.system(cmd)
         time.sleep(0.3)
 

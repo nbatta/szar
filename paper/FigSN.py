@@ -2,7 +2,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import sys,os
-import cPickle as pickle
+import pickle as pickle
 import numpy as np
 
 outDir = "/gpfs01/astro/www/msyriac/paper/"
@@ -46,7 +46,7 @@ for gridFile,ls,lab,outPlot in zip(gridList,['-','--'],['CMB lensing','optical l
     zmin = zgrid[0]
     zmax = zgrid[-1]
 
-    print mmin,mmax,zmin,zmax
+    print((mmin,mmax,zmin,zmax))
 
     grids[gridFile] = (mexpgrid,zgrid,errgrid)
 
@@ -58,7 +58,7 @@ for gridFile,ls,lab,outPlot in zip(gridList,['-','--'],['CMB lensing','optical l
     dzs.append(min(np.diff(zgrid)))
 
     sngrid = 1./errgrid
-    print sngrid.shape
+    print((sngrid.shape))
     
     # pgrid = np.rot90(sngrid)
     # pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
@@ -77,7 +77,7 @@ for gridFile,ls,lab,outPlot in zip(gridList,['-','--'],['CMB lensing','optical l
         else:
             labadd = None
         pl.add(zgrid,sngrid[ind,:].ravel(),ls=ls,label=labadd,color=col)
-        print mexpgrid[ind]
+        print((mexpgrid[ind]))
 
     
     #plt.gca().set_color_cycle(None)

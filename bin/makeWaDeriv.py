@@ -25,14 +25,14 @@ calibration error over mass.
 debug = False
 
 
-if debug: print "Starting common module imports..."
+if debug: print("Starting common module imports...")
 
 from mpi4py import MPI
 from szar.counts import ClusterCosmology,Halo_MF,getNmzq
 from szar.szproperties import SZ_Cluster_Model
 import numpy as np
     
-if debug: print "Finished common module imports."
+if debug: print("Finished common module imports.")
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -46,13 +46,13 @@ numcores = comm.Get_size()
 # python modules
 if rank==0:
 
-    if debug: print "Starting rank 0 imports..."
+    if debug: print("Starting rank 0 imports...")
 
     import sys
-    from ConfigParser import SafeConfigParser 
-    import cPickle as pickle
+    from configparser import SafeConfigParser 
+    import pickle as pickle
 
-    if debug: print "Finished rank 0 imports. Starting rank 0 work..."
+    if debug: print("Finished rank 0 imports. Starting rank 0 work...")
     
 
     expName = sys.argv[1]
@@ -122,7 +122,7 @@ if rank==0:
         raise ValueError
 
     massMultiplier = Config.getfloat('general','mass_calib_factor')
-    if debug: print "Finished rank 0 work."
+    if debug: print("Finished rank 0 work.")
 
 else:
     waDerivRoot = None
@@ -144,7 +144,7 @@ else:
     massMultiplier = None
     siggrid = None
 
-if rank==0: print "Broadcasting..."
+if rank==0: print("Broadcasting...")
 waDerivRoot = comm.bcast(waDerivRoot, root = 0)
 waStep = comm.bcast(waStep, root = 0)
 fparams = comm.bcast(fparams, root = 0)
@@ -163,7 +163,7 @@ lknee = comm.bcast(lknee, root = 0)
 alpha = comm.bcast(alpha, root = 0)
 massMultiplier = comm.bcast(massMultiplier, root = 0)
 siggrid = comm.bcast(siggrid, root = 0)
-if rank==0: print "Broadcasted."
+if rank==0: print("Broadcasted.")
 
 myParamIndex = (rank+1)/2-1
 passParams = fparams.copy()
@@ -198,7 +198,7 @@ dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbin_edges,SZProf)
 if rank==0: 
     np.save(bigDataDir+"N_mzq_"+saveId+"_wa_fid",getNmzq(dN_dmqz,mexp_edges,z_edges,qbin_edges))
 
-    print "Waiting for ups and downs..."
+    print("Waiting for ups and downs...")
     for i in range(1,numcores):
         data = np.empty(dN_dmqz.shape, dtype=np.float64)
         comm.Recv(data, source=i, tag=77)

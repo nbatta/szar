@@ -4,8 +4,8 @@ import numpy as np
 import sys, os, time
 from szar.counts import rebinN,getA
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 from szar.fisher import getFisher
 import szar.fisher as sfisher
 
@@ -41,9 +41,9 @@ NFid_mzq_alt = np.load(bigDataDir+"N_mzq_"+saveId+"_fid.npy")
 try:
     assert np.all(np.isclose(NFid_mzq,NFid_mzq_alt))
 except:
-    print "ERROR: Sigma8 and fid saves are not identical"
-    print NFid_mzq.shape
-    print NFid_mzq_alt.shape
+    print("ERROR: Sigma8 and fid saves are not identical")
+    print((NFid_mzq.shape))
+    print((NFid_mzq_alt.shape))
     from orphics.tools.io import quickPlot2d
     quickPlot2d(NFid_mzq[0,:,:],os.environ['WWW']+"debug_sig8.png")
     quickPlot2d(NFid_mzq_alt[0,:,:],os.environ['WWW']+"debug_fid.png")
@@ -89,7 +89,7 @@ inv = np.linalg.inv(f)
 
 err = np.sqrt(np.diagonal(inv))[len(origParams):]
 
-print err
+print(err)
 
 # import camb
 # from szar.counts import ClusterCosmology

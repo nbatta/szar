@@ -1,6 +1,6 @@
 import matplotlib
 matplotlib.use('Agg')
-import ConfigParser
+import configparser
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
@@ -39,7 +39,7 @@ class BattagliaSims(object):
         zlist = np.array((1./alist)-1.)
         snaplist = np.arange(55,55-len(zlist),-1)
         self.snapToZ = lambda s: zlist[snaplist==s][0] 
-        self.allSnaps = range(54,34,-1)
+        self.allSnaps = list(range(54,34,-1))
 
         # True masses
         self.NumClust= 300
@@ -69,12 +69,12 @@ class BattagliaSims(object):
 
                 maps, z, kappa, szMap, projM500, trueM500, trueR500, pixScaleX, pixScaleY = self.getMaps(snap,massIndex)
 
-                print "true M500 " , "{:.2E}".format(trueM500)
+                print(("true M500 " , "{:.2E}".format(trueM500)))
 
                 trueMs.append(trueM500)
                 expMs.append(projM500)
         
-                print "totmass ", "{:.2E}".format(projM500)
+                print(("totmass ", "{:.2E}".format(projM500)))
 
                 if not(plotRel):
                     pl = Plotter()
@@ -100,7 +100,7 @@ class BattagliaSims(object):
         fileY = self.root + "GEN_Cluster_"+str(massIndex)+"L165.256.FBN2_snap"+str(snap)+"_comovFINE.d"
 
         z = self.snapToZ(snap)
-        print "Snap ", snap , " corresponds to redshift ", z
+        print(("Snap ", snap , " corresponds to redshift ", z))
 
         stampWidthMpc = 8. / self.cc.h
         comovingMpc = self.cc.results.comoving_radial_distance(z)
@@ -157,7 +157,7 @@ class BattagliaSims(object):
         #assert projectedM500>trueM500
 
         freqfac = f_nu(self.cc.c,freqGHz)
-        print freqfac
+        print(freqfac)
         szMapuK = maps['y']*freqfac*self.TCMB
 
         # cmbZ = sourceZ

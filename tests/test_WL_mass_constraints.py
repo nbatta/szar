@@ -8,7 +8,7 @@ import sys, os, time
 from szar.counts import ClusterCosmology,SZ_Cluster_Model,Halo_MF
 from orphics.tools.io import Plotter,dictFromSection,listFromConfig
 
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 
 clusterParams = 'LACluster' # from ini file
 cosmologyName = 'LACosmology' # from ini file
@@ -45,8 +45,8 @@ HMF = Halo_MF(clusterCosmology=cc)
 
 errs,Ntot = HMF.Mass_err(mass_err,zbin,beam,noise,freq,clusterDict,lknee,alpha,fileFunc)
 
-print np.sqrt(errs)
-print Ntot
+print((np.sqrt(errs)))
+print(Ntot)
 
 #HSC_mass = np.loadtxt('input/HSC_DeltalnM_z0_z1.txt',unpack=True)
 #HSC_mass = np.transpose(HSC_mass)

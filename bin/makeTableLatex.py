@@ -1,4 +1,4 @@
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from orphics.tools.io import dictFromSection, listFromConfig
 
 
@@ -26,8 +26,8 @@ for i,expName in enumerate(expList):
 
 latex = ""
 
-print "BEAMS"
-print "============"
+print("BEAMS")
+print("============")
 
 for i,freq in enumerate(freqs):
     latex += '{:.0f}'.format(freq) 
@@ -44,7 +44,7 @@ for i,freq in enumerate(freqs):
     latex += " \\\\ \n"        
 
 
-print latex    
+print(latex)    
 
 
 expList = ["dummy-S3","S4-1.5-0.7","S4-1.5-0.4","S4-1.5-0.2","S4-1.5-0.1","S4-1.5-0.05"]
@@ -61,8 +61,8 @@ for i,expName in enumerate(expList):
 
 latex = ""
 
-print "NOISES"
-print "============"
+print("NOISES")
+print("============")
 
 for i,freq in enumerate(freqs):
     latex += '{:.0f}'.format(freq) 
@@ -79,4 +79,4 @@ for i,freq in enumerate(freqs):
     latex += " \\\\ \n"        
 
 
-print latex    
+print(latex)    

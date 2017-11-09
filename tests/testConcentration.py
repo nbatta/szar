@@ -3,8 +3,8 @@ matplotlib.use('Agg')
 from szar.counts import ClusterCosmology
 import numpy as np
 import sys,os
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 from orphics.tools.io import dictFromSection, listFromConfig, Plotter
 import szar._fast as fast
 
@@ -30,4 +30,4 @@ clttfile = Config.get('general','clttfile')
 cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
 
 
-print cc.Mdel_to_cdel(M,z,500.)
+print((cc.Mdel_to_cdel(M,z,500.)))

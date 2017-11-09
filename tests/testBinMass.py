@@ -1,8 +1,8 @@
 import matplotlib
 matplotlib.use('Agg')
 import traceback
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 import numpy as np
 import sys
 from orphics.tools.io import dictFromSection, listFromConfig
@@ -37,5 +37,5 @@ M_edges = 10**mexp_edges
 Masses = (M_edges[1:]+M_edges[:-1])/2.
 
 dm = np.diff(M_edges)
-print Masses
-print dm*100./Masses
+print(Masses)
+print((dm*100./Masses))

@@ -2,11 +2,11 @@ import numpy as np
 import orphics.tools.io as io
 import sys, time
 from szar.counts import ClusterCosmology,Halo_MF
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 
 paramName = sys.argv[1]
 key = paramName
-print "Calculating derivative for ", key
+print(("Calculating derivative for ", key))
 
 iniFile = "input/params.ini"
 Config = SafeConfigParser()
@@ -30,11 +30,11 @@ try:
     upDict[key] = cosmoListDict[key][0] + cosmoListDict[key][1]/2.
     dnDict[key] = cosmoListDict[key][0] - cosmoListDict[key][1]/2.
 except:
-    print "No step size specified for ", key
+    print(("No step size specified for ", key))
     sys.exit()    
 
-print upDict[key]
-print dnDict[key]
+print((upDict[key]))
+print((dnDict[key]))
 
 beam = io.listFromConfig(Config,experimentName,'beams')
 noise = io.listFromConfig(Config,experimentName,'noises')
@@ -63,11 +63,11 @@ start3 = time.time()
 
 HMFup = Halo_MF(clusterCosmology=ccUp)
 dN_dmqz_up = HMFup.N_of_mqz_SZ(mass_err,zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha)
-print dN_dmqz_up.sum()
+print((dN_dmqz_up.sum()))
 HMFdn = Halo_MF(clusterCosmology=ccDn)
 dN_dmqz_dn = HMFdn.N_of_mqz_SZ(mass_err,zbin,mbin,np.exp(qbin),beam,noise,freq,clusterDict,lknee,alpha)
 
-print "Time for N of z " , time.time() - start3
+print(("Time for N of z " , time.time() - start3))
 
 np.save("data/dN_dzmq"+saveId+"_"+key+"_up",dN_dmqz_up)
 np.save("data/dN_dzmq"+saveId+"_"+key+"_dn",dN_dmqz_dn)

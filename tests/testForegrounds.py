@@ -6,8 +6,8 @@ from szar.szproperties import SZ_Cluster_Model
 from szar.foregrounds import fgNoises, f_nu
 from szar.ilc import ILC_simple
 import sys,os
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
+from configparser import SafeConfigParser 
+import pickle as pickle
 from orphics.tools.io import dictFromSection, listFromConfig, Plotter
 from orphics.tools.cmb import noise_func
 
@@ -58,37 +58,37 @@ ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freq
 lsedges = np.arange(300,8001,100)
 el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
 el_ilc_c, cls_ilc_c, err_ilc_c, s2n_c = ILC.Forecast_Cellcmb(lsedges,fsky,constraint='tsz')
-print s2n,s2n_c
+print((s2n,s2n_c))
 
 ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=7000,lknee=lknee,alpha=alpha)
 
 lsedges = np.arange(300,7001,100)
 el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
-print s2n
+print(s2n)
 
 ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=6000,lknee=lknee,alpha=alpha)
 
 lsedges = np.arange(300,6001,100)
 el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
-print s2n
+print(s2n)
 
 ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=5000,lknee=lknee,alpha=alpha)
 
 lsedges = np.arange(300,5001,100)
 el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
-print s2n
+print(s2n)
 
 ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=3000,lknee=lknee,alpha=alpha)
 
 lsedges = np.arange(300,3001,100)
 el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
-print s2n
+print(s2n)
 
 ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=2000,lknee=lknee,alpha=alpha)
 
 lsedges = np.arange(300,2001,100)
 el_ilc, cls_ilc, err_ilc, s2n = ILC.Forecast_Cellcmb(lsedges,fsky)
-print s2n
+print(s2n)
 
 #print 'S/N' , np.sqrt(np.sum((cls_ilc/err_ilc)**2))
 
@@ -130,9 +130,9 @@ ksz = fgs.ksz_temp(ls)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
 
 print_ells = [100,200,300,400,500,600]
 
-print "freqs", freqs
-print "freqs", freqs[3:]
-print "freqs", freqs[3:6]
+print(("freqs", freqs))
+print(("freqs", freqs[3:]))
+print(("freqs", freqs[3:6]))
 
 fq_mat   = np.matlib.repmat(freqs,len(freqs),1)
 fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
@@ -156,7 +156,7 @@ radio_mat = fgs.rad_ps(print_ells[4],fq_mat,fq_mat_t) / cc.c['TCMBmuK']**2.
 
 #print fgs.rad_ps(ls[10],fq_mat_t,fq_mat)*0.0 + 1.
 
-print "noise", noise_func(print_ells[4],np.array(beams),np.array(noises),lknee,alpha,dimensionless=False) / cc.c['TCMBmuK']**2.
+print(("noise", noise_func(print_ells[4],np.array(beams),np.array(noises),lknee,alpha,dimensionless=False) / cc.c['TCMBmuK']**2.))
 
 fac_norm = ls*(ls+1.)/(2.*np.pi) * cc.c['TCMBmuK']**2
 
@@ -175,7 +175,7 @@ for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
     pol_ps   = fgs.rad_pol_ps(ls,testFreq,testFreq) /ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
     pol_sync = fgs.gal_sync_pol(ls,testFreq,testFreq) /ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
 
-    print ls[print_ells],tsz[print_ells],tsz_cib[print_ells],tsz[print_ells]/tsz_cib[print_ells] 
+    print((ls[print_ells],tsz[print_ells],tsz_cib[print_ells],tsz[print_ells]/tsz_cib[print_ells])) 
 
 
     totCl = cc.theory.lCl('TT',ls)+ksz+radio+cibp+cibc+noise+tsz+tsz_cib
@@ -204,7 +204,7 @@ for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
     pl._ax.set_xlim(30.,5000.)
     totClEE = cc.theory.lCl('EE',ls)+pol_dust+pol_sync+pol_ps
 
-    print ls[print_ells],pol_ps[print_ells],pol_sync[print_ells],pol_dust[print_ells],totClEE[print_ells]
+    print((ls[print_ells],pol_ps[print_ells],pol_sync[print_ells],pol_dust[print_ells],totClEE[print_ells]))
 
     pl.add(ls,cc.theory.lCl('EE',ls)*fac_norm,ls="--")
     pl.add(ls,pol_dust*fac_norm,ls="--")

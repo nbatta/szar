@@ -1,9 +1,9 @@
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from orphics.tools.io import Plotter
-import cPickle as pickle
+import pickle as pickle
 import sys
 
 from szar.counts import ClusterCosmology,Halo_MF,getNmzq
@@ -112,21 +112,21 @@ for expName,col in zip(expList,colList):
     
     SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
     Nofzs = np.multiply(HMF.N_of_z_SZ(SZProf)*fsky,np.diff(z_edges).reshape(1,z_edges.size-1)).ravel()
-    print Nofzs.sum()
+    print((Nofzs.sum()))
     #sys.exit()
 
     saveId = expName + "_" + gridName + "_" + cal + "_v" + version
     Nmzq = np.load(bigDataDir+"N_mzq_"+saveId+"_fid.npy")*fsky
     Nmz = Nmzq.sum(axis=-1)
     Nz = Nmzq.sum(axis=0).sum(axis=-1)
-    print Nz.shape
+    print((Nz.shape))
 
 
     m_edges = 10**mexp_edges
     masses = (m_edges[1:]+m_edges[:-1])/2.
     mexp_new = np.log10(np.linspace(masses[0],masses[-1],10))
     z_new = np.linspace(0.25,2.75,10)
-    print Nmz.sum()
+    print((Nmz.sum()))
     rn = resample_bin(Nmz,factors=[float(mexp_new.size)/Nmz.shape[0],float(z_new.size)/Nmz.shape[1]],axes=[-2,-1])
 
     currentAxis = plt.gca()
@@ -136,14 +136,14 @@ for expName,col in zip(expList,colList):
         zcent = (zleft+zright)/2.
         xerr = (zright-zleft)/2.
         N = Nofzs[np.logical_and(zrange>zleft,zrange<=zright)].sum()
-        print N
+        print(N)
         N2 = Nz[np.logical_and(zrange>zleft,zrange<=zright)].sum()
         currentAxis.add_patch(Rectangle((zcent - xerr+pad, 0), 2*xerr-pad/2., N, facecolor=col,alpha=0.5))
         currentAxis.add_patch(Rectangle((zcent - xerr+pad+pad/3., 0), 2*xerr-pad/2., N2, facecolor=col))
 
     massSense = lndM #*100./np.sqrt(Nmz)
     massSense = interpolateGrid(massSense,masses,zrange,10**mexp_new,z_new,regular=True)#,kind="cubic",bounds_error=False,fill_value=np.inf)
-    print massSense.shape
+    print((massSense.shape))
     fsense = massSense/np.sqrt(rn)
     
     

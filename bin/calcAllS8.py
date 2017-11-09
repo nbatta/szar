@@ -30,5 +30,5 @@ for exp in expList:
                 for grid in gridList:
             
                     cmd = cmdRoot + exp+res+atm+" "+grid+" "+cal+" "
-                    print cmd
+                    print(cmd)
                     os.system(cmd)

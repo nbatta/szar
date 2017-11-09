@@ -2,12 +2,12 @@ import numpy as np
 import camb
 from camb import model
 import time
-import cPickle as pickle
+import pickle as pickle
 
-from tinker import dn_dlogM
-from tinker import dsigma_dkmax_dM
-from tinker import tinker_params
-import tinker as tinker
+from .tinker import dn_dlogM
+from .tinker import dsigma_dkmax_dM
+from .tinker import tinker_params
+from . import tinker as tinker
 from szar.foregrounds import fgNoises
 
 from orphics.tools.io import Plotter
@@ -68,12 +68,11 @@ def getA(fparams,constDict,zrange,kmax=11.):
     return s8s[0],As
 
 
-def rebinN(Nmzq,pzCutoff,zbin_edges):
+def rebinN(Nmzq,pzCutoff,zbin_edges,mass_bin=37):
     #return zbin_edges, Nmzq  #.sum(axis=0) # !!!
     x,y,z = Nmzq.shape
     #print x
-    Nmzq = bin_ndarray(Nmzq, (37,y,z), operation='sum')
-    #return zbin_edges, bin_ndarray(Nmzq, (37,y,z), operation='sum')
+    if mass_bin is not None: Nmzq = bin_ndarray(Nmzq, (mass_bin,y,z), operation='sum')
     
     if pzCutoff>=zbin_edges[-2]: return zbin_edges,Nmzq
     orig = Nmzq.copy()
@@ -288,10 +287,10 @@ class Halo_MF:
         self.M200_edges = np.zeros((M_edges.size,self.zarr.size))
         self.zeroTemplate = self.M200.copy()
 
-        for i in xrange(self.zarr.size):
+        for i in range(self.zarr.size):
             self.M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M,500,self.zarr[i])
 
-        for i in xrange(self.zarr.size):
+        for i in range(self.zarr.size):
             self.M200_edges[:,i] = self.cc.Mass_con_del_2_del_mean200(M_edges,500,self.zarr[i])
             
 
@@ -310,7 +309,7 @@ class Halo_MF:
         #dV/dzdOmega
         DA_z = self.DAz 
         dV_dz = DA_z**2 * (1.+z_arr)**2
-        for i in xrange (z_arr.size):
+        for i in range (z_arr.size):
             dV_dz[i] /= (self.cc.results.h_of_z(z_arr[i]))
         dV_dz *= (self.cc.H0/100.)**3. # was h0
         self.dVdz = dV_dz
@@ -355,7 +354,7 @@ class Halo_MF:
         z_arr = self.zarr
         dn_dzdm = self.N_of_Mz(self.M200,200.)
         N_z = np.zeros(z_arr.size)
-        for i in xrange(z_arr.size):
+        for i in range(z_arr.size):
             N_z[i] = np.dot(dn_dzdm[:,i],np.diff(self.M200_edges[:,i]))
 
         return N_z*4.*np.pi
@@ -364,12 +363,12 @@ class Halo_MF:
         zs = self.zarr
         M = self.M
 
-        print "Calculating variance grid. This is slow..."
+        print("Calculating variance grid. This is slow...")
 
         sigN = self.zeroTemplate.copy()
 
-        for i in xrange(zs.size):
-            for j in xrange(M.size):
+        for i in range(zs.size):
+            for j in range(M.size):
                 var = SZCluster.quickVar(M[j],zs[i],tmaxN,numts)
                 sigN[j,i] = np.sqrt(var)
              
@@ -381,22 +380,22 @@ class Halo_MF:
 
         YM = self.zeroTemplate
 
-        for i in xrange(zs.size):
-            for j in xrange(M.size):
+        for i in range(zs.size):
+            for j in range(M.size):
                 YM[j,i] = SZCluster.Y_M(M[j],zs[i])
         self.YM = YM
 
 
     def updatePfunc(self,SZCluster):
-        print "updating"
+        print("updating")
         self.Pfunc = SZCluster.Pfunc(self.sigN.copy(),self.M.copy(),self.zarr.copy())
 
     def updatePfunc_qarr(self,SZCluster,q_arr):
-        print "Calculating P_func_qarr. This takes a while..."
+        print("Calculating P_func_qarr. This takes a while...")
         self.Pfunc_qarr = SZCluster.Pfunc_qarr(self.sigN.copy(),self.M,self.zarr,q_arr)
 
     def updatePfunc_qarr_corr(self,SZCluster,q_arr,mass_err):
-        print "Calculating P_func_qarr. This takes a while..."
+        print("Calculating P_func_qarr. This takes a while...")
         self.Pfunc_qarr_corr = SZCluster.Pfunc_qarr_corr(self.sigN.copy(),self.M,self.zarr,q_arr,self.Mexp,mass_err)
 
     def N_of_z_SZ(self,fsky,SZCluster):
@@ -410,7 +409,7 @@ class Halo_MF:
 
         dn_dzdm = self.dn_dM(self.M200,200.)
         N_z = np.zeros(z_arr.size)
-        for i in xrange (z_arr.size):
+        for i in range (z_arr.size):
             N_z[i] = np.dot(dn_dzdm[:,i]*P_func[:,i],np.diff(self.M200_edges[:,i]))
 
         return N_z* self.dVdz[:]*4.*np.pi*fsky
@@ -444,7 +443,7 @@ class Halo_MF:
 
         N_z = np.zeros(z_arr.size)
         N_tot_z = np.zeros(z_arr.size)
-        for i in xrange(z_arr.size):
+        for i in range(z_arr.size):
             N_z[i] = np.dot(dn_dVdm[:,i]*P_func[:,i] / (mass_err[:,i]**2 + alpha_ym**2 * (self.sigN[:,i]/self.YM[:,i])**2),np.diff(self.M200_edges[:,i]))
             N_tot_z[i] = np.dot(dn_dVdm[:,i]*P_func[:,i],np.diff(self.M200_edges[:,i]))
         err_WL_mass = 4.*np.pi* fsky*np.dot(N_z*dV_dz[:],np.diff(self.zarr_edges))
@@ -473,9 +472,9 @@ class Halo_MF:
 
         
         # \int dm  dn/dzdm
-        for kk in xrange(q_arr.size):
-            for jj in xrange(m_wl.size):
-                for i in xrange (z_arr.size):
+        for kk in range(q_arr.size):
+            for jj in range(m_wl.size):
+                for i in range (z_arr.size):
                     dM = np.diff(self.M200_edges[:,i])
                     dNdzmq[jj,i,kk] = np.dot(dn_dVdm[:,i]*P_func[:,i,kk]*SZCluster.Mwl_prob(10**(m_wl[jj]),M_arr[:,i],mass_err[:,i]),dM) * dV_dz[i]*4.*np.pi
         
@@ -502,9 +501,9 @@ class Halo_MF:
 
         
         # \int dm  dn/dzdm
-        for kk in xrange(q_arr.size):
-            for jj in xrange(m_wl.size):
-                for i in xrange (z_arr.size):
+        for kk in range(q_arr.size):
+            for jj in range(m_wl.size):
+                for i in range (z_arr.size):
                     dM = np.diff(self.M200_edges[:,i])
                     dNdzmq[jj,i,kk] = np.dot(dn_dVdm[:,i]*P_func[:,i,kk,jj],dM) * dV_dz[i]*4.*np.pi
         
@@ -533,20 +532,20 @@ class Halo_MF:
 #        np.outer(ell,np.outer(M,np.zeros([len(z_arr)])))
         #print formfac.shape
         
-        for i in xrange (z_arr.size):
+        for i in range (z_arr.size):
             M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M/(self.cc.H0/100.),500,z_arr[i])
             dM200[:,i] = np.gradient(M200[:,i])
             if (i > 0): 
-                for j in xrange (len(M)):
-                    for k in xrange (len(ell)):
+                for j in range (len(M)):
+                    for k in range (len(ell)):
                         formfac[k,j,i] = SZCluster.Prof_tilde(ell[k],M[j]/(self.cc.H0/100.),z_arr[i])
         
         dn_dm = self.dn_dM(M200,200.)
         dV_dz = self.dVdz
         
         ans = np.zeros(len(ell))
-        for k in xrange (len(ell)):
-            for i in xrange (z_arr.size):
+        for k in range (len(ell)):
+            for i in range (z_arr.size):
                 ans[k] += 4*np.pi *dV_dz[i] * dz[i] * np.trapz( dn_dm[:,i] * formfac[k,:,i]**2,M200[:,i])
         #print dn_dm.shape, formfac.shape
         #ans  =1.    

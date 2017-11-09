@@ -1,5 +1,5 @@
 import numpy as np
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 import szar.fisher as sfisher
 from orphics.tools.io import dictFromSection, listFromConfig
 import orphics.tools.io as io
@@ -45,7 +45,7 @@ for expName,col,lab in zip(expList,collist,lablist):
 
             try:
                 N = sfisher.counts_from_config(Config,bigDataDir,version,expName,gridName,mexp_edges,z_edges,lkneeTOverride = lknee,alphaTOverride=alpha)
-                print N
+                print(N)
             except:
                 N = np.nan
             Ns.append(N)
@@ -54,7 +54,7 @@ for expName,col,lab in zip(expList,collist,lablist):
         pl.add(lkneeList,Ns,label=labnow,color=col,ls=ls)
 
 
-        print alpha,(Ns[-1]-Ns[0])*100./Ns[0], " %"
+        print((alpha,(Ns[-1]-Ns[0])*100./Ns[0], " %"))
 
 pl.legendOn(labsize=12,loc="lower left")
 pl._ax.axvline(x=3500.,color="k",alpha=0.5,ls="--")
