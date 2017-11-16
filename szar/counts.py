@@ -341,7 +341,7 @@ class Halo_MF:
 
     def sample_mf(self,delta):
         N_Mz = self.N_of_Mz(self.M200,delta)
-        ans = interp2d(self.zarr,self.M,N_Mz,kind='cubic',fill_value=0) 
+        ans = interp2d(self.zarr,self.M,N_Mz,kind='linear',fill_value=0) 
         return ans
 
     def N_of_z(self):
