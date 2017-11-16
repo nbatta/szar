@@ -3,6 +3,9 @@ from szar.counts import ClusterCosmology,Halo_MF
 from orphics.tools.io import dictFromSection, listFromConfig
 from ConfigParser import SafeConfigParser
 import cPickle as pickle
+import matplotlib.pyplot as plt
+import emcee
+
 
 #initial setup
 
@@ -30,6 +33,17 @@ mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName
 cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(cc,mgrid,zgrid)
 
-blah = HMF.sample_mf(200)
+bla = HMF.N_of_Mz(HMF.M200,200)
+print HMF.M[100]
+print HMF.zarr[18]
 
-print blah(1e15,0.8)
+print bla[100][18]
+
+blah = HMF.sample_mf(200)#(1.8,4e14,bla)
+
+print blah(HMF.zarr[18],HMF.M[100])
+
+plt.imshow(np.log10(bla))
+plt.colorbar()
+plt.savefig('default.png', bbox_inches='tight',format='png')
+

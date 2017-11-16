@@ -14,7 +14,7 @@ from orphics.tools.io import Plotter
 from orphics.theory.cosmology import Cosmology
 import orphics.theory.cosmology as cosmo
 from orphics.tools.stats import timeit
-from scipy.interpolate import interp1d, interp2d
+from scipy.interpolate import interp1d, interp2d, griddata
 from orphics.analysis.flatMaps import interpolateGrid
 
 import szar._fast as fast
@@ -341,11 +341,7 @@ class Halo_MF:
 
     def sample_mf(self,delta):
         N_Mz = self.N_of_Mz(self.M200,delta)
-        mm,zz = np.meshgrid(self.M200[:,0],self.zarr)
-        print np.shape(self.M200)
-        print np.shape(zz)
-        print np.shape(N_Mz)
-        ans = interp2d(self.M200,zz,N_Mz,kind='cubic') 
+        ans = interp2d(self.zarr,self.M,N_Mz,kind='cubic',fill_value=0) 
         return ans
 
     def N_of_z(self):
