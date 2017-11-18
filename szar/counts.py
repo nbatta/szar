@@ -300,7 +300,7 @@ class Halo_MF:
 
         kh, z, powerZK = self.cc.results.get_matter_power_spectrum(minkh=kmin, maxkh=kmax, npoints = knum)
         return kh, powerZK
-    '''
+    """
     def _pk2(self,zarr,kmin,kmax,knum):
         #self.cc.pars.set_matter_power(redshifts=zarr, kmax=kmax)
         self.cc.pars.Transfer.high_precision = True
@@ -318,7 +318,7 @@ class Halo_MF:
         kh=np.exp(np.log(10)*np.linspace(np.log10(kmin),np.log10(kmax),knum))
         powerZK = PK.P(self.zarr,kh)
         return kh, powerZK
-        '''
+    """
     
     def _initdVdz(self,z_arr):
         #dV/dzdOmega
