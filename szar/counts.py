@@ -3,6 +3,7 @@ import camb
 from camb import model
 import time
 import pickle as pickle
+import emcee
 
 from .tinker import dn_dlogM
 from .tinker import dsigma_dkmax_dM
@@ -219,8 +220,6 @@ class ClusterCosmology(Cosmology):
         ans = self.rho_crit0H100*self.E_z(z)**2.
         return ans
     
-        
-    
     def rdel_c(self,M,z,delta):
         #spherical overdensity radius w.r.t. the critical density
         rhocz = self.rhoc(z)
@@ -250,24 +249,23 @@ class ClusterCosmology(Cosmology):
 class Halo_MF:
     #@timeit
     def __init__(self,clusterCosmology,Mexp_edges,z_edges,kh=None,powerZK=None,kmin=1e-4,kmax=11.,knum=200):
-
         # update self.sigN (20 mins) and self.Pfunc if changing experiment
         # update self.cc or self.pk if changing cosmology
         # update self.Pfunc if changing scaling relation parameters
-
 
         self.cc = clusterCosmology
 
         zcenters = (z_edges[1:]+z_edges[:-1])/2.
         self.zarr_edges = z_edges
         self.zarr = zcenters
+
         if powerZK is None:
             self.kh, self.pk = self._pk(self.zarr,kmin,kmax,knum)
         else:
             assert kh is not None
             self.kh = kh
             self.pk = powerZK
-            
+
         self.DAz = self.cc.results.angular_diameter_distance(self.zarr)        
         self._initdVdz(self.zarr)
 
@@ -293,17 +291,34 @@ class Halo_MF:
         for i in range(self.zarr.size):
             self.M200_edges[:,i] = self.cc.Mass_con_del_2_del_mean200(M_edges,500,self.zarr[i])
             
-
     def _pk(self,zarr,kmin,kmax,knum):
         self.cc.pars.set_matter_power(redshifts=zarr, kmax=kmax)
         self.cc.pars.Transfer.high_precision = True
-        
+
         self.cc.pars.NonLinear = model.NonLinear_none
         self.cc.results = camb.get_results(self.cc.pars)
+
         kh, z, powerZK = self.cc.results.get_matter_power_spectrum(minkh=kmin, maxkh=kmax, npoints = knum)
-
-
         return kh, powerZK
+    """
+    def _pk2(self,zarr,kmin,kmax,knum):
+        #self.cc.pars.set_matter_power(redshifts=zarr, kmax=kmax)
+        self.cc.pars.Transfer.high_precision = True
+
+        self.cc.pars.NonLinear = model.NonLinear_none
+        start1 = time.clock()
+        self.cc.results = camb.get_background(self.cc.pars)
+        #self.cc.results = camb.get_results(self.cc.pars)
+        elapsed1 = (time.clock() - start1)
+        print "internal time pk2", elapsed1
+
+        start = time.clock()
+        PK = camb.get_matter_power_interpolator(self.cc.pars,kmax=kmax)
+        print "internal time pk2",time.clock() - start
+        kh=np.exp(np.log(10)*np.linspace(np.log10(kmin),np.log10(kmax),knum))
+        powerZK = PK.P(self.zarr,kh)
+        return kh, powerZK
+    """
     
     def _initdVdz(self,z_arr):
         #dV/dzdOmega
@@ -339,10 +354,39 @@ class Halo_MF:
         N_dzdm = dn_dm[:,:] * dV_dz[:]
         return N_dzdm
 
-    def sample_mf(self,delta):
+    def inter_mf(self,delta):
         N_Mz = self.N_of_Mz(self.M200,delta)
         ans = interp2d(self.zarr,self.M,N_Mz,kind='linear',fill_value=0) 
         return ans
+
+    def lnprior(self,theta,mthresh,zthresh):
+        a1,a2temp = theta
+        a2 = 10**a2temp
+        if  zthresh[0] < a1 < zthresh[1] and  mthresh[0] < a2 < mthresh[1]:
+            return 0
+        return -np.inf
+
+    def lnlike(self,theta,inter):
+        a1,a2temp = theta
+        a2 = 10**a2temp
+        return np.log(inter(a1,a2)/inter(0.15,9e13))
+
+    def lnprob(self,theta, inter, mthresh, zthresh):
+        lp = self.lnprior(theta, mthresh, zthresh)
+        if not np.isfinite(lp):
+            return -np.inf
+        return lp + self.lnlike(theta, inter)
+
+    def mcsample_mf(self,delta,nsamp100,nwalkers=100,nburnin=50,Ndim=2,mthresh=[4e14,4e15],zthresh=[0.2,1.95]):
+
+        N_mz_inter = self.inter_mf(delta)
+        P0 = np.array([1.,15.5])
+        pos = [P0 + P0*2e-2*np.random.randn(Ndim) for i in range(nwalkers)]
+        
+        sampler = emcee.EnsembleSampler(nwalkers,Ndim,self.lnprob, args =[N_mz_inter,mthresh,zthresh] )
+        sampler.run_mcmc(pos,nsamp100+nburnin)
+        
+        return sampler.chain[:,nburnin:,:].reshape((-1,Ndim))
 
     def N_of_z(self):
         # dN/dz(z) = 4pi fsky \int dm dN/dzdmdOmega
