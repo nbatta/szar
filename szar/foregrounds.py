@@ -28,46 +28,13 @@ def totTTNoise(ells,constDict,beamFWHM,noiseT,freq,lknee,alpha,tsz_battaglia_tem
     return instrument+ksz+radio+cibp+cibc+tsz #+tsz_cib
 
 
-class fgGenerator(object):
-    
-    def __init__(self,shape,wcs,components,fg_noises):
-        
-        from enlib import enmap
-        from orphics import maps
-
-        modlmap = enmap.modlmap(shape,wcs)
-        lmax = modlmap.max()
-        ells = np.arange(0,lmax,1)
-        f = fg_noises
-        
-        self.nu0 = 150.
-
-        fgdict = {'tsz':f.tSZ,'cibc':f.cib_c,'cibp':f.cib_p,'radps':f.rad_ps}
-        self.fgdict_nu = {'tsz':f.tSZ_nu,'cibc':f.cib_nu,'cibp':f.cib_nu,'radps':f.rad_ps_nu}
-        
-        self.mgens = {}
-        self.noises = {}
-        for component in components:
-            fgfunc = fgdict[component]
-            noise = fgfunc(ells,self.nu0,self.nu0)*2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
-            self.noises[component] = interp1d(ells,noise,bounds_error=False,fill_value=0.)
-            ps = noise.reshape((1,1,ells.size))
-            self.mgens[component] = maps.MapGen(shape,wcs,ps)
-
-    def get_noise(self,component,nu1,nu2,ells):
-        return self.noises[component](ells)* self.fgdict_nu[component](nu1)*self.fgdict_nu[component](nu2)/self.fgdict_nu[component](self.nu0)**2.
-    def get_maps(self,component,nus,seed=None):
-        rmap = self.mgens[component].get_map(seed=seed)
-        return [rmap * self.fgdict_nu[component](nu)/self.fgdict_nu[component](self.nu0) for nu in nus]
-
-        
 
 class fgNoises(object):
     '''                                                                                                                             
     Returns fgPower * l(l+1)/2pi in uK^2                                                                                            
     '''
 
-    def __init__(self,constDict,ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',tsz_cib_file='input/sz_x_cib_template.dat',ksz_battaglia_test_csv=None,tsz_battaglia_template_csv=None):
+    def __init__(self,constDict,ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',tsz_cib_file='input/sz_x_cib_template.dat',ksz_battaglia_test_csv=None,tsz_battaglia_template_csv=None,components=None,lmax=None):
         self.c = constDict
         el,ksz = np.loadtxt(ksz_file,unpack=True)
         self.ksz_func = interp1d(el,ksz,bounds_error=False,fill_value=0.)
@@ -87,6 +54,21 @@ class fgNoises(object):
         else:
             self.tsz_template = None
 
+        if components is not None:
+            fgdict = {'tsz':self.tSZ,'cibc':self.cib_c,'cibp':self.cib_p,'radps':self.rad_ps}
+            self.fgdict_nu = {'tsz':self.tSZ_nu,'cibc':self.cib_nu,'cibp':self.cib_nu,'radps':self.rad_ps_nu}
+            self.ells = np.arange(0,lmax,1)
+            self.nu0 = 150.
+            self.noises = {}
+            for component in components:
+                fgfunc = fgdict[component]
+                noise = fgfunc(self.ells,self.nu0,self.nu0)*2.*np.pi*np.nan_to_num(1./self.ells/(self.ells+1.))
+                self.noises[component] = interp1d(self.ells,noise,bounds_error=False,fill_value=0.)
+            
+
+    def get_noise(self,component,nu1,nu2,ells):
+        return self.noises[component](ells)* self.fgdict_nu[component](nu1)*self.fgdict_nu[component](nu2)/self.fgdict_nu[component](self.nu0)**2.
+    
     def g_nu(self,nu):
         beta = (nu*1e9) * self.c['H_CGS'] / (self.c['K_CGS']*self.c['TCMB'])
         ans = 2.* self.c['H_CGS']**2 * (nu*1e9)**4 / (self.c['C']**2 *self.c['K_CGS'] * self.c['TCMB']**2) \
@@ -184,3 +166,28 @@ class fgNoises(object):
         ans = self.c['A_ps_pol'] * (ell/self.c['ell0sec']) ** 2 * (nu1*nu2/self.c['nu0']**2) ** self.c['al_ps'] \
             * self.g_nu(nu1) * self.g_nu(nu2) / (self.g_nu(self.c['nu0']))**2
         return ans
+
+
+
+class fgGenerator(fgNoises):
+    
+    def __init__(self,shape,wcs,components,constDict,ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',tsz_cib_file='input/sz_x_cib_template.dat',ksz_battaglia_test_csv=None,tsz_battaglia_template_csv=None):
+        
+        from enlib import enmap
+        from orphics import maps
+
+        modlmap = enmap.modlmap(shape,wcs)
+        fgNoises.__init__(self,constDict,ksz_file,ksz_p_file,tsz_cib_file,ksz_battaglia_test_csv,tsz_battaglia_template_csv,components,lmax=modlmap.max())
+        
+        self.mgens = {}
+        for component in components:
+            noise = self.noises[component](self.ells)
+            ps = noise.reshape((1,1,self.ells.size))
+            self.mgens[component] = maps.MapGen(shape,wcs,ps)
+
+    def get_maps(self,component,nus,seed=None):
+        rmap = self.mgens[component].get_map(seed=seed)
+        return [rmap * self.fgdict_nu[component](nu)/self.fgdict_nu[component](self.nu0) for nu in nus]
+
+        
+    
