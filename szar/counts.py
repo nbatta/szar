@@ -292,7 +292,7 @@ class Halo_MF:
             self.M200_edges[:,i] = self.cc.Mass_con_del_2_del_mean200(M_edges,500,self.zarr[i])
             
     def _pk(self,zarr,kmin,kmax,knum):
-        self.cc.pars.set_matter_power(redshifts=zarr, kmax=kmax)
+        self.cc.pars.set_matter_power(redshifts=zarr, kmax=kmax,silent=True)
         self.cc.pars.Transfer.high_precision = True
 
         self.cc.pars.NonLinear = model.NonLinear_none
@@ -301,7 +301,7 @@ class Halo_MF:
         kh, z, powerZK = self.cc.results.get_matter_power_spectrum(minkh=kmin, maxkh=kmax, npoints = knum)
         return kh, powerZK
     """
-    def _pk2(self,zarr,kmin,kmax,knum):
+    def _pk2(self,zarr,kmin,kmax,knum):x
         #self.cc.pars.set_matter_power(redshifts=zarr, kmax=kmax)
         self.cc.pars.Transfer.high_precision = True
 

@@ -47,7 +47,7 @@ elapsed1 = (time.clock() - start)
 print elapsed1
 print len(samples)
 
-nclust = 1000
+nclust = 100
 ids = np.random.randint(len(samples)/2.,size=nclust)
 
 #plt.plot(samples[:,0],samples[:,1],'x')
