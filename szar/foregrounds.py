@@ -7,6 +7,14 @@ def f_nu(constDict,nu):
     ans = mu/np.tanh(mu/2.0) - 4.0
     return ans
 
+def g_nu(constDict,nu):
+    c = constDict
+    beta = (nu*1e9) * c['H_CGS'] / (c['K_CGS']*c['TCMB'])
+    ans = 2.* c['H_CGS']**2 * (nu*1e9)**4 / (c['C']**2 *c['K_CGS'] * c['TCMB']**2) \
+        * np.exp(beta) * 1. / (np.exp(beta) - 1.)**2
+    return ans
+
+
 def totTTNoise(ells,constDict,beamFWHM,noiseT,freq,lknee,alpha,tsz_battaglia_template_csv="data/sz_template_battaglia.csv",TCMB=2.7255e6):
     ls = ells
     instrument = noise_func(ls,beamFWHM,noiseT,lknee,alpha,dimensionless=False)/ cc.c['TCMBmuK']**2.
@@ -18,6 +26,41 @@ def totTTNoise(ells,constDict,beamFWHM,noiseT,freq,lknee,alpha,tsz_battaglia_tem
     tsz = fgs.tSZ(ls,freq,freq)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
     tsz_cib = fgs.tSZ_CIB(ls,freq,freq)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
     return instrument+ksz+radio+cibp+cibc+tsz #+tsz_cib
+
+
+class fgGenerator(object):
+    
+    def __init__(self,shape,wcs,components,fg_noises):
+        
+        from enlib import enmap
+        from orphics import maps
+
+        modlmap = enmap.modlmap(shape,wcs)
+        lmax = modlmap.max()
+        ells = np.arange(0,lmax,1)
+        f = fg_noises
+        
+        self.nu0 = 150.
+
+        fgdict = {'tsz':f.tSZ,'cibc':f.cib_c,'cibp':f.cib_p,'radps':f.rad_ps}
+        self.fgdict_nu = {'tsz':f.tSZ_nu,'cibc':f.cib_nu,'cibp':f.cib_nu,'radps':f.rad_ps_nu}
+        
+        self.mgens = {}
+        self.noises = {}
+        for component in components:
+            fgfunc = fgdict[component]
+            noise = fgfunc(ells,self.nu0,self.nu0)*2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
+            self.noises[component] = interp1d(ells,noise,bounds_error=False,fill_value=0.)
+            ps = noise.reshape((1,1,ells.size))
+            self.mgens[component] = maps.MapGen(shape,wcs,ps)
+
+    def get_noise(self,component,nu1,nu2,ells):
+        return self.noises[component](ells)* self.fgdict_nu[component](nu1)*self.fgdict_nu[component](nu2)/self.fgdict_nu[component](self.nu0)**2.
+    def get_maps(self,component,nus,seed=None):
+        rmap = self.mgens[component].get_map(seed=seed)
+        return [rmap * self.fgdict_nu[component](nu)/self.fgdict_nu[component](self.nu0) for nu in nus]
+
+        
 
 class fgNoises(object):
     '''                                                                                                                             
@@ -55,44 +98,49 @@ class fgNoises(object):
         ans = 2.* self.c['H_CGS'] * nu**3 / (self.c['C'])**2 / (np.exp(beta) - 1.)
         return ans
 
+    def rad_ps_nu(self,nu):
+        return (nu/self.c['nu0']) ** self.c['al_ps'] \
+            * self.g_nu(nu)  / (self.g_nu(self.c['nu0']))
+        
     def rad_ps(self,ell,nu1,nu2):
-        ans = self.c['A_ps'] * (ell/self.c['ell0sec']) ** 2 * (nu1*nu2/self.c['nu0']**2) ** self.c['al_ps'] \
-            * self.g_nu(nu1) * self.g_nu(nu2) / (self.g_nu(self.c['nu0']))**2
+        ans = self.c['A_ps'] * (ell/self.c['ell0sec']) ** 2 * self.rad_ps_nu(nu1)*self.rad_ps_nu(nu2)
         return ans
 
+    def res_gal_nu(self,nu):
+        return (nu/self.c['nu0']) ** self.c['al_g'] \
+            * self.g_nu(nu)  / (self.g_nu(self.c['nu0']))
+    
     def res_gal(self,ell,nu1,nu2):
-        ans = self.c['A_g'] * (ell/self.c['ell0sec']) ** self.c['n_g'] * (nu1*nu2/self.c['nu0']**2) ** self.c['al_g'] \
-            * self.g_nu(nu1) * self.g_nu(nu2) / (self.g_nu(self.c['nu0']))**2
+        ans = self.c['A_g'] * (ell/self.c['ell0sec']) ** self.c['n_g'] * self.res_gal_nu(nu1)*self.res_gal_nu(nu2)
         return ans
 
-    def cib_p(self,ell,nu1,nu2):
+    def cib_nu(self,nu):
 
-        mu1 = nu1**self.c['al_cib']*self.B_nu(self.c['Td'],nu1) * self.g_nu(nu1)
-        mu2 = nu2**self.c['al_cib']*self.B_nu(self.c['Td'],nu2) * self.g_nu(nu2)
+        mu = nu**self.c['al_cib']*self.B_nu(self.c['Td'],nu) * self.g_nu(nu)
         mu0 = self.c['nu0']**self.c['al_cib']*self.B_nu(self.c['Td'],self.c['nu0']) \
             * self.g_nu(self.c['nu0'])
+        return mu  / mu0
 
-        ans = self.c['A_cibp'] * (ell/self.c['ell0sec']) ** 2.0 * mu1 * mu2 / mu0**2
+    def cib_p(self,ell,nu1,nu2):
+        
+        ans = self.c['A_cibp'] * (ell/self.c['ell0sec']) ** 2.0 * self.cib_nu(nu1)*self.cib_nu(nu2) 
         return ans
 
     def cib_c(self,ell,nu1,nu2):
-        mu1 = nu1**self.c['al_cib']*self.B_nu(self.c['Td'],nu1) * self.g_nu(nu1)
-        mu2 = nu2**self.c['al_cib']*self.B_nu(self.c['Td'],nu2) * self.g_nu(nu2)
-        mu0 = self.c['nu0']**self.c['al_cib']*self.B_nu(self.c['Td'],self.c['nu0']) \
-            * self.g_nu(self.c['nu0'])
 
-        ans = self.c['A_cibc'] * (ell/self.c['ell0sec']) ** (2.-self.c['n_cib']) * mu1 * mu2 / mu0**2
+        ans = self.c['A_cibc'] * (ell/self.c['ell0sec']) ** (2.-self.c['n_cib']) * self.cib_nu(nu1)*self.cib_nu(nu2) 
         return ans
 
     def f_nu_cib(self,nu1):
-        mu1 = nu1**self.c['al_cib']*self.B_nu(self.c['Td'],nu1) * self.g_nu(nu1)
-        mu0 = self.c['nu0']**self.c['al_cib']*self.B_nu(self.c['Td'],self.c['nu0']) \
-            * self.g_nu(self.c['nu0'])
-        ans = mu1 /  mu0
+        return self.cib_nu(nu1)
+        # mu1 = nu1**self.c['al_cib']*self.B_nu(self.c['Td'],nu1) * self.g_nu(nu1)
+        # mu0 = self.c['nu0']**self.c['al_cib']*self.B_nu(self.c['Td'],self.c['nu0']) \
+        #     * self.g_nu(self.c['nu0'])
+        # ans = mu1 /  mu0
 
-        return ans
+        # return ans
 
-    def tSZ_CIB(self,ell,nu1,nu2):
+    def tSZ_CIB_nu(self,nu1,nu2):
         mu1 = nu1**self.c['al_cib']*self.B_nu(self.c['Td'],nu1) * self.g_nu(nu1)
         mu2 = nu2**self.c['al_cib']*self.B_nu(self.c['Td'],nu2) * self.g_nu(nu2)
         mu0 = self.c['nu0']**self.c['al_cib']*self.B_nu(self.c['Td'],self.c['nu0']) \
@@ -100,16 +148,23 @@ class fgNoises(object):
 
         fp12 = f_nu(self.c,nu1)*mu1 + f_nu(self.c,nu2)*mu2
         fp0  = 2.* f_nu(self.c,self.c['nu0'])*mu0
-        ans = self.c['zeta']*np.sqrt(self.c['A_tsz']*self.c['A_cibc']) * 2.*fp12 / fp0 * self.tsz_cib_func(ell)
+        ans = self.c['zeta']*np.sqrt(self.c['A_tsz']*self.c['A_cibc']) * 2.*fp12 / fp0 
+        return ans
+
+    def tSZ_CIB(self,ell,nu1,nu2):
+        ans = self.tSZ_CIB_nu(nu1,nu2) * self.tsz_cib_func(ell)
         return ans
 
     def ksz_temp(self,ell):
         ans = self.ksz_func(ell) * (1.65/1.5) + self.ksz_p_func(ell)
         return ans
 
+    def tSZ_nu(self,nu):
+        return f_nu(self.c,nu)/f_nu(self.c,self.c['nu0'])
+    
     def tSZ(self,ell,nu1,nu2):
         assert self.tsz_template is not None, "You did not initialize this object with tsz_battaglia_template_csv."
-        return self.c['A_tsz']*self.tsz_template(ell)*f_nu(self.c,nu1)*f_nu(self.c,nu2)/f_nu(self.c,self.c['nu0'])**2.
+        return self.c['A_tsz']*self.tsz_template(ell)*self.tSZ_nu(nu1)*self.tSZ_nu(nu2)
 
     def gal_dust_pol(self,ell,nu1,nu2):
         mu1 = nu1**self.c['al_cib']*self.B_nu(self.c['Td'],nu1) * self.g_nu(nu1)
