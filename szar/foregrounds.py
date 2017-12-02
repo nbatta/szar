@@ -15,7 +15,7 @@ def g_nu(constDict,nu):
     return ans
 
 
-def totTTNoise(ells,constDict,beamFWHM,noiseT,freq,lknee,alpha,tsz_battaglia_template_csv="data/sz_template_battaglia.csv",TCMB=2.7255e6):
+def totTTNoise(ells,constDict,beamFWHM,noiseT,freq,lknee,alpha,tsz_battaglia_template_csv="input/sz_template_battaglia.csv",TCMB=2.7255e6):
     ls = ells
     instrument = noise_func(ls,beamFWHM,noiseT,lknee,alpha,dimensionless=False)/ cc.c['TCMBmuK']**2.
     fgs = fgNoises(constDict,tsz_battaglia_template_csv)
@@ -34,7 +34,7 @@ class fgNoises(object):
     Returns fgPower * l(l+1)/2pi in uK^2                                                                                            
     '''
 
-    def __init__(self,constDict,ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',tsz_cib_file='input/sz_x_cib_template.dat',ksz_battaglia_test_csv=None,tsz_battaglia_template_csv=None,components=None,lmax=None):
+    def __init__(self,constDict,ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',tsz_cib_file='input/sz_x_cib_template.dat',ksz_battaglia_test_csv=None,tsz_battaglia_template_csv="input/sz_template_battaglia.csv",components=None,lmax=None):
         self.c = constDict
         el,ksz = np.loadtxt(ksz_file,unpack=True)
         self.ksz_func = interp1d(el,ksz,bounds_error=False,fill_value=0.)
@@ -58,7 +58,7 @@ class fgNoises(object):
             fgdict = {'tsz':self.tSZ,'cibc':self.cib_c,'cibp':self.cib_p,'radps':self.rad_ps}
             self.fgdict_nu = {'tsz':self.tSZ_nu,'cibc':self.cib_nu,'cibp':self.cib_nu,'radps':self.rad_ps_nu}
             self.ells = np.arange(0,lmax,1)
-            self.nu0 = 150.
+            self.nu0 = self.c['nu0']
             self.noises = {}
             for component in components:
                 fgfunc = fgdict[component]
