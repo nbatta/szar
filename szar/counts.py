@@ -3,7 +3,6 @@ import camb
 from camb import model
 import time
 import pickle as pickle
-import emcee
 
 from .tinker import dn_dlogM
 from .tinker import dsigma_dkmax_dM
@@ -378,6 +377,7 @@ class Halo_MF:
         return lp + self.lnlike(theta, inter)
 
     def mcsample_mf(self,delta,nsamp100,nwalkers=100,nburnin=50,Ndim=2,mthresh=[4e14,4e15],zthresh=[0.2,1.95]):
+        import emcee
 
         N_mz_inter = self.inter_mf(delta)
         P0 = np.array([1.,15.5])
