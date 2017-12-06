@@ -6,7 +6,7 @@ from orphics.tools.io import dictFromSection, listFromConfig
 from ConfigParser import SafeConfigParser
 import cPickle as pickle
 import matplotlib.pyplot as plt
-import nemo
+from nemo import simsTools
 import time
 
 iniFile = "input/pipeline.ini"
@@ -29,8 +29,8 @@ for (key, val) in Config.items('params'):
         fparams[key] = float(val)
 
 
-class clusterLike(iniFile,expName,gridname):
-    def __init__(self):
+class clusterLike:
+    def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir):
         
         Config = SafeConfigParser()
         Config.optionxform=str
@@ -43,6 +43,10 @@ class clusterLike(iniFile,expName,gridname):
         self.mgrid,self.zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
         self.cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
         self.HMF = Halo_MF(cc,mgrid,zgrid)
+
+        self.diagnosticsDir=nemoOutputDir+os.path.sep+"diagnostics" 
+        filteredMapsDir=nemoOutputDir+os.path.sep+"filteredMaps"
+        self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, filteredMapsDir)
 
     def lnprior(self,theta):
         a1,a2 = theta
@@ -67,6 +71,14 @@ class clusterLike(iniFile,expName,gridname):
             return -np.inf
         return lp + self.lnlike(theta, inter)
 
+
+
+
 #Functions from NEMO
 #y0FromLogM500(log10M500, z, tckQFit, tenToA0 = 4.95e-5, B0 = 0.08, Mpivot = 3e14, sigma_int = 0.2)
 #fitQ(parDict, diagnosticsDir, filteredMapsDir)
+
+    #self.diagnosticsDir=nemoOutputDir+os.path.sep+"diagnostics"
+    
+    #filteredMapsDir=nemoOutputDir+os.path.sep+"filteredMaps"
+    #self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, filteredMapsDir)
