@@ -1,32 +1,13 @@
 import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 import emcee
-
-from orphics.tools.io import dictFromSection, listFromConfig
+from nemo import simsTools
 from ConfigParser import SafeConfigParser
+from orphics.tools.io import dictFromSection
 import cPickle as pickle
 import matplotlib.pyplot as plt
-from nemo import simsTools
-import time
 
-iniFile = "input/pipeline.ini"
-Config = SafeConfigParser()
-Config.optionxform=str
-Config.read(iniFile)
-bigDataDir = Config.get('general','bigDataDirectory')
-clttfile = Config.get('general','clttfile')
-constDict = dictFromSection(Config,'constants')
-version = Config.get('general','version')
-expName = "S4-1.0-CDT"
-gridName = "grid-owl2"
-
-fparams = {}
-for (key, val) in Config.items('params'):
-    if ',' in val:
-        param, step = val.split(',')
-        fparams[key] = float(param)
-    else:
-        fparams[key] = float(val)
+#import time
 
 
 class clusterLike:
@@ -35,17 +16,26 @@ class clusterLike:
         Config = SafeConfigParser()
         Config.optionxform=str
         Config.read(iniFile)
+
+        self.fparams = {}
+        for (key, val) in Config.items('params'):
+            if ',' in val:
+                param, step = val.split(',')
+                self.fparams[key] = float(param)
+            else:
+                self.fparams[key] = float(val)
+
         bigDataDir = Config.get('general','bigDataDirectory')
         self.clttfile = Config.get('general','clttfile')
         self.constDict = dictFromSection(Config,'constants')
         version = Config.get('general','version')
         
         self.mgrid,self.zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
-        self.cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
-        self.HMF = Halo_MF(cc,mgrid,zgrid)
+        self.cc = ClusterCosmology(self.fparams,self.constDict,clTTFixFile=self.clttfile)
+        self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
 
-        self.diagnosticsDir=nemoOutputDir+os.path.sep+"diagnostics" 
-        filteredMapsDir=nemoOutputDir+os.path.sep+"filteredMaps"
+        self.diagnosticsDir=nemoOutputDir+"diagnostics" 
+        filteredMapsDir=nemoOutputDir+"filteredMaps"
         self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, filteredMapsDir)
 
     def lnprior(self,theta):
@@ -70,9 +60,6 @@ class clusterLike:
         if not np.isfinite(lp):
             return -np.inf
         return lp + self.lnlike(theta, inter)
-
-
-
 
 #Functions from NEMO
 #y0FromLogM500(log10M500, z, tckQFit, tenToA0 = 4.95e-5, B0 = 0.08, Mpivot = 3e14, sigma_int = 0.2)
