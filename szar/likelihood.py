@@ -2,7 +2,9 @@ import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 import emcee
 from nemo import simsTools
+from scipy import special
 from astropy.io import fits
+from astLib import astWCS
 from ConfigParser import SafeConfigParser
 from orphics.tools.io import dictFromSection
 import cPickle as pickle
@@ -10,13 +12,15 @@ import matplotlib.pyplot as plt
 
 #import time
 
-def read_MJH_noisemap(noiseMap):
+def read_MJH_noisemap(noiseMap,maskMap):
+    #Read in filter noise map
     img = fits.open(noiseMap)
     rmsmap=img[0].data
-    ra = 1.
-    dec = 1.
-    pixel_size = 1.
-    return rmsmap, ra, dec, pixel_size
+    #Read in mask map
+    img2 = fits.open(maskMap)
+    mmap=img[0].data
+    #return the filter noise map for pixels in the mask map that = 1
+    return rmsmap*mmap
 
 class clusterLike:
     def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile):
@@ -43,18 +47,45 @@ class clusterLike:
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
 
         self.diagnosticsDir=nemoOutputDir+"diagnostics" 
-        filteredMapsDir=nemoOutputDir+"filteredMaps"
-        self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, filteredMapsDir)
+        self.filteredMapsDir=nemoOutputDir+"filteredMaps"
+        self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, self.filteredMapsDir)
         FilterNoiseMapFile = nemoOutputDir + noiseFile
-        self.rms_noise_map, self.nmap_ra, self.nmap_dec, self.pixel_size = read_MJH_noisemap(FilterNoiseMapFile)
+        MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
+        self.rms_noise_map  = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
+        self.wcs=astWCS.WCS(FilterNoiseMapFile) 
+        self.qmin = 5.6
 
-    def P_Yo(self, M, z):
-        
-        ans = 1
+    def Find_nearest_pixel_ind(self,RADeg,DECDeg):
+        x,y = self.wcs.wcs2pix(RADeg,DECDeg)
+        return [np.round(x),np.round(y)]
+
+    def P_Yo(self, Y0, M, z,thetaScalPars):
+        YNorm,Yslope,Ysig = thetaScalPars
+        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(M), z, self.tckQFit,tenToA0=YNorm,B0=YSlope,sigma_int=Ysig)
+        #Ma = np.outer(MM,np.ones(len(Y0[0,:])))
+        numer = -1.*(np.log(Y/Ytilde))**2
+        ans = 1./(Ysig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*Ysig**2))
+
+        return ans
+
+    def Y_erf(self,Y,Ynoise):
+        q = self.qmin
+        noise = np.outer(Ynoise,np.ones(len(Y[0,:])))
+        ans = 0.5 * (1. + special.erf((Y_true - q*sigma_Na)/(np.sqrt(2.)*sigma_Na)))
+        return ans
+
+    def q_prob (self,q,LgY,YNoise):
+        #Gaussian error probablity for SZ S/N                                                                                 
+        sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
+        Y = 10**(lgY)
+        ans = gaussian(q,Y/YNoise,1.)
         return ans
 
     def Ntot_survey(self, HMF, NoiseMap):
-        ans = 1
+        #temp
+        Ythresh = 10**(-4.65)
+
+        ans = 1.
         return ans
 
     def lnprior(self,theta):
