@@ -26,6 +26,6 @@ gridName = "grid-owl2"
 
 nemoOutputDir = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACTdata/'
 pardict = nemoOutputDir + 'equD56.par'
-
-CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir)
+noise_file = 'RMSMap_Arnaud_M2e14_z0p4.fits'
+CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir,noise_file)
 

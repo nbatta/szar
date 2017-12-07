@@ -2,6 +2,7 @@ import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 import emcee
 from nemo import simsTools
+from astropy.io import fits
 from ConfigParser import SafeConfigParser
 from orphics.tools.io import dictFromSection
 import cPickle as pickle
@@ -9,9 +10,16 @@ import matplotlib.pyplot as plt
 
 #import time
 
+def read_MJH_noisemap(noiseMap):
+    img = fits.open(noiseMap)
+    rmsmap=img[0].data
+    ra = 1.
+    dec = 1.
+    pixel_size = 1.
+    return rmsmap, ra, dec, pixel_size
 
 class clusterLike:
-    def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir):
+    def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile):
         
         Config = SafeConfigParser()
         Config.optionxform=str
@@ -37,6 +45,17 @@ class clusterLike:
         self.diagnosticsDir=nemoOutputDir+"diagnostics" 
         filteredMapsDir=nemoOutputDir+"filteredMaps"
         self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, filteredMapsDir)
+        FilterNoiseMapFile = nemoOutputDir + noiseFile
+        self.rms_noise_map, self.nmap_ra, self.nmap_dec, self.pixel_size = read_MJH_noisemap(FilterNoiseMapFile)
+
+    def P_Yo(self, M, z):
+        
+        ans = 1
+        return ans
+
+    def Ntot_survey(self, HMF, NoiseMap):
+        ans = 1
+        return ans
 
     def lnprior(self,theta):
         a1,a2 = theta
