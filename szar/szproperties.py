@@ -9,8 +9,15 @@ from orphics.tools.stats import timeit
 def gaussian(xx, mu, sig):
     return 1./(sig * np.sqrt(2*np.pi)) * np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
 
-def gaussian2Dnorm(sig_x,sig_y, rho):
+def gaussian2Dnorm(sig_x,sig_y,rho):
     return sig_x*sig_y*2.0*np.pi*np.sqrt(1. - rho**2)
+
+def 2dgaussian(diff,sig_x,sig_y,rho):
+    cov = np.array([[sig_x**2, sig_x*sig_y*rho],[sig_x*sig_y*rho, sig_y**2]])
+    icov = np.linalg.inv(cov)
+    ans = np.dot(np.transpose(diff),np.dot(icov,diff))
+    ans /= gaussian2Dnorm(sig_x,sig_y,rho)
+    return ans
 
 def gaussian2D(xx, mu_x, sig_x,yy,mu_y, sig_y, rho):
 
@@ -322,13 +329,14 @@ class SZ_Cluster_Model:
         print((Y.size, Mwla.size, MM.size)) 
         
         diff_Y = q_arr - Y/sigma_Na
-        diff_M = Mwl*self.scaling['b_wl'] - MM
+        diff_M = diff_Y*0.0 + Mwl*self.scaling['b_wl'] - MM
         diff_arr = np.array([diff_Y,diff_M])
-        cov = np.array([[1.,rho*Merr*MM],[rho*Merr*MM (Merr*MM)**2 ]])
-        covi = np.linalg.inv(cov)
+        ans = 2Dgaussian(diff_arr,1.,Merr*MM,rho)
+        #cov = np.array([[1.,rho*Merr*MM],[rho*Merr*MM (Merr*MM)**2 ]])
+        #covi = np.linalg.inv(cov)
 
-        ans = np.dot(np.transpose(diff_arr),np.dot(covi,diff_arr))
-        norm = gaussian2D_norm(1,Merra*MMa,rho)
+        #ans = np.dot(np.transpose(diff_arr),np.dot(covi,diff_arr))
+        #norm = gaussian2D_norm(1,Merra*MMa,rho)
         #ans = gaussian2D(q_arr,Y/sigma_Na,1.,Mwl*self.scaling['b_wl'],MMa,Merra*MMa,rho)
         return ans
     
