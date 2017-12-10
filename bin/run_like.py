@@ -1,6 +1,6 @@
 import szar.likelihood as lk
 import matplotlib.pyplot as plt
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from orphics.tools.io import dictFromSection
 
 import time
