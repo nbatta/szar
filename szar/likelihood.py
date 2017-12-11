@@ -5,7 +5,7 @@ from nemo import simsTools
 from scipy import special
 from astropy.io import fits
 from astLib import astWCS
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from orphics.tools.io import dictFromSection
 import cPickle as pickle
 import matplotlib.pyplot as plt

@@ -12,7 +12,7 @@ def gaussian(xx, mu, sig):
 def gaussian2Dnorm(sig_x,sig_y,rho):
     return sig_x*sig_y*2.0*np.pi*np.sqrt(1. - rho**2)
 
-def 2dgaussian(diff,sig_x,sig_y,rho):
+def gaussianMat2D(diff,sig_x,sig_y,rho):
     cov = np.array([[sig_x**2, sig_x*sig_y*rho],[sig_x*sig_y*rho, sig_y**2]])
     icov = np.linalg.inv(cov)
     ans = np.dot(np.transpose(diff),np.dot(icov,diff))
@@ -50,7 +50,7 @@ class SZ_Cluster_Model:
         lnYmax = np.log(ymax)
         self.lnY = np.arange(lnYmin,lnYmax,dlnY)
 
-        fgs = fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
+        fgs = fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv="input/sz_template_battaglia.csv")
 
         self.dell = 10
         self.nlinv = 0.
@@ -331,7 +331,7 @@ class SZ_Cluster_Model:
         diff_Y = q_arr - Y/sigma_Na
         diff_M = diff_Y*0.0 + Mwl*self.scaling['b_wl'] - MM
         diff_arr = np.array([diff_Y,diff_M])
-        ans = 2Dgaussian(diff_arr,1.,Merr*MM,rho)
+        ans = gaussianMat2D(diff_arr,1.,Merr*MM,rho)
         #cov = np.array([[1.,rho*Merr*MM],[rho*Merr*MM (Merr*MM)**2 ]])
         #covi = np.linalg.inv(cov)
 
