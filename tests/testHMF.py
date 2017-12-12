@@ -56,7 +56,20 @@ elif qspacing=="linear":
 else:
     raise ValueError
 
-SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
-dN_dmqz_corr = HMF.N_of_mqz_SZ_corr(lndM,qbin_edges,SZProf)
-dN_dmqz = HMF.N_of_mqz_SZ(lndM,qbin_edges,SZProf)
+SZProp = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
+
+Mwl = 10**HMF.Mexp
+z_arr = HMF.zarr
+M_arr =  np.outer(HMF.M,np.ones([len(z_arr)]))
+
+if HMF.sigN is None: HMF.updateSigN(SZProp)
+sigN = HMF.sigN
+
+
+q_arr = (qbin_edges[1:]+qbin_edges[:-1])/2.
+
+blah = SZProp.P_of_qn_corr(SZProp.lnY,M_arr,z_arr,sigN,q_arr,Mwl,lndM)
+
+#dN_dmqz_corr = HMF.N_of_mqz_SZ_corr(lndM,qbin_edges,SZProp)
+#dN_dmqz = HMF.N_of_mqz_SZ(lndM,qbin_edges,SZProp)
 

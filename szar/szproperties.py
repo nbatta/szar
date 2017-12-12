@@ -322,11 +322,12 @@ class SZ_Cluster_Model:
     def q_prob_corr (self,q_arr,lnY,sigma_N,Mwl,MM,Merr):
         #Gaussian error probablity for SZ S/N
         rho = self.scaling['rho_corr']
-        sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
-        Mwla = np.outer(Mwl)
-        Y = np.exp(lnY)
         print("size")
-        print((Y.size, Mwla.size, MM.size)) 
+        Y = np.exp(lnY)
+        print(sigma_N)
+        print(Y.shape, MM.shape,q_arr.shape,sigma_N.shape)
+        print(np.ones(len(lnY[0,:])))
+        sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
         
         diff_Y = q_arr - Y/sigma_Na
         diff_M = diff_Y*0.0 + Mwl*self.scaling['b_wl'] - MM
