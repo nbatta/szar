@@ -13,7 +13,7 @@ def gaussian2Dnorm(sig_x,sig_y,rho):
     return sig_x*sig_y*2.0*np.pi*np.sqrt(1. - rho**2)
 
 def gaussianMat2D(diff,sig_x,sig_y,rho):
-    cov = np.array([[sig_x**2, sig_x*sig_y*rho],[sig_x*sig_y*rho, sig_y**2]])
+    cov = np.matrix([[sig_x**2, sig_x*sig_y*rho],[sig_x*sig_y*rho, sig_y**2]])
     icov = np.linalg.inv(cov)
     ans = np.dot(np.transpose(diff),np.dot(icov,diff))
     ans /= gaussian2Dnorm(sig_x,sig_y,rho)
@@ -299,15 +299,20 @@ class SZ_Cluster_Model:
         sig_thresh = self.q_prob(qarr,lnYa,sigma_N)
         P_Y = self.P_of_Y(lnYa,MM, zz)
         ans = MM*0.0
+        print ('No corr')
+        print (P_Y.shape,sig_thresh.shape,lnY.shape,np.diff(lnY).shape)
         for ii in range(len(MM)):
             ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
         return ans
 
     def P_of_qn_corr(self,lnY,MM,zz,sigma_N,qarr,Mwl,Merr):
         lnYa = np.outer(np.ones(len(MM)),lnY)
+
         sig_thresh = self.q_prob_corr(qarr,lnYa,sigma_N,Mwl,MM,Merr)
         P_Y = self.P_of_Y(lnYa,MM, zz)
-        ans = sig_thresh*0.0
+        ans = MM*0.0
+        print ('corr')
+        print (P_Y.shape,sig_thresh.shape,lnY.shape,np.diff(lnY).shape)
         for ii in range(len(MM)):
             ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
         return ans
@@ -316,6 +321,7 @@ class SZ_Cluster_Model:
         #Gaussian error probablity for SZ S/N 
         sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
         Y = np.exp(lnY)
+        print(Y.shape,q_arr.shape,sigma_N.shape)
         ans = gaussian(q_arr,Y/sigma_Na,1.)
         return ans
 
@@ -324,18 +330,23 @@ class SZ_Cluster_Model:
         rho = self.scaling['rho_corr']
         print("size 2")
         Y = np.exp(lnY)
-        print(sigma_N)
-        print(Y.shape, MM.shape,q_arr.shape,sigma_N.shape)
+        #print(sigma_N)
+        print(Y.shape,q_arr.shape,sigma_N.shape,MM.shape)
         print(np.ones(len(lnY[0,:])))
         sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
         
         diff_Y = q_arr - Y/sigma_Na
-        diff_M = diff_Y*0.0 + Mwl*self.scaling['b_wl'] - MM
+        print(diff_Y.shape)
+        diff_M = np.outer(Mwl*self.scaling['b_wl'] - MM,np.ones(len(lnY[0,:])))
         diff_arr = np.array([diff_Y,diff_M])
-        ans = gaussianMat2D(diff_arr,1.,Merr*MM,rho)
+        Merr_arr = Merr*MM
+        print (diff_arr.shape)
+        ans = sigma_Na * 0.0
+        for ii in range(len(MM)):
+            ans[ii,:] = gaussianMat2D(diff_arr[:,ii,:],1.,Merr[ii],rho)[0]
         #cov = np.array([[1.,rho*Merr*MM],[rho*Merr*MM (Merr*MM)**2 ]])
         #covi = np.linalg.inv(cov)
-
+        print (ans.shape)
         #ans = np.dot(np.transpose(diff_arr),np.dot(covi,diff_arr))
         #norm = gaussian2D_norm(1,Merra*MMa,rho)
         #ans = gaussian2D(q_arr,Y/sigma_Na,1.,Mwl*self.scaling['b_wl'],MMa,Merra*MMa,rho)
