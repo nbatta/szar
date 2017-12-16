@@ -15,7 +15,14 @@ def gaussian2Dnorm(sig_x,sig_y,rho):
 def gaussianMat2D(diff,sig_x,sig_y,rho):
     cov = np.matrix([[sig_x**2, sig_x*sig_y*rho],[sig_x*sig_y*rho, sig_y**2]])
     icov = np.linalg.inv(cov)
-    ans = np.dot(np.transpose(diff),np.dot(icov,diff))
+    print (cov,icov)
+    ans = 0.0*diff[0,:]
+    print ('gauss2D',ans.shape,diff.shape,icov.shape,sig_y.shape)
+    for ii in range(len(diff[0,:])):
+        #print ('gauss2D',ans.shape,diff[:,ii].shape,icov.shape,np.dot(icov,diff[:,ii]).shape,np.matrix([[diff[0,ii]],[diff[1,ii]]]).shape)
+        #print (np.dot(np.matrix([[diff[0,ii]],[diff[1,ii]]]),np.dot(icov,diff[:,ii])))
+        #ans[ii] = np.dot(np.matrix([[diff[0,ii]],[diff[1,ii]]]),np.dot(icov,diff[:,ii]))
+        ans[ii] =  np.dot(diff[:,ii],np.transpose(np.dot(icov,diff[:,ii])))
     ans /= gaussian2Dnorm(sig_x,sig_y,rho)
     return ans
 
@@ -297,6 +304,7 @@ class SZ_Cluster_Model:
         lnYa = np.outer(np.ones(len(MM)),lnY)
 
         sig_thresh = self.q_prob(qarr,lnYa,sigma_N)
+        print (sig_thresh)
         P_Y = self.P_of_Y(lnYa,MM, zz)
         ans = MM*0.0
         print ('No corr')
@@ -309,6 +317,7 @@ class SZ_Cluster_Model:
         lnYa = np.outer(np.ones(len(MM)),lnY)
 
         sig_thresh = self.q_prob_corr(qarr,lnYa,sigma_N,Mwl,MM,Merr)
+        print (sig_thresh)
         P_Y = self.P_of_Y(lnYa,MM, zz)
         ans = MM*0.0
         print ('corr')
@@ -339,11 +348,12 @@ class SZ_Cluster_Model:
         print(diff_Y.shape)
         diff_M = np.outer(Mwl*self.scaling['b_wl'] - MM,np.ones(len(lnY[0,:])))
         diff_arr = np.array([diff_Y,diff_M])
-        Merr_arr = Merr*MM
-        print (diff_arr.shape)
+        Merr_arr = MM*Merr
+        print (diff_arr.shape,Merr_arr.shape)
         ans = sigma_Na * 0.0
+        print (ans.shape)
         for ii in range(len(MM)):
-            ans[ii,:] = gaussianMat2D(diff_arr[:,ii,:],1.,Merr[ii],rho)[0]
+            ans[ii,:] = gaussianMat2D(diff_arr[:,ii,:],1.,Merr_arr[ii],rho)
         #cov = np.array([[1.,rho*Merr*MM],[rho*Merr*MM (Merr*MM)**2 ]])
         #covi = np.linalg.inv(cov)
         print (ans.shape)
