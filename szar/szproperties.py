@@ -15,9 +15,9 @@ def gaussian2Dnorm(sig_x,sig_y,rho):
 def gaussianMat2D(diff,sig_x,sig_y,rho):
     cov = np.matrix([[sig_x**2, sig_x*sig_y*rho],[sig_x*sig_y*rho, sig_y**2]])
     icov = np.linalg.inv(cov)
-    print (cov,icov)
+    #print (cov,icov)
     ans = 0.0*diff[0,:]
-    print ('gauss2D',ans.shape,diff.shape,icov.shape,sig_y.shape)
+    #print ('gauss2D',ans.shape,diff.shape,icov.shape,sig_y.shape)
     for ii in range(len(diff[0,:])):
         #print ('gauss2D',ans.shape,diff[:,ii].shape,icov.shape,np.dot(icov,diff[:,ii]).shape,np.matrix([[diff[0,ii]],[diff[1,ii]]]).shape)
         #print (np.dot(np.matrix([[diff[0,ii]],[diff[1,ii]]]),np.dot(icov,diff[:,ii])))
@@ -317,14 +317,23 @@ class SZ_Cluster_Model:
         lnYa = np.outer(np.ones(len(MM)),lnY)
 
         sig_thresh = self.q_prob_corr(qarr,lnYa,sigma_N,Mwl,MM,Merr)
+        
+        sig_thresh_old = self.q_prob(qarr,lnYa,sigma_N)
+
+        Mwlprob_old = self.Mwl_prob(Mwl,MM,Merr)
+
         print (sig_thresh)
+        print ('testing corr')
+        #print (sig_thresh_old.shape,Mwlprob_old.shape)
         P_Y = self.P_of_Y(lnYa,MM, zz)
         ans = MM*0.0
+        ans2 = MM*0.0
         print ('corr')
         print (P_Y.shape,sig_thresh.shape,lnY.shape,np.diff(lnY).shape)
         for ii in range(len(MM)):
             ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
-        return ans
+            ans2[ii] = np.trapz(P_Y[ii,:]*sig_thresh_old[ii,:]*Mwlprob_old[ii],lnY,np.diff(lnY))
+        return ans,ans2
 
     def q_prob (self,q_arr,lnY,sigma_N):
         #Gaussian error probablity for SZ S/N 
@@ -342,6 +351,7 @@ class SZ_Cluster_Model:
         #print(sigma_N)
         print(Y.shape,q_arr.shape,sigma_N.shape,MM.shape)
         print(np.ones(len(lnY[0,:])))
+        print(rho)
         sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
         
         diff_Y = q_arr - Y/sigma_Na
