@@ -22,7 +22,7 @@ def gaussianMat2D(diff,sig_x,sig_y,rho):
         #print ('gauss2D',ans.shape,diff[:,ii].shape,icov.shape,np.dot(icov,diff[:,ii]).shape,np.matrix([[diff[0,ii]],[diff[1,ii]]]).shape)
         #print (np.dot(np.matrix([[diff[0,ii]],[diff[1,ii]]]),np.dot(icov,diff[:,ii])))
         #ans[ii] = np.dot(np.matrix([[diff[0,ii]],[diff[1,ii]]]),np.dot(icov,diff[:,ii]))
-        ans[ii] =  np.dot(diff[:,ii],np.transpose(np.dot(icov,diff[:,ii])))
+        ans[ii] =  np.exp(-0.5 * np.dot(diff[:,ii],np.transpose(np.dot(icov,diff[:,ii]))))
     ans /= gaussian2Dnorm(sig_x,sig_y,rho)
     return ans
 
