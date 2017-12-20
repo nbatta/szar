@@ -15,19 +15,13 @@ def gaussian2Dnorm(sig_x,sig_y,rho):
 def gaussianMat2D(diff,sig_x,sig_y,rho):
     cov = np.matrix([[sig_x**2, sig_x*sig_y*rho],[sig_x*sig_y*rho, sig_y**2]])
     icov = np.linalg.inv(cov)
-    #print (cov,icov)
     ans = 0.0*diff[0,:]
-    #print ('gauss2D',ans.shape,diff.shape,icov.shape,sig_y.shape)
     for ii in range(len(diff[0,:])):
-        #print ('gauss2D',ans.shape,diff[:,ii].shape,icov.shape,np.dot(icov,diff[:,ii]).shape,np.matrix([[diff[0,ii]],[diff[1,ii]]]).shape)
-        #print (np.dot(np.matrix([[diff[0,ii]],[diff[1,ii]]]),np.dot(icov,diff[:,ii])))
-        #ans[ii] = np.dot(np.matrix([[diff[0,ii]],[diff[1,ii]]]),np.dot(icov,diff[:,ii]))
         ans[ii] =  np.exp(-0.5 * np.dot(diff[:,ii],np.transpose(np.dot(icov,diff[:,ii]))))
     ans /= gaussian2Dnorm(sig_x,sig_y,rho)
     return ans
 
 def gaussian2D(xx, mu_x, sig_x,yy,mu_y, sig_y, rho):
-
     exp0 = -1./(2.*(1.-rho**2))
     exp1 = (xx - mu_x)**2 / (sig_x**2.)
     exp2 = (yy - mu_y)**2 / (sig_y**2.)
@@ -301,75 +295,45 @@ class SZ_Cluster_Model:
         return ans
 
     def P_of_qn(self,lnY,MM,zz,sigma_N,qarr):
-        lnYa = np.outer(np.ones(len(MM)),lnY)
 
+        lnYa = np.outer(np.ones(len(MM)),lnY)
         sig_thresh = self.q_prob(qarr,lnYa,sigma_N)
-        print (sig_thresh)
         P_Y = self.P_of_Y(lnYa,MM, zz)
         ans = MM*0.0
-        print ('No corr')
-        print (P_Y.shape,sig_thresh.shape,lnY.shape,np.diff(lnY).shape)
         for ii in range(len(MM)):
             ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
         return ans
 
     def P_of_qn_corr(self,lnY,MM,zz,sigma_N,qarr,Mwl,Merr):
+
         lnYa = np.outer(np.ones(len(MM)),lnY)
-
-        sig_thresh = self.q_prob_corr(qarr,lnYa,sigma_N,Mwl,MM,Merr)
-        
-        sig_thresh_old = self.q_prob(qarr,lnYa,sigma_N)
-
-        Mwlprob_old = self.Mwl_prob(Mwl,MM,Merr)
-
-        print (sig_thresh)
-        print ('testing corr')
-        #print (sig_thresh_old.shape,Mwlprob_old.shape)
+        sig_thresh = self.q_prob_corr(qarr,lnYa,sigma_N,Mwl,MM,Merr)        
         P_Y = self.P_of_Y(lnYa,MM, zz)
         ans = MM*0.0
-        ans2 = MM*0.0
-        print ('corr')
-        print (P_Y.shape,sig_thresh.shape,lnY.shape,np.diff(lnY).shape)
         for ii in range(len(MM)):
             ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
-            ans2[ii] = np.trapz(P_Y[ii,:]*sig_thresh_old[ii,:]*Mwlprob_old[ii],lnY,np.diff(lnY))
-        return ans,ans2
+        return ans
 
     def q_prob (self,q_arr,lnY,sigma_N):
         #Gaussian error probablity for SZ S/N 
         sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
         Y = np.exp(lnY)
-        print(Y.shape,q_arr.shape,sigma_N.shape)
         ans = gaussian(q_arr,Y/sigma_Na,1.)
         return ans
 
     def q_prob_corr (self,q_arr,lnY,sigma_N,Mwl,MM,Merr):
         #Gaussian error probablity for SZ S/N
         rho = self.scaling['rho_corr']
-        print("size 2")
         Y = np.exp(lnY)
-        #print(sigma_N)
-        print(Y.shape,q_arr.shape,sigma_N.shape,MM.shape)
-        print(np.ones(len(lnY[0,:])))
-        print(rho)
-        sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
-        
+
+        sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))        
         diff_Y = q_arr - Y/sigma_Na
-        print(diff_Y.shape)
         diff_M = np.outer(Mwl*self.scaling['b_wl'] - MM,np.ones(len(lnY[0,:])))
         diff_arr = np.array([diff_Y,diff_M])
         Merr_arr = MM*Merr
-        print (diff_arr.shape,Merr_arr.shape)
         ans = sigma_Na * 0.0
-        print (ans.shape)
         for ii in range(len(MM)):
             ans[ii,:] = gaussianMat2D(diff_arr[:,ii,:],1.,Merr_arr[ii],rho)
-        #cov = np.array([[1.,rho*Merr*MM],[rho*Merr*MM (Merr*MM)**2 ]])
-        #covi = np.linalg.inv(cov)
-        print (ans.shape)
-        #ans = np.dot(np.transpose(diff_arr),np.dot(covi,diff_arr))
-        #norm = gaussian2D_norm(1,Merra*MMa,rho)
-        #ans = gaussian2D(q_arr,Y/sigma_Na,1.,Mwl*self.scaling['b_wl'],MMa,Merra*MMa,rho)
         return ans
     
     def Mwl_prob (self,Mwl,M,Merr):
@@ -377,8 +341,4 @@ class SZ_Cluster_Model:
         ans = gaussian(Mwl*self.scaling['b_wl'],M,Merr*M)*self.scaling['b_wl']
         return ans
 
-    # def Mwl_prob (self,Mwl,M,Merr):
-    #     #Gaussian error probablity for weak lensing mass 
-    #     ans = gaussian(Mwl,M,(Merr+0.01)*M) #* gaussian(Mwl,M,0.01*M)
-    #     return ans
 
