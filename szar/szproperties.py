@@ -15,9 +15,9 @@ def gaussian2Dnorm(sig_x,sig_y,rho):
 def gaussianMat2D(diff,sig_x,sig_y,rho):
     cov = np.matrix([[sig_x**2, sig_x*sig_y*rho],[sig_x*sig_y*rho, sig_y**2]])
     icov = np.linalg.inv(cov)
-    ans = 0.0*diff[0,:]
-    for ii in range(len(diff[0,:])):
-        ans[ii] =  np.exp(-0.5 * np.dot(diff[:,ii],np.transpose(np.dot(icov,diff[:,ii]))))
+    iC_diff = np.dot(icov,diff)
+    expo = np.einsum('j...,j...->...',diff,iC_diff)
+    ans = np.exp(-0.5 * expo)
     ans /= gaussian2Dnorm(sig_x,sig_y,rho)
     return ans
 
@@ -311,6 +311,7 @@ class SZ_Cluster_Model:
         P_Y = self.P_of_Y(lnYa,MM, zz)
         ans = MM*0.0
         for ii in range(len(MM)):
+            
             ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
         return ans
 
@@ -332,6 +333,8 @@ class SZ_Cluster_Model:
         diff_arr = np.array([diff_Y,diff_M])
         Merr_arr = MM*Merr
         ans = sigma_Na * 0.0
+
+        ans = np.apply_along
         for ii in range(len(MM)):
             ans[ii,:] = gaussianMat2D(diff_arr[:,ii,:],1.,Merr_arr[ii],rho)
         return ans
