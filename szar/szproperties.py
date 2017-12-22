@@ -252,9 +252,9 @@ class SZ_Cluster_Model:
 
         # P_func(M,z,q)
         for i in range(z_arr.size):
-            for kk in range(q_arr.size):
-                for jj in range(M_wl.size):
-                    P_func[:,i,kk,jj] = self.P_of_qn_corr(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr[kk],M_wl[jj],mass_err[:,i])
+#            for kk in range(q_arr.size):
+            for jj in range(M_wl.size):
+                P_func[:,i,:,jj] = self.P_of_qn_corr(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr,M_wl[jj],mass_err[:,i])
         return P_func
 
     def Y_M(self,MM,zz):
@@ -324,14 +324,17 @@ class SZ_Cluster_Model:
     def P_of_qn_corr(self,lnY,MM,zz,sigma_N,qarr,Mwl,Merr):
 
         lnYa = np.outer(np.ones(len(MM)),lnY)
-        sig_thresh = self.q_prob_corr(qarr,lnYa,sigma_N,Mwl,MM,Merr)        
+        #sig_thresh = self.q_prob_corr(qarr,lnYa,sigma_N,Mwl,MM,Merr)        
         P_Y = self.P_of_Y(lnYa,MM, zz)
         #ans = MM*0.0
         #for ii in range(len(MM)):
             #sig_thresh = self.q_prob_corr(qarr,lnY,sigma_N[ii],Mwl,MM[ii],Merr[ii])
             #ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh,lnY,np.diff(lnY))
         #    ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
-        ans = np.trapz(P_Y*sig_thresh,lnY,np.diff(lnY),axis=1)
+        ans = np.zeros([len(MM),len(qarr)])
+        for ii in range(len(qarr)):
+            sig_thresh = self.q_prob_corr(qarr[ii],lnYa,sigma_N,Mwl,MM,Merr)
+            ans[:,ii] = np.trapz(P_Y*sig_thresh,lnY,np.diff(lnY),axis=1)
         return ans
 
     def q_prob (self,q_arr,lnY,sigma_N):
@@ -342,7 +345,7 @@ class SZ_Cluster_Model:
         return ans
 
     def q_prob_corr (self,q_arr,lnY,sigma_N,Mwl,MM,Merr):
-        #Gaussian error probablity for SZ S/N
+        #Gaussian error probablity for SZ S/N and WL mass including correlated scatter
         rho = self.scaling['rho_corr']
         Y = np.exp(lnY)
         sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))        
