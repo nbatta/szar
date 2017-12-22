@@ -232,12 +232,8 @@ class SZ_Cluster_Model:
         M_arr =  np.outer(M,np.ones([z_arr.size]))
 
         # P_func(M,z,q)
-        #for i in range(z_arr.size):
-        #    for kk in range(q_arr.size):
-        #        P_func[:,i,kk] = self.P_of_qn(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr[kk])
-
         for i in range(z_arr.size):
-            P_func[:,i,:] = self.P_of_qn_arr(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr)
+            P_func[:,i,:] = self.P_of_qn(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr)
 
         return P_func
 
@@ -252,7 +248,6 @@ class SZ_Cluster_Model:
 
         # P_func(M,z,q)
         for i in range(z_arr.size):
-#            for kk in range(q_arr.size):
             for jj in range(M_wl.size):
                 P_func[:,i,:,jj] = self.P_of_qn_corr(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr,M_wl[jj],mass_err[:,i])
         return P_func
@@ -292,24 +287,10 @@ class SZ_Cluster_Model:
         lnYa = np.outer(np.ones(len(MM)),lnY)
         sig_thresh = self.Y_erf(np.exp(lnYa),sigma_N)
         P_Y = self.P_of_Y(lnYa,MM, zz)
-        #ans = MM*0.0
-        #for ii in range(len(MM)):
-        #    ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
         ans = np.trapz(P_Y*sig_thresh,lnY,np.diff(lnY),axis=1)
         return ans
 
     def P_of_qn(self,lnY,MM,zz,sigma_N,qarr):
-
-        lnYa = np.outer(np.ones(len(MM)),lnY)
-        sig_thresh = self.q_prob(qarr,lnYa,sigma_N)
-        P_Y = self.P_of_Y(lnYa,MM, zz)
-        #ans = MM*0.0
-        #for ii in range(len(MM)):
-        #    ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
-        ans = np.trapz(P_Y*sig_thresh,lnY,np.diff(lnY),axis=1)
-        return ans
-
-    def P_of_qn_arr(self,lnY,MM,zz,sigma_N,qarr):
 
         lnYa = np.outer(np.ones(len(MM)),lnY)
         
@@ -324,13 +305,7 @@ class SZ_Cluster_Model:
     def P_of_qn_corr(self,lnY,MM,zz,sigma_N,qarr,Mwl,Merr):
 
         lnYa = np.outer(np.ones(len(MM)),lnY)
-        #sig_thresh = self.q_prob_corr(qarr,lnYa,sigma_N,Mwl,MM,Merr)        
         P_Y = self.P_of_Y(lnYa,MM, zz)
-        #ans = MM*0.0
-        #for ii in range(len(MM)):
-            #sig_thresh = self.q_prob_corr(qarr,lnY,sigma_N[ii],Mwl,MM[ii],Merr[ii])
-            #ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh,lnY,np.diff(lnY))
-        #    ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
         ans = np.zeros([len(MM),len(qarr)])
         for ii in range(len(qarr)):
             sig_thresh = self.q_prob_corr(qarr[ii],lnYa,sigma_N,Mwl,MM,Merr)
