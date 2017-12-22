@@ -13,8 +13,9 @@ def gaussian2Dnorm(sig_x,sig_y,rho):
     return sig_x*sig_y*2.0*np.pi*np.sqrt(1. - rho**2)
 
 def gaussianMat2D(diff,sig_x,sig_y,rho):
-    cov = np.matrix([[sig_x**2, sig_x*sig_y*rho],[sig_x*sig_y*rho, sig_y**2]])
-    icov = np.linalg.inv(cov)
+    #cov = np.matrix([[sig_x**2, sig_x*sig_y*rho],[sig_x*sig_y*rho, sig_y**2]])
+    #icov = np.linalg.inv(cov)
+    icov = np.matrix([[sig_y**2, -1.*sig_x*sig_y*rho],[-1.*sig_x*sig_y*rho, sig_x**2]]) / (sig_x**2* sig_y**2*(1 - rho**2) ) 
     iC_diff = np.dot(icov,diff)
     expo = np.einsum('j...,j...->...',diff,iC_diff)
     ans = np.exp(-0.5 * expo)
@@ -338,27 +339,6 @@ class SZ_Cluster_Model:
 
         for ii in range(len(MM)):
             ans[ii,:] = gaussianMat2D(diff_arr[:,ii,:],1.,Merr_arr[ii],rho)
-        return ans
-
-    def q_prob_corr_mod (self,q_arr,lnY,sigma_N,Mwl,MM,Merr):
-        #Gaussian error probablity for SZ S/N
-        rho = self.scaling['rho_corr']
-        Y = np.exp(lnY)
-        #print (sigma_N.shape)
-        #sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))        
-        sigma_Na = np.outer(sigma_N,np.ones(len(lnY)))        
-        diff_Y = (q_arr - Y/sigma_Na).flatten()
-        #diff_M = np.outer(Mwl*self.scaling['b_wl'] - MM,np.ones(len(lnY[0,:])))
-        diff_M = (np.outer(Mwl*self.scaling['b_wl'] - MM,np.ones(len(lnY)))).flatten()
-        diff_arr = np.array([diff_Y,diff_M])
-        #diff_arr = np.array([diff_Y,diff_M])
-        Merr_arr = MM*Merr
-        #print (Merr_arr.shape,MM.shape,Merr.shape)
-        #ans = sigma_Na * 0.0
-
-        #for ii in range(len(MM)):
-        #    ans[ii,:] = gaussianMat2D(diff_arr[:,ii,:],1.,Merr_arr[ii],rho)
-        ans = gaussianMat2D(diff_arr,1.,Merr_arr,rho)
         return ans
     
     def Mwl_prob (self,Mwl,M,Merr):
