@@ -232,9 +232,12 @@ class SZ_Cluster_Model:
         M_arr =  np.outer(M,np.ones([z_arr.size]))
 
         # P_func(M,z,q)
+        #for i in range(z_arr.size):
+        #    for kk in range(q_arr.size):
+        #        P_func[:,i,kk] = self.P_of_qn(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr[kk])
+
         for i in range(z_arr.size):
-            for kk in range(q_arr.size):
-                P_func[:,i,kk] = self.P_of_qn(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr[kk])
+            P_func[:,i,:] = self.P_of_qn_arr(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr)
 
         return P_func
 
@@ -304,6 +307,18 @@ class SZ_Cluster_Model:
         #for ii in range(len(MM)):
         #    ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
         ans = np.trapz(P_Y*sig_thresh,lnY,np.diff(lnY),axis=1)
+        return ans
+
+    def P_of_qn_arr(self,lnY,MM,zz,sigma_N,qarr):
+
+        lnYa = np.outer(np.ones(len(MM)),lnY)
+        
+        P_Y = self.P_of_Y(lnYa,MM, zz)
+        ans = np.zeros([len(MM),len(qarr)])
+        
+        for ii in range(len(qarr)):
+            sig_thresh = self.q_prob(qarr[ii],lnYa,sigma_N)
+            ans[:,ii] = np.trapz(P_Y*sig_thresh,lnY,np.diff(lnY),axis=1)
         return ans
 
     def P_of_qn_corr(self,lnY,MM,zz,sigma_N,qarr,Mwl,Merr):
