@@ -13,8 +13,6 @@ def gaussian2Dnorm(sig_x,sig_y,rho):
     return sig_x*sig_y*2.0*np.pi*np.sqrt(1. - rho**2)
 
 def gaussianMat2D(diff,sig_x,sig_y,rho):
-    #cov = np.matrix([[sig_x**2, sig_x*sig_y*rho],[sig_x*sig_y*rho, sig_y**2]])
-    #icov = np.linalg.inv(cov)
     icov = np.matrix([[sig_y**2, -1.*sig_x*sig_y*rho],[-1.*sig_x*sig_y*rho, sig_x**2]]) / (sig_x**2* sig_y**2*(1 - rho**2) ) 
     iC_diff = np.dot(icov,diff)
     expo = np.einsum('j...,j...->...',diff,iC_diff)
