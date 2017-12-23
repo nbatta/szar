@@ -40,7 +40,9 @@ m_nmap = np.mean(nmap[nmap>0])
 
 LgY = np.arange(-6,-3,0.05)
 
-#
+#timing test NB's macbook pro
+
+#5e-5 seconds / per call
 #start = time.time()
 #blah = CL.Y_erf(10**LgY,m_nmap)
 #print (time.time() - start)
