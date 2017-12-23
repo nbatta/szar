@@ -53,6 +53,17 @@ LgY = np.arange(-6,-3,0.05)
 #print (time.time() - start)
 
 #3e-3 seconds / per call
+#start = time.time()
+#blah = CL.P_of_SN(LgY,CL.mgrid,0.5,m_nmap)
+#print (time.time() - start)
+
+#5e-2 seconds / per call
+#start = time.time()
+#blah = CL.PfuncY(m_nmap,CL.mgrid,CL.zgrid)
+#print (time.time() - start)
+
 start = time.time()
-blah = CL.P_of_SN(LgY,CL.mgrid,0.5,m_nmap)
+blah = CL.Ntot_survey(600./42000.,m_nmap)
 print (time.time() - start)
+print (blah)
+

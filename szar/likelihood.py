@@ -55,14 +55,24 @@ class clusterLike:
         self.wcs=astWCS.WCS(FilterNoiseMapFile) 
         self.qmin = 5.6
         self.Ysig = 0.2
+        self.LgY = np.arange(-6,-3,0.05)
 
     def Find_nearest_pixel_ind(self,RADeg,DECDeg):
         x,y = self.wcs.wcs2pix(RADeg,DECDeg)
         return [np.round(x),np.round(y)]
 
+    def PfuncY(self,YNoise,M,z_arr):
+        LgY = self.LgY
+        
+        P_func = np.outer(M,np.zeros([len(z_arr)]))
+        M_arr =  np.outer(M,np.ones([len(z_arr)]))
+
+        for i in range(z_arr.size):
+            P_func[:,i] = self.P_of_SN(LgY,M_arr[:,i],z_arr[i],YNoise)
+        return P_func
+
     def P_Yo(self, LgY, M, z):#,thetaScalPars):
         #YNorm,Yslope,Ysig = thetaScalPars
-        print (LgY.shape)
         Ma = np.outer(M,np.ones(len(LgY[0,:])))
         Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(Ma), z, self.tckQFit)#,tenToA0=YNorm,B0=YSlope,sigma_int=Ysig)
 
@@ -92,12 +102,19 @@ class clusterLike:
         ans = gaussian(q,Y/YNoise,1.)
         return ans
 
-    def Ntot_survey(self, HMF, NoiseMap):
+    def Ntot_survey(self,fsky,Ythresh):
         #temp
-        Ythresh = 10**(-4.65)
+        #Ythresh = 10**(-4.65)
 
-        ans = 1.
-        return ans
+        z_arr = self.HMF.zarr.copy()
+        
+        Pfunc = self.PfuncY(Ythresh,self.HMF.M.copy(),z_arr)
+        dn_dzdm = self.HMF.dn_dM(self.HMF.M200,200.)
+
+        print ((dn_dzdm*Pfunc).shape,(np.diff(self.HMF.M200,axis=0).shape))
+        N_z = np.trapz(dn_dzdm*Pfunc,dx=np.diff(self.HMF.M200,axis=0),axis=0)
+        Ntot = np.trapz(N_z*self.HMF.dVdz,dx=np.diff(z_arr))*4.*np.pi*fsky
+        return Ntot
 
     def lnprior(self,theta):
         a1,a2 = theta
