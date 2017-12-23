@@ -54,29 +54,40 @@ class clusterLike:
         self.rms_noise_map  = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
         self.wcs=astWCS.WCS(FilterNoiseMapFile) 
         self.qmin = 5.6
+        self.Ysig = 0.2
 
     def Find_nearest_pixel_ind(self,RADeg,DECDeg):
         x,y = self.wcs.wcs2pix(RADeg,DECDeg)
         return [np.round(x),np.round(y)]
 
-    def P_Yo(self, Y0, M, z,thetaScalPars):
-        YNorm,Yslope,Ysig = thetaScalPars
-        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(M), z, self.tckQFit,tenToA0=YNorm,B0=YSlope,sigma_int=Ysig)
-        #Ma = np.outer(MM,np.ones(len(Y0[0,:])))
-        numer = -1.*(np.log(Y/Ytilde))**2
-        ans = 1./(Ysig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*Ysig**2))
+    def P_Yo(self, LgY, M, z):#,thetaScalPars):
+        #YNorm,Yslope,Ysig = thetaScalPars
+        print (LgY.shape)
+        Ma = np.outer(M,np.ones(len(LgY[0,:])))
+        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(Ma), z, self.tckQFit)#,tenToA0=YNorm,B0=YSlope,sigma_int=Ysig)
 
+        Y = 10**LgY
+        numer = -1.*(np.log(Y/Ytilde))**2
+        ans = 1./(self.Ysig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*self.Ysig**2))
+        
         return ans
 
     def Y_erf(self,Y,Ynoise):
-        q = self.qmin
-        noise = np.outer(Ynoise,np.ones(len(Y[0,:])))
-        ans = 0.5 * (1. + special.erf((Y_true - q*sigma_Na)/(np.sqrt(2.)*sigma_Na)))
+        qmin = self.qmin  # fixed 
+        ans = 0.5 * (1. + special.erf((Y - qmin*Ynoise)/(np.sqrt(2.)*Ynoise)))
         return ans
 
-    def q_prob (self,q,LgY,YNoise):
+    def P_of_SN(self,LgY,MM,zz,Ynoise):#,thetaScalPars):
+        Y = 10**LgY
+        sig_thresh = np.outer(np.ones(len(MM)),self.Y_erf(Y,Ynoise))
+        Ya = np.outer(np.ones(len(MM)),LgY)
+        P_Y = self.P_Yo(Ya,MM,zz)#,thetaScalPars)
+        ans = np.trapz(P_Y*sig_thresh,LgY,np.diff(LgY),axis=1)
+        return ans
+    
+    def q_prob (self,LgY,YNoise):
         #Gaussian error probablity for SZ S/N                                                                                 
-        sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
+        YNoise = np.outer(sigma_N,np.ones(len(LgY[0,:])))
         Y = 10**(lgY)
         ans = gaussian(q,Y/YNoise,1.)
         return ans
