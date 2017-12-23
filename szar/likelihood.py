@@ -18,7 +18,7 @@ def read_MJH_noisemap(noiseMap,maskMap):
     rmsmap=img[0].data
     #Read in mask map
     img2 = fits.open(maskMap)
-    mmap=img[0].data
+    mmap=img2[0].data
     #return the filter noise map for pixels in the mask map that = 1
     return rmsmap*mmap
 
@@ -97,7 +97,7 @@ class clusterLike:
     
     def q_prob (self,LgY,YNoise):
         #Gaussian error probablity for SZ S/N                                                                                 
-        YNoise = np.outer(sigma_N,np.ones(len(LgY[0,:])))
+        #YNoise = np.outer(sigma_N,np.ones(len(LgY[0,:])))
         Y = 10**(lgY)
         ans = gaussian(q,Y/YNoise,1.)
         return ans
@@ -111,7 +111,6 @@ class clusterLike:
         Pfunc = self.PfuncY(Ythresh,self.HMF.M.copy(),z_arr)
         dn_dzdm = self.HMF.dn_dM(self.HMF.M200,200.)
 
-        print ((dn_dzdm*Pfunc).shape,(np.diff(self.HMF.M200,axis=0).shape))
         N_z = np.trapz(dn_dzdm*Pfunc,dx=np.diff(self.HMF.M200,axis=0),axis=0)
         Ntot = np.trapz(N_z*self.HMF.dVdz,dx=np.diff(z_arr))*4.*np.pi*fsky
         return Ntot

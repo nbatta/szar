@@ -37,6 +37,7 @@ nmap = lk.read_MJH_noisemap(nemoOutputDir+noise_file,diagnosticsDir+'areaMask.fi
 
 print nmap.shape
 m_nmap = np.mean(nmap[nmap>0])
+print (m_nmap)
 
 LgY = np.arange(-6,-3,0.05)
 
@@ -61,6 +62,11 @@ LgY = np.arange(-6,-3,0.05)
 #start = time.time()
 #blah = CL.PfuncY(m_nmap,CL.mgrid,CL.zgrid)
 #print (time.time() - start)
+
+start = time.time()
+blah = CL.PfuncY(m_nmap,CL.HMF.M,CL.HMF.zarr)
+print (time.time() - start)
+print (blah)
 
 start = time.time()
 blah = CL.Ntot_survey(600./42000.,m_nmap)
