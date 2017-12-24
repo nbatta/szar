@@ -27,6 +27,7 @@ gridName = "grid-owl2"
 #        fparams[key] = float(val)
 
 nemoOutputDir = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACTdata/'
+nemoOutputDirOut = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/'
 pardict = nemoOutputDir + 'equD56.par'
 noise_file = 'RMSMap_Arnaud_M2e14_z0p4.fits'
 CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir,noise_file)
@@ -49,10 +50,25 @@ start = time.time()
 blah = CL.Y_erf(10**LgY,m_nmap)
 print (time.time() - start)
 #blah2 = stats.norm.sf(m_nmap,loc = 10**LgY,scale=m_nmap/CL.qmin)
-blah2 = 1. - stats.norm.sf(10**LgY,loc = m_nmap,scale=m_nmap/CL.qmin)
+blah2 = 1. - stats.norm.sf(10**LgY,loc = m_nmap*CL.qmin,scale=m_nmap)
+blah3 = 1. - stats.norm.sf(10**LgY,loc = m_nmap,scale=m_nmap/CL.qmin)
 
-for i in range(len(blah)):
-    print blah[i],blah2[i],blah[i]/blah2[i]
+#for i in range(len(blah)):
+#    print blah[i],blah2[i],blah[i]/blah2[i]
+
+
+thk = 3
+plt.figure(figsize=(10,8))
+plt.rc('axes', linewidth=thk)
+plt.tick_params(size=14,width=thk,labelsize = 16)
+plt.xlabel(r'$\mathrm{Log}_{10}Y$', fontsize=32,weight='bold')
+plt.ylabel(r'$P(Y)$', fontsize=32,weight='bold')
+plt.plot(LgY,blah,linewidth=thk)
+plt.plot(LgY,blah2,'--',linewidth=thk/2.)
+plt.plot(LgY,blah3,'--',linewidth=thk)
+plt.plot(np.log10([m_nmap,m_nmap]),[0,1],'--k',linewidth=thk)
+plt.plot(np.log10([CL.qmin*m_nmap,CL.qmin*m_nmap]),[0,1],'--r',linewidth=thk)
+plt.savefig(nemoOutputDirOut+'P_Y_erf_comp_MJH.png',bbox_inches='tight',format='png')
 
 #1e-4 seconds
 #start = time.time()

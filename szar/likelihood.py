@@ -68,18 +68,16 @@ class clusterLike:
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
 
         for i in range(z_arr.size):
-            P_func[:,i] = self.P_of_SN(LgY,M_arr[:,i],z_arr[i],YNoise)
+            P_func[:,i] = self.P_of_gt_SN(LgY,M_arr[:,i],z_arr[i],YNoise)
         return P_func
 
     def P_Yo(self, LgY, M, z):#,thetaScalPars):
         #YNorm,Yslope,Ysig = thetaScalPars
         Ma = np.outer(M,np.ones(len(LgY[0,:])))
         Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(Ma), z, self.tckQFit)#,tenToA0=YNorm,B0=YSlope,sigma_int=Ysig)
-
         Y = 10**LgY
         numer = -1.*(np.log(Y/Ytilde))**2
         ans = 1./(self.Ysig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*self.Ysig**2))
-        
         return ans
 
     def Y_erf(self,Y,Ynoise):
@@ -88,26 +86,22 @@ class clusterLike:
         ans = 0.5 * (1. + special.erf((Y - qmin*Ynoise)/(np.sqrt(2.)*Ynoise)))
         return ans
 
-    def P_of_SN(self,LgY,MM,zz,Ynoise):#,thetaScalPars):
+    def P_of_gt_SN(self,LgY,MM,zz,Ynoise):#,thetaScalPars):
         Y = 10**LgY
         sig_thresh = np.outer(np.ones(len(MM)),self.Y_erf(Y,Ynoise))
-        Ya = np.outer(np.ones(len(MM)),LgY)
-        P_Y = self.P_Yo(Ya,MM,zz)#,thetaScalPars)
+        LgYa = np.outer(np.ones(len(MM)),LgY)
+        P_Y = self.P_Yo(LgYa,MM,zz)#,thetaScalPars)
         ans = np.trapz(P_Y*sig_thresh,LgY,np.diff(LgY),axis=1)
         return ans
     
-    def q_prob (self,LgY,YNoise):
-        #Gaussian error probablity for SZ S/N
-        #YNoise = np.outer(sigma_N,np.ones(len(LgY[0,:])))
-        Y = 10**(lgY)
+    def q_prob (self,q,LgY,YNoise):
+        Y = 10**(LgY)
         ans = gaussian(q,Y/YNoise,1.)
         return ans
 
     def Ntot_survey(self,fsky,Ythresh):
-        #temp
-        #Ythresh = 10**(-4.65)
-        z_arr = self.HMF.zarr.copy()
-        
+
+        z_arr = self.HMF.zarr.copy()        
         Pfunc = self.PfuncY(Ythresh,self.HMF.M.copy(),z_arr)
         dn_dzdm = self.HMF.dn_dM(self.HMF.M200,200.)
 
