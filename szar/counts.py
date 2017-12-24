@@ -358,24 +358,6 @@ class Halo_MF:
         ans = interp2d(self.zarr,self.M,N_Mz,kind='linear',fill_value=0) 
         return ans
 
-    def lnprior(self,theta,mthresh,zthresh):
-        a1,a2temp = theta
-        a2 = 10**a2temp
-        if  zthresh[0] < a1 < zthresh[1] and  mthresh[0] < a2 < mthresh[1]:
-            return 0
-        return -np.inf
-
-    def lnlike(self,theta,inter):
-        a1,a2temp = theta
-        a2 = 10**a2temp
-        return np.log(inter(a1,a2)/inter(0.15,9e13))
-
-    def lnprob(self,theta, inter, mthresh, zthresh):
-        lp = self.lnprior(theta, mthresh, zthresh)
-        if not np.isfinite(lp):
-            return -np.inf
-        return lp + self.lnlike(theta, inter)
-
     def mcsample_mf(self,delta,nsamp100,nwalkers=100,nburnin=50,Ndim=2,mthresh=[4e14,4e15],zthresh=[0.2,1.95]):
         import emcee
 

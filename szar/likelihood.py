@@ -2,7 +2,7 @@ import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 import emcee
 from nemo import simsTools
-from scipy import special
+from scipy import special,stats
 from astropy.io import fits
 from astLib import astWCS
 from configparser import SafeConfigParser
@@ -84,6 +84,7 @@ class clusterLike:
 
     def Y_erf(self,Y,Ynoise):
         qmin = self.qmin  # fixed 
+        #ans = stats.norm.sf(Ynoise,loc = Y,scale=Ynoise/qmin)
         ans = 0.5 * (1. + special.erf((Y - qmin*Ynoise)/(np.sqrt(2.)*Ynoise)))
         return ans
 
@@ -96,7 +97,7 @@ class clusterLike:
         return ans
     
     def q_prob (self,LgY,YNoise):
-        #Gaussian error probablity for SZ S/N                                                                                 
+        #Gaussian error probablity for SZ S/N
         #YNoise = np.outer(sigma_N,np.ones(len(LgY[0,:])))
         Y = 10**(lgY)
         ans = gaussian(q,Y/YNoise,1.)
@@ -105,7 +106,6 @@ class clusterLike:
     def Ntot_survey(self,fsky,Ythresh):
         #temp
         #Ythresh = 10**(-4.65)
-
         z_arr = self.HMF.zarr.copy()
         
         Pfunc = self.PfuncY(Ythresh,self.HMF.M.copy(),z_arr)
