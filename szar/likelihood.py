@@ -73,8 +73,9 @@ class clusterLike:
 
     def P_Yo(self, LgY, M, z):#,thetaScalPars):
         #YNorm,Yslope,Ysig = thetaScalPars
+        #M500c has 1/h factors in it
         Ma = np.outer(M,np.ones(len(LgY[0,:])))
-        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(Ma), z, self.tckQFit)#,tenToA0=YNorm,B0=YSlope,sigma_int=Ysig)
+        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(Ma/(self.cc.H0/100.)), z, self.tckQFit)#,tenToA0=YNorm,B0=YSlope,sigma_int=Ysig)
         Y = 10**LgY
         numer = -1.*(np.log(Y/Ytilde))**2
         ans = 1./(self.Ysig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*self.Ysig**2))
@@ -84,6 +85,7 @@ class clusterLike:
         qmin = self.qmin  # fixed 
         #ans = stats.norm.sf(Ynoise,loc = Y,scale=Ynoise/qmin)
         ans = 0.5 * (1. + special.erf((Y - qmin*Ynoise)/(np.sqrt(2.)*Ynoise)))
+        #ans = 1. - stats.norm.sf(Y,loc = Ynoise*qmin,scale=Ynoise)
         return ans
 
     def P_of_gt_SN(self,LgY,MM,zz,Ynoise):#,thetaScalPars):
