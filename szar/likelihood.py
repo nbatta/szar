@@ -51,11 +51,18 @@ class clusterLike:
         self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, self.filteredMapsDir)
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
+
         self.rms_noise_map  = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
+        
         self.wcs=astWCS.WCS(FilterNoiseMapFile) 
         self.qmin = 5.6
-        self.Ysig = 0.2
+        self.num_noise_bins = 20
+        self.area_rads = 987.5/41252.9612
         self.LgY = np.arange(-6,-3,0.05)
+
+        count_temp,bin_edge =np.histogram(np.log10(self.rms_noise_map[self.rms_noise_map>0]),bins=self.num_noise_bins)
+        self.frac_of_survey = count_temp*1.0 / np.sum(count_temp)
+        self.thresh_bin = 10**((bin_edge[:-1] + bin_edge[1:])/2.)
 
     def alter_fparams(self,fparams,parlist,parvals):
         for k,parvals in enumerate(parvals):
@@ -79,17 +86,15 @@ class clusterLike:
     def P_Yo(self, LgY, M, z,param_vals):
         #M500c has 1/h factors in it
         Ma = np.outer(M,np.ones(len(LgY[0,:])))
-        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit)#,B0=YSlope,sigma_int=Ysig#,tenToA0=YNorm)
+        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit,sigma_int=param_vals['scat'])#,B0=param_vals['yslope'])#,tenToA0=YNorm)
         Y = 10**LgY
         numer = -1.*(np.log(Y/Ytilde))**2
-        ans = 1./(self.Ysig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*self.Ysig**2))
+        ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(numer/(2.*param_vals['scat']**2))
         return ans
 
     def Y_erf(self,Y,Ynoise):
         qmin = self.qmin  # fixed 
-        #ans = stats.norm.sf(Ynoise,loc = Y,scale=Ynoise/qmin)
         ans = 0.5 * (1. + special.erf((Y - qmin*Ynoise)/(np.sqrt(2.)*Ynoise)))
-        #ans = 1. - stats.norm.sf(Y,loc = Ynoise*qmin,scale=Ynoise)
         return ans
 
     def P_of_gt_SN(self,LgY,MM,zz,Ynoise,param_vals):#,thetaScalPars):
@@ -127,7 +132,10 @@ class clusterLike:
         int_cc = ClusterCosmology(fparams,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
         int_HMF = Halo_MF(int_cc,self.mgrid,self.zgrid) # internal HMF call
 
-        Ntot = self.Ntot_survey(int_HMF,fsky,Ythresh,param_vals)
+        Ntot = 0.
+        for i in range(len(self.frac_of_survey)):
+             Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
+
         Nind = 0
         for i in xrange(len(clustsz)):
             N_per = 1.
