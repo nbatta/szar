@@ -57,25 +57,29 @@ class clusterLike:
         self.Ysig = 0.2
         self.LgY = np.arange(-6,-3,0.05)
 
+    def alter_fparams(self,fparams,parlist,parvals):
+        for k,parvals in enumerate(parvals):
+            fparams[parlist[k]] = parvals
+        return fparams
+
     def Find_nearest_pixel_ind(self,RADeg,DECDeg):
         x,y = self.wcs.wcs2pix(RADeg,DECDeg)
         return [np.round(x),np.round(y)]
 
-    def PfuncY(self,YNoise,M,z_arr):
+    def PfuncY(self,YNoise,M,z_arr,param_vals):
         LgY = self.LgY
         
         P_func = np.outer(M,np.zeros([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
 
         for i in range(z_arr.size):
-            P_func[:,i] = self.P_of_gt_SN(LgY,M_arr[:,i],z_arr[i],YNoise)
+            P_func[:,i] = self.P_of_gt_SN(LgY,M_arr[:,i],z_arr[i],YNoise,param_vals)
         return P_func
 
-    def P_Yo(self, LgY, M, z):#,thetaScalPars):
-        #YNorm,Yslope,Ysig = thetaScalPars
+    def P_Yo(self, LgY, M, z,param_vals):
         #M500c has 1/h factors in it
         Ma = np.outer(M,np.ones(len(LgY[0,:])))
-        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(Ma/(self.cc.H0/100.)), z, self.tckQFit)#,tenToA0=YNorm,B0=YSlope,sigma_int=Ysig)
+        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit)#,B0=YSlope,sigma_int=Ysig#,tenToA0=YNorm)
         Y = 10**LgY
         numer = -1.*(np.log(Y/Ytilde))**2
         ans = 1./(self.Ysig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*self.Ysig**2))
@@ -88,11 +92,11 @@ class clusterLike:
         #ans = 1. - stats.norm.sf(Y,loc = Ynoise*qmin,scale=Ynoise)
         return ans
 
-    def P_of_gt_SN(self,LgY,MM,zz,Ynoise):#,thetaScalPars):
+    def P_of_gt_SN(self,LgY,MM,zz,Ynoise,param_vals):#,thetaScalPars):
         Y = 10**LgY
         sig_thresh = np.outer(np.ones(len(MM)),self.Y_erf(Y,Ynoise))
         LgYa = np.outer(np.ones(len(MM)),LgY)
-        P_Y = self.P_Yo(LgYa,MM,zz)#,thetaScalPars)
+        P_Y = self.P_Yo(LgYa,MM,zz,param_vals)#,thetaScalPars)
         ans = np.trapz(P_Y*sig_thresh,LgY,np.diff(LgY),axis=1)
         return ans
     
@@ -101,14 +105,14 @@ class clusterLike:
         ans = gaussian(q,Y/YNoise,1.)
         return ans
 
-    def Ntot_survey(self,fsky,Ythresh):
+    def Ntot_survey(self,int_HMF,fsky,Ythresh,param_vals):
 
         z_arr = self.HMF.zarr.copy()        
-        Pfunc = self.PfuncY(Ythresh,self.HMF.M.copy(),z_arr)
-        dn_dzdm = self.HMF.dn_dM(self.HMF.M200,200.)
+        Pfunc = self.PfuncY(Ythresh,self.HMF.M.copy(),z_arr,param_vals)
+        dn_dzdm = int_HMF.dn_dM(int_HMF.M200,200.)
 
-        N_z = np.trapz(dn_dzdm*Pfunc,dx=np.diff(self.HMF.M200,axis=0),axis=0)
-        Ntot = np.trapz(N_z*self.HMF.dVdz,dx=np.diff(z_arr))*4.*np.pi*fsky
+        N_z = np.trapz(dn_dzdm*Pfunc,dx=np.diff(int_HMF.M200,axis=0),axis=0)
+        Ntot = np.trapz(N_z*int_HMF.dVdz,dx=np.diff(z_arr))*4.*np.pi*fsky
         return Ntot
 
     def lnprior(self,theta):
@@ -117,11 +121,13 @@ class clusterLike:
             return 0
         return -np.inf
 
-    def lnlike(self,fparams,clustsz,nemo):
-        self.cc = ClusterCosmology(fparams,self.constDict,clTTFixFile=self.clttfile)
-        self.HMF = Halo_MF(cc,self.mgrid,self.zgrid)
+    def lnlike(self,theta,parlist,cluster_data,survey_data):
+        
+        param_vals = self.alter_fparams(self.fparams,parlist,theta)
+        int_cc = ClusterCosmology(fparams,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
+        int_HMF = Halo_MF(int_cc,self.mgrid,self.zgrid) # internal HMF call
 
-        Ntot = 1.
+        Ntot = self.Ntot_survey(int_HMF,fsky,Ythresh,param_vals)
         Nind = 0
         for i in xrange(len(clustsz)):
             N_per = 1.
