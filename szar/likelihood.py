@@ -22,6 +22,16 @@ def read_MJH_noisemap(noiseMap,maskMap):
     #return the filter noise map for pixels in the mask map that = 1
     return rmsmap*mmap
 
+def read_clust_cat(fitsfile):
+    list = fits.open(fitsfile)
+    data = list[1].data
+    ra = data.field('RADeg')
+    dec = data.field('DECDeg')
+    z = data.field('M500_redshift')
+    Y0 = data.field('fixed_y_c')
+    Y0err = data.field('fixed_err_y_c')
+    return ra,dec,z,Y0,Y0err
+
 class clusterLike:
     def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile):
         
@@ -51,10 +61,13 @@ class clusterLike:
         self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, self.filteredMapsDir)
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
+        clust_cat = nemoOutputDir + 'ACTPol_mjh_cluster_cat.fits'
 
         self.rms_noise_map  = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
-        
         self.wcs=astWCS.WCS(FilterNoiseMapFile) 
+        self.clst_RA,self.clst_DEC,self.clst_z,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat)
+        self.clst_xmapInd,self.clst_ymapInd = self.Find_nearest_pixel_ind(self.clst_RA,self.clst_DEC)
+
         self.qmin = 5.6
         self.num_noise_bins = 20
         self.area_rads = 987.5/41252.9612
@@ -70,8 +83,14 @@ class clusterLike:
         return fparams
 
     def Find_nearest_pixel_ind(self,RADeg,DECDeg):
-        x,y = self.wcs.wcs2pix(RADeg,DECDeg)
-        return [np.round(x),np.round(y)]
+        xx = np.array([])
+        yy = np.array([])
+        for ra, dec in zip(RADeg,DECDeg):
+            x,y = self.wcs.wcs2pix(ra,dec)
+            np.append(xx,np.round(x))
+            np.append(yy,np.round(y))
+        #return [np.round(x),np.round(y)]
+        return xx,yy
 
     def PfuncY(self,YNoise,M,z_arr,param_vals):
         LgY = self.LgY
