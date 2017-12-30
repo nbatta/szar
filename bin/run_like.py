@@ -110,13 +110,15 @@ params= CL.alter_fparams(fparams,parlist,parvals)
 
 #print params
 
-int_cc = ClusterCosmology(fparams,CL.constDict,clTTFixFile=CL.clttfile) # internal HMF call
+int_cc = ClusterCosmology(params,CL.constDict,clTTFixFile=CL.clttfile) # internal HMF call
 int_HMF = Halo_MF(int_cc,CL.mgrid,CL.zgrid)
 
 for i in range(len(frac_of_survey)):
-    counts += CL.Ntot_survey(int_HMF,area_rads*frac_of_survey[i],thresh_bin[i],fparams)
+    counts += CL.Ntot_survey(int_HMF,area_rads*frac_of_survey[i],thresh_bin[i],params)
 print (time.time() - start)
 print (counts)
+
+print CL.lnlike(parvals,parlist,np.array([1.,1.]))
 
 #print fparams
 

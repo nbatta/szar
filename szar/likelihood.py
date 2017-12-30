@@ -97,11 +97,11 @@ class clusterLike:
         ans = 0.5 * (1. + special.erf((Y - qmin*Ynoise)/(np.sqrt(2.)*Ynoise)))
         return ans
 
-    def P_of_gt_SN(self,LgY,MM,zz,Ynoise,param_vals):#,thetaScalPars):
+    def P_of_gt_SN(self,LgY,MM,zz,Ynoise,param_vals):
         Y = 10**LgY
         sig_thresh = np.outer(np.ones(len(MM)),self.Y_erf(Y,Ynoise))
         LgYa = np.outer(np.ones(len(MM)),LgY)
-        P_Y = self.P_Yo(LgYa,MM,zz,param_vals)#,thetaScalPars)
+        P_Y = self.P_Yo(LgYa,MM,zz,param_vals)
         ans = np.trapz(P_Y*sig_thresh,LgY,np.diff(LgY),axis=1)
         return ans
     
@@ -126,10 +126,10 @@ class clusterLike:
             return 0
         return -np.inf
 
-    def lnlike(self,theta,parlist,cluster_data,survey_data):
+    def lnlike(self,theta,parlist,cluster_data):
         
         param_vals = self.alter_fparams(self.fparams,parlist,theta)
-        int_cc = ClusterCosmology(fparams,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
+        int_cc = ClusterCosmology(param_vals,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
         int_HMF = Halo_MF(int_cc,self.mgrid,self.zgrid) # internal HMF call
 
         Ntot = 0.
@@ -137,10 +137,10 @@ class clusterLike:
              Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
 
         Nind = 0
-        for i in xrange(len(clustsz)):
+        for i in xrange(len(cluster_data)):
             N_per = 1.
             Nind = Nind + np.log(N_per) 
-        return -Ntot * Nind
+        return -Ntot #* Nind
 
     def lnprob(self,theta, inter, mthresh, zthresh):
         lp = self.lnprior(theta, mthresh, zthresh)
