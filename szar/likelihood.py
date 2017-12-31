@@ -25,12 +25,17 @@ def read_MJH_noisemap(noiseMap,maskMap):
 def read_clust_cat(fitsfile):
     list = fits.open(fitsfile)
     data = list[1].data
+    SNR = data.field('SNR2p4')
     ra = data.field('RADeg')
     dec = data.field('DECDeg')
-    z = data.field('M500_redshift')
-    Y0 = data.field('fixed_y_c')
-    Y0err = data.field('fixed_err_y_c')
-    return ra,dec,z,Y0,Y0err
+    z = data.field('z')
+    Y0 = data.field('y0tilde')
+    Y0err = data.field('y0tilde_err')
+    ind = np.where(SNR >= 5.6)[0]
+    #z = data.field('M500_redshift')
+    #Y0 = data.field('M500_fixed_y_c')
+    #Y0err = data.field('M500_fixed_err_y_c')
+    return ra[ind],dec[ind],z[ind],Y0[ind],Y0err[ind]
 
 class clusterLike:
     def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile):
@@ -61,7 +66,7 @@ class clusterLike:
         self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, self.filteredMapsDir)
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
-        clust_cat = nemoOutputDir + 'ACTPol_mjh_cluster_cat.fits'
+        clust_cat = nemoOutputDir + 'E-D56Clusters.fits' #'ACTPol_mjh_cluster_cat.fits'
 
         self.rms_noise_map  = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
         self.wcs=astWCS.WCS(FilterNoiseMapFile) 
