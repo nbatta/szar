@@ -102,7 +102,7 @@ frac_of_survey = count_temp*1.0 / np.sum(count_temp)
 thresh_bin = 10**((bin_edge[:-1] + bin_edge[1:])/2.)
 
 parlist = ['omch2','ombh2','H0','As','ns','tau','massbias','yslope','scat']
-parvals = [0.1194,0.022,67.0,2.2e-09,0.96,0.06,1.0,1.08,0.2]
+parvals = [0.1194,0.022,67.0,2.2e-09,0.96,0.06,1.0,0.08,0.2]
 
 #print fparams 
 

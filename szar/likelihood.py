@@ -12,6 +12,9 @@ import matplotlib.pyplot as plt
 
 #import time
 
+def gaussian(xx, mu, sig):
+    return 1./(sig * np.sqrt(2*np.pi)) * np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
+
 def read_MJH_noisemap(noiseMap,maskMap):
     #Read in filter noise map
     img = fits.open(noiseMap)
@@ -35,7 +38,7 @@ def read_clust_cat(fitsfile):
     #z = data.field('M500_redshift')
     #Y0 = data.field('M500_fixed_y_c')
     #Y0err = data.field('M500_fixed_err_y_c')
-    return ra[ind],dec[ind],z[ind],Y0[ind],Y0err[ind]
+    return ra[ind],dec[ind],z[ind],1.,Y0[ind],Y0err[ind]
 
 class clusterLike:
     def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile):
@@ -70,7 +73,7 @@ class clusterLike:
 
         self.rms_noise_map  = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
         self.wcs=astWCS.WCS(FilterNoiseMapFile) 
-        self.clst_RA,self.clst_DEC,self.clst_z,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat)
+        self.clst_RA,self.clst_DEC,self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat)
         self.clst_xmapInd,self.clst_ymapInd = self.Find_nearest_pixel_ind(self.clst_RA,self.clst_DEC)
 
         self.qmin = 5.6
@@ -110,7 +113,7 @@ class clusterLike:
     def P_Yo(self, LgY, M, z,param_vals):
         #M500c has 1/h factors in it
         Ma = np.outer(M,np.ones(len(LgY[0,:])))
-        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit,sigma_int=param_vals['scat'])#,B0=param_vals['yslope'])#,tenToA0=YNorm)
+        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])#,tenToA0=YNorm)
         Y = 10**LgY
         numer = -1.*(np.log(Y/Ytilde))**2
         ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(numer/(2.*param_vals['scat']**2))
@@ -120,6 +123,8 @@ class clusterLike:
         qmin = self.qmin  # fixed 
         ans = 0.5 * (1. + special.erf((Y - qmin*Ynoise)/(np.sqrt(2.)*Ynoise)))
         return ans
+
+
 
     def P_of_gt_SN(self,LgY,MM,zz,Ynoise,param_vals):
         Y = 10**LgY
@@ -144,6 +149,17 @@ class clusterLike:
         Ntot = np.trapz(N_z*int_HMF.dVdz,dx=np.diff(z_arr))*4.*np.pi*fsky
         return Ntot
 
+    def Prob_per_cluster(self,int_HMF,cluster_props,param_vals):
+
+        c_z, c_zerr, c_y, c_yerr = cluster_props
+        
+        dn_dzdm = int_HMF.dn_dM(int_HMF.M200,200.)
+        N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(int_HMF.M200,axis=0),axis=0)
+        N_per = np.trapz(N_z_ind*gaussian(z_arr,c_z,c_zerr),dx=np.diff(z_arr))
+
+        ans = 1.
+        return ans
+
     def lnprior(self,theta):
         a1,a2 = theta
         if  1 < a1 < 5 and  1 < a2 < 2:
@@ -162,6 +178,7 @@ class clusterLike:
 
         Nind = 0
         for i in xrange(len(cluster_data)):
+            cluster_prop = self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err
             N_per = 1.
             Nind = Nind + np.log(N_per) 
         return -Ntot #* Nind
