@@ -5,7 +5,7 @@ from scipy import stats
 from configparser import SafeConfigParser
 from orphics.tools.io import dictFromSection
 from szar.counts import ClusterCosmology,Halo_MF
-
+import emcee
 import time
 
 iniFile = "input/pipeline.ini"
@@ -120,7 +120,30 @@ print (counts)
 
 print CL.lnlike(parvals,parlist,np.array([1.,1.]))
 
-#print fparams
+
+parlist = ['omch2','As','massbias']
+parvals = [0.1194,2.2e-09,1.0]
+
+#params_test= CL.alter_fparams(fparams,parlist,parvals)
+
+
+Ndim, nwalkers = 3 , 10
+P0 = np.array(parvals)
+
+pos = [P0 + P0*1e-1*np.random.randn(Ndim) for i in range(nwalkers)]
+
+start = time.time()
+sampler = emcee.EnsembleSampler(nwalkers,Ndim,CL.lnlike,args =(parlist,np.array([1.,1.])))
+sampler.run_mcmc(pos,2)
+print (time.time() - start)  
+
+emcee_run_lnlk = sampler.lnprobability
+emcee_run_chain =  sampler.chain[:,:,:].reshape((-1,Ndim))
+
+print CL.lnlike(emcee_run_chain[0],parlist,np.array([1.,1.]))
+print CL.lnlike(emcee_run_chain[10],parlist,np.array([1.,1.]))
+print (emcee_run_lnlk)
+print (emcee_run_chain)
 
 
 #{'beta_ym': 0.0, 'Ysig': 0.127, 'betaYsig': 0.0, 'Y_star': 2.42e-10, 'wa': 0.0, 'tau': 0.06, 'b_wl': 1.0, 'H0': 67.0, 'S8All': 0.8, 'mnu': 0.06, 'alpha_ym': 1.79, 'As': 2.2e-09, 'sigR': 0.75, 'omch2': 0.1194, 'gammaYsig': 0.0, 'w0': -1.0, 'rho_corr': 0.0, 'ns': 0.96, 'gamma_ym': 0.0, 'ombh2': 0.022, 'b_ym': 0.8}
