@@ -1,5 +1,6 @@
 import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
+from szar.szproperties import gaussian
 import emcee
 from nemo import simsTools
 from scipy import special,stats
@@ -11,9 +12,6 @@ import cPickle as pickle
 import matplotlib.pyplot as plt
 
 #import time
-
-def gaussian(xx, mu, sig):
-    return 1./(sig * np.sqrt(2*np.pi)) * np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
 
 def read_MJH_noisemap(noiseMap,maskMap):
     #Read in filter noise map
@@ -32,13 +30,14 @@ def read_clust_cat(fitsfile):
     ra = data.field('RADeg')
     dec = data.field('DECDeg')
     z = data.field('z')
+    zerr = data.field('zErr')
     Y0 = data.field('y0tilde')
     Y0err = data.field('y0tilde_err')
     ind = np.where(SNR >= 5.6)[0]
     #z = data.field('M500_redshift')
     #Y0 = data.field('M500_fixed_y_c')
     #Y0err = data.field('M500_fixed_err_y_c')
-    return ra[ind],dec[ind],z[ind],1.,Y0[ind],Y0err[ind]
+    return ra[ind],dec[ind],z[ind],zerr[ind],Y0[ind],Y0err[ind]
 
 class clusterLike:
     def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile):
@@ -98,7 +97,7 @@ class clusterLike:
             np.append(xx,np.round(x))
             np.append(yy,np.round(y))
         #return [np.round(x),np.round(y)]
-        return xx,yy
+        return np.round(xx),np.round(yy)
 
     def PfuncY(self,YNoise,M,z_arr,param_vals):
         LgY = self.LgY
@@ -124,8 +123,6 @@ class clusterLike:
         ans = 0.5 * (1. + special.erf((Y - qmin*Ynoise)/(np.sqrt(2.)*Ynoise)))
         return ans
 
-
-
     def P_of_gt_SN(self,LgY,MM,zz,Ynoise,param_vals):
         Y = 10**LgY
         sig_thresh = np.outer(np.ones(len(MM)),self.Y_erf(Y,Ynoise))
@@ -134,9 +131,16 @@ class clusterLike:
         ans = np.trapz(P_Y*sig_thresh,LgY,np.diff(LgY),axis=1)
         return ans
     
-    def q_prob (self,q,LgY,YNoise):
+    def Y_prob (self,Y_c,LgY,YNoise):
         Y = 10**(LgY)
-        ans = gaussian(q,Y/YNoise,1.)
+        ans = gaussian(Y,Y_c,YNoise)
+        return ans
+
+    def Pfunc_per(self,MM,zz,Y_c,Y_err,param_vals):
+        LgY = self.LgY
+        P_Y_sig = self.Y_prob(Y_c,LgY,Y_err)
+        P_Y = self.P_Yo(LgY,MM,zz,param_vals)
+        ans = np.trapz(P_Y*P_Y_sig,LgY,np.diff(LgY),axis=1)
         return ans
 
     def Ntot_survey(self,int_HMF,fsky,Ythresh,param_vals):
@@ -153,6 +157,8 @@ class clusterLike:
 
         c_z, c_zerr, c_y, c_yerr = cluster_props
         
+        Pfunc_ind = self.Pfunc_per(self.HMF.M.copy(),c_z, c_y, c_yerr,param_vals)
+
         dn_dzdm = int_HMF.dn_dM(int_HMF.M200,200.)
         N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(int_HMF.M200,axis=0),axis=0)
         N_per = np.trapz(N_z_ind*gaussian(z_arr,c_z,c_zerr),dx=np.diff(z_arr))
