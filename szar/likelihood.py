@@ -146,20 +146,22 @@ class clusterLike:
 
     def Pfunc_per(self,MM,zz,Y_c,Y_err,param_vals):
         LgY = self.LgY
+        LgYa = np.outer(np.ones(len(MM)),LgY)
         P_Y_sig = self.Y_prob(Y_c,LgY,Y_err)
-        P_Y = self.P_Yo(LgY,MM,zz,param_vals)
+        P_Y = self.P_Yo(LgYa,MM,zz,param_vals)
         ans = np.trapz(P_Y*P_Y_sig,LgY,np.diff(LgY))
         return ans
 
-    def Pfunc_per_zarr(self,MM,z_arr,Y_c,Y_err,param_vals):
+    def Pfunc_per_zarr(self,MM,z_arr,Y_c,Y_err,int_HMF,param_vals):
         LgY = self.LgY
 
         P_func = np.outer(MM,np.zeros([len(z_arr)]))
         M_arr =  np.outer(MM,np.ones([len(z_arr)]))
-
+        M200 = np.outer(MM,np.zeros([len(z_arr)]))
         for i in range(z_arr.size):
             P_func[:,i] = self.P_of_Y_per(LgY,M_arr[:,i],z_arr[i],Y_c,Y_err,param_vals)
-        return P_func
+            M200[:,i] = int_HMF.cc.Mass_con_del_2_del_mean200(self.HMF.M.copy(),500,z_arr[i])
+        return P_func,M200
 
     def Ntot_survey(self,int_HMF,fsky,Ythresh,param_vals):
 
@@ -171,22 +173,19 @@ class clusterLike:
         Ntot = np.trapz(N_z*int_HMF.dVdz,dx=np.diff(z_arr))*4.*np.pi*fsky
         return Ntot
 
-    def Prob_per_cluster(self,int_HMF,cluster_props,param_vals):
+    def Prob_per_cluster(self,int_HMF,cluster_props,dn_dzdm_int,param_vals):
         c_z, c_zerr, c_y, c_yerr = cluster_props
-        if (c_yerr > 0):
+        if (c_zerr > 0):
             z_arr = np.arange(-3.*c_zerr,(3.+0.1)*c_zerr,c_zerr) + c_z
-            Pfunc_ind = self.Pfunc_per_zarr(self.HMF.M.copy(),z_arr,c_y,c_yerr,param_vals)
-            dn_dzdm = int_HMF.dn_dM(int_HMF.M200,200.)
-            N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(int_HMF.M200,axis=0),axis=0)
+            Pfunc_ind,M200 = self.Pfunc_per_zarr(self.HMF.M.copy(),z_arr,c_y,c_yerr,int_HMF,param_vals)
+            dn_dzdm = dn_dzdm_int(z_arr,self.HMF.M.copy())
+            N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
             N_per = np.trapz(N_z_ind*gaussian(z_arr,c_z,c_zerr),dx=np.diff(z_arr))
             ans = N_per            
         else:
             Pfunc_ind = self.Pfunc_per(self.HMF.M.copy(),c_z, c_y, c_yerr,param_vals)
-            dn_dzdm_int = int_HMF.inter_mf(200.) # delta = 200
-            N_mz_inter = self.inter_mf(delta)
-            dn_dzdm = N_mz_inter(self.HMF.M.copy()*0.+c_z,self.HMF.M.copy())
+            dn_dzdm = dn_dzdm_int(c_z,self.HMF.M.copy())[:,0]
             M200 = int_HMF.cc.Mass_con_del_2_del_mean200(self.HMF.M.copy(),500,c_z)
-            print dn_dzdm.shape,Pfunc_ind.shape,M200.shape
             N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
             ans = N_z_ind
         return ans
@@ -202,6 +201,7 @@ class clusterLike:
         param_vals = self.alter_fparams(self.fparams,parlist,theta)
         int_cc = ClusterCosmology(param_vals,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
         int_HMF = Halo_MF(int_cc,self.mgrid,self.zgrid) # internal HMF call
+        dn_dzdm_int = int_HMF.inter_mf(200.) # delta = 200
         cluster_prop = np.array([self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err])
 
         Ntot = 0.
@@ -209,10 +209,10 @@ class clusterLike:
              Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
 
         Nind = 0
-        for i in xrange(len(cluster_data)):
-            N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],param_vals)
+        for i in xrange(len(self.clst_z)):
+            N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dn_dzdm_int,param_vals)
             Nind = Nind + np.log(N_per) 
-        return -Ntot * Nind
+        return -Ntot + Nind
 
     def lnprob(self,theta, inter, mthresh, zthresh):
         lp = self.lnprior(theta, mthresh, zthresh)

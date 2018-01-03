@@ -120,19 +120,29 @@ print ('HMF',time.time() - start)
 cluster_prop = np.array([CL.clst_z,CL.clst_zerr,CL.clst_y0,CL.clst_y0err])
 print cluster_prop.shape
 
-print CL.Prob_per_cluster(int_HMF,cluster_prop[:,0],params)
+dn_dzdm_int = int_HMF.inter_mf(200.)
+
+start = time.time()
+print np.log(CL.Prob_per_cluster(int_HMF,cluster_prop[:,0],dn_dzdm_int,params))
+print ('per cluster spec z',time.time() - start)
+
+start = time.time()
+print np.log(CL.Prob_per_cluster(int_HMF,cluster_prop[:,1],dn_dzdm_int,params))
+print ('per cluster photo z',time.time() - start)
 
 start = time.time()
 for i in range(len(frac_of_survey)):
     counts += CL.Ntot_survey(int_HMF,area_rads*frac_of_survey[i],thresh_bin[i],params)
-print ('Ln Loop',time.time() - start)
+print ('Ntot loop',time.time() - start)
 print (counts)
 
-#print CL.lnlike(parvals,parlist,np.array([1.,1.]))
+#parlist = ['omch2','As','massbias']
+#parvals = [0.1194,2.2e-09,1.0]
 
+start = time.time()
+print CL.lnlike(parvals,parlist,cluster_prop)
+print ('Ln Like Func',time.time() - start)
 
-parlist = ['omch2','As','massbias']
-parvals = [0.1194,2.2e-09,1.0]
 
 #params_test= CL.alter_fparams(fparams,parlist,parvals)
 
