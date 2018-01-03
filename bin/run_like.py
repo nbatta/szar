@@ -118,17 +118,34 @@ int_HMF = Halo_MF(int_cc,CL.mgrid,CL.zgrid)
 print ('HMF',time.time() - start)
 
 cluster_prop = np.array([CL.clst_z,CL.clst_zerr,CL.clst_y0,CL.clst_y0err])
+cluster_prop2 = np.array([CL.clst_z,CL.clst_zerr,CL.clst_y0*1e-4,CL.clst_y0err*1e-4])
 print cluster_prop.shape
 
-dn_dzdm_int = int_HMF.inter_mf(200.)
+dndm_int = int_HMF.inter_dndm(200.)
 
 start = time.time()
-print np.log(CL.Prob_per_cluster(int_HMF,cluster_prop[:,0],dn_dzdm_int,params))
+print np.log(CL.Prob_per_cluster(int_HMF,cluster_prop2[:,0],dndm_int,params))
 print ('per cluster spec z',time.time() - start)
 
+c_z, c_zerr, c_y, c_yerr = cluster_prop[:,0]
+c_y *= 1e-4
+c_yerr *= 1e-4
+#print c_z, c_zerr, c_y, c_yerr
+#print int_HMF.zarr
+
 start = time.time()
-print np.log(CL.Prob_per_cluster(int_HMF,cluster_prop[:,1],dn_dzdm_int,params))
+print np.log(CL.Prob_per_cluster(int_HMF,cluster_prop2[:,1],dndm_int,params))
 print ('per cluster photo z',time.time() - start)
+
+mind = 50
+
+#print c_y,c_yerr
+#print 'prob check 0',CL.Y_prob(c_y,CL.LgY,c_yerr)
+#print 'prob check 1',CL.Pfunc_per(CL.HMF.M.copy(),c_z,c_y, c_yerr,params)
+#print CL.P_of_Y_per(CL.HMF.M.copy())[mind]
+#print CL.Pfunc_per(CL.HMF.M.copy(),c_z,c_y,c_yerr,params)
+print 'MF interpol check',dndm_int(c_z,CL.HMF.M.copy())[mind,0]/int_HMF.dn_dM(int_HMF.M200,200.)[mind,2]
+print 'Mass check',int_HMF.cc.Mass_con_del_2_del_mean200(CL.HMF.M.copy(),500,c_z)[mind] / CL.HMF.M.copy()[mind]
 
 start = time.time()
 for i in range(len(frac_of_survey)):

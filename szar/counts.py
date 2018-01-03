@@ -353,6 +353,11 @@ class Halo_MF:
         N_dzdm = dn_dm[:,:] * dV_dz[:]
         return N_dzdm
 
+    def inter_dndm(self,delta):
+        dndM = self.dn_dM(self.M200,delta)
+        ans = interp2d(self.zarr,self.M,dndM,kind='linear',fill_value=0)
+        return ans
+
     def inter_mf(self,delta):
         N_Mz = self.N_of_Mz(self.M200,delta)
         ans = interp2d(self.zarr,self.M,N_Mz,kind='linear',fill_value=0) 

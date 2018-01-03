@@ -138,7 +138,6 @@ class clusterLike:
         ans = np.trapz(P_Y*P_Y_sig,LgY,np.diff(LgY),axis=1)
         return ans
 
-    
     def Y_prob (self,Y_c,LgY,YNoise):
         Y = 10**(LgY)
         ans = gaussian(Y,Y_c,YNoise)
@@ -149,7 +148,7 @@ class clusterLike:
         LgYa = np.outer(np.ones(len(MM)),LgY)
         P_Y_sig = self.Y_prob(Y_c,LgY,Y_err)
         P_Y = self.P_Yo(LgYa,MM,zz,param_vals)
-        ans = np.trapz(P_Y*P_Y_sig,LgY,np.diff(LgY))
+        ans = np.trapz(P_Y*P_Y_sig,LgY,np.diff(LgY),axis=1)
         return ans
 
     def Pfunc_per_zarr(self,MM,z_arr,Y_c,Y_err,int_HMF,param_vals):
@@ -201,8 +200,8 @@ class clusterLike:
         param_vals = self.alter_fparams(self.fparams,parlist,theta)
         int_cc = ClusterCosmology(param_vals,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
         int_HMF = Halo_MF(int_cc,self.mgrid,self.zgrid) # internal HMF call
-        dn_dzdm_int = int_HMF.inter_mf(200.) # delta = 200
-        cluster_prop = np.array([self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err])
+        dndm_int = int_HMF.inter_dndm(200.) # delta = 200
+        cluster_prop = np.array([self.clst_z,self.clst_zerr,self.clst_y0*1e-4,self.clst_y0err*1e-4])
 
         Ntot = 0.
         for i in range(len(self.frac_of_survey)):
@@ -210,7 +209,7 @@ class clusterLike:
 
         Nind = 0
         for i in xrange(len(self.clst_z)):
-            N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dn_dzdm_int,param_vals)
+            N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int,param_vals)
             Nind = Nind + np.log(N_per) 
         return -Ntot + Nind
 
