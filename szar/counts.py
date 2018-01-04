@@ -11,8 +11,8 @@ from . import tinker as tinker
 from szar.foregrounds import fgNoises
 
 from orphics.tools.io import Plotter
-from orphics.theory.cosmology import Cosmology
-import orphics.theory.cosmology as cosmo
+from orphics.cosmology import Cosmology
+import orphics.cosmology as cosmo
 from orphics.tools.stats import timeit
 from scipy.interpolate import interp1d, interp2d, griddata
 from orphics.analysis.flatMaps import interpolateGrid
@@ -205,8 +205,8 @@ def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,z_edges,fsky,lmax=1000):
 class ClusterCosmology(Cosmology):
     
     def __init__(self,paramDict=cosmo.defaultCosmology,constDict=cosmo.defaultConstants,lmax=None,
-                 clTTFixFile=None,skipCls=False,pickling=False,fill_zero=True,dimensionless=True):
-        Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls,pickling,fill_zero,dimensionless=dimensionless)
+                 clTTFixFile=None,skipCls=False,pickling=False,fill_zero=True,dimensionless=True,verbose=True):
+        Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls,pickling,fill_zero,dimensionless=dimensionless,verbose=verbose)
         self.rhoc0om = self.rho_crit0H100*self.om
         
     def E_z(self,z):
