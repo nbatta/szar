@@ -16,9 +16,9 @@ bigDataDir = Config.get('general','bigDataDirectory')
 clttfile = Config.get('general','clttfile')
 constDict = dictFromSection(Config,'constants')
 version = Config.get('general','version')
-expName = "S4-1.0-CDT"
-gridName = "grid-owl2"
-
+expName = "S4-1.5-paper" #S4-1.0-CDT"
+gridName = "grid-owl2" #grid-owl2"
+#_S4-1.5-paper_grid-owl2_v0.6.p
 fparams = {}
 for (key, val) in Config.items('params'):
     if ',' in val:
@@ -27,13 +27,13 @@ for (key, val) in Config.items('params'):
     else:
         fparams[key] = float(val)
         
-nemoOutputDir = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACTdata/'
-nemoOutputDirOut = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/'
+nemoOutputDir = '/gpfs01/astro/workarea/msyriac/data/depot/SZruns/ACTdata/' #/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACTdata/'
+nemoOutputDirOut = '/gpfs01/astro/workarea/msyriac/data/depot/SZruns/ACTdata_out/'
 pardict = nemoOutputDir + 'equD56.par'
 noise_file = 'RMSMap_Arnaud_M2e14_z0p4.fits'
 CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir,noise_file)
 
-diagnosticsDir = '/Users/nab/Downloads/countsCheck/equD56-countsCheck/diagnostics/'
+diagnosticsDir = '/gpfs01/astro/workarea/msyriac/data/depot/SZruns/ACTdata_out/'
 
 nmap = lk.read_MJH_noisemap(nemoOutputDir+noise_file,diagnosticsDir+'areaMask.fits')
 
