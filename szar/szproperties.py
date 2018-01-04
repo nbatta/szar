@@ -6,14 +6,24 @@ from szar.counts import ClusterCosmology
 from scipy.special import j0
 from orphics.tools.stats import timeit
 
-def gaussian(xx, mu, sig):
-    return 1./(sig * np.sqrt(2*np.pi)) * np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
+def gaussian(xx, mu, sig,noNorm=False):
+    if (noNorm==True):
+        return np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
+    else:
+        return 1./(sig * np.sqrt(2*np.pi)) * np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
 
-def gaussian2Dnorm(sig_x,sig_y, rho):
+def gaussian2Dnorm(sig_x,sig_y,rho):
     return sig_x*sig_y*2.0*np.pi*np.sqrt(1. - rho**2)
 
-def gaussian2D(xx, mu_x, sig_x,yy,mu_y, sig_y, rho):
+def gaussianMat2D(diff,sig_x,sig_y,rho):
+    icov = np.matrix([[sig_y**2, -1.*sig_x*sig_y*rho],[-1.*sig_x*sig_y*rho, sig_x**2]]) / (sig_x**2* sig_y**2*(1 - rho**2) ) 
+    iC_diff = np.dot(icov,diff)
+    expo = np.einsum('j...,j...->...',diff,iC_diff)
+    ans = np.exp(-0.5 * expo)
+    ans /= gaussian2Dnorm(sig_x,sig_y,rho)
+    return ans
 
+def gaussian2D(xx, mu_x, sig_x,yy,mu_y, sig_y, rho):
     exp0 = -1./(2.*(1.-rho**2))
     exp1 = (xx - mu_x)**2 / (sig_x**2.)
     exp2 = (yy - mu_y)**2 / (sig_y**2.)
@@ -43,7 +53,7 @@ class SZ_Cluster_Model:
         lnYmax = np.log(ymax)
         self.lnY = np.arange(lnYmin,lnYmax,dlnY)
 
-        fgs = fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
+        fgs = fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv="input/sz_template_battaglia.csv")
 
         self.dell = 10
         self.nlinv = 0.
@@ -224,8 +234,7 @@ class SZ_Cluster_Model:
 
         # P_func(M,z,q)
         for i in range(z_arr.size):
-            for kk in range(q_arr.size):
-                P_func[:,i,kk] = self.P_of_qn(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr[kk])
+            P_func[:,i,:] = self.P_of_qn(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr)
 
         return P_func
 
@@ -240,9 +249,8 @@ class SZ_Cluster_Model:
 
         # P_func(M,z,q)
         for i in range(z_arr.size):
-            for kk in range(q_arr.size):
-                for jj in range(M_wl.size):
-                    P_func[:,i,kk,jj] = self.P_of_qn_corr(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr[kk],M_wl[jj],mass_err[:,i])
+            for jj in range(M_wl.size):
+                P_func[:,i,:,jj] = self.P_of_qn_corr(lnY,M_arr[:,i],z_arr[i],sigN[:,i],q_arr,M_wl[jj],mass_err[:,i])
         return P_func
 
     def Y_M(self,MM,zz):
@@ -276,33 +284,33 @@ class SZ_Cluster_Model:
         return ans
 
     def P_of_q(self,lnY,MM,zz,sigma_N):
-        lnYa = np.outer(np.ones(len(MM)),lnY)
 
+        lnYa = np.outer(np.ones(len(MM)),lnY)
         sig_thresh = self.Y_erf(np.exp(lnYa),sigma_N)
         P_Y = self.P_of_Y(lnYa,MM, zz)
-
-        ans = MM*0.0
-        for ii in range(len(MM)):
-            ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
+        ans = np.trapz(P_Y*sig_thresh,lnY,np.diff(lnY),axis=1)
         return ans
 
     def P_of_qn(self,lnY,MM,zz,sigma_N,qarr):
-        lnYa = np.outer(np.ones(len(MM)),lnY)
 
-        sig_thresh = self.q_prob(qarr,lnYa,sigma_N)
+        lnYa = np.outer(np.ones(len(MM)),lnY)
+        
         P_Y = self.P_of_Y(lnYa,MM, zz)
-        ans = MM*0.0
-        for ii in range(len(MM)):
-            ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
+        ans = np.zeros([len(MM),len(qarr)])
+        
+        for ii in range(len(qarr)):
+            sig_thresh = self.q_prob(qarr[ii],lnYa,sigma_N)
+            ans[:,ii] = np.trapz(P_Y*sig_thresh,lnY,np.diff(lnY),axis=1)
         return ans
 
     def P_of_qn_corr(self,lnY,MM,zz,sigma_N,qarr,Mwl,Merr):
+
         lnYa = np.outer(np.ones(len(MM)),lnY)
-        sig_thresh = self.q_prob_corr(qarr,lnYa,sigma_N,Mwl,MM,Merr)
         P_Y = self.P_of_Y(lnYa,MM, zz)
-        ans = sig_thresh*0.0
-        for ii in range(len(MM)):
-            ans[ii] = np.trapz(P_Y[ii,:]*sig_thresh[ii,:],lnY,np.diff(lnY))
+        ans = np.zeros([len(MM),len(qarr)])
+        for ii in range(len(qarr)):
+            sig_thresh = self.q_prob_corr(qarr[ii],lnYa,sigma_N,Mwl,MM,Merr)
+            ans[:,ii] = np.trapz(P_Y*sig_thresh,lnY,np.diff(lnY),axis=1)
         return ans
 
     def q_prob (self,q_arr,lnY,sigma_N):
@@ -313,23 +321,18 @@ class SZ_Cluster_Model:
         return ans
 
     def q_prob_corr (self,q_arr,lnY,sigma_N,Mwl,MM,Merr):
-        #Gaussian error probablity for SZ S/N
+        #Gaussian error probablity for SZ S/N and WL mass including correlated scatter
         rho = self.scaling['rho_corr']
-        sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
-        Mwla = np.outer(Mwl)
         Y = np.exp(lnY)
-        print("size")
-        print((Y.size, Mwla.size, MM.size)) 
-        
-        diff_Y = q_arr - Y/sigma_Na
-        diff_M = Mwl*self.scaling['b_wl'] - MM
+        sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))        
+        diff_Y = (q_arr - Y/sigma_Na)
+        diff_M = np.outer(Mwl*self.scaling['b_wl'] - MM,np.ones(len(lnY[0,:])))
         diff_arr = np.array([diff_Y,diff_M])
-        cov = np.array([[1.,rho*Merr*MM],[rho*Merr*MM (Merr*MM)**2 ]])
-        covi = np.linalg.inv(cov)
+        Merr_arr = MM*Merr
+        ans = sigma_Na * 0.0
 
-        ans = np.dot(np.transpose(diff_arr),np.dot(covi,diff_arr))
-        norm = gaussian2D_norm(1,Merra*MMa,rho)
-        #ans = gaussian2D(q_arr,Y/sigma_Na,1.,Mwl*self.scaling['b_wl'],MMa,Merra*MMa,rho)
+        for ii in range(len(MM)):
+            ans[ii,:] = gaussianMat2D(diff_arr[:,ii,:],1.,Merr_arr[ii],rho)
         return ans
     
     def Mwl_prob (self,Mwl,M,Merr):
@@ -337,8 +340,4 @@ class SZ_Cluster_Model:
         ans = gaussian(Mwl*self.scaling['b_wl'],M,Merr*M)*self.scaling['b_wl']
         return ans
 
-    # def Mwl_prob (self,Mwl,M,Merr):
-    #     #Gaussian error probablity for weak lensing mass 
-    #     ans = gaussian(Mwl,M,(Merr+0.01)*M) #* gaussian(Mwl,M,0.01*M)
-    #     return ans
 

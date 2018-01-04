@@ -2,6 +2,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 def f_nu(constDict,nu):
+    nu = np.asarray(nu)
     c = constDict
     mu = c['H_CGS']*(1e9*nu)/(c['K_CGS']*c['TCMB'])
     ans = mu/np.tanh(mu/2.0) - 4.0
@@ -54,7 +55,9 @@ class fgNoises(object):
         else:
             self.tsz_template = None
 
+            
         if components is not None:
+            self.components = components
             fgdict = {'tsz':self.tSZ,'cibc':self.cib_c,'cibp':self.cib_p,'radps':self.rad_ps}
             self.fgdict_nu = {'tsz':self.tSZ_nu,'cibc':self.cib_nu,'cibp':self.cib_nu,'radps':self.rad_ps_nu}
             self.ells = np.arange(0,lmax,1)
@@ -66,6 +69,12 @@ class fgNoises(object):
                 self.noises[component] = interp1d(self.ells,noise,bounds_error=False,fill_value=0.)
             
 
+    def get_tot_fg_noise(self,nu,ells):
+        totnoise = 0.
+        for component in self.components:
+            totnoise += self.noises[component](ells)* self.fgdict_nu[component](nu)*self.fgdict_nu[component](nu)/self.fgdict_nu[component](self.nu0)**2.
+        return totnoise
+    
     def get_noise(self,component,nu1,nu2,ells):
         return self.noises[component](ells)* self.fgdict_nu[component](nu1)*self.fgdict_nu[component](nu2)/self.fgdict_nu[component](self.nu0)**2.
     

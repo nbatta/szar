@@ -7,7 +7,7 @@ import pickle as pickle
 
 calName = sys.argv[1] #"owl1"
 gridName = "grid-"+calName
-outDir = os.environ['WWW']
+#outDir = os.environ['WWW']
 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
@@ -15,7 +15,7 @@ Config.optionxform=str
 Config.read(iniFile)
 
 bigDataDir = Config.get('general','bigDataDirectory')
-
+outDir = bigDataDir
 ms = listFromConfig(Config,gridName,'mexprange')
 Mexp_edges = np.arange(ms[0],ms[1]+ms[2],ms[2])
 zs = listFromConfig(Config,gridName,'zrange')
