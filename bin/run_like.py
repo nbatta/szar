@@ -102,7 +102,7 @@ frac_of_survey = count_temp*1.0 / np.sum(count_temp)
 thresh_bin = 10**((bin_edge[:-1] + bin_edge[1:])/2.)
 
 parlist = ['omch2','ombh2','H0','As','ns','tau','massbias','yslope','scat']
-parvals = [0.1194,0.022,67.0,2.2e-09,0.96,0.06,1.0,0.08,0.2]
+parvals = [0.1194,0.022,67.0,2.2e-09,0.96,0.06,0.80,0.08,0.2]
 
 #print fparams 
 
@@ -153,35 +153,34 @@ for i in range(len(frac_of_survey)):
 print ('Ntot loop',time.time() - start)
 print (counts)
 
-#parlist = ['omch2','As','massbias']
-#parvals = [0.1194,2.2e-09,1.0]
-
 start = time.time()
 print CL.lnlike(parvals,parlist,cluster_prop)
 print ('Ln Like Func',time.time() - start)
 
+parlist = ['omch2','As','massbias','scat','yslope']
+parvals = [0.1194,2.2e-09,1.0,0.2,0.08]
 
 #params_test= CL.alter_fparams(fparams,parlist,parvals)
 
 
 ##test likelihood
-#Ndim, nwalkers = 3 , 10
-#P0 = np.array(parvals)
+Ndim, nwalkers = 5 , 100
+P0 = np.array(parvals)
 
-#pos = [P0 + P0*1e-1*np.random.randn(Ndim) for i in range(nwalkers)]
+pos = [P0 + P0*1e-1*np.random.randn(Ndim) for i in range(nwalkers)]
 
-#start = time.time()
-#sampler = emcee.EnsembleSampler(nwalkers,Ndim,CL.lnlike,args =(parlist,np.array([1.,1.])))
-#sampler.run_mcmc(pos,2)
-#print (time.time() - start)  
+start = time.time()
+sampler = emcee.EnsembleSampler(nwalkers,Ndim,CL.lnlike,args =(parlist,np.array([1.,1.])))
+sampler.run_mcmc(pos,2)
+print (time.time() - start)  
 
-#emcee_run_lnlk = sampler.lnprobability
-#emcee_run_chain =  sampler.chain[:,:,:].reshape((-1,Ndim))
+emcee_run_lnlk = sampler.lnprobability
+emcee_run_chain =  sampler.chain[:,:,:].reshape((-1,Ndim))
 
-#print CL.lnlike(emcee_run_chain[0],parlist,np.array([1.,1.]))
-#print CL.lnlike(emcee_run_chain[10],parlist,np.array([1.,1.]))
-#print (emcee_run_lnlk)
-#print (emcee_run_chain)
+print CL.lnlike(emcee_run_chain[0],parlist,np.array([1.,1.]))
+print CL.lnlike(emcee_run_chain[10],parlist,np.array([1.,1.]))
+print (emcee_run_lnlk)
+print (emcee_run_chain)
 
 
 #{'beta_ym': 0.0, 'Ysig': 0.127, 'betaYsig': 0.0, 'Y_star': 2.42e-10, 'wa': 0.0, 'tau': 0.06, 'b_wl': 1.0, 'H0': 67.0, 'S8All': 0.8, 'mnu': 0.06, 'alpha_ym': 1.79, 'As': 2.2e-09, 'sigR': 0.75, 'omch2': 0.1194, 'gammaYsig': 0.0, 'w0': -1.0, 'rho_corr': 0.0, 'ns': 0.96, 'gamma_ym': 0.0, 'ombh2': 0.022, 'b_ym': 0.8}
