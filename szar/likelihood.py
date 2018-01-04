@@ -195,7 +195,6 @@ class clusterLike:
         priorwth = priorval[1,:]
         lnp = 0.
         for k,prioravg in enumerate(prioravg):
-            print k,param_vals[priorlist[k]],prioravg,priorwth[k],np.log(gaussian(param_vals[priorlist[k]],prioravg,priorwth[k],noNorm=True))
             lnp += np.log(gaussian(param_vals[priorlist[k]],prioravg,priorwth[k],noNorm=True))
  
         if ((param_vals['scat'] < 0) or (param_vals['tau'] < 0)) :
@@ -223,7 +222,7 @@ class clusterLike:
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist, priorval, priorlist):
-        lp = self.lnprior(theta, priorval, priorlist)
+        lp = self.lnprior(theta, parlist, priorval, priorlist)
         if not np.isfinite(lp):
             return -np.inf
         return lp + self.lnlike(theta, parlist)
