@@ -6,8 +6,11 @@ from szar.counts import ClusterCosmology
 from scipy.special import j0
 from orphics.tools.stats import timeit
 
-def gaussian(xx, mu, sig):
-    return 1./(sig * np.sqrt(2*np.pi)) * np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
+def gaussian(xx, mu, sig,noNorm=False):
+    if (noNorm==True):
+        return np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
+    else:
+        return 1./(sig * np.sqrt(2*np.pi)) * np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))
 
 def gaussian2Dnorm(sig_x,sig_y,rho):
     return sig_x*sig_y*2.0*np.pi*np.sqrt(1. - rho**2)

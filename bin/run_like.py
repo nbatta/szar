@@ -137,50 +137,56 @@ start = time.time()
 print np.log(CL.Prob_per_cluster(int_HMF,cluster_prop2[:,1],dndm_int,params))
 print ('per cluster photo z',time.time() - start)
 
-mind = 50
+#mind = 50
 
 #print c_y,c_yerr
 #print 'prob check 0',CL.Y_prob(c_y,CL.LgY,c_yerr)
 #print 'prob check 1',CL.Pfunc_per(CL.HMF.M.copy(),c_z,c_y, c_yerr,params)
 #print CL.P_of_Y_per(CL.HMF.M.copy())[mind]
 #print CL.Pfunc_per(CL.HMF.M.copy(),c_z,c_y,c_yerr,params)
-print 'MF interpol check',dndm_int(c_z,CL.HMF.M.copy())[mind,0]/int_HMF.dn_dM(int_HMF.M200,200.)[mind,2]
-print 'Mass check',int_HMF.cc.Mass_con_del_2_del_mean200(CL.HMF.M.copy(),500,c_z)[mind] / CL.HMF.M.copy()[mind]
+#print 'MF interpol check',dndm_int(c_z,CL.HMF.M.copy())[mind,0]/int_HMF.dn_dM(int_HMF.M200,200.)[mind,2]
+#print 'Mass check',int_HMF.cc.Mass_con_del_2_del_mean200(CL.HMF.M.copy(),500,c_z)[mind] / CL.HMF.M.copy()[mind]
+
+#start = time.time()
+#for i in range(len(frac_of_survey)):
+#    counts += CL.Ntot_survey(int_HMF,area_rads*frac_of_survey[i],thresh_bin[i],params)
+#print ('Ntot loop',time.time() - start)
+#print (counts)
 
 start = time.time()
-for i in range(len(frac_of_survey)):
-    counts += CL.Ntot_survey(int_HMF,area_rads*frac_of_survey[i],thresh_bin[i],params)
-print ('Ntot loop',time.time() - start)
-print (counts)
-
-start = time.time()
-print CL.lnlike(parvals,parlist,cluster_prop)
+print CL.lnlike(parvals,parlist)
 print ('Ln Like Func',time.time() - start)
 
-parlist = ['omch2','As','massbias','scat','yslope']
-parvals = [0.1194,2.2e-09,1.0,0.2,0.08]
+#parlist = ['omch2','As','tau','massbias','scat','yslope']
+#parvals = [0.1194,2.2e-09,0.06,1.0,0.15,0.08]
 
 #params_test= CL.alter_fparams(fparams,parlist,parvals)
 
+priorlist = ['tau','ns','H0','massbias','scat']
+prioravg = np.array([0.06,0.96,67,0.8,0.2])
+priorwth = np.array([0.01,0.01,3,0.12,0.05])
+priorvals = np.array([prioravg,priorwth])
+
+print CL.lnprior(parvals,parlist,priorvals,priorlist)
 
 ##test likelihood
-Ndim, nwalkers = 5 , 100
-P0 = np.array(parvals)
+#Ndim, nwalkers = 5 , 10
+#P0 = np.array(parvals)
 
-pos = [P0 + P0*1e-1*np.random.randn(Ndim) for i in range(nwalkers)]
+#pos = [P0 + P0*1e-1*np.random.randn(Ndim) for i in range(nwalkers)]
 
-start = time.time()
-sampler = emcee.EnsembleSampler(nwalkers,Ndim,CL.lnlike,args =(parlist,np.array([1.,1.])))
-sampler.run_mcmc(pos,2)
-print (time.time() - start)  
+#start = time.time()
+#sampler = emcee.EnsembleSampler(nwalkers,Ndim,CL.lnlike,args =(parlist))
+#sampler.run_mcmc(pos,2)
+#print (time.time() - start)  
 
-emcee_run_lnlk = sampler.lnprobability
-emcee_run_chain =  sampler.chain[:,:,:].reshape((-1,Ndim))
+#emcee_run_lnlk = sampler.lnprobability
+#emcee_run_chain =  sampler.chain[:,:,:].reshape((-1,Ndim))
 
-print CL.lnlike(emcee_run_chain[0],parlist,np.array([1.,1.]))
-print CL.lnlike(emcee_run_chain[10],parlist,np.array([1.,1.]))
-print (emcee_run_lnlk)
-print (emcee_run_chain)
+#print CL.lnlike(emcee_run_chain[0],parlist,np.array([1.,1.]))
+#print CL.lnlike(emcee_run_chain[10],parlist,np.array([1.,1.]))
+#print (emcee_run_lnlk)
+#print (emcee_run_chain)
 
 
 #{'beta_ym': 0.0, 'Ysig': 0.127, 'betaYsig': 0.0, 'Y_star': 2.42e-10, 'wa': 0.0, 'tau': 0.06, 'b_wl': 1.0, 'H0': 67.0, 'S8All': 0.8, 'mnu': 0.06, 'alpha_ym': 1.79, 'As': 2.2e-09, 'sigR': 0.75, 'omch2': 0.1194, 'gammaYsig': 0.0, 'w0': -1.0, 'rho_corr': 0.0, 'ns': 0.96, 'gamma_ym': 0.0, 'ombh2': 0.022, 'b_ym': 0.8}

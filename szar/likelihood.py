@@ -189,13 +189,22 @@ class clusterLike:
             ans = N_z_ind
         return ans
 
-    def lnprior(self,theta):
-        a1,a2 = theta
-        if  1 < a1 < 5 and  1 < a2 < 2:
-            return 0
-        return -np.inf
+    def lnprior(self,theta,parlist,priorval,priorlist):
+        param_vals = self.alter_fparams(self.fparams,parlist,theta)
+        prioravg = priorval[0,:]
+        priorwth = priorval[1,:]
+        lnp = 0.
+        for k,prioravg in enumerate(prioravg):
+            print k,param_vals[priorlist[k]],prioravg,priorwth[k],np.log(gaussian(param_vals[priorlist[k]],prioravg,priorwth[k],noNorm=True))
+            lnp += np.log(gaussian(param_vals[priorlist[k]],prioravg,priorwth[k],noNorm=True))
+ 
+        if ((param_vals['scat'] < 0) or (param_vals['tau'] < 0)) :
+            lnp += -np.inf 
 
-    def lnlike(self,theta,parlist,cluster_data):
+        return lnp
+
+
+    def lnlike(self,theta,parlist):
         
         param_vals = self.alter_fparams(self.fparams,parlist,theta)
         int_cc = ClusterCosmology(param_vals,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
@@ -213,11 +222,11 @@ class clusterLike:
             Nind = Nind + np.log(N_per) 
         return -Ntot + Nind
 
-    def lnprob(self,theta, inter, mthresh, zthresh):
-        lp = self.lnprior(theta, mthresh, zthresh)
+    def lnprob(self,theta, parlist, priorval, priorlist):
+        lp = self.lnprior(theta, priorval, priorlist)
         if not np.isfinite(lp):
             return -np.inf
-        return lp + self.lnlike(theta, inter)
+        return lp + self.lnlike(theta, parlist)
 
 #Functions from NEMO
 #y0FromLogM500(log10M500, z, tckQFit, tenToA0 = 4.95e-5, B0 = 0.08, Mpivot = 3e14, sigma_int = 0.2)
