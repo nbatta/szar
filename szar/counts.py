@@ -10,12 +10,11 @@ from .tinker import tinker_params
 from . import tinker as tinker
 from szar.foregrounds import fgNoises
 
-from orphics.tools.io import Plotter
+from orphics.io import Plotter
 from orphics.cosmology import Cosmology
 import orphics.cosmology as cosmo
-from orphics.tools.stats import timeit
+from orphics.stats import timeit
 from scipy.interpolate import interp1d, interp2d, griddata
-from orphics.analysis.flatMaps import interpolateGrid
 
 import szar._fast as fast
 
@@ -247,7 +246,8 @@ class ClusterCosmology(Cosmology):
 
 class Halo_MF:
     #@timeit
-    def __init__(self,clusterCosmology,Mexp_edges,z_edges,kh=None,powerZK=None,kmin=1e-4,kmax=11.,knum=200):
+    def __init__(self,clusterCosmology,Mexp_edges,z_edges,kh=None,powerZK=None,kmin=1e-4,kmax=5.,knum=200):
+        #def __init__(self,clusterCosmology,Mexp_edges,z_edges,kh=None,powerZK=None,kmin=1e-4,kmax=11.,knum=200):
         # update self.sigN (20 mins) and self.Pfunc if changing experiment
         # update self.cc or self.pk if changing cosmology
         # update self.Pfunc if changing scaling relation parameters
@@ -293,7 +293,7 @@ class Halo_MF:
     def _pk(self,zarr,kmin,kmax,knum):
         self.cc.pars.set_matter_power(redshifts=np.append(zarr,0), kmax=kmax,silent=True)
         #self.cc.pars.set_matter_power(redshifts=zarr, kmax=kmax,silent=True)
-        self.cc.pars.Transfer.high_precision = True
+        self.cc.pars.Transfer.high_precision = False #True
 
         self.cc.pars.NonLinear = model.NonLinear_none
         self.cc.results = camb.get_results(self.cc.pars)
