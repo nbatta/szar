@@ -12,6 +12,7 @@ import cPickle as pickle
 import matplotlib.pyplot as plt
 
 #import time
+from enlib import bench
 
 def read_MJH_noisemap(noiseMap,maskMap):
     #Read in filter noise map
@@ -195,7 +196,6 @@ class clusterLike:
         priorwth = priorval[1,:]
         lnp = 0.
         for k,prioravg in enumerate(prioravg):
-            print k,param_vals[priorlist[k]],prioravg,priorwth[k],np.log(gaussian(param_vals[priorlist[k]],prioravg,priorwth[k],noNorm=True))
             lnp += np.log(gaussian(param_vals[priorlist[k]],prioravg,priorwth[k],noNorm=True))
  
         if ((param_vals['scat'] < 0) or (param_vals['tau'] < 0)) :
@@ -207,6 +207,8 @@ class clusterLike:
     def lnlike(self,theta,parlist):
         
         param_vals = self.alter_fparams(self.fparams,parlist,theta)
+        print(param_vals)
+
         int_cc = ClusterCosmology(param_vals,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
         int_HMF = Halo_MF(int_cc,self.mgrid,self.zgrid) # internal HMF call
         dndm_int = int_HMF.inter_dndm(200.) # delta = 200
@@ -214,7 +216,7 @@ class clusterLike:
 
         Ntot = 0.
         for i in range(len(self.frac_of_survey)):
-             Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
+            Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
 
         Nind = 0
         for i in xrange(len(self.clst_z)):
@@ -223,10 +225,11 @@ class clusterLike:
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist, priorval, priorlist):
-        lp = self.lnprior(theta, priorval, priorlist)
+        lp = self.lnprior(theta, parlist, priorval, priorlist)
         if not np.isfinite(lp):
             return -np.inf
-        return lp + self.lnlike(theta, parlist)
+        lnlike = self.lnlike(theta, parlist)
+        return lp + lnlike
 
 #Functions from NEMO
 #y0FromLogM500(log10M500, z, tckQFit, tenToA0 = 4.95e-5, B0 = 0.08, Mpivot = 3e14, sigma_int = 0.2)

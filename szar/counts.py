@@ -247,7 +247,8 @@ class ClusterCosmology(Cosmology):
 
 class Halo_MF:
     #@timeit
-    def __init__(self,clusterCosmology,Mexp_edges,z_edges,kh=None,powerZK=None,kmin=1e-4,kmax=11.,knum=200):
+    def __init__(self,clusterCosmology,Mexp_edges,z_edges,kh=None,powerZK=None,kmin=1e-4,kmax=5.,knum=200):
+        #def __init__(self,clusterCosmology,Mexp_edges,z_edges,kh=None,powerZK=None,kmin=1e-4,kmax=11.,knum=200):
         # update self.sigN (20 mins) and self.Pfunc if changing experiment
         # update self.cc or self.pk if changing cosmology
         # update self.Pfunc if changing scaling relation parameters
@@ -292,7 +293,7 @@ class Halo_MF:
             
     def _pk(self,zarr,kmin,kmax,knum):
         self.cc.pars.set_matter_power(redshifts=zarr, kmax=kmax,silent=True)
-        self.cc.pars.Transfer.high_precision = True
+        self.cc.pars.Transfer.high_precision = False #True
 
         self.cc.pars.NonLinear = model.NonLinear_none
         self.cc.results = camb.get_results(self.cc.pars)
