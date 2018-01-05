@@ -31,7 +31,7 @@ bigDataDir = Config.get('general','bigDataDirectory')
 clttfile = Config.get('general','clttfile')
 constDict = io.dict_from_section(Config,'constants')
 version = Config.get('general','version')
-expName = "S4-1.5-paper" #S4-1.0-CDT"
+expName = "S4-1.0-CDT"#"S4-1.5-paper" #S4-1.0-CDT"
 gridName = "grid-owl2" #grid-owl2"
 #_S4-1.5-paper_grid-owl2_v0.6.p
 
@@ -85,7 +85,11 @@ else:
 
 
 
-print CL.lnprior(parvals,parlist,priorvals,priorlist)
+start = time.time()
+print CL.lnlike(parvals,parlist)#,priorvals,priorlist)
+print ("like call", time.time() - start)
+
+sys.exit(0)
 
 Ndim, nwalkers = len(parvals), len(parvals)*2
 P0 = np.array(parvals)

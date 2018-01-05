@@ -61,7 +61,16 @@ class clusterLike:
         self.constDict = dict_from_section(Config,'constants')
         version = Config.get('general','version')
         
-        self.mgrid,self.zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
+        #self.mgrid,self.zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
+        logm_min = 13.7
+        logm_max = 15.72
+        logm_spacing = 0.04
+        self.mgrid = np.arange(logm_min,logm_max,logm_spacing)
+        self.zgrid = np.arange(0.0,2.01,0.1)        
+        #print self.mgrid
+        #print self.zgrid
+        
+
         self.cc = ClusterCosmology(self.fparams,self.constDict,clTTFixFile=self.clttfile)
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
 
@@ -78,7 +87,7 @@ class clusterLike:
         self.clst_xmapInd,self.clst_ymapInd = self.Find_nearest_pixel_ind(self.clst_RA,self.clst_DEC)
 
         self.qmin = 5.6
-        self.num_noise_bins = 20
+        self.num_noise_bins = 10
         self.area_rads = 987.5/41252.9612
         self.LgY = np.arange(-6,-3,0.05)
 

@@ -31,7 +31,7 @@ nemoOutputDir = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACTdata/'
 nemoOutputDirOut = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/'
 pardict = nemoOutputDir + 'equD56.par'
 noise_file = 'RMSMap_Arnaud_M2e14_z0p4.fits'
-CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir,noise_file)
+CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir,noise_file,test=args.test)
 
 diagnosticsDir = '/Users/nab/Downloads/countsCheck/equD56-countsCheck/diagnostics/'
 
