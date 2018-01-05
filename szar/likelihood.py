@@ -41,8 +41,9 @@ def read_clust_cat(fitsfile):
     return ra[ind],dec[ind],z[ind],zerr[ind],Y0[ind],Y0err[ind]
 
 class clusterLike:
-    def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile,fix_params):
+    def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile,fix_params,test=False):
         self.fix_params = fix_params
+        self.test = test
         Config = SafeConfigParser()
         Config.optionxform=str
         Config.read(iniFile)
@@ -219,9 +220,12 @@ class clusterLike:
         dndm_int = int_HMF.inter_dndm(200.) # delta = 200
         cluster_prop = np.array([self.clst_z,self.clst_zerr,self.clst_y0*1e-4,self.clst_y0err*1e-4])
 
-        Ntot = 0.
-        for i in range(len(self.frac_of_survey)):
-            Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
+        if self.test:
+            Ntot = 60.
+        else:
+            Ntot = 0.
+            for i in range(len(self.frac_of_survey)):
+                Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
         
         Nind = 0
         for i in xrange(len(self.clst_z)):
@@ -233,8 +237,7 @@ class clusterLike:
         lp = self.lnprior(theta, parlist, priorval, priorlist)
         if not np.isfinite(lp):
             return -np.inf
-        with bench.show("lnlike"):
-            lnlike = self.lnlike(theta, parlist)
+        lnlike = self.lnlike(theta, parlist)
         return lp + lnlike,self.s8
 
 #Functions from NEMO

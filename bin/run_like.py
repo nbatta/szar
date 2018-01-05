@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser(description='Run likelihood.')
 parser.add_argument("chain_name", type=str,help='Root name of run.')
 parser.add_argument("-i", "--index",     type=int,  default=0,help="Index of chainset.")
 parser.add_argument("-N", "--nruns",     type=int,  default=int(1e6),help="Number of iterations.")
-# parser.add_argument("-f", "--flag", action='store_true',help='A flag.')
+parser.add_argument("-t", "--test", action='store_true',help='Do a test quickly by setting Ntot=60 and just 3 params.')
 args = parser.parse_args()
 
 
@@ -46,36 +46,43 @@ chain_out = PathConfig.get("likepaths","chains")
 pardict = nemoOutputDir + 'equD56.par'
 noise_file = 'RMSMap_Arnaud_M2e14_z0p4.fits'
 
-fixlist = ['tau']
-fixvals = [0.06]
+
+if args.test:
+    fixlist = ['ombh2','ns','tau','massbias','yslope','scat']
+    fixvals = [0.022,0.96,0.06,0.80,0.08,0.2]
+else:
+    fixlist = ['tau']
+    fixvals = [0.06]
 
 
-# fixlist = ['ombh2','ns','tau','massbias','yslope','scat']
-# fixvals = [0.022,0.96,0.06,0.80,0.08,0.2]
 
 
 
 fix_params = dict(zip(fixlist,fixvals))
 
 
-CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir,noise_file,fix_params)
-
-parlist = ['omch2','ombh2','H0','As','ns','massbias','yslope','scat']
-parvals = [0.1194,0.022,67.0,2.2e-09,0.96,0.80,0.08,0.2]
-
-priorlist = ['ns','H0','massbias','scat']
-prioravg = np.array([0.96,67,0.8,0.2])
-priorwth = np.array([0.01,3,0.12,0.1])
-priorvals = np.array([prioravg,priorwth])
+CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir,noise_file,fix_params,test=args.test)
 
 
-# parlist = ['omch2','H0','As']
-# parvals = [0.1194,67.0,2.2e-09]
+if args.test:
+    parlist = ['omch2','H0','As']
+    parvals = [0.1194,67.0,2.2e-09]
 
-# priorlist = ['H0']
-# prioravg = np.array([67])
-# priorwth = np.array([3])
-# priorvals = np.array([prioravg,priorwth])
+    priorlist = ['H0']
+    prioravg = np.array([67])
+    priorwth = np.array([3])
+    priorvals = np.array([prioravg,priorwth])
+    
+else:
+    parlist = ['omch2','ombh2','H0','As','ns','massbias','yslope','scat']
+    parvals = [0.1194,0.022,67.0,2.2e-09,0.96,0.80,0.08,0.2]
+
+    priorlist = ['ns','H0','massbias','scat']
+    prioravg = np.array([0.96,67,0.8,0.2])
+    priorwth = np.array([0.01,3,0.12,0.1])
+    priorvals = np.array([prioravg,priorwth])
+
+
 
 
 print CL.lnprior(parvals,parlist,priorvals,priorlist)
@@ -110,6 +117,7 @@ for result in sampler.sample(pos, iterations=Nruns, storechain=False):
     savemat = np.concatenate((position,s8),axis=1)
     np.savetxt(f,savemat)
     f.close()
+    print "Saved a sample."
 
 # pool.close()
 
