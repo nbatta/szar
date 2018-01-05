@@ -41,8 +41,8 @@ def read_clust_cat(fitsfile):
     return ra[ind],dec[ind],z[ind],zerr[ind],Y0[ind],Y0err[ind]
 
 class clusterLike:
-    def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile):
-        
+    def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile,fix_params):
+        self.fix_params = fix_params
         Config = SafeConfigParser()
         Config.optionxform=str
         Config.read(iniFile)
@@ -197,9 +197,12 @@ class clusterLike:
         lnp = 0.
         for k,prioravg in enumerate(prioravg):
             lnp += np.log(gaussian(param_vals[priorlist[k]],prioravg,priorwth[k],noNorm=True))
- 
-        if ((param_vals['scat'] < 0) or (param_vals['tau'] < 0)) :
-            lnp += -np.inf 
+
+        try:
+            if ((param_vals['scat'] < 0) or (param_vals['tau'] < 0)) :
+                lnp += -np.inf
+        except:
+            pass
 
         return lnp
 
@@ -207,17 +210,19 @@ class clusterLike:
     def lnlike(self,theta,parlist):
         
         param_vals = self.alter_fparams(self.fparams,parlist,theta)
-        print(param_vals)
+        for key in self.fix_params:
+            if key not in param_vals.keys(): param_vals[key] = self.fix_params[key]
 
         int_cc = ClusterCosmology(param_vals,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
         int_HMF = Halo_MF(int_cc,self.mgrid,self.zgrid) # internal HMF call
+        self.s8 = int_HMF.cc.s8
         dndm_int = int_HMF.inter_dndm(200.) # delta = 200
         cluster_prop = np.array([self.clst_z,self.clst_zerr,self.clst_y0*1e-4,self.clst_y0err*1e-4])
 
         Ntot = 0.
         for i in range(len(self.frac_of_survey)):
             Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
-
+        
         Nind = 0
         for i in xrange(len(self.clst_z)):
             N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int,param_vals)
@@ -228,8 +233,9 @@ class clusterLike:
         lp = self.lnprior(theta, parlist, priorval, priorlist)
         if not np.isfinite(lp):
             return -np.inf
-        lnlike = self.lnlike(theta, parlist)
-        return lp + lnlike
+        with bench.show("lnlike"):
+            lnlike = self.lnlike(theta, parlist)
+        return lp + lnlike,self.s8
 
 #Functions from NEMO
 #y0FromLogM500(log10M500, z, tckQFit, tenToA0 = 4.95e-5, B0 = 0.08, Mpivot = 3e14, sigma_int = 0.2)

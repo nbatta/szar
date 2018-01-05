@@ -6,8 +6,11 @@ from configparser import SafeConfigParser
 from orphics.tools.io import dictFromSection
 from szar.counts import ClusterCosmology,Halo_MF
 import emcee
-import time
+import time, sys, os
 # from emcee.utils import MPIPool
+
+index = int(sys.argv[1])
+print index
 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
@@ -25,22 +28,38 @@ nemoOutputDir = '/gpfs01/astro/workarea/msyriac/data/depot/SZruns/ACTdata/' #/Us
 nemoOutputDirOut = '/gpfs01/astro/workarea/msyriac/data/depot/SZruns/ACTdata_out/'
 pardict = nemoOutputDir + 'equD56.par'
 noise_file = 'RMSMap_Arnaud_M2e14_z0p4.fits'
-CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir,noise_file)
+
+fixlist = ['tau']
+fixvals = [0.06]
+
+
+# fixlist = ['ombh2','ns','tau','massbias','yslope','scat']
+# fixvals = [0.022,0.96,0.06,0.80,0.08,0.2]
 
 
 
-pardict = nemoOutputDir + 'equD56.par'
-noise_file = 'RMSMap_Arnaud_M2e14_z0p4.fits'
+fix_params = dict(zip(fixlist,fixvals))
 
-CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir,noise_file)
 
-parlist = ['omch2','ombh2','H0','As','ns','tau','massbias','yslope','scat']
-parvals = [0.1194,0.022,67.0,2.2e-09,0.96,0.06,0.80,0.08,0.2]
+CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir,noise_file,fix_params)
 
-priorlist = ['tau','ns','H0','massbias','scat']
-prioravg = np.array([0.06,0.96,67,0.8,0.2])
-priorwth = np.array([0.01,0.01,3,0.12,0.1])
+parlist = ['omch2','ombh2','H0','As','ns','massbias','yslope','scat']
+parvals = [0.1194,0.022,67.0,2.2e-09,0.96,0.80,0.08,0.2]
+
+priorlist = ['ns','H0','massbias','scat']
+prioravg = np.array([0.96,67,0.8,0.2])
+priorwth = np.array([0.01,3,0.12,0.1])
 priorvals = np.array([prioravg,priorwth])
+
+
+# parlist = ['omch2','H0','As']
+# parvals = [0.1194,67.0,2.2e-09]
+
+# priorlist = ['H0']
+# prioravg = np.array([67])
+# priorwth = np.array([3])
+# priorvals = np.array([prioravg,priorwth])
+
 
 print CL.lnprior(parvals,parlist,priorvals,priorlist)
 
@@ -56,22 +75,23 @@ start = time.time()
 #     pool.wait()
 #     sys.exit(0)
 
-Nruns = 1
+Nruns = int(1e6)
 print (nwalkers,Nruns)
 #nwalkers = 1
 sampler = emcee.EnsembleSampler(nwalkers,Ndim,CL.lnprob,args =(parlist,priorvals,priorlist))#,pool=pool)
 #sampler.run_mcmc(pos,Nruns)
 
 
-filename = "chain.dat"
+filename = os.environ['WORK']+"/sz_chain_"+str(index)+".dat"
 f = open(filename, "w")
 f.close()
 
 for result in sampler.sample(pos, iterations=Nruns, storechain=False):
     position = result[0]
-    f = open(filename, "a")
-    for k in range(position.shape[0]):
-        f.write("{0:4d} {1:s}\n".format(k, " ".join(position[k])))
+    s8 = np.array(result[3]).reshape((len(result[3]),1))
+    f = open(filename, "ab")
+    savemat = np.concatenate((position,s8),axis=1)
+    np.savetxt(f,savemat)
     f.close()
 
 # pool.close()
