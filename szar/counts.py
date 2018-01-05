@@ -10,12 +10,11 @@ from .tinker import tinker_params
 from . import tinker as tinker
 from szar.foregrounds import fgNoises
 
-from orphics.tools.io import Plotter
+from orphics.io import Plotter
 from orphics.cosmology import Cosmology
 import orphics.cosmology as cosmo
-from orphics.tools.stats import timeit
+from orphics.stats import timeit
 from scipy.interpolate import interp1d, interp2d, griddata
-from orphics.analysis.flatMaps import interpolateGrid
 
 import szar._fast as fast
 

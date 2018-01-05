@@ -7,7 +7,7 @@ from scipy import special,stats
 from astropy.io import fits
 from astLib import astWCS
 from configparser import SafeConfigParser
-from orphics.tools.io import dictFromSection
+from orphics.io import dict_from_section
 import cPickle as pickle
 import matplotlib.pyplot as plt
 
@@ -57,7 +57,7 @@ class clusterLike:
 
         bigDataDir = Config.get('general','bigDataDirectory')
         self.clttfile = Config.get('general','clttfile')
-        self.constDict = dictFromSection(Config,'constants')
+        self.constDict = dict_from_section(Config,'constants')
         version = Config.get('general','version')
         
         self.mgrid,self.zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
