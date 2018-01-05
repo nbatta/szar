@@ -3,7 +3,7 @@ import szar.likelihood as lk
 import matplotlib.pyplot as plt
 from scipy import stats
 from configparser import SafeConfigParser
-from orphics.tools.io import dictFromSection
+from orphics import io
 from szar.counts import ClusterCosmology,Halo_MF
 import emcee
 import time, sys, os
@@ -18,14 +18,19 @@ Config.optionxform=str
 Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
 clttfile = Config.get('general','clttfile')
-constDict = dictFromSection(Config,'constants')
+constDict = io.dict_from_section(Config,'constants')
 version = Config.get('general','version')
 expName = "S4-1.5-paper" #S4-1.0-CDT"
 gridName = "grid-owl2" #grid-owl2"
 #_S4-1.5-paper_grid-owl2_v0.6.p
-        
-nemoOutputDir = '/gpfs01/astro/workarea/msyriac/data/depot/SZruns/ACTdata/' #/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACTdata/'
-nemoOutputDirOut = '/gpfs01/astro/workarea/msyriac/data/depot/SZruns/ACTdata_out/'
+
+
+PathConfig = io.load_path_config()
+nemoOutputDir = PathConfig.get("likepaths","nemoOutputDir")
+nemoOutputDirOut = PathConfig.get("likepaths","nemoOutputDirOut")
+# nemoOutputDir = '/gpfs01/astro/workarea/msyriac/data/depot/SZruns/ACTdata/' #/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACTdata/'
+# nemoOutputDirOut = '/gpfs01/astro/workarea/msyriac/data/depot/SZruns/ACTdata_out/'
+
 pardict = nemoOutputDir + 'equD56.par'
 noise_file = 'RMSMap_Arnaud_M2e14_z0p4.fits'
 
