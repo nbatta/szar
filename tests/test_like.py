@@ -153,10 +153,6 @@ print ('per cluster photo z',time.time() - start)
 #print ('Ntot loop',time.time() - start)
 #print (counts)
 
-start = time.time()
-print CL.lnlike(parvals,parlist)
-print ('Ln Like Func',time.time() - start)
-
 #parlist = ['omch2','As','tau','massbias','scat','yslope']
 #parvals = [0.1194,2.2e-09,0.06,1.0,0.15,0.08]
 
@@ -166,6 +162,10 @@ priorlist = ['tau','ns','H0','massbias','scat']
 prioravg = np.array([0.06,0.96,67,0.8,0.2])
 priorwth = np.array([0.01,0.01,3,0.12,0.05])
 priorvals = np.array([prioravg,priorwth])
+
+start = time.time()
+print CL.lnprob(parvals,parlist,priorvals,priorlist)
+print ('Ln Like Func',time.time() - start)
 
 print CL.lnprior(parvals,parlist,priorvals,priorlist)
 
