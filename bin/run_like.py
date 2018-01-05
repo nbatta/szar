@@ -7,7 +7,6 @@ from orphics.tools.io import dictFromSection
 from szar.counts import ClusterCosmology,Halo_MF
 import emcee
 import time
-from emcee.utils import MPIPool
 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
@@ -44,13 +43,8 @@ pos = [P0 + P0*1e-1*np.random.randn(Ndim) for i in range(nwalkers)]
 
 start = time.time()
 
-pool = MPIPool()
-if not pool.is_master():
-    pool.wait()
-    sys.exit(0)
+sampler = emcee.EnsembleSampler(nwalkers,Ndim,CL.lnprob,args =(parlist,priorvals,priorlist))
+sampler.run_mcmc(pos,1)
 
-sampler = emcee.EnsembleSampler(nwalkers,Ndim,CL.lnprob,args =(parlist,priorvals,priorlist))#,pool=pool)
-sampler.run_mcmc(pos,1000)
-#pool.close()
 
 print (time.time() - start)  
