@@ -226,6 +226,11 @@ class clusterLike:
         int_cc = ClusterCosmology(param_vals,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
         int_HMF = Halo_MF(int_cc,self.mgrid,self.zgrid) # internal HMF call
         self.s8 = int_HMF.cc.s8
+
+        if np.nan_to_num(self.s8)<0.1 or np.nan_to_num(self.s8)>10.:
+            self.s8 = 0.
+            return -np.inf
+        
         dndm_int = int_HMF.inter_dndm(200.) # delta = 200
         cluster_prop = np.array([self.clst_z,self.clst_zerr,self.clst_y0*1e-4,self.clst_y0err*1e-4])
 
