@@ -8,9 +8,20 @@ from szar.counts import ClusterCosmology,Halo_MF
 import emcee
 import time, sys, os
 # from emcee.utils import MPIPool
+import argparse
+# Parse command line
+parser = argparse.ArgumentParser(description='Run likelihood.')
+parser.add_argument("chain_name", type=str,help='Root name of run.')
+parser.add_argument("-i", "--index",     type=int,  default=0,help="Index of chainset.")
+parser.add_argument("-N", "--nruns",     type=int,  default=int(1e6),help="Number of iterations.")
+# parser.add_argument("-f", "--flag", action='store_true',help='A flag.')
+args = parser.parse_args()
 
-index = int(sys.argv[1])
-print index
+
+
+# index = int(sys.argv[1])
+print "Index ", args.index
+index = args.index
 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
@@ -28,6 +39,7 @@ gridName = "grid-owl2" #grid-owl2"
 PathConfig = io.load_path_config()
 nemoOutputDir = PathConfig.get("likepaths","nemoOutputDir")
 nemoOutputDirOut = PathConfig.get("likepaths","nemoOutputDirOut")
+chain_out = PathConfig.get("likepaths","chains")
 # nemoOutputDir = '/gpfs01/astro/workarea/msyriac/data/depot/SZruns/ACTdata/' #/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACTdata/'
 # nemoOutputDirOut = '/gpfs01/astro/workarea/msyriac/data/depot/SZruns/ACTdata_out/'
 
@@ -80,14 +92,14 @@ start = time.time()
 #     pool.wait()
 #     sys.exit(0)
 
-Nruns = int(1e6)
+Nruns = args.nruns #int(1e6)
 print (nwalkers,Nruns)
 #nwalkers = 1
 sampler = emcee.EnsembleSampler(nwalkers,Ndim,CL.lnprob,args =(parlist,priorvals,priorlist))#,pool=pool)
 #sampler.run_mcmc(pos,Nruns)
 
 
-filename = os.environ['WORK']+"/sz_chain_"+str(index)+".dat"
+filename = chain_out+"/sz_chain_"+args.chain_name+"_"+str(index)+".dat"
 f = open(filename, "w")
 f.close()
 
