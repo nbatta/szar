@@ -74,10 +74,12 @@ else:
     parvals = [0.1194,0.022,67.0,2.2e-09,0.96,0.80,0.08,0.2]
     #parvals = [  1.88435449e-01,   3.58611034e-02,   7.11553421e+01 ,  3.16378460e-09, 8.79223364e-01,   2.53233761e-02,   2.79267165e-02,   1.99945364e-01]
     #nan pars
-
-    priorlist = ['ns','H0','massbias','scat']
-    prioravg = np.array([0.96,67,0.8,0.2])
-    priorwth = np.array([0.01,3,0.12,0.1])
+   
+    priorlist = ['ombh2','ns','H0','massbias','scat']
+    prioravg = np.array([0.0223,0.96,67.3,0.68,0.2])
+    priorwth = np.array([0.0009,0.02,3.6,0.11,0.1])
+    # prioravg = np.array([0.0223,0.96,67.3,0.8,0.2])
+    # priorwth = np.array([0.0009,0.02,3.6,0.12,0.1])
     priorvals = np.array([prioravg,priorwth])
 
 

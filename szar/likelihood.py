@@ -214,6 +214,16 @@ class clusterLike:
         except:
             pass
 
+
+    
+        pars = ['omch2','ombh2','H0','As','ns','massbias','yslope','scat']
+        mins = [0.001,0.005,40.,7.389056098930651e-10,0.8,0.2,-0.6,0.001 ]
+        maxs = [0.99,0.1,100.,5.459815003314424e-09,1.2,1.4,0.6,0.8 ]
+
+        for k,par in enumerate(pars):
+            if param_vals[par]<mins[k] or param_vals[par]>maxs[k]: lnp += -np.inf
+
+
         return lnp
 
 
