@@ -72,6 +72,8 @@ if args.test:
 else:
     parlist = ['omch2','ombh2','H0','As','ns','massbias','yslope','scat']
     parvals = [0.1194,0.022,67.0,2.2e-09,0.96,0.80,0.08,0.2]
+    #parvals = [  1.88435449e-01,   3.58611034e-02,   7.11553421e+01 ,  3.16378460e-09, 8.79223364e-01,   2.53233761e-02,   2.79267165e-02,   1.99945364e-01]
+    #nan pars
 
     priorlist = ['ns','H0','massbias','scat']
     prioravg = np.array([0.96,67,0.8,0.2])
@@ -85,10 +87,15 @@ start = time.time()
 print CL.lnlike(parvals,parlist)#,priorvals,priorlist)
 print ("like call", time.time() - start)
 
+sys.exit(0)
+
+print parlist
+
 Ndim, nwalkers = len(parvals), len(parvals)*2
 P0 = np.array(parvals)
 
 pos = [P0 + P0*1e-1*np.random.randn(Ndim) for i in range(nwalkers)]
+pos = [P0 + P0*0.0*np.random.randn(Ndim) for i in range(nwalkers)]
 
 start = time.time()
 
