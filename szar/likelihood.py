@@ -138,14 +138,14 @@ class clusterLike:
         Y = 10**LgY
         sig_thresh = np.outer(np.ones(len(MM)),self.Y_erf(Y,Ynoise))
         LgYa = np.outer(np.ones(len(MM)),LgY)
-        P_Y = self.P_Yo(LgYa,MM,zz,param_vals)
+        P_Y = np.nan_to_num(self.P_Yo(LgYa,MM,zz,param_vals))
         ans = np.trapz(P_Y*sig_thresh,LgY,np.diff(LgY),axis=1)
         return ans
 
     def P_of_Y_per(self,LgY,MM,zz,Y_c,Y_err,param_vals):
         P_Y_sig = np.outer(np.ones(len(MM)),self.Y_prob(Y_c,LgY,Y_err))
         LgYa = np.outer(np.ones(len(MM)),LgY)
-        P_Y = self.P_Yo(LgYa,MM,zz,param_vals)
+        P_Y = np.nan_to_num(self.P_Yo(LgYa,MM,zz,param_vals))
         ans = np.trapz(P_Y*P_Y_sig,LgY,np.diff(LgY),axis=1)
         return ans
 
@@ -158,7 +158,7 @@ class clusterLike:
         LgY = self.LgY
         LgYa = np.outer(np.ones(len(MM)),LgY)
         P_Y_sig = self.Y_prob(Y_c,LgY,Y_err)
-        P_Y = self.P_Yo(LgYa,MM,zz,param_vals)
+        P_Y = np.nan_to_num(self.P_Yo(LgYa,MM,zz,param_vals))
         ans = np.trapz(P_Y*P_Y_sig,LgY,np.diff(LgY),axis=1)
         return ans
 
@@ -178,7 +178,7 @@ class clusterLike:
         z_arr = self.HMF.zarr.copy()        
         Pfunc = self.PfuncY(Ythresh,self.HMF.M.copy(),z_arr,param_vals)
         dn_dzdm = int_HMF.dn_dM(int_HMF.M200,200.)
-
+        
         N_z = np.trapz(dn_dzdm*Pfunc,dx=np.diff(int_HMF.M200,axis=0),axis=0)
         Ntot = np.trapz(N_z*int_HMF.dVdz,dx=np.diff(z_arr))*4.*np.pi*fsky
         return Ntot
@@ -223,6 +223,8 @@ class clusterLike:
         for key in self.fix_params:
             if key not in param_vals.keys(): param_vals[key] = self.fix_params[key]
 
+        print param_vals['tau']
+
         int_cc = ClusterCosmology(param_vals,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
         int_HMF = Halo_MF(int_cc,self.mgrid,self.zgrid) # internal HMF call
         self.s8 = int_HMF.cc.s8
@@ -235,17 +237,16 @@ class clusterLike:
             Ntot = 0.
             for i in range(len(self.frac_of_survey)):
                 Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
-        
         Nind = 0
         for i in xrange(len(self.clst_z)):
             N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int,param_vals)
-            Nind = Nind + np.log(N_per) 
+            Nind = Nind + np.log(N_per)
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist, priorval, priorlist):
         lp = self.lnprior(theta, parlist, priorval, priorlist)
         if not np.isfinite(lp):
-            return -np.inf
+            return -np.inf,self.s8
         lnlike = self.lnlike(theta, parlist)
         return lp + lnlike,self.s8
 
