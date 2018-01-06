@@ -54,10 +54,6 @@ else:
     fixlist = ['tau']
     fixvals = [0.06]
 
-
-
-
-
 fix_params = dict(zip(fixlist,fixvals))
 
 

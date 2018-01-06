@@ -218,6 +218,7 @@ class clusterLike:
 
 
     def lnlike(self,theta,parlist):
+
         
         param_vals = self.alter_fparams(self.fparams,parlist,theta)
         for key in self.fix_params:
@@ -227,9 +228,9 @@ class clusterLike:
         int_HMF = Halo_MF(int_cc,self.mgrid,self.zgrid) # internal HMF call
         self.s8 = int_HMF.cc.s8
 
-        if np.nan_to_num(self.s8)<0.1 or np.nan_to_num(self.s8)>10.:
+        if np.nan_to_num(self.s8)<0.1 or np.nan_to_num(self.s8)>10. or not(np.isfinite(self.s8)):
             self.s8 = 0.
-            return -np.inf
+        #     return -np.inf
         
         dndm_int = int_HMF.inter_dndm(200.) # delta = 200
         cluster_prop = np.array([self.clst_z,self.clst_zerr,self.clst_y0*1e-4,self.clst_y0err*1e-4])
@@ -244,15 +245,15 @@ class clusterLike:
         Nind = 0
         for i in xrange(len(self.clst_z)):
             N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int,param_vals)
-            Nind = Nind + np.log(N_per) 
+            Nind = Nind + np.log(N_per)
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist, priorval, priorlist):
         lp = self.lnprior(theta, parlist, priorval, priorlist)
         if not np.isfinite(lp):
-            return -np.inf
+            return -np.inf, 0.
         lnlike = self.lnlike(theta, parlist)
-        return lp + lnlike,self.s8
+        return lp + lnlike,np.nan_to_num(self.s8)
 
 #Functions from NEMO
 #y0FromLogM500(log10M500, z, tckQFit, tenToA0 = 4.95e-5, B0 = 0.08, Mpivot = 3e14, sigma_int = 0.2)
