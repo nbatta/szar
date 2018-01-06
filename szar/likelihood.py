@@ -234,8 +234,6 @@ class clusterLike:
         for key in self.fix_params:
             if key not in param_vals.keys(): param_vals[key] = self.fix_params[key]
 
-        print param_vals['tau']
-
         int_cc = ClusterCosmology(param_vals,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
         int_HMF = Halo_MF(int_cc,self.mgrid,self.zgrid) # internal HMF call
         self.s8 = int_HMF.cc.s8
