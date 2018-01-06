@@ -87,7 +87,7 @@ start = time.time()
 print CL.lnlike(parvals,parlist)#,priorvals,priorlist)
 print ("like call", time.time() - start)
 
-sys.exit(0)
+#sys.exit(0)
 
 print parlist
 
@@ -95,7 +95,6 @@ Ndim, nwalkers = len(parvals), len(parvals)*2
 P0 = np.array(parvals)
 
 pos = [P0 + P0*1e-1*np.random.randn(Ndim) for i in range(nwalkers)]
-pos = [P0 + P0*0.0*np.random.randn(Ndim) for i in range(nwalkers)]
 
 start = time.time()
 
