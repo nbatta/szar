@@ -27,23 +27,38 @@ def bring_together_samples(home,chain_name,burnin):
     return all_samps
 
 outdir = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/"
-dir_name = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/v9working_run/"
-chain1 = "sz_chain_production_v9"
+#dir_name = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/v9working_run/"
+dir_name1 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/v10updated/"
+dir_name2 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/v11updated/"
+#chain = "sz_chain_production_v9"
+chain1 = "sz_chain_production_v10"
+chain2 = "sz_chain_production_v11"
 burnins = 1600
-nruns = 19
 
 names = ['omch2','ombh2','H0','As','ns','massbias','yslope','scat','s8','om']
-labels =  ['\omega_c h2','\omega_b h^2','H_0','A_s','n_s','1-b','B','\sigma_{YM}','\sigma_8','\Omega_M']
+labels =  ['\Omega_c h2','\Omega_b h^2','H_0','A_s','n_s','1-b','B','\sigma_{YM}','\sigma_8','\Omega_M']
+lims= [[0.04,0.44],[0.019,0.027],]
 
-out1 = bring_together_samples(dir_name,chain1,burnins)
 
-print out1.shape
+out1 = bring_together_samples(dir_name1,chain1,burnins)
+out2 = bring_together_samples(dir_name2,chain2,burnins)
+
+constraints = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(out1, [16, 50, 84],axis=0)))
+
+print constraints
+#print out1.shape
 
 samples1 = MCSamples(samples=out1,names = names, labels = labels)
+samples2 = MCSamples(samples=out2,names = names, labels = labels)
 
-plt.figure()
-g = plots.getSubplotPlotter()
-g.triangle_plot([samples1], filled=True)
-plt.savefig(outdir+"v9_test_script.png")
+print out1[-1:,:]
+
+print(samples1.getTable(limit=1).tableTex())
+print(samples2.getTable(limit=1).tableTex())
+
+#plt.figure()
+#g = plots.getSubplotPlotter()
+#g.triangle_plot([samples1,samples2], params=['massbias','yslope','scat','s8','om'], filled=True)
+#plt.savefig(outdir+"v10_and_v11_test.png")
 
 

@@ -28,8 +28,8 @@ def read_clust_cat(fitsfile):
     list = fits.open(fitsfile)
     data = list[1].data
     SNR = data.field('SNR2p4')
-    ra = data.field('RADeg')
-    dec = data.field('DECDeg')
+    #ra = data.field('RADeg')
+    #dec = data.field('DECDeg')
     z = data.field('z')
     zerr = data.field('zErr')
     Y0 = data.field('y0tilde')
@@ -38,7 +38,19 @@ def read_clust_cat(fitsfile):
     #z = data.field('M500_redshift')
     #Y0 = data.field('M500_fixed_y_c')
     #Y0err = data.field('M500_fixed_err_y_c')
-    return ra[ind],dec[ind],z[ind],zerr[ind],Y0[ind],Y0err[ind]
+    #return ra[ind],dec[ind],
+    return z[ind],zerr[ind],Y0[ind],Y0err[ind]
+
+def read_mock_cat(fitsfile):
+    list = fits.open(fitsfile)
+    data = list[1].data
+    SNR = data.field('fixed_SNR')
+    z = data.field('redshift')
+    zerr = data.field('redshiftErr')
+    Y0 = data.field('fixed_y_c')
+    Y0err = data.field('err_fixed_y_c')
+    ind = np.where(SNR >= 5.6)[0]
+    return z[ind],zerr[ind],Y0[ind],Y0err[ind]
 
 class clusterLike:
     def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile,fix_params,test=False):
@@ -83,8 +95,10 @@ class clusterLike:
 
         self.rms_noise_map  = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
         self.wcs=astWCS.WCS(FilterNoiseMapFile) 
-        self.clst_RA,self.clst_DEC,self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat)
-        self.clst_xmapInd,self.clst_ymapInd = self.Find_nearest_pixel_ind(self.clst_RA,self.clst_DEC)
+        #self.clst_RA,self.clst_DEC,
+        #self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat)
+        self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat)
+        #self.clst_xmapInd,self.clst_ymapInd = self.Find_nearest_pixel_ind(self.clst_RA,self.clst_DEC)
 
         self.qmin = 5.6
         self.num_noise_bins = 10
@@ -178,7 +192,7 @@ class clusterLike:
         z_arr = self.HMF.zarr.copy()        
         Pfunc = self.PfuncY(Ythresh,self.HMF.M.copy(),z_arr,param_vals)
         dn_dzdm = int_HMF.dn_dM(int_HMF.M200,200.)
-        
+        #print Pfunc
         N_z = np.trapz(dn_dzdm*Pfunc,dx=np.diff(int_HMF.M200,axis=0),axis=0)
         Ntot = np.trapz(N_z*int_HMF.dVdz,dx=np.diff(z_arr))*4.*np.pi*fsky
         return Ntot
@@ -187,6 +201,7 @@ class clusterLike:
         c_z, c_zerr, c_y, c_yerr = cluster_props
         if (c_zerr > 0):
             z_arr = np.arange(-3.*c_zerr,(3.+0.1)*c_zerr,c_zerr) + c_z
+            print z_arr, c_z, c_zerr
             Pfunc_ind,M200 = self.Pfunc_per_zarr(self.HMF.M.copy(),z_arr,c_y,c_yerr,int_HMF,param_vals)
             dn_dzdm = dn_dzdm_int(z_arr,self.HMF.M.copy())
             N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
@@ -198,6 +213,7 @@ class clusterLike:
             M200 = int_HMF.cc.Mass_con_del_2_del_mean200(self.HMF.M.copy(),500,c_z)
             N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
             ans = N_z_ind
+        #print Pfunc_ind
         return ans
 
     def lnprior(self,theta,parlist,priorval,priorlist):
@@ -251,10 +267,13 @@ class clusterLike:
             Ntot = 0.
             for i in range(len(self.frac_of_survey)):
                 Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
+        print Ntot
         Nind = 0
         for i in xrange(len(self.clst_z)):
             N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int,param_vals)
             Nind = Nind + np.log(N_per)
+            #print N_per
+        print Nind
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist, priorval, priorlist):

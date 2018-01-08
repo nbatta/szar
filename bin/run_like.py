@@ -88,8 +88,17 @@ else:
 start = time.time()
 print CL.lnlike(parvals,parlist)#,priorvals,priorlist)
 print ("like call", time.time() - start)
+print "prior",CL.lnprior(parvals,parlist,priorvals,priorlist)
+#print "Prob",CL.lnprob(parvals,parlist,priorvals,priorlist)
+parvals2 = [3.46419819e-01,2.34697120e-02,6.50170056e+01,1.33398673e-09,9.36305025e-01,2.53310030e-01,1.93661978e-01,1.74839544e-01]
 
-#sys.exit(0)
+start = time.time()
+print CL.lnlike(parvals2,parlist)#,priorvals,priorlist)
+print ("like call", time.time() - start)
+print "prior",CL.lnprior(parvals2,parlist,priorvals,priorlist)
+#print "Prob",CL.lnprob(parvals2,parlist,priorvals,priorlist)
+
+sys.exit(0)
 
 print parlist
 
