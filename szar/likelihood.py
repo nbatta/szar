@@ -268,13 +268,13 @@ class clusterLike:
             Ntot = 0.
             for i in range(len(self.frac_of_survey)):
                 Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
-        print Ntot
+        #print Ntot
         Nind = 0
         for i in xrange(len(self.clst_z)):
             N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int,param_vals)
             Nind = Nind + np.log(N_per)
             #print N_per
-        print Nind
+        #print Nind
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist, priorval, priorlist):

@@ -78,6 +78,8 @@ else:
     priorlist = ['ombh2','ns','H0','massbias','scat']
     prioravg = np.array([0.0223,0.96,67.3,0.68,0.2])
     priorwth = np.array([0.0009,0.02,3.6,0.11,0.1])
+    prioravg = np.array([0.022,0.9624,67.3,0.68,0.2])
+    priorwth = np.array([0.002,0.014,3.6,0.11,0.1])
     # prioravg = np.array([0.0223,0.96,67.3,0.8,0.2])
     # priorwth = np.array([0.0009,0.02,3.6,0.12,0.1])
     priorvals = np.array([prioravg,priorwth])
@@ -98,7 +100,7 @@ print ("like call", time.time() - start)
 print "prior",CL.lnprior(parvals2,parlist,priorvals,priorlist)
 #print "Prob",CL.lnprob(parvals2,parlist,priorvals,priorlist)
 
-sys.exit(0)
+#sys.exit(0)
 
 print parlist
 

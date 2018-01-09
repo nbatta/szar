@@ -20,7 +20,7 @@ def bring_together_samples(home,chain_name,burnin):
         a = np.loadtxt(f[i])[burnin:,:]
         if (i == 0): all_samps = a
         all_samps = np.append(all_samps,a,axis=0)
-        
+
     Om_samps = np.array([(all_samps[:,0] + all_samps[:,1])/(all_samps[:,2]/100.)**2])
     all_samps = np.concatenate((all_samps,Om_samps.T),axis=1)
 
@@ -28,6 +28,8 @@ def bring_together_samples(home,chain_name,burnin):
 
 outdir = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/"
 #dir_name = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/v9working_run/"
+#dir_name1 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/highbias_v10/"
+#dir_name2 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/lowbias_v10/"
 dir_name1 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/v10updated/"
 dir_name2 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/v11updated/"
 #chain = "sz_chain_production_v9"
@@ -56,9 +58,9 @@ print out1[-1:,:]
 print(samples1.getTable(limit=1).tableTex())
 print(samples2.getTable(limit=1).tableTex())
 
-#plt.figure()
-#g = plots.getSubplotPlotter()
-#g.triangle_plot([samples1,samples2], params=['massbias','yslope','scat','s8','om'], filled=True)
-#plt.savefig(outdir+"v10_and_v11_test.png")
+plt.figure()
+g = plots.getSubplotPlotter()
+g.triangle_plot([samples1,samples2], params=['massbias','yslope','scat','s8','om'], filled=True)
+plt.savefig(outdir+"v10_and_v11_testv2.png")
 
 
