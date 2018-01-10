@@ -4,11 +4,11 @@ import numpy as np
 import sys, os, time
 from szar.counts import ClusterCosmology,Halo_MF,getNmzq,getA
 from szar.szproperties import SZ_Cluster_Model
-from orphics.tools.io import Plotter,dictFromSection,listFromConfig
+from orphics.io import Plotter,dictFromSection,listFromConfig
 from configparser import SafeConfigParser 
 import pickle as pickle
-from orphics.tools.io import Plotter
-from orphics.analysis.flatMaps import interpolateGrid
+from orphics.io import Plotter
+from orphics.maps import interpolateGrid
 
 expName = sys.argv[1]
 gridName = sys.argv[2]
@@ -45,7 +45,7 @@ assert np.all(zrange==zgrid)
 
 saveId = expName + "_" + gridName + "_" + calName + "_v" + version
 
-from orphics.tools.io import dictFromSection, listFromConfig
+from orphics.io import dictFromSection, listFromConfig
 constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,'cluster_params')
 beam = listFromConfig(Config,expName,'beams')

@@ -100,7 +100,7 @@ if rank==0:
     
     saveId = expName + "_" + gridName + "_" + calName + "_v" + version
 
-    from orphics.tools.io import dictFromSection, listFromConfig
+    from orphics.io import dictFromSection, listFromConfig
     constDict = dictFromSection(Config,'constants')
     clusterDict = dictFromSection(Config,'cluster_params')
     beam = listFromConfig(Config,expName,'beams')

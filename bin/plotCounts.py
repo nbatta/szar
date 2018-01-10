@@ -2,7 +2,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from configparser import SafeConfigParser
-from orphics.tools.io import Plotter
+from orphics.io import Plotter
 import pickle as pickle
 import sys
 
@@ -10,7 +10,7 @@ from szar.counts import ClusterCosmology,Halo_MF,getNmzq
 from szar.szproperties import SZ_Cluster_Model
 import numpy as np
 
-from orphics.analysis.flatMaps import interpolateGrid
+from orphics.maps import interpolateGrid
 
 def resample_bin(d, factors=[0.5], axes=None):
 	if np.allclose(factors,1): return d
@@ -64,7 +64,7 @@ gridName = "grid-default"
 version = "0.3_ysig_0.127"
 cal = "CMB_pol_miscentered"
 
-from orphics.tools.io import dictFromSection, listFromConfig
+from orphics.io import dictFromSection, listFromConfig
 constDict = dictFromSection(Config,'constants')
 clusterDict = dictFromSection(Config,'cluster_params')
 
@@ -154,7 +154,7 @@ pl._ax.set_xlim(0.,3.)
 pl.done(outDir+"Nofz.png")
 
 fsense[fsense>10.] = np.nan
-from orphics.tools.io import Plotter
+from orphics.io import Plotter
 import os
 mmin = mgrid.min()
 mmax = mgrid.max()
@@ -165,9 +165,6 @@ pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
 pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],labsize=14,aspect="auto",lim=[0.,10.])
 pl.done(outDir+"massSense.png")
 
-
-from orphics.tools.io import Plotter
-import os
 rn[rn<1]=np.nan
 mmin = mgrid.min()
 mmax = mgrid.max()
@@ -179,8 +176,6 @@ pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],labsize=14,aspect="auto")
 pl.done(outDir+"rn.png")
 
 
-from orphics.tools.io import Plotter
-import os
 #rn[rn<1]=np.nan
 mmin = mgrid.min()
 mmax = mgrid.max()

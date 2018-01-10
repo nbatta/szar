@@ -4,7 +4,7 @@ from configparser import SafeConfigParser
 import pickle as pickle
 import sys
 
-from orphics.tools.io import FisherPlots
+from orphics.io import FisherPlots
 
 
 def getFisher(expName,gridName,calName,saveName,inParamList,suffix):

@@ -37,7 +37,7 @@ outDir = os.environ['WWW']+"paper/"
 
 mindicesList = [60,80,120,160]
 
-from orphics.tools.io import Plotter
+from orphics.io import Plotter
     
 for cmbfile,cmbtype,save_func in zip([fidcmb_file,upcmb_file,dncmb_file],['fid','up','dn'], \
                                     [sfisher.mass_grid_name_cmb,sfisher.mass_grid_name_cmb_up,sfisher.mass_grid_name_cmb_dn]):
@@ -105,7 +105,7 @@ for cmbfile,cmbtype,save_func in zip([fidcmb_file,upcmb_file,dncmb_file],['fid',
 
     print((outmgrid[0],outmgrid[-1],outmgrid.shape))
     print((outzgrid[0],outzgrid[-1],outzgrid.shape))
-    from orphics.analysis.flatMaps import interpolateGrid
+    from orphics.maps import interpolateGrid
 
     jointgridsqinv = 0.
     for key in grids:
@@ -138,7 +138,7 @@ for cmbfile,cmbtype,save_func in zip([fidcmb_file,upcmb_file,dncmb_file],['fid',
     #pl.done(outDir+"slice.pdf")
 
 
-    from orphics.tools.io import Plotter
+    #from orphics.io import Plotter
     pgrid = np.rot90(1./jointgrid)
     pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
     pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],levels=[1.0,3.0,5.0],labsize=14)

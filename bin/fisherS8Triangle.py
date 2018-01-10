@@ -5,7 +5,7 @@ import pickle as pickle
 import sys
 import numpy as np
 
-from orphics.tools.io import FisherPlots
+from orphics.io import FisherPlots
 
 
 def getFisher(expName,gridName,calName,saveName,inParamList,suffix):
@@ -38,7 +38,7 @@ derivSet = "v0.3_ysig_0.127"
 gridName = "grid-high"
 
 cosmoFisher = Config.get('fisher-'+fishSection,'saveSuffix')
-from orphics.tools.io import listFromConfig
+from orphics.io import listFromConfig
 zs = listFromConfig(Config,gridName,'zrange')
 z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 zrange = (z_edges[1:]+z_edges[:-1])/2.

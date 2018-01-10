@@ -61,7 +61,7 @@ cmbfisher0 = getFisher(bigDataDir,"S4-1.0-0.4-0.95"+noatm,gridName,cal,cosmoFish
 
 
 from szar.counts import getA
-from orphics.tools.io import Plotter,dictFromSection,listFromConfig
+from orphics.io import Plotter,dictFromSection,listFromConfig
 fparams = {}   # the 
 for (key, val) in Config.items('params'):
     if ',' in val:

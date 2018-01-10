@@ -1,6 +1,6 @@
 import numpy as np
-from orphics.tools.io import dictFromSection, listFromConfig, Plotter
-from orphics.analysis.flatMaps import interpolateGrid
+from orphics.io import dictFromSection, listFromConfig, Plotter
+from orphics.flatMaps import interpolateGrid
 import sys, os
 from configparser import SafeConfigParser 
 import pickle as pickle
