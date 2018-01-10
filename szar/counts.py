@@ -15,7 +15,6 @@ from orphics.cosmology import Cosmology
 import orphics.cosmology as cosmo
 from orphics.tools.stats import timeit
 from scipy.interpolate import interp1d, interp2d, griddata
-from orphics.analysis.flatMaps import interpolateGrid
 
 import szar._fast as fast
 
