@@ -1,9 +1,9 @@
 import numpy as np
 from scipy.interpolate import interp1d
-from orphics.tools.cmb import noise_func
-from orphics.theory.gaussianCov import LensForecast
+from orphics.cosmology import noise_func
+from orphics.cosmology import LensForecast
 from szar.foregrounds import fgNoises, f_nu
-from orphics.tools.io import Plotter
+from orphics.io import Plotter
 import numpy.matlib
 
 class ILC_simple:

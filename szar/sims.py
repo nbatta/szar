@@ -7,7 +7,7 @@ from szar.counts import ClusterCosmology
 from szar.foregrounds import f_nu
 import orphics.maps as fmaps
 import re
-from orphics.tools.io import Plotter
+from orphics.io import Plotter
             
 class BattagliaSims(object):
 
