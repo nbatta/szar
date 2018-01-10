@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import glob
 from szar.counts import ClusterCosmology
 from szar.foregrounds import f_nu
-import orphics.maps as fmaps
 import re
 from orphics.io import Plotter
+from orphics import maps
             
 class BattagliaSims(object):
 
@@ -133,15 +133,16 @@ class BattagliaSims(object):
         totMass = (maps["dm"]+maps["stars"]+maps["gas"])
 
 
-        class template:
-            pass
-        t = template()
-        t.Nx = PIX
-        t.Ny = PIX
-        t.pixScaleX = pixWidthArcmin*np.pi/180./60.
-        t.pixScaleY = pixWidthArcmin*np.pi/180./60.
+        # class template:
+        #     pass
+        # t = template()
+        # t.Nx = PIX
+        # t.Ny = PIX
+        pixScaleX = pixWidthArcmin*np.pi/180./60.
+        pixScaleY = pixWidthArcmin*np.pi/180./60.
 
-        xMap,yMap,modRMap,xx,yy = fmaps.getRealAttributes(t)
+        
+        xMap,yMap,modRMap,xx,yy = maps.get_real_attributes_generic(PIX,PIX,pixScaleY,pixScaleX)
 
         modmapArc = modRMap*60.*180./np.pi
 
@@ -180,13 +181,7 @@ class BattagliaSims(object):
 
         kappa = totMass/sigmaCr # not sure if totMass needs to be rescaled?
 
-
-        # from orphics import io
-        # io.plot_img(kappa,io.dout_dir+"battaglia_cluster_kappa_"+str(massIndex)+".png",verbose=False)
-        # io.plot_img(szMapuK,io.dout_dir+"battaglia_cluster_tsz_"+str(massIndex)+".png",verbose=False)
-
-
-        return maps, z, kappa, szMapuK, projectedM500, trueM500, trueR500, t.pixScaleX, t.pixScaleY
+        return maps, z, kappa, szMapuK, projectedM500, trueM500, trueR500, pixScaleX, pixScaleY
 
     
     def getKappaSZ(self,snap,massIndex,shape,wcs,apodWidthArcmin=None):
