@@ -21,24 +21,17 @@ def read_MJH_noisemap(noiseMap,maskMap):
     #Read in mask map
     img2 = fits.open(maskMap)
     mmap=img2[0].data
-    #return the filter noise map for pixels in the mask map that = 1
     return rmsmap*mmap
 
 def read_clust_cat(fitsfile):
     list = fits.open(fitsfile)
     data = list[1].data
     SNR = data.field('SNR2p4')
-    #ra = data.field('RADeg')
-    #dec = data.field('DECDeg')
     z = data.field('z')
     zerr = data.field('zErr')
     Y0 = data.field('y0tilde')
     Y0err = data.field('y0tilde_err')
     ind = np.where(SNR >= 5.6)[0]
-    #z = data.field('M500_redshift')
-    #Y0 = data.field('M500_fixed_y_c')
-    #Y0err = data.field('M500_fixed_err_y_c')
-    #return ra[ind],dec[ind],
     return z[ind],zerr[ind],Y0[ind],Y0err[ind]
 
 def read_mock_cat(fitsfile):
@@ -53,9 +46,10 @@ def read_mock_cat(fitsfile):
     return z[ind],zerr[ind],Y0[ind],Y0err[ind]
 
 class clusterLike:
-    def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile,fix_params,test=False):
+    def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile,fix_params,test=False,simtest=False):
         self.fix_params = fix_params
         self.test = test
+        self.simtest = simtest
         Config = SafeConfigParser()
         Config.optionxform=str
         Config.read(iniFile)
@@ -74,7 +68,7 @@ class clusterLike:
         version = Config.get('general','version')
         
         #self.mgrid,self.zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
-        logm_min = 13.7
+        logm_min = 12.7
         logm_max = 15.72
         logm_spacing = 0.04
         self.mgrid = np.arange(logm_min,logm_max,logm_spacing)
@@ -202,16 +196,18 @@ class clusterLike:
         c_z, c_zerr, c_y, c_yerr = cluster_props
         if (c_zerr > 0):
             z_arr = np.arange(-3.*c_zerr,(3.+0.1)*c_zerr,c_zerr) + c_z
-            print z_arr, c_z, c_zerr
             Pfunc_ind,M200 = self.Pfunc_per_zarr(self.HMF.M.copy(),z_arr,c_y,c_yerr,int_HMF,param_vals)
-            dn_dzdm = dn_dzdm_int(z_arr,self.HMF.M.copy())
+            dn_dzdm = dn_dzdm_int(z_arr,np.log10(M200))
             N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
             N_per = np.trapz(N_z_ind*gaussian(z_arr,c_z,c_zerr),dx=np.diff(z_arr))
             ans = N_per            
         else:
             Pfunc_ind = self.Pfunc_per(self.HMF.M.copy(),c_z, c_y, c_yerr,param_vals)
-            dn_dzdm = dn_dzdm_int(c_z,self.HMF.M.copy())[:,0]
+            #print "PFunc",Pfunc_ind
             M200 = int_HMF.cc.Mass_con_del_2_del_mean200(self.HMF.M.copy(),500,c_z)
+            dn_dzdm = dn_dzdm_int(c_z,np.log10(M200))[:,0]
+            #print "dndm", dn_dzdm
+            #print "M200", M200
             N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
             ans = N_z_ind
         #print Pfunc_ind
@@ -231,15 +227,12 @@ class clusterLike:
         except:
             pass
 
-
-    
         pars = ['omch2','ombh2','H0','As','ns','massbias','yslope','scat']
         mins = [0.001,0.005,40.,7.389056098930651e-10,0.8,0.2,-0.6,0.001 ]
         maxs = [0.99,0.1,100.,5.459815003314424e-09,1.2,1.4,0.6,0.8 ]
 
         for k,par in enumerate(pars):
             if param_vals[par]<mins[k] or param_vals[par]>maxs[k]: lnp += -np.inf
-
 
         return lnp
 
@@ -259,7 +252,8 @@ class clusterLike:
             self.s8 = 0.
         #     return -np.inf
         
-        dndm_int = int_HMF.inter_dndm(200.) # delta = 200
+        #dndm_int = int_HMF.inter_dndm(200.) # delta = 200
+        dndm_int = int_HMF.inter_dndmLogm(200.) # delta = 200
         cluster_prop = np.array([self.clst_z,self.clst_zerr,self.clst_y0*1e-4,self.clst_y0err*1e-4])
 
         if self.test:
@@ -278,9 +272,12 @@ class clusterLike:
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist, priorval, priorlist):
-        lp = self.lnprior(theta, parlist, priorval, priorlist)
-        if not np.isfinite(lp):
-            return -np.inf, 0.
+        if not (self.simtest):
+            lp = self.lnprior(theta, parlist, priorval, priorlist)
+            if not np.isfinite(lp):
+                return -np.inf, 0.
+        else:
+            lp = 0
         lnlike = self.lnlike(theta, parlist)
         return lp + lnlike,np.nan_to_num(self.s8)
 

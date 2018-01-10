@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from configparser import SafeConfigParser
 from orphics import io
+from orphics.io import Plotter
 from szar.counts import ClusterCosmology,Halo_MF
 import emcee
 import time, sys, os
@@ -15,9 +16,9 @@ parser.add_argument("chain_name", type=str,help='Root name of run.')
 parser.add_argument("-i", "--index",     type=int,  default=0,help="Index of chainset.")
 parser.add_argument("-N", "--nruns",     type=int,  default=int(1e6),help="Number of iterations.")
 parser.add_argument("-t", "--test", action='store_true',help='Do a test quickly by setting Ntot=60 and just 3 params.')
+parser.add_argument("-s", "--simtest", action='store_true',help='Do a test quickly by setting Ntot=60 and just 1 params.')
+parser.add_argument("-p", "--printtest", action='store_true',help='Do quick print tests of likelihood functions.')
 args = parser.parse_args()
-
-
 
 # index = int(sys.argv[1])
 print "Index ", args.index
@@ -35,6 +36,13 @@ expName = "S4-1.0-CDT"#"S4-1.5-paper" #S4-1.0-CDT"
 gridName = "grid-owl2" #grid-owl2"
 #_S4-1.5-paper_grid-owl2_v0.6.p
 
+fparams = {}
+for (key, val) in Config.items('params'):
+    if ',' in val:
+        param, step = val.split(',')
+        fparams[key] = float(param)
+    else:
+        fparams[key] = float(val)
 
 PathConfig = io.load_path_config()
 nemoOutputDir = PathConfig.get("likepaths","nemoOutputDir")
@@ -50,6 +58,9 @@ noise_file = 'RMSMap_Arnaud_M2e14_z0p4.fits'
 if args.test:
     fixlist = ['ombh2','ns','tau','massbias','yslope','scat']
     fixvals = [0.022,0.96,0.06,0.80,0.08,0.2]
+elif args.simtest:
+    fixlist = ['omch2','ombh2','H0','ns','tau','massbias','yslope','scat']
+    fixvals = [0.1225,0.0245,70,0.97,0.06,1.0,0.08,0.2]
 else:
     fixlist = ['tau']
     fixvals = [0.06]
@@ -57,7 +68,7 @@ else:
 fix_params = dict(zip(fixlist,fixvals))
 
 
-CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir,noise_file,fix_params,test=args.test)
+CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir,noise_file,fix_params,test=args.test,simtest=args.simtest)
 
 
 if args.test:
@@ -68,7 +79,17 @@ if args.test:
     prioravg = np.array([67])
     priorwth = np.array([3])
     priorvals = np.array([prioravg,priorwth])
-    
+
+elif args.simtest:
+    parlist = ['As']
+    parvals = [2.2e-09]
+
+    priorlist = []
+    prioravg = np.array([])
+    priorwth = np.array([])
+    priorvals = np.array([prioravg,priorwth])
+
+
 else:
     parlist = ['omch2','ombh2','H0','As','ns','massbias','yslope','scat']
     parvals = [0.1194,0.022,67.0,2.2e-09,0.96,0.80,0.08,0.2]
@@ -84,25 +105,58 @@ else:
     # priorwth = np.array([0.0009,0.02,3.6,0.12,0.1])
     priorvals = np.array([prioravg,priorwth])
 
+if (args.printtest):
 
+    parvals2 = [3.46419819e-01,2.34697120e-02,6.50170056e+01,1.33398673e-09,9.36305025e-01,2.53310030e-01,1.93661978e-01,1.74839544e-01]
+#parvals2 = [1.194e-01,2.34697120e-02,6.50170056e+01,1.33398673e-09,9.36305025e-01,2.53310030e-01,1.93661978e-01,1.74839544e-01]
 
+    param_vals= CL.alter_fparams(fparams,parlist,parvals)
+    cluster_props = np.array([CL.clst_z,CL.clst_zerr,CL.clst_y0,CL.clst_y0err])
+    
+    start = time.time()
+    int_cc = ClusterCosmology(param_vals,CL.constDict,clTTFixFile=CL.clttfile) 
+    
+    print ('CC',time.time() - start)
+    start = time.time()
+    int_HMF = Halo_MF(int_cc,CL.mgrid,CL.zgrid)
+    
+    print ('HMF',time.time() - start)
+    dn_dzdm_int = int_HMF.inter_dndmLogm(200.)
+    
+    print cluster_props[:,0]
+    print parlist
+    print parvals
+    print np.log(CL.Prob_per_cluster(int_HMF,cluster_props[:,0],dn_dzdm_int,param_vals))
+    
+    param_vals2= CL.alter_fparams(fparams,parlist,parvals2)
+    int_cc2 = ClusterCosmology(param_vals2,CL.constDict,clTTFixFile=CL.clttfile) 
+    int_HMF2 = Halo_MF(int_cc2,CL.mgrid,CL.zgrid)
+    dn_dzdm_int2 = int_HMF2.inter_dndmLogm(200.)
+    print parvals2
+    print np.log(CL.Prob_per_cluster(int_HMF2,cluster_props[:,0],dn_dzdm_int2,param_vals2))
 
-start = time.time()
-print CL.lnlike(parvals,parlist)#,priorvals,priorlist)
-print ("like call", time.time() - start)
-print "prior",CL.lnprior(parvals,parlist,priorvals,priorlist)
+    zbins = 10
+
+    pl = Plotter()
+    pl.add(np.log10(int_HMF.M200[:,zbins]),np.log10(int_HMF.dn_dM(int_HMF.M200,200)[:,zbins]*int_HMF.M200[:,zbins]),color='b',alpha=0.9)
+    pl.add(np.log10(int_HMF2.M200[:,zbins]),np.log10(int_HMF2.dn_dM(int_HMF2.M200,200)[:,zbins]*int_HMF2.M200[:,zbins]),color='r',alpha=0.9)
+    pl.done("test_MF.png")
+
+    sys.exit(0)
+
+    start = time.time()
+    print CL.lnlike(parvals,parlist)#,priorvals,priorlist)
+    print ("like call", time.time() - start)
+    print "prior",CL.lnprior(parvals,parlist,priorvals,priorlist)
 #print "Prob",CL.lnprob(parvals,parlist,priorvals,priorlist)
-parvals2 = [3.46419819e-01,2.34697120e-02,6.50170056e+01,1.33398673e-09,9.36305025e-01,2.53310030e-01,1.93661978e-01,1.74839544e-01]
-
-start = time.time()
-print CL.lnlike(parvals2,parlist)#,priorvals,priorlist)
-print ("like call", time.time() - start)
-print "prior",CL.lnprior(parvals2,parlist,priorvals,priorlist)
+    
+    start = time.time()
+    print CL.lnlike(parvals2,parlist)#,priorvals,priorlist)
+    print ("like call", time.time() - start)
+    print "prior",CL.lnprior(parvals2,parlist,priorvals,priorlist)
 #print "Prob",CL.lnprob(parvals2,parlist,priorvals,priorlist)
-
-#sys.exit(0)
-
-print parlist
+    
+    print parlist
 
 Ndim, nwalkers = len(parvals), len(parvals)*2
 P0 = np.array(parvals)
