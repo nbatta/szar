@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import glob
 from szar.counts import ClusterCosmology
 from szar.foregrounds import f_nu
-import orphics.analysis.flatMaps as fmaps
+import orphics.maps as fmaps
 import re
 from orphics.tools.io import Plotter
             
