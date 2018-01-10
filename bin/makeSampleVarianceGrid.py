@@ -4,7 +4,7 @@ import sys
 import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF,sampleVarianceOverNsquareOverBsquare,haloBias,getTotN
 #from szar.szproperties import SZ_Cluster_Model
-from orphics.tools.io import Plotter,dictFromSection,listFromConfig
+from orphics.io import Plotter,dictFromSection,listFromConfig
 from configparser import SafeConfigParser 
 
 lmax = 1000
