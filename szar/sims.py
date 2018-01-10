@@ -1,5 +1,4 @@
-import matplotlib
-matplotlib.use('Agg')
+from __future__ import print_function
 import configparser
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,7 +28,7 @@ class BattagliaSims(object):
         cosmoDict['As'] = 2.e-9
         
 
-        self.cc = ClusterCosmology(cosmoDict,constDict,lmax,pickling=True)
+        self.cc = ClusterCosmology(cosmoDict,constDict.copy(),lmax,pickling=True,skipCls=True,verbose=False)
         self.TCMB = 2.7255e6
 
         self.root = rootPath
@@ -69,12 +68,12 @@ class BattagliaSims(object):
 
                 maps, z, kappa, szMap, projM500, trueM500, trueR500, pixScaleX, pixScaleY = self.getMaps(snap,massIndex)
 
-                print(("true M500 " , "{:.2E}".format(trueM500)))
+                print("true M500 " , "{:.2E}".format(trueM500))
 
                 trueMs.append(trueM500)
                 expMs.append(projM500)
         
-                print(("totmass ", "{:.2E}".format(projM500)))
+                print("totmass ", "{:.2E}".format(projM500))
 
                 if not(plotRel):
                     pl = Plotter()
@@ -100,7 +99,7 @@ class BattagliaSims(object):
         fileY = self.root + "GEN_Cluster_"+str(massIndex)+"L165.256.FBN2_snap"+str(snap)+"_comovFINE.d"
 
         z = self.snapToZ(snap)
-        print(("Snap ", snap , " corresponds to redshift ", z))
+        #print("Snap ", snap , " corresponds to redshift ", z)
 
         stampWidthMpc = 8. / self.cc.h
         comovingMpc = self.cc.results.comoving_radial_distance(z)
@@ -158,7 +157,7 @@ class BattagliaSims(object):
         #assert projectedM500>trueM500
 
         freqfac = f_nu(self.cc.c,freqGHz)
-        print(freqfac)
+        # print(freqfac)
         szMapuK = maps['y']*freqfac*self.TCMB
 
         # cmbZ = sourceZ
@@ -205,7 +204,11 @@ class BattagliaSims(object):
             kappaMap = enmap.apod(kappaMap,apodWidth)
             szMap = enmap.apod(szMap,apodWidth)
 
+        # from orphics import io
+        # io.plot_img(kappaMap,io.dout_dir+"battaglia_cluster_kappa_"+str(massIndex)+".png",verbose=False)
+        # io.plot_img(szMap,io.dout_dir+"battaglia_cluster_tsz_"+str(massIndex)+".png",verbose=False)
 
+            
         kappaMap = enmap.project(kappaMap, shape, wcs)
         szMap = enmap.project(szMap, shape, wcs)
         

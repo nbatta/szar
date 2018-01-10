@@ -1,5 +1,5 @@
 from configparser import SafeConfigParser
-from orphics.tools.io import dictFromSection, listFromConfig
+from orphics.io import dictFromSection, listFromConfig
 
 
 iniFile = "input/pipeline.ini"

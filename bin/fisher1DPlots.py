@@ -5,7 +5,7 @@ import pickle as pickle
 import sys
 import numpy as np
 
-from orphics.tools.io import FisherPlots
+from orphics.io import FisherPlots
 
 
 def getFisher(expName,calName,saveName,inParamList,suffix):

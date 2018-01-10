@@ -68,7 +68,7 @@ sigN = HMF.sigN
 
 q_arr = (qbin_edges[1:]+qbin_edges[:-1])/2.
 
-blah = SZProp.P_of_qn_corr(SZProp.lnY,M_arr,z_arr,sigN,q_arr,Mwl,lndM)
+blah = SZProp.P_of_qn_corr(SZProp.lnY,M_arr,z_arr,sigN,q_arr,Mwl)#,lndM)
 
 #dN_dmqz_corr = HMF.N_of_mqz_SZ_corr(lndM,qbin_edges,SZProp)
 #dN_dmqz = HMF.N_of_mqz_SZ(lndM,qbin_edges,SZProp)

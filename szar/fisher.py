@@ -1,7 +1,7 @@
 import itertools
 from szar.counts import rebinN
 import numpy as np
-from orphics.tools.io import dictFromSection, listFromConfig
+from orphics.io import dictFromSection, listFromConfig
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
 import pickle as pickle

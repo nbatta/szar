@@ -5,8 +5,8 @@ from configparser import SafeConfigParser
 import pickle as pickle
 import numpy as np
 import sys
-from orphics.tools.io import dictFromSection, listFromConfig
-from orphics.tools.io import Plotter, nostdout
+from orphics.io import dictFromSection, listFromConfig
+from orphics.io import Plotter, nostdout
 import matplotlib.pyplot as plt
 from szar.fisher import getFisher
 from szar.counts import rebinN

@@ -1,7 +1,7 @@
 import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
-from orphics.tools.io import dictFromSection, listFromConfig
+from orphics.io import dictFromSection, listFromConfig
 from ConfigParser import SafeConfigParser
 import cPickle as pickle
 import matplotlib.pyplot as plt

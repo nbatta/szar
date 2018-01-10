@@ -3,7 +3,7 @@ matplotlib.use('Agg')
 import numpy as np
 import sys, os, time
 from szar.counts import rebinN,getA
-from orphics.tools.io import Plotter,dictFromSection,listFromConfig
+from orphics.io import Plotter,dictFromSection,listFromConfig
 from configparser import SafeConfigParser 
 import pickle as pickle
 from szar.fisher import getFisher
@@ -27,14 +27,7 @@ bigDataDir = Config.get('general','bigDataDirectory')
 saveId = sfisher.save_id(expName,gridName,calName,version)
 derivRoot = sfisher.deriv_root(bigDataDir,saveId)
 
-
-from orphics.tools.io import dictFromSection, listFromConfig
 fsky = Config.getfloat(expName,'fsky')
-
-
-
-from orphics.tools.io import listFromConfig
-
 
 NFid_mzq = np.load(bigDataDir+"N_mzq_"+saveId+"_fid_sigma8.npy")
 NFid_mzq_alt = np.load(bigDataDir+"N_mzq_"+saveId+"_fid.npy")
@@ -44,7 +37,7 @@ except:
     print("ERROR: Sigma8 and fid saves are not identical")
     print((NFid_mzq.shape))
     print((NFid_mzq_alt.shape))
-    from orphics.tools.io import quickPlot2d
+    from orphics.io import quickPlot2d
     quickPlot2d(NFid_mzq[0,:,:],os.environ['WWW']+"debug_sig8.png")
     quickPlot2d(NFid_mzq_alt[0,:,:],os.environ['WWW']+"debug_fid.png")
     sys.exit(1)

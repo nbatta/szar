@@ -89,7 +89,7 @@ if rank==0:
         else:
             fparams[key] = float(val)
 
-    from orphics.tools.io import dictFromSection, listFromConfig
+    from orphics.io import dictFromSection, listFromConfig
 
     bigDataDir = Config.get('general','bigDataDirectory')
 
@@ -193,7 +193,7 @@ if rank==0:
         kellmin = 10
         lmap = lm.makeEmptyCEATemplate(raSizeDeg=deg, decSizeDeg=deg,pixScaleXarcmin=px,pixScaleYarcmin=px)
         kellmax = max(tellmax,pellmax)
-        from orphics.theory.cosmology import Cosmology
+        from orphics.cosmology import Cosmology
         cc = Cosmology(lmax=int(kellmax),pickling=True)
         theory = cc.theory
         bin_edges = np.arange(kellmin,kellmax,dell)
@@ -209,7 +209,7 @@ if rank==0:
 
         from scipy.interpolate import interp1d
 
-        from orphics.tools.io import Plotter
+        from orphics.io import Plotter
         ellkk = np.arange(2,9000,1)
         Clkk = theory.gCl("kk",ellkk)    
         pl = Plotter(scaleY='log',scaleX='log')

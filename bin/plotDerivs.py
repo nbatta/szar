@@ -1,13 +1,13 @@
 import os, sys
 import numpy as np
-from orphics.tools.io import Plotter
+from orphics.io import Plotter
 
 from configparser import SafeConfigParser 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
-from orphics.tools.io import dictFromSection, listFromConfig
+from orphics.io import dictFromSection, listFromConfig
 constDict = dictFromSection(Config,'constants')
 clttfile = Config.get('general','clttfile')
 gridName = "grid-default"
