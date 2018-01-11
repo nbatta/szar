@@ -356,16 +356,19 @@ class Halo_MF:
         return N_dzdm
 
     def inter_dndm(self,delta):
+        #interpolating over M500c becasue that's a constant at every redshift 
         dndM = self.dn_dM(self.M200,delta)
         ans = interp2d(self.zarr,self.M,dndM,kind='linear',fill_value=0)
         return ans
 
     def inter_dndmLogm(self,delta):
+        #interpolating over M500c becasue that's a constant at every redshift, log10 M500c 
         dndM = self.dn_dM(self.M200,delta)
         ans = interp2d(self.zarr,np.log10(self.M),dndM,kind='linear',fill_value=0)
         return ans
 
     def inter_mf(self,delta):
+        #interpolating over M500c becasue that's a constant at every redshif 
         N_Mz = self.N_of_Mz(self.M200,delta)
         ans = interp2d(self.zarr,self.M,N_Mz,kind='linear',fill_value=0) 
         return ans

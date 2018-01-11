@@ -135,6 +135,7 @@ class clusterLike:
         Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])#,tenToA0=YNorm)
         Y = 10**LgY
         numer = -1.*(np.log(Y/Ytilde))**2
+        #numer = -1.*(np.log(Y) - np.log(Ytilde))**2
         ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(numer/(2.*param_vals['scat']**2))
         return ans
 
@@ -196,16 +197,16 @@ class clusterLike:
         c_z, c_zerr, c_y, c_yerr = cluster_props
         if (c_zerr > 0):
             z_arr = np.arange(-3.*c_zerr,(3.+0.1)*c_zerr,c_zerr) + c_z
-            Pfunc_ind,M200 = self.Pfunc_per_zarr(self.HMF.M.copy(),z_arr,c_y,c_yerr,int_HMF,param_vals)
-            dn_dzdm = dn_dzdm_int(z_arr,np.log10(M200))
+            Pfunc_ind,M200 = self.Pfunc_per_zarr(int_HMF.M.copy(),z_arr,c_y,c_yerr,int_HMF,param_vals)
+            dn_dzdm = dn_dzdm_int(z_arr,np.log10(int_HMF.M.copy()))
             N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
             N_per = np.trapz(N_z_ind*gaussian(z_arr,c_z,c_zerr),dx=np.diff(z_arr))
             ans = N_per            
         else:
-            Pfunc_ind = self.Pfunc_per(self.HMF.M.copy(),c_z, c_y, c_yerr,param_vals)
+            Pfunc_ind = self.Pfunc_per(int_HMF.M.copy(),c_z, c_y, c_yerr,param_vals)
             #print "PFunc",Pfunc_ind
-            M200 = int_HMF.cc.Mass_con_del_2_del_mean200(self.HMF.M.copy(),500,c_z)
-            dn_dzdm = dn_dzdm_int(c_z,np.log10(M200))[:,0]
+            M200 = int_HMF.cc.Mass_con_del_2_del_mean200(int_HMF.M.copy(),500,c_z)
+            dn_dzdm = dn_dzdm_int(c_z,np.log10(int_HMF.M.copy()))[:,0]
             #print "dndm", dn_dzdm
             #print "M200", M200
             N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)

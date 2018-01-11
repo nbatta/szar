@@ -6,6 +6,8 @@ from configparser import SafeConfigParser
 from orphics import io
 from orphics.io import Plotter
 from szar.counts import ClusterCosmology,Halo_MF
+from nemo import simsTools
+
 import emcee
 import time, sys, os
 # from emcee.utils import MPIPool
@@ -122,26 +124,55 @@ if (args.printtest):
     
     print ('HMF',time.time() - start)
     dn_dzdm_int = int_HMF.inter_dndmLogm(200.)
-    
+
+    zbins = 10
+    LgYa = np.outer(np.ones(len(int_HMF.M.copy())),CL.LgY)
+    Y = 10**LgYa
+    Ma = np.outer(int_HMF.M.copy(),np.ones(len(LgYa[0,:])))
+
     print cluster_props[:,0]
     print parlist
     print parvals
-    print np.log(CL.Prob_per_cluster(int_HMF,cluster_props[:,0],dn_dzdm_int,param_vals))
-    
+    print "ln prob", np.log(CL.Prob_per_cluster(int_HMF,cluster_props[:,1],dn_dzdm_int,param_vals))
+    print LgYa[-1,-1]
+    Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])
+    print "ln Y val",np.log10(Y[-1,-1])
+    print "ln Y~", np.log10(Ytilde[-1,-1])
+    print Y[-1,30:35]/Ytilde[-1,-1]
+    print np.log(Y[-1,-1]) - np.log(Ytilde[-1,-1])
+    print "P of Y", CL.P_Yo(LgYa,int_HMF.M.copy(),int_HMF.zarr[zbins],param_vals)[-1,-1], 
+ 
     param_vals2= CL.alter_fparams(fparams,parlist,parvals2)
     int_cc2 = ClusterCosmology(param_vals2,CL.constDict,clTTFixFile=CL.clttfile) 
     int_HMF2 = Halo_MF(int_cc2,CL.mgrid,CL.zgrid)
     dn_dzdm_int2 = int_HMF2.inter_dndmLogm(200.)
-    print parvals2
-    print np.log(CL.Prob_per_cluster(int_HMF2,cluster_props[:,0],dn_dzdm_int2,param_vals2))
+    print
+    print 'pars2', parvals2
+    print "ln prop", np.log(CL.Prob_per_cluster(int_HMF2,cluster_props[:,0],dn_dzdm_int2,param_vals2))
+    print LgYa[-1,-1]
+    Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals2['massbias']*Ma/(param_vals2['H0']/100.)), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals2['scat'],B0=param_vals2['yslope'])
+    print "ln Y val",np.log10(Y[-1,-1])
+    print "ln Y~", np.log10(Ytilde[-1,-1])
+    #print np.log(Ytilde[-1,30:35])
+    print Y[-1,-1]/Ytilde[-1,-1]
+    print np.log(Y[-1,-1]/Ytilde[-1,-1])
+    #print -1.*(np.log(Y[-1,30:35]/Ytilde[-1,30:35]))
 
-    zbins = 10
+    print "P of Y", CL.P_Yo(np.outer(np.ones(len(int_HMF.M.copy())),CL.LgY),int_HMF2.M.copy(),int_HMF2.zarr[zbins],param_vals2)[-1,-1]
 
-    pl = Plotter()
-    pl.add(np.log10(int_HMF.M200[:,zbins]),np.log10(int_HMF.dn_dM(int_HMF.M200,200)[:,zbins]*int_HMF.M200[:,zbins]),color='b',alpha=0.9)
-    pl.add(np.log10(int_HMF2.M200[:,zbins]),np.log10(int_HMF2.dn_dM(int_HMF2.M200,200)[:,zbins]*int_HMF2.M200[:,zbins]),color='r',alpha=0.9)
-    pl.done("test_MF.png")
+    #pl = Plotter()
+    #pl.add(np.log10(int_HMF.M200[:,zbins]),np.log10(int_HMF.dn_dM(int_HMF.M200,200)[:,zbins]*int_HMF.M200[:,zbins]),color='b',alpha=0.9)
+    #pl.add(np.log10(int_HMF2.M200[:,zbins]),np.log10(int_HMF2.dn_dM(int_HMF2.M200,200)[:,zbins]*int_HMF2.M200[:,zbins]),color='r',alpha=0.9)
+    #pl.add(np.log10(int_HMF.M200[:,zbins]),np.log10(dn_dzdm_int(int_HMF.zarr[zbins],np.log10(int_HMF.M.copy()))[:,0]*int_HMF.M200[:,zbins]),linestyle='--',color='g',alpha=0.9)
+    #pl.add(np.log10(int_HMF2.M200[:,zbins]),np.log10(dn_dzdm_int2(int_HMF2.zarr[zbins],np.log10(int_HMF2.M.copy()))[:,0]*int_HMF2.M200[:,zbins]),linestyle='--',color='c',alpha=0.9)
+    #pl.done("test_MF.png")
 
+    #print np.log10(dn_dzdm_int(int_HMF.zarr[zbins],np.log10(int_HMF.M.copy()))[:,0]*int_HMF.M200[:,zbins])
+
+    print "MF interp check", np.sum(np.log10(int_HMF.dn_dM(int_HMF.M200,200)[:,zbins]*int_HMF.M200[:,zbins]) - np.log10(dn_dzdm_int(int_HMF.zarr[zbins],np.log10(int_HMF.M.copy()))[:,0]*int_HMF.M200[:,zbins]))
+
+    print int_HMF.zarr[zbins]
+    
     sys.exit(0)
 
     start = time.time()
@@ -157,6 +188,8 @@ if (args.printtest):
 #print "Prob",CL.lnprob(parvals2,parlist,priorvals,priorlist)
     
     print parlist
+
+    sys.exit(0)
 
 Ndim, nwalkers = len(parvals), len(parvals)*2
 P0 = np.array(parvals)
