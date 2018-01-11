@@ -7,7 +7,7 @@ from szar.counts import ClusterCosmology
 from szar.foregrounds import f_nu
 import re
 from orphics.io import Plotter
-from orphics import maps
+from orphics import maps as fmaps
             
 class BattagliaSims(object):
 
@@ -142,7 +142,7 @@ class BattagliaSims(object):
         pixScaleY = pixWidthArcmin*np.pi/180./60.
 
         
-        xMap,yMap,modRMap,xx,yy = maps.get_real_attributes_generic(PIX,PIX,pixScaleY,pixScaleX)
+        xMap,yMap,modRMap,xx,yy = fmaps.get_real_attributes_generic(PIX,PIX,pixScaleY,pixScaleX)
 
         modmapArc = modRMap*60.*180./np.pi
 
