@@ -1,4 +1,4 @@
-from orphics.tools.cmb import getAtmosphere
+from orphics.cosmology import getAtmosphere
 import numpy as np
 beamList = np.arange(1.0,3.5,0.5)
 
