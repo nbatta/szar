@@ -113,7 +113,7 @@ if (args.printtest):
 #parvals2 = [1.194e-01,2.34697120e-02,6.50170056e+01,1.33398673e-09,9.36305025e-01,2.53310030e-01,1.93661978e-01,1.74839544e-01]
 
     param_vals= CL.alter_fparams(fparams,parlist,parvals)
-    cluster_props = np.array([CL.clst_z,CL.clst_zerr,CL.clst_y0,CL.clst_y0err])
+    cluster_props = np.array([CL.clst_z,CL.clst_zerr,CL.clst_y0*1e-4,CL.clst_y0err*1e-4])
     
     start = time.time()
     int_cc = ClusterCosmology(param_vals,CL.constDict,clTTFixFile=CL.clttfile) 
@@ -129,11 +129,13 @@ if (args.printtest):
     LgYa = np.outer(np.ones(len(int_HMF.M.copy())),CL.LgY)
     Y = 10**LgYa
     Ma = np.outer(int_HMF.M.copy(),np.ones(len(LgYa[0,:])))
+    clustind = 1
 
-    print cluster_props[:,0]
+
+    print cluster_props[:,clustind]
     print parlist
     print parvals
-    print "ln prob", np.log(CL.Prob_per_cluster(int_HMF,cluster_props[:,1],dn_dzdm_int,param_vals))
+    print "ln prob", np.log(CL.Prob_per_cluster(int_HMF,cluster_props[:,clustind],dn_dzdm_int,param_vals))
     print LgYa[-1,-1]
     Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])
     print "ln Y val",np.log10(Y[-1,-1])
@@ -148,7 +150,7 @@ if (args.printtest):
     dn_dzdm_int2 = int_HMF2.inter_dndmLogm(200.)
     print
     print 'pars2', parvals2
-    print "ln prop", np.log(CL.Prob_per_cluster(int_HMF2,cluster_props[:,0],dn_dzdm_int2,param_vals2))
+    print "ln prop", np.log(CL.Prob_per_cluster(int_HMF2,cluster_props[:,clustind],dn_dzdm_int2,param_vals2))
     print LgYa[-1,-1]
     Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals2['massbias']*Ma/(param_vals2['H0']/100.)), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals2['scat'],B0=param_vals2['yslope'])
     print "ln Y val",np.log10(Y[-1,-1])
@@ -173,8 +175,6 @@ if (args.printtest):
 
     print int_HMF.zarr[zbins]
     
-    sys.exit(0)
-
     start = time.time()
     print CL.lnlike(parvals,parlist)#,priorvals,priorlist)
     print ("like call", time.time() - start)

@@ -135,7 +135,6 @@ class clusterLike:
         Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])#,tenToA0=YNorm)
         Y = 10**LgY
         numer = -1.*(np.log(Y/Ytilde))**2
-        #numer = -1.*(np.log(Y) - np.log(Ytilde))**2
         ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(numer/(2.*param_vals['scat']**2))
         return ans
 
@@ -263,10 +262,13 @@ class clusterLike:
             Ntot = 0.
             for i in range(len(self.frac_of_survey)):
                 Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
-        #print Ntot
+        print Ntot
         Nind = 0
         for i in xrange(len(self.clst_z)):
+            
             N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int,param_vals)
+            if (i < 3):
+                print np.log(N_per)
             Nind = Nind + np.log(N_per)
             #print N_per
         #print Nind
