@@ -2,7 +2,7 @@ import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import gaussian
 import emcee
-from nemo import simsTools
+import simsTools
 from scipy import special,stats
 from astropy.io import fits
 from astLib import astWCS
@@ -85,14 +85,14 @@ class clusterLike:
         self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, self.filteredMapsDir)
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
-        #clust_cat = nemoOutputDir + 'E-D56Clusters.fits' #'ACTPol_mjh_cluster_cat.fits'
-        clust_cat = nemoOutputDir + 'mockCatalog_equD56.fits' #'ACTPol_mjh_cluster_cat.fits'
+        clust_cat = nemoOutputDir + 'E-D56Clusters.fits' #'ACTPol_mjh_cluster_cat.fits'
+        #clust_cat = nemoOutputDir + 'mockCatalog_equD56.fits' #'ACTPol_mjh_cluster_cat.fits'
 
         self.rms_noise_map  = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
         self.wcs=astWCS.WCS(FilterNoiseMapFile) 
         #self.clst_RA,self.clst_DEC,
-        #self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat)
-        self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat)
+        self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat)
+        #self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat)
         #self.clst_xmapInd,self.clst_ymapInd = self.Find_nearest_pixel_ind(self.clst_RA,self.clst_DEC)
 
         self.qmin = 5.6
@@ -132,7 +132,8 @@ class clusterLike:
     def P_Yo(self, LgY, M, z,param_vals):
         #M500c has 1/h factors in it
         Ma = np.outer(M,np.ones(len(LgY[0,:])))
-        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])#,tenToA0=YNorm)
+        Om = (param_vals['omch2'] + param_vals['ombh2']) / (param_vals['H0']/100.)**2
+        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'], H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = 1 - Om)#,tenToA0=YNorm)
         Y = 10**LgY
         numer = -1.*(np.log(Y/Ytilde))**2
         ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(numer/(2.*param_vals['scat']**2))
@@ -262,7 +263,7 @@ class clusterLike:
             Ntot = 0.
             for i in range(len(self.frac_of_survey)):
                 Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
-        print Ntot
+        print 'NTOT', Ntot
         Nind = 0
         for i in xrange(len(self.clst_z)):
             
@@ -271,7 +272,7 @@ class clusterLike:
                 print np.log(N_per)
             Nind = Nind + np.log(N_per)
             #print N_per
-        #print Nind
+        print Nind
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist, priorval, priorlist):
