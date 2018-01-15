@@ -46,10 +46,11 @@ def read_mock_cat(fitsfile):
     return z[ind],zerr[ind],Y0[ind],Y0err[ind]
 
 class clusterLike:
-    def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile,fix_params,test=False,simtest=False):
+    def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile,fix_params,test=False,simtest=False,simpars=False):
         self.fix_params = fix_params
         self.test = test
         self.simtest = simtest
+        self.simpars = simpars
         Config = SafeConfigParser()
         Config.optionxform=str
         Config.read(iniFile)
@@ -263,20 +264,20 @@ class clusterLike:
             Ntot = 0.
             for i in range(len(self.frac_of_survey)):
                 Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
-        print 'NTOT', Ntot
+        #print 'NTOT', Ntot
         Nind = 0
         for i in xrange(len(self.clst_z)):
             
             N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int,param_vals)
-            if (i < 3):
-                print np.log(N_per)
+            #if (i < 3):
+                #print np.log(N_per)
             Nind = Nind + np.log(N_per)
             #print N_per
-        print Nind
+        #print Nind
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist, priorval, priorlist):
-        if not (self.simtest):
+        if not (self.simtest or self.simpars):
             lp = self.lnprior(theta, parlist, priorval, priorlist)
             if not np.isfinite(lp):
                 return -np.inf, 0.

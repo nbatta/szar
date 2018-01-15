@@ -19,6 +19,7 @@ parser.add_argument("-i", "--index",     type=int,  default=0,help="Index of cha
 parser.add_argument("-N", "--nruns",     type=int,  default=int(1e6),help="Number of iterations.")
 parser.add_argument("-t", "--test", action='store_true',help='Do a test quickly by setting Ntot=60 and just 3 params.')
 parser.add_argument("-s", "--simtest", action='store_true',help='Do a test quickly by setting Ntot=60 and just 1 params.')
+parser.add_argument("-S", "--simpars", action='store_true',help='Do a test quickly by setting Ntot=60 and just 1 params.')
 parser.add_argument("-p", "--printtest", action='store_true',help='Do quick print tests of likelihood functions.')
 args = parser.parse_args()
 
@@ -63,6 +64,9 @@ if args.test:
 elif args.simtest:
     fixlist = ['omch2','ombh2','H0','ns','tau','massbias','yslope','scat']
     fixvals = [0.1225,0.0245,70,0.97,0.06,1.0,0.08,0.2]
+elif args.simpars:
+    fixlist = ['H0','ns','tau','massbias','yslope','scat']
+    fixvals = [70,0.97,0.06,1.0,0.08,0.2]
 else:
     fixlist = ['tau']
     fixvals = [0.06]
@@ -70,7 +74,7 @@ else:
 fix_params = dict(zip(fixlist,fixvals))
 
 
-CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir,noise_file,fix_params,test=args.test,simtest=args.simtest)
+CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir,noise_file,fix_params,test=args.test,simtest=args.simtest,simpars=args.simpars)
 
 
 if args.test:
@@ -81,7 +85,6 @@ if args.test:
     prioravg = np.array([67])
     priorwth = np.array([3])
     priorvals = np.array([prioravg,priorwth])
-
 elif args.simtest:
     parlist = ['As']
     parvals = [2.2e-09]
@@ -90,8 +93,14 @@ elif args.simtest:
     prioravg = np.array([])
     priorwth = np.array([])
     priorvals = np.array([prioravg,priorwth])
+elif args.simpars:
+    parlist = ['As','omch2','ombh2']
+    parvals = [2.2e-09,0.1194,0.022]
 
-
+    priorlist = ['ombh2']
+    prioravg = np.array([0.022])
+    priorwth = np.array([0.002])
+    priorvals = np.array([prioravg,priorwth])
 else:
     parlist = ['omch2','ombh2','H0','As','ns','massbias','yslope','scat']
     parvals = [0.1194,0.022,67.0,2.2e-09,0.96,0.80,0.08,0.2]
@@ -192,6 +201,9 @@ if (args.printtest):
     sys.exit(0)
 
 Ndim, nwalkers = len(parvals), len(parvals)*2
+if (args.simpars):
+    Ndim, nwalkers = len(parvals), 20
+
 P0 = np.array(parvals)
 
 pos = [P0 + P0*1e-1*np.random.randn(Ndim) for i in range(nwalkers)]
