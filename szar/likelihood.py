@@ -228,10 +228,15 @@ class clusterLike:
                 lnp += -np.inf
         except:
             pass
-
-        pars = ['omch2','ombh2','H0','As','ns','massbias','yslope','scat']
-        mins = [0.001,0.005,40.,7.389056098930651e-10,0.8,0.2,-0.6,0.001 ]
-        maxs = [0.99,0.1,100.,5.459815003314424e-09,1.2,1.4,0.6,0.8 ]
+        
+        if (self.simpars):
+            pars = ['omch2','ombh2','H0','As','ns']
+            mins = [0.001,0.005,40.,7.389056098930651e-10,0.8]
+            maxs = [0.99,0.1,100.,5.459815003314424e-09,1.2]
+        else:
+            pars = ['omch2','ombh2','H0','As','ns','massbias','yslope','scat']
+            mins = [0.001,0.005,40.,7.389056098930651e-10,0.8,0.2,-0.6,0.001 ]
+            maxs = [0.99,0.1,100.,5.459815003314424e-09,1.2,1.4,0.6,0.8 ]
 
         for k,par in enumerate(pars):
             if param_vals[par]<mins[k] or param_vals[par]>maxs[k]: lnp += -np.inf
@@ -277,7 +282,7 @@ class clusterLike:
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist, priorval, priorlist):
-        if not (self.simtest or self.simpars):
+        if not (self.simtest):
             lp = self.lnprior(theta, parlist, priorval, priorlist)
             if not np.isfinite(lp):
                 return -np.inf, 0.
