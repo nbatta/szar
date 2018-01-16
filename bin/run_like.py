@@ -203,6 +203,8 @@ if (args.printtest):
 Ndim, nwalkers = len(parvals), len(parvals)*2
 if (args.simpars):
     Ndim, nwalkers = len(parvals), 20
+if (args.simtest):
+    Ndim, nwalkers = len(parvals), 20
 
 P0 = np.array(parvals)
 

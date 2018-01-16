@@ -2,13 +2,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from getdist import plots, MCSamples
 import glob
-#import argparse
+import argparse
 
-#parser = argparse.ArgumentParser(description='Plot Cluster Chains.')
+parser = argparse.ArgumentParser(description='Plot Cluster Chains.')
 #parser.add_argument("dir_name", type=str,help='dir of run.')
 #parser.add_argument("chain_name", type=str,help='Root name of run.')
 #parser.add_argument("-N", "--nruns",     type=int,  default=int(1e6),help="Number of chains.")
-#args = parser.parse_args()
+#parser.add_argument("-N", "--nruns",     type=int,  default=int(1e6),help="Number of chains.")
+parser.add_argument("-t", "--test", action='store_true',help='Do a simtest quickly with 3 params.')
+parser.add_argument("-s", "--s8test", action='store_true',help='Do a simtest quickly with s8.')
+
+args = parser.parse_args()
 
 def bring_together_samples(home,chain_name,burnin):
 
@@ -26,41 +30,82 @@ def bring_together_samples(home,chain_name,burnin):
 
     return all_samps
 
+def load_single_sample(home,chain_name,burnin):
+
+    f = home+chain_name
+    all_samps = np.loadtxt(f)[burnin:,:]
+
+    return all_samps
+
 outdir = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/"
 #dir_name = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/v9working_run/"
 #dir_name1 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/highbias_v10/"
 #dir_name2 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/lowbias_v10/"
-dir_name1 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/v10updated/"
-dir_name2 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/v11updated/"
+
+
+if args.test:
+    dir_name1 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACT_chains/"
+    chain1 = "sz_chain_test_sim_pars_v1_0.dat"
+    burnins = 2000
+    
+    names = ['As','omch2','ombh2','s8']
+    labels =  ['A_s','\Omega_c h2','\Omega_b h^2','\sigma_8']
+    out1 = load_single_sample(dir_name1,chain1,burnins)
+    samples1 = MCSamples(samples=out1,names = names, labels = labels)
+
+    p = samples1.getParams() 
+    samples1.addDerived((p.omch2 + p.ombh2) /0.7**2, name='om', label='\Omega_M')
+    
+    plt.figure()
+    g = plots.getSubplotPlotter()
+    g.triangle_plot([samples1], params=['omch2','ombh2','s8','om'], filled=True)
+    plt.savefig(outdir+"simtest_parsTestv1.png")
+    
+elif args.s8test:
+    dir_name1 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACT_chains/"
+    chain1 = "sz_chain_test_chains_v3_0.dat"
+    burnins = 100
+    
+    names = ['As','s8']
+    labels =  ['A_s','\sigma_8']
+    out1 = load_single_sample(dir_name1,chain1,burnins)
+    samples1 = MCSamples(samples=out1,names = names, labels = labels)
+    
+    plt.figure()
+    g = plots.getSubplotPlotter()
+    g.triangle_plot([samples1], params=['As','s8'], filled=True)
+    plt.savefig(outdir+"simtest_s8Testv3.png")
+    
+else:
+    dir_name1 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/v10updated/"
+    dir_name2 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/v11updated/"
 #chain = "sz_chain_production_v9"
-chain1 = "sz_chain_production_v10"
-chain2 = "sz_chain_production_v11"
-burnins = 1600
+    chain1 = "sz_chain_production_v10"
+    chain2 = "sz_chain_production_v11"
+    burnins = 1600
+    names = ['omch2','ombh2','H0','As','ns','massbias','yslope','scat','s8','om']
+    labels =  ['\Omega_c h2','\Omega_b h^2','H_0','A_s','n_s','1-b','B','\sigma_{YM}','\sigma_8','\Omega_M']
+    lims= [[0.04,0.44],[0.019,0.027],]
 
-names = ['omch2','ombh2','H0','As','ns','massbias','yslope','scat','s8','om']
-labels =  ['\Omega_c h2','\Omega_b h^2','H_0','A_s','n_s','1-b','B','\sigma_{YM}','\sigma_8','\Omega_M']
-lims= [[0.04,0.44],[0.019,0.027],]
+    out1 = bring_together_samples(dir_name1,chain1,burnins)
+    out2 = bring_together_samples(dir_name2,chain2,burnins)
 
-
-out1 = bring_together_samples(dir_name1,chain1,burnins)
-out2 = bring_together_samples(dir_name2,chain2,burnins)
-
-constraints = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(out1, [16, 50, 84],axis=0)))
-
-print constraints
 #print out1.shape
-
-samples1 = MCSamples(samples=out1,names = names, labels = labels)
-samples2 = MCSamples(samples=out2,names = names, labels = labels)
-
-print out1[-1:,:]
+    
+    samples1 = MCSamples(samples=out1,names = names, labels = labels)
+    samples2 = MCSamples(samples=out2,names = names, labels = labels)
+    
+    #print out1[-1:,:]
+     
+    print(samples2.getTable(limit=1).tableTex())
+    
+    plt.figure()
+    g = plots.getSubplotPlotter()
+    g.triangle_plot([samples1,samples2], params=['massbias','yslope','scat','s8','om'], filled=True)
+    plt.savefig(outdir+"v10_and_v11_testv2.png")
+    print(samples2.getTable(limit=1).tableTex())
 
 print(samples1.getTable(limit=1).tableTex())
-print(samples2.getTable(limit=1).tableTex())
 
-plt.figure()
-g = plots.getSubplotPlotter()
-g.triangle_plot([samples1,samples2], params=['massbias','yslope','scat','s8','om'], filled=True)
-plt.savefig(outdir+"v10_and_v11_testv2.png")
-
-
+constraints = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(out1, [16, 50, 84],axis=0)))
+print constraints
