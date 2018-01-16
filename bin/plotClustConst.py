@@ -63,8 +63,8 @@ if args.test:
     
 elif args.s8test:
     dir_name1 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACT_chains/"
-    chain1 = "sz_chain_test_chains_v3_0.dat"
-    burnins = 100
+    chain1 = "sz_chain_test_chains_v4_0.dat"
+    burnins = 2000
     
     names = ['As','s8']
     labels =  ['A_s','\sigma_8']
