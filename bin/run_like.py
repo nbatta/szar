@@ -35,8 +35,8 @@ bigDataDir = Config.get('general','bigDataDirectory')
 clttfile = Config.get('general','clttfile')
 constDict = io.dict_from_section(Config,'constants')
 version = Config.get('general','version')
-expName = "S4-1.0-CDT"#"S4-1.5-paper" #S4-1.0-CDT"
-gridName = "grid-owl2" #grid-owl2"
+#expName = "S4-1.0-CDT"#"S4-1.5-paper" #S4-1.0-CDT"
+#gridName = "grid-owl2" #grid-owl2"
 #_S4-1.5-paper_grid-owl2_v0.6.p
 
 fparams = {}
@@ -74,7 +74,7 @@ else:
 fix_params = dict(zip(fixlist,fixvals))
 
 
-CL = lk.clusterLike(iniFile,expName,gridName,pardict,nemoOutputDir,noise_file,fix_params,test=args.test,simtest=args.simtest,simpars=args.simpars)
+CL = lk.clusterLike(iniFile,pardict,nemoOutputDir,noise_file,fix_params,test=args.test,simtest=args.simtest,simpars=args.simpars)
 
 
 if args.test:

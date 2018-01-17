@@ -376,22 +376,24 @@ class Halo_MF:
     def inter_mf_bound(self,theta,mthresh,zthresh):
         a1,a2temp = theta
         a2 = 10**a2temp
-        if  zthresh[0] < a1 < zthresh[1] and  mthresh[0] < a2 < mthresh[1]:
+        mlim = 10**mthresh 
+        if  zthresh[0] < a1 < zthresh[1] and  mlim[0] < a2 < mlim[1]:
             return 0
         return -np.inf
 
-    def inter_mf_func(self,theta,inter):
+    def inter_mf_func(self,theta,inter,mthresh):
         a1,a2temp = theta
         a2 = 10**a2temp
-        return np.log(inter(a1,a2)/inter(0.15,9e13))
+        mlim = 10**mthresh
+        return np.log(inter(a1,a2)/inter(0.15,mlim[0]))
     
     def mf_inter_eval(self,theta, inter, mthresh, zthresh):
         lp = self.inter_mf_bound(theta, mthresh, zthresh)
         if not np.isfinite(lp):
             return -np.inf
-        return lp + self.inter_mf_func(theta, inter)
+        return lp + self.inter_mf_func(theta,inter,mthresh)
     
-    def mcsample_mf(self,delta,nsamp100,nwalkers=100,nburnin=50,Ndim=2,mthresh=[4e14,4e15],zthresh=[0.2,1.95]):
+    def mcsample_mf(self,delta,nsamp100,nwalkers=100,nburnin=50,Ndim=2,mthresh=[14.6,15.6],zthresh=[0.2,1.95]):
         import emcee
 
         N_mz_inter = self.inter_mf(delta)

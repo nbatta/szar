@@ -46,7 +46,7 @@ def read_mock_cat(fitsfile):
     return z[ind],zerr[ind],Y0[ind],Y0err[ind]
 
 class clusterLike:
-    def __init__(self,iniFile,expName,gridName,parDict,nemoOutputDir,noiseFile,fix_params,test=False,simtest=False,simpars=False):
+    def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,fix_params,test=False,simtest=False,simpars=False):
         self.fix_params = fix_params
         self.test = test
         self.simtest = simtest
@@ -95,7 +95,7 @@ class clusterLike:
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat)
 
         self.rms_noise_map  = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
-        self.wcs=astWCS.WCS(FilterNoiseMapFile) 
+        #self.wcs=astWCS.WCS(FilterNoiseMapFile) 
         #self.clst_RA,self.clst_DEC,
         #self.clst_xmapInd,self.clst_ymapInd = self.Find_nearest_pixel_ind(self.clst_RA,self.clst_DEC)
 
@@ -113,11 +113,11 @@ class clusterLike:
             fparams[parlist[k]] = parvals
         return fparams
 
-    def Find_nearest_pixel_ind(self,RADeg,DECDeg):
+    def Find_nearest_pixel_ind(self,wcs,RADeg,DECDeg):
         xx = np.array([])
         yy = np.array([])
         for ra, dec in zip(RADeg,DECDeg):
-            x,y = self.wcs.wcs2pix(ra,dec)
+            x,y = wcs.wcs2pix(ra,dec)
             np.append(xx,np.round(x))
             np.append(yy,np.round(y))
         #return [np.round(x),np.round(y)]
@@ -294,11 +294,79 @@ class clusterLike:
         lnlike = self.lnlike(theta, parlist)
         return lp + lnlike,np.nan_to_num(self.s8)
 
-#Functions from NEMO
-#y0FromLogM500(log10M500, z, tckQFit, tenToA0 = 4.95e-5, B0 = 0.08, Mpivot = 3e14, sigma_int = 0.2)
-#fitQ(parDict, diagnosticsDir, filteredMapsDir)
+class MockCatalog:
+    def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,mass_grid_log=None,z_grid=None):
 
-    #self.diagnosticsDir=nemoOutputDir+os.path.sep+"diagnostics"
-    
-    #filteredMapsDir=nemoOutputDir+os.path.sep+"filteredMaps"
-    #self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, filteredMapsDir)
+        Config = SafeConfigParser()
+        Config.optionxform=str
+        Config.read(iniFile)
+
+        self.fparams = {}
+        for (key, val) in Config.items('params'):
+            if ',' in val:
+                param, step = val.split(',')
+                self.fparams[key] = float(param)
+            else:
+                self.fparams[key] = float(val)
+
+        bigDataDir = Config.get('general','bigDataDirectory')
+        self.clttfile = Config.get('general','clttfile')
+        self.constDict = dict_from_section(Config,'constants')
+        version = Config.get('general','version')
+
+        if mass_grid_log:
+            logm_min,logm_max,logm_spacing = mass_grid_log
+        else:
+            logm_min = 12.7
+            logm_max = 15.72
+            logm_spacing = 0.04
+        if z_grid:
+            zmin,zmax,zdel = z_grid
+        else:
+            zmin = 0.0
+            zmax = 2.01
+            zdel = 0.1
+        
+        self.mgrid = np.arange(logm_min,logm_max,logm_spacing)
+        self.zgrid = np.arange(zmin,zmax,zdel)
+
+        self.cc = ClusterCosmology(self.fparams,self.constDict,clTTFixFile=self.clttfile)
+        self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
+
+        self.diagnosticsDir=nemoOutputDir+"diagnostics"
+        self.filteredMapsDir=nemoOutputDir+"filteredMaps"
+        self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, self.filteredMapsDir)
+        FilterNoiseMapFile = nemoOutputDir + noiseFile
+        MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
+
+        self.rms_noise_map  = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
+        
+        self.scat_val = 0.2
+        self.seedval = 1
+
+    def Total_clusters(self,fsky):
+        Nz = self.HMF.N_of_z()
+        ans = np.trapz(Nz*fsky,dx=self.HMF.zarr)
+        return ans
+
+    def create_basic_sample(self,fsky):
+        # create simple mock catalog of Mass and Redshift 
+        Ntot100 = np.ceil(self.Total_clusters(fsky) / 100.)
+        sample_z,sample_m = self.HMF.mcsample_mf(200.,Ntot100,mthresh=[np.min(self.mgrid),np.max(self.mgrid)],zthresh[np.min(self.zgrid),np.max(self.zgrid)])        
+        return sample_z,sample_m
+
+    def create_obs_sample(self,fsky):
+        
+        #include observational effects like scatter and noise into the detection of clusters
+        sampZ,sampM = self.create_basic_sample(fsky)
+        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(sampM/(self.HMF.cc.H0/100.)), sampZ, self.tckQFit)
+        
+        # add scatter 
+        np.random.seed(self.seedval)
+        ymod = np.exp(self.scat_val * np.random.randn(len(sampM)))
+        sampY = Ytile*ymod
+        
+        #calculate noise for a given object gicen a random place on the map
+        np.random.seed(self.seedval+3)
+        np.random.uniform()
+        
