@@ -373,12 +373,14 @@ class MockCatalog:
         #include observational effects like scatter and noise into the detection of clusters
         sampZ,sampM = self.create_basic_sample(fsky)
         nsamps = len(sampM)
-        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(sampM/(self.HMF.cc.H0/100.)), sampZ, self.tckQFit)
+        Ytilde = sampM * 0.0
         
-        # add scatter 
+        for i in range(nsamps):
+            Ytilde[i], theta0, Qfilt =simsTools.y0FromLogM500(np.log10(10**sampM[i]/(self.HMF.cc.H0/100.)), sampZ[i], self.tckQFit)
+        # add scatter 4
         np.random.seed(self.seedval)
         ymod = np.exp(self.scat_val * np.random.randn(nsamps))
-        sampY0 = Ytile*ymod
+        sampY0 = Ytilde*ymod
         
         #calculate noise for a given object for a random place on the map and save coordinates
 
@@ -401,3 +403,4 @@ class MockCatalog:
                 ysave = np.append(ysave,ytemp)
                 sampY0err = np.append(sampY0err,nmap[ytemp,xtemp])
         return xsave,ysave,sampZ,sampY0,sampY0err,sampY0/sampY0err,sampM
+
