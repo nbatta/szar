@@ -1,7 +1,8 @@
 import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
-from orphics.io import dictFromSection, listFromConfig
+#from orphics import dictFromSection, listFromConfig
+from orphics.io import dict_from_section
 from ConfigParser import SafeConfigParser
 import cPickle as pickle
 import matplotlib.pyplot as plt
@@ -16,8 +17,8 @@ Config.optionxform=str
 Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
 clttfile = Config.get('general','clttfile')
-constDict = dictFromSection(Config,'constants')
-clusterDict = dictFromSection(Config,'cluster_params')
+constDict = dict_from_section(Config,'constants')
+clusterDict = dict_from_section(Config,'cluster_params')
 version = Config.get('general','version')
 expName = "S4-1.0-CDT"
 gridName = "grid-owl2"
@@ -42,7 +43,7 @@ elapsed1 = (time.clock() - start)
 print elapsed1
 
 start = time.clock()
-samples = HMF.mcsample_mf(200.,1000,mthresh=[3e14,7e15])
+samples = HMF.mcsample_mf(200.,1000,mthresh=[np.log10(3e14),np.log10(7e15)])
 elapsed1 = (time.clock() - start)
 print elapsed1
 print len(samples)
@@ -50,14 +51,16 @@ print len(samples)
 nclust = 100
 ids = np.random.randint(len(samples)/2.,size=nclust)
 
-#plt.plot(samples[:,0],samples[:,1],'x')
-#plt.plot(samples[ids,0],samples[ids,1],'o')
-#plt.savefig('default2.png', bbox_inches='tight',format='png') 
+plt.plot(samples[:,0],samples[:,1],'x')
+plt.plot(samples[ids,0],samples[ids,1],'o')
+plt.savefig('default_mf.png', bbox_inches='tight',format='png') 
+
+sys.exit(0)
 
 experimentName = expName
 
-beams = listFromConfig(Config,experimentName,'beams')
-noises = listFromConfig(Config,experimentName,'noises')
+beams = list_from_config(Config,experimentName,'beams')
+noises = list_from_config(Config,experimentName,'noises')
 freqs = listFromConfig(Config,experimentName,'freqs')
 lmax = int(Config.getfloat(experimentName,'lmax'))
 lknee = listFromConfig(Config,experimentName,'lknee')[0]
@@ -74,6 +77,6 @@ Y = SZProp.Y_M(MM,zz) * np.random.normal(1,0.2,nclust)
 ML = MM * np.random.normal(1,0.2,nclust)
 
 plt.loglog(ML,Y,'o') 
-plt.savefig('default2.png', bbox_inches='tight',format='png')
+#plt.savefig('default2.png', bbox_inches='tight',format='png')
 
 #Z = MM

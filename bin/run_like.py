@@ -21,6 +21,8 @@ parser.add_argument("-t", "--test", action='store_true',help='Do a test quickly 
 parser.add_argument("-s", "--simtest", action='store_true',help='Do a test quickly by setting Ntot=60 and just 1 params.')
 parser.add_argument("-S", "--simpars", action='store_true',help='Do a test quickly by setting Ntot=60 and just 1 params.')
 parser.add_argument("-p", "--printtest", action='store_true',help='Do quick print tests of likelihood functions.')
+parser.add_argument("-m", "--mockcat", action='store_true',help='test making a mock catalog.')
+
 args = parser.parse_args()
 
 # index = int(sys.argv[1])
@@ -76,6 +78,17 @@ fix_params = dict(zip(fixlist,fixvals))
 
 CL = lk.clusterLike(iniFile,pardict,nemoOutputDir,noise_file,fix_params,test=args.test,simtest=args.simtest,simpars=args.simpars)
 
+if args.mockcat:
+    MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,mass_grid_log=[np.log10(8e13),np.log10(7e15),0.01],z_grid=[0.1,2.01,0.1])
+    
+    #print MC.Total_clusters(MC.fsky)
+
+    blah = MC.create_basic_sample(MC.fsky)
+    print np.shape(np.array(blah))
+    MC.plot_basic_sample()
+    xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = MC.create_obs_sample(MC.fsky)
+    print len(np.where(SNR > 5.6)[0])
+    sys.exit(0)
 
 if args.test:
     parlist = ['omch2','H0','As']

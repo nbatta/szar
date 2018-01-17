@@ -376,7 +376,7 @@ class Halo_MF:
     def inter_mf_bound(self,theta,mthresh,zthresh):
         a1,a2temp = theta
         a2 = 10**a2temp
-        mlim = 10**mthresh 
+        mlim = [10**mthresh[0],10**mthresh[1]]  
         if  zthresh[0] < a1 < zthresh[1] and  mlim[0] < a2 < mlim[1]:
             return 0
         return -np.inf
@@ -384,8 +384,9 @@ class Halo_MF:
     def inter_mf_func(self,theta,inter,mthresh):
         a1,a2temp = theta
         a2 = 10**a2temp
-        mlim = 10**mthresh
-        return np.log(inter(a1,a2)/inter(0.15,mlim[0]))
+        mlim = 10**mthresh[0]
+        
+        return np.log(inter(a1,a2))#/inter(0.15,mlim))
     
     def mf_inter_eval(self,theta, inter, mthresh, zthresh):
         lp = self.inter_mf_bound(theta, mthresh, zthresh)
@@ -400,7 +401,7 @@ class Halo_MF:
         P0 = np.array([1.,15.5])
         pos = [P0 + P0*2e-2*np.random.randn(Ndim) for i in range(nwalkers)]
         
-        sampler = emcee.EnsembleSampler(nwalkers,Ndim,self.inter_mf_eval, args =[N_mz_inter,mthresh,zthresh] )
+        sampler = emcee.EnsembleSampler(nwalkers,Ndim,self.mf_inter_eval, args =[N_mz_inter,mthresh,zthresh] )
         sampler.run_mcmc(pos,nsamp100+nburnin)
         
         return sampler.chain[:,nburnin:,:].reshape((-1,Ndim))

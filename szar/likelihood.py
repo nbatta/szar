@@ -101,7 +101,7 @@ class clusterLike:
 
         self.qmin = 5.6
         self.num_noise_bins = 10
-        self.area_rads = 987.5/41252.9612
+        self.area_rads = 987.5/41252.9612 # fraction of sky - ACTPol D56-equ specific
         self.LgY = np.arange(-6,-3,0.05)
 
         count_temp,bin_edge =np.histogram(np.log10(self.rms_noise_map[self.rms_noise_map>0]),bins=self.num_noise_bins)
@@ -339,34 +339,65 @@ class MockCatalog:
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
 
-        self.rms_noise_map  = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
+        self.rms_noise_map = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
         
+        self.fsky = 987.5/41252.9612 # in rads ACTPol D56-equ specific
         self.scat_val = 0.2
         self.seedval = 1
 
     def Total_clusters(self,fsky):
         Nz = self.HMF.N_of_z()
-        ans = np.trapz(Nz*fsky,dx=self.HMF.zarr)
+        ans = np.trapz(Nz*fsky,dx=np.diff(self.HMF.zarr))
         return ans
 
     def create_basic_sample(self,fsky):
         # create simple mock catalog of Mass and Redshift 
         Ntot100 = np.ceil(self.Total_clusters(fsky) / 100.)
-        sample_z,sample_m = self.HMF.mcsample_mf(200.,Ntot100,mthresh=[np.min(self.mgrid),np.max(self.mgrid)],zthresh[np.min(self.zgrid),np.max(self.zgrid)])        
-        return sample_z,sample_m
+        mlim = [np.min(self.mgrid),np.max(self.mgrid)]
+        zlim = [np.min(self.zgrid),np.max(self.zgrid)]
+        #mlim = [np.log10(3e14),np.log10(7e15)]
+        samples = self.HMF.mcsample_mf(200.,Ntot100,mthresh = mlim,zthresh = zlim)
+        
+        return samples[:,0],samples[:,1]
+
+    def plot_basic_sample(self):
+        fsky = self.fsky
+        sampZ,sampM = self.create_basic_sample(fsky)
+        plt.figure()
+        plt.plot(sampZ,sampM,'x') 
+        plt.savefig('default_mockcat.png', bbox_inches='tight',format='png')  
+        return
 
     def create_obs_sample(self,fsky):
         
         #include observational effects like scatter and noise into the detection of clusters
         sampZ,sampM = self.create_basic_sample(fsky)
+        nsamps = len(sampM)
         Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(sampM/(self.HMF.cc.H0/100.)), sampZ, self.tckQFit)
         
         # add scatter 
         np.random.seed(self.seedval)
-        ymod = np.exp(self.scat_val * np.random.randn(len(sampM)))
-        sampY = Ytile*ymod
+        ymod = np.exp(self.scat_val * np.random.randn(nsamps))
+        sampY0 = Ytile*ymod
         
-        #calculate noise for a given object gicen a random place on the map
-        np.random.seed(self.seedval+3)
-        np.random.uniform()
+        #calculate noise for a given object for a random place on the map and save coordinates
+
+        np.random.seed(self.seedval+1)
+        nmap = self.rms_noise_map[::-1,:]
         
+        ylims = nmap.shape[0]
+        xlims = nmap.shape[1]
+        xsave = np.array([])
+        ysave = np.array([])
+        sampY0err = np.array([])
+        count = 0
+
+        while count < nsamps:
+            ytemp = np.int32(np.floor(np.random.uniform(0,ylims)))
+            xtemp = np.int32(np.floor(np.random.uniform(0,xlims)))
+            if nmap[ytemp,xtemp] > 0:
+                count += 1
+                xsave = np.append(xsave,xtemp)
+                ysave = np.append(ysave,ytemp)
+                sampY0err = np.append(sampY0err,nmap[ytemp,xtemp])
+        return xsave,ysave,sampZ,sampY0,sampY0err,sampY0/sampY0err,sampM
