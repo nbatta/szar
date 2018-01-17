@@ -203,8 +203,6 @@ if (args.printtest):
 Ndim, nwalkers = len(parvals), len(parvals)*2
 if (args.simpars):
     Ndim, nwalkers = len(parvals), 20
-if (args.simtest):
-    Ndim, nwalkers = len(parvals), 20
 
 P0 = np.array(parvals)
 
@@ -217,25 +215,40 @@ start = time.time()
 #     pool.wait()
 #     sys.exit(0)
 
-Nruns = args.nruns #int(1e6)
-print (nwalkers,Nruns)
+if args.simtest:
+    
+    filename = chain_out+"/sz_likelival_"+args.chain_name+".dat"
+    
+    parvals_arr = parvals*(1+np.arange(-0.2,0.2001,0.001))
+    ansout = parvals_arr*0.0
+    for ii, vals in enumerate(parvals_arr):
+        #print ii, vals
+        ansout[ii] = CL.lnlike([vals],parlist)
+    
+    f = open(filename, "w")
+    savemat = [parvals_arr,ansout]
+    np.savetxt(f,savemat)
+
+else:
+    Nruns = args.nruns #int(1e6)
+    print (nwalkers,Nruns)
 #nwalkers = 1
-sampler = emcee.EnsembleSampler(nwalkers,Ndim,CL.lnprob,args =(parlist,priorvals,priorlist))#,pool=pool)
+    sampler = emcee.EnsembleSampler(nwalkers,Ndim,CL.lnprob,args =(parlist,priorvals,priorlist))#,pool=pool)
 #sampler.run_mcmc(pos,Nruns)
 
-
-filename = chain_out+"/sz_chain_"+args.chain_name+"_"+str(index)+".dat"
-f = open(filename, "w")
-f.close()
-
-for result in sampler.sample(pos, iterations=Nruns, storechain=False):
-    position = result[0]
-    s8 = np.array(result[3]).reshape((len(result[3]),1))
-    f = open(filename, "ab")
-    savemat = np.concatenate((position,s8),axis=1)
-    np.savetxt(f,savemat)
+    
+    filename = chain_out+"/sz_chain_"+args.chain_name+"_"+str(index)+".dat"
+    f = open(filename, "w")
     f.close()
-    print "Saved a sample."
+    
+    for result in sampler.sample(pos, iterations=Nruns, storechain=False):
+        position = result[0]
+        s8 = np.array(result[3]).reshape((len(result[3]),1))
+        f = open(filename, "ab")
+        savemat = np.concatenate((position,s8),axis=1)
+        np.savetxt(f,savemat)
+        f.close()
+        print "Saved a sample."
 
 # pool.close()
 

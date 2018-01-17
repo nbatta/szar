@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from getdist import plots, MCSamples
 import glob
 import argparse
+from scipy.interpolate import interp1d
 
 parser = argparse.ArgumentParser(description='Plot Cluster Chains.')
 #parser.add_argument("dir_name", type=str,help='dir of run.')
@@ -64,18 +65,38 @@ if args.test:
 elif args.s8test:
     dir_name1 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACT_chains/"
     chain1 = "sz_chain_test_chains_v4_0.dat"
-    burnins = 2000
+    burnins = 0 #,2000
+
+    likefile = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACT_chains/sz_likelival_test_chains_v4.dat'
+    
+    As1D,like1D,  = np.loadtxt(likefile)
     
     names = ['As','s8']
     labels =  ['A_s','\sigma_8']
     out1 = load_single_sample(dir_name1,chain1,burnins)
     samples1 = MCSamples(samples=out1,names = names, labels = labels)
     
+    indsort = np.argsort(out1[:,0])
+    #print indsort
+    
+    fint = interp1d(out1[:,0][indsort], out1[:,1][indsort])
+    #print out1[:,0][indsort]
+    #print As1D
+
+    indmin = np.argmax(like1D)
+    print As1D[indmin]
+
+    print fint(As1D[indmin])
+    
+    #print len(indsort)
+
     plt.figure()
     g = plots.getSubplotPlotter()
     g.triangle_plot([samples1], params=['As','s8'], filled=True)
-    plt.savefig(outdir+"simtest_s8Testv3.png")
+    plt.savefig(outdir+"simtest_s8Testv4.png")
     
+    
+
 else:
     dir_name1 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/v10updated/"
     dir_name2 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/v11updated/"
@@ -105,7 +126,10 @@ else:
     plt.savefig(outdir+"v10_and_v11_testv2.png")
     print(samples2.getTable(limit=1).tableTex())
 
-print(samples1.getTable(limit=1).tableTex())
+if not args.s8test:
 
-constraints = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(out1, [16, 50, 84],axis=0)))
-print constraints
+    print(samples1.getTable(limit=1).tableTex())
+    
+    constraints = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(out1, [16, 50, 84],axis=0)))
+    print constraints
+    
