@@ -400,11 +400,16 @@ class Halo_MF:
         N_mz_inter = self.inter_mf(delta)
         P0 = np.array([1.,15.5])
         pos = [P0 + P0*2e-2*np.random.randn(Ndim) for i in range(nwalkers)]
+
+        corrlength = 20 # Roughly corresponds to number from sampler.acor
         
         sampler = emcee.EnsembleSampler(nwalkers,Ndim,self.mf_inter_eval, args =[N_mz_inter,mthresh,zthresh] )
-        sampler.run_mcmc(pos,nsamp100+nburnin)
-        
-        return sampler.chain[:,nburnin:,:].reshape((-1,Ndim))
+        sampler.run_mcmc(pos,corrlength*nsamp100+nburnin)
+        #print "acor", sampler.acor
+        #sample_burnedin = sampler.chain[:,nburnin:,:]
+        #print "shape", sample_burnedin.shape
+        #return sample_burnedin[:,0:nsamp100*corrlength:corrlength,:].reshape((-1,Ndim))
+        return sampler.chain[:,nburnin:corrlength*nsamp100+nburnin:corrlength,:].reshape((-1,Ndim))
 
     def N_of_z(self):
         # dN/dz(z) = 4pi fsky \int dm dN/dzdmdOmega

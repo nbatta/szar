@@ -83,14 +83,21 @@ if args.mockcat:
     
     #print MC.Total_clusters(MC.fsky)
 
-    blah = MC.create_basic_sample(MC.fsky)
-    print np.shape(np.array(blah))
-    xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = MC.create_obs_sample(MC.fsky)
-    print sampY0[:10],sampY0err[:10]
-    print len(np.where(SNR > 5.6)[0])
+    #start = time.time()
+    #blah = MC.create_basic_sample(MC.fsky)
+    #print ('sample time',time.time() - start)
+    #print np.shape(np.array(blah))
+    #start = time.time()
+    #xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = MC.create_obs_sample(MC.fsky)
+    #print ('sample time',time.time() - start)
+    #print sampY0[:10],sampY0err[:10]
+    #print len(np.where(SNR > 5.6)[0])
     #MC.plot_obs_sample()
-    fileout = 
-    MC.write_obs_cat_toFits(fileout)
+    start = time.time()
+    filedir = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/'
+    filename = args.chain_name #,'mockCat_v1'
+    MC.write_obs_cat_toFits(filedir,filename)
+    print ('sample time',time.time() - start)    
     sys.exit(0)
 
 if args.test:

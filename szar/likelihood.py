@@ -352,7 +352,7 @@ class MockCatalog:
 
     def create_basic_sample(self,fsky):
         # create simple mock catalog of Mass and Redshift 
-        Ntot100 = np.ceil(self.Total_clusters(fsky) / 100.)
+        Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky) / 100.))
         mlim = [np.min(self.mgrid),np.max(self.mgrid)]
         zlim = [np.min(self.zgrid),np.max(self.zgrid)]
         #mlim = [np.log10(3e14),np.log10(7e15)]
@@ -405,40 +405,46 @@ class MockCatalog:
         return xsave,ysave,sampZ,sampY0,sampY0err,sampY0/sampY0err,sampM
 
 
-    def plot_obs_sample(self,filename1='default_mockobscat.png',filename2='default_obs_mock_footprint.png'):
+    def plot_obs_sample(self,filename1='default_mockobscat',filename2='default_obs_mock_footprint'):
         fsky = self.fsky
         xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = self.create_obs_sample(fsky)
         ind = np.where(SNR >= 5.6)[0]
         plt.figure()
         plt.plot(sampZ,sampM,'x')
         plt.plot(sampZ[ind],sampM[ind],'o')
-        plt.savefig(filename1, bbox_inches='tight',format='png')
+        plt.savefig(filename1+'.png', bbox_inches='tight',format='png')
 
         nmap = self.rms_noise_map[::-1,:]
         plt.figure(figsize=(40,6))
         plt.imshow(nmap,cmap='Blues')
         plt.plot(xsave[ind],ysave[ind],'ko')
         plt.colorbar()
-        plt.savefig(filename2, bbox_inches='tight',format='png')
+        plt.savefig(filename2+'.png', bbox_inches='tight',format='png')
 
         return xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM
 
-    def write_obs_cat_toFits(self, filename):
+    def write_obs_cat_toFits(self, filedir,filename):
         #fsky = self.fsky
         #xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = self.create_obs_sample(fsky)
 
-        xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = self.plot_obs_sample()
+        f1 = filedir+filename+'_mockobscat'
+        f2 = filedir+filename+'_obs_mock_footprint'
 
+        xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = self.plot_obs_sample(filename1=f1,filename2=f2)
+
+        ind = np.where(SNR >= 5.6)[0]
+        print "number of clusters", len(ind)
+        clusterID = ind.astype(str)
         hdu = fits.BinTableHDU.from_columns(
-            [fits.Column(name='Cluster_ID', format='20A', array=a1),
-             fits.Column(name='x_ind', format='E', array=xsave),
-             fits.Column(name='y_ind', format='E', array=ysave),
-             fits.Column(name='redshift', format='E', array=sampZ),
-             fits.Column(name='redshiftErr', format='E', array=sampZ*0.0),
-             fits.Column(name='fixed_y_c', format='E', array=sampY0),
-             fits.Column(name='err_fixed_y_c', format='E', array=sampY0err),
-             fits.Column(name='fixed_SNR', format='E', array=SNR),])
+            [fits.Column(name='Cluster_ID', format='20A', array=clusterID),
+             fits.Column(name='x_ind', format='E', array=xsave[ind]),
+             fits.Column(name='y_ind', format='E', array=ysave[ind]),
+             fits.Column(name='redshift', format='E', array=sampZ[ind]),
+             fits.Column(name='redshiftErr', format='E', array=sampZ[ind]*0.0),
+             fits.Column(name='fixed_y_c', format='E', array=sampY0[ind]),
+             fits.Column(name='err_fixed_y_c', format='E', array=sampY0err[ind]),
+             fits.Column(name='fixed_SNR', format='E', array=SNR[ind]),])
 
-        hdu.writeto(filename)
+        hdu.writeto(filedir+filename+'.fits')
 
         return 0
