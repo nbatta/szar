@@ -88,7 +88,9 @@ if args.mockcat:
     xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = MC.create_obs_sample(MC.fsky)
     print sampY0[:10],sampY0err[:10]
     print len(np.where(SNR > 5.6)[0])
-    MC.plot_obs_sample()
+    #MC.plot_obs_sample()
+    fileout = 
+    MC.write_obs_cat_toFits(fileout)
     sys.exit(0)
 
 if args.test:
