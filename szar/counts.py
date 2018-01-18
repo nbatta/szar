@@ -406,9 +406,7 @@ class Halo_MF:
         sampler = emcee.EnsembleSampler(nwalkers,Ndim,self.mf_inter_eval, args =[N_mz_inter,mthresh,zthresh] )
         sampler.run_mcmc(pos,corrlength*nsamp100+nburnin)
         #print "acor", sampler.acor
-        #sample_burnedin = sampler.chain[:,nburnin:,:]
-        #print "shape", sample_burnedin.shape
-        #return sample_burnedin[:,0:nsamp100*corrlength:corrlength,:].reshape((-1,Ndim))
+
         return sampler.chain[:,nburnin:corrlength*nsamp100+nburnin:corrlength,:].reshape((-1,Ndim))
 
     def N_of_z(self):
