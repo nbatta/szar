@@ -404,3 +404,21 @@ class MockCatalog:
                 sampY0err = np.append(sampY0err,nmap[ytemp,xtemp])
         return xsave,ysave,sampZ,sampY0,sampY0err,sampY0/sampY0err,sampM
 
+
+    def plot_obs_sample(self):
+        fsky = self.fsky
+        xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = self.create_obs_sample(fsky)
+        ind = np.where(SNR >= 5.6)[0]
+        plt.figure()
+        plt.plot(sampZ,sampM,'x')
+        plt.plot(sampZ[ind],sampM[ind],'o')
+        plt.savefig('default_mockobscat.png', bbox_inches='tight',format='png')
+
+        nmap = self.rms_noise_map[::-1,:]
+        plt.figure(figsize=(40,6))
+        plt.imshow(nmap,cmap='Blues')
+        plt.plot(xsave[ind],ysave[ind],'ko')
+        plt.colorbar()
+        plt.savefig('default_obs_mock_footprint.png', bbox_inches='tight',format='png')
+
+        return
