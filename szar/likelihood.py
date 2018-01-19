@@ -45,6 +45,11 @@ def read_mock_cat(fitsfile):
     ind = np.where(SNR >= 5.6)[0]
     return z[ind],zerr[ind],Y0[ind],Y0err[ind]
 
+def alter_fparams(fparams,parlist,parvals):
+    for k,parvals in enumerate(parvals):
+        fparams[parlist[k]] = parvals
+    return fparams
+
 class clusterLike:
     def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,fix_params,test=False,simtest=False,simpars=False):
         self.fix_params = fix_params
@@ -88,9 +93,12 @@ class clusterLike:
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
         
         if self.simtest or self.simpars:
-            clust_cat = nemoOutputDir + 'mockCatalog_equD56.fits' #'ACTPol_mjh_cluster_cat.fits'
+            print "mock catalog"
+            #clust_cat = nemoOutputDir + 'mockCatalog_equD56.fits' #'ACTPol_mjh_cluster_cat.fits'
+            clust_cat = nemoOutputDir + 'mockCat_D56equ_v1.fits' #'ACTPol_mjh_cluster_cat.fits'
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat)
         else:
+            print "real catalog"
             clust_cat = nemoOutputDir + 'E-D56Clusters.fits' #'ACTPol_mjh_cluster_cat.fits'
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat)
 
@@ -107,11 +115,6 @@ class clusterLike:
         count_temp,bin_edge =np.histogram(np.log10(self.rms_noise_map[self.rms_noise_map>0]),bins=self.num_noise_bins)
         self.frac_of_survey = count_temp*1.0 / np.sum(count_temp)
         self.thresh_bin = 10**((bin_edge[:-1] + bin_edge[1:])/2.)
-
-    def alter_fparams(self,fparams,parlist,parvals):
-        for k,parvals in enumerate(parvals):
-            fparams[parlist[k]] = parvals
-        return fparams
 
     def Find_nearest_pixel_ind(self,wcs,RADeg,DECDeg):
         xx = np.array([])
@@ -219,7 +222,7 @@ class clusterLike:
         return ans
 
     def lnprior(self,theta,parlist,priorval,priorlist):
-        param_vals = self.alter_fparams(self.fparams,parlist,theta)
+        param_vals = alter_fparams(self.fparams,parlist,theta)
         prioravg = priorval[0,:]
         priorwth = priorval[1,:]
         lnp = 0.
@@ -248,9 +251,8 @@ class clusterLike:
 
 
     def lnlike(self,theta,parlist):
-
         
-        param_vals = self.alter_fparams(self.fparams,parlist,theta)
+        param_vals = alter_fparams(self.fparams,parlist,theta)
         for key in self.fix_params:
             if key not in param_vals.keys(): param_vals[key] = self.fix_params[key]
 
@@ -295,7 +297,7 @@ class clusterLike:
         return lp + lnlike,np.nan_to_num(self.s8)
 
 class MockCatalog:
-    def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,mass_grid_log=None,z_grid=None):
+    def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,params,parlist,mass_grid_log=None,z_grid=None):
 
         Config = SafeConfigParser()
         Config.optionxform=str
@@ -308,6 +310,8 @@ class MockCatalog:
                 self.fparams[key] = float(param)
             else:
                 self.fparams[key] = float(val)
+
+        self.param_vals = alter_fparams(self.fparams,parlist,params)
 
         bigDataDir = Config.get('general','bigDataDirectory')
         self.clttfile = Config.get('general','clttfile')
@@ -330,7 +334,7 @@ class MockCatalog:
         self.mgrid = np.arange(logm_min,logm_max,logm_spacing)
         self.zgrid = np.arange(zmin,zmax,zdel)
 
-        self.cc = ClusterCosmology(self.fparams,self.constDict,clTTFixFile=self.clttfile)
+        self.cc = ClusterCosmology(self.param_vals,self.constDict,clTTFixFile=self.clttfile)
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
 
         self.diagnosticsDir=nemoOutputDir+"diagnostics"
@@ -355,7 +359,7 @@ class MockCatalog:
         Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky) / 100.))
         mlim = [np.min(self.mgrid),np.max(self.mgrid)]
         zlim = [np.min(self.zgrid),np.max(self.zgrid)]
-        #mlim = [np.log10(3e14),np.log10(7e15)]
+
         samples = self.HMF.mcsample_mf(200.,Ntot100,mthresh = mlim,zthresh = zlim)
         
         return samples[:,0],samples[:,1]
@@ -375,9 +379,12 @@ class MockCatalog:
         nsamps = len(sampM)
         Ytilde = sampM * 0.0
         
+        Om = (self.param_vals['omch2'] + self.param_vals['ombh2']) / (self.param_vals['H0']/100.)**2
+
         for i in range(nsamps):
-            Ytilde[i], theta0, Qfilt =simsTools.y0FromLogM500(np.log10(10**sampM[i]/(self.HMF.cc.H0/100.)), sampZ[i], self.tckQFit)
-        # add scatter 4
+            Ytilde[i], theta0, Qfilt = simsTools.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM[i]/(self.param_vals['H0']/100.)), sampZ[i], self.tckQFit,sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = 1 - Om)
+            #simsTools.y0FromLogM500(np.log10(10**sampM[i]/(self.HMF.cc.H0/100.)), sampZ[i], self.tckQFit,)
+        # add scatter of 20% percent
         np.random.seed(self.seedval)
         ymod = np.exp(self.scat_val * np.random.randn(nsamps))
         sampY0 = Ytilde*ymod
@@ -426,14 +433,17 @@ class MockCatalog:
     def write_obs_cat_toFits(self, filedir,filename):
         #fsky = self.fsky
         #xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = self.create_obs_sample(fsky)
-
+        # ADD RA and DEC to calatog
         f1 = filedir+filename+'_mockobscat'
         f2 = filedir+filename+'_obs_mock_footprint'
 
         xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = self.plot_obs_sample(filename1=f1,filename2=f2)
 
-        ind = np.where(SNR >= 5.6)[0]
+        ind = np.where(SNR >= 4.5)[0]
+        #print "number of clusters", len(ind)
+        ind2 = np.where(SNR >= 5.6)[0]
         print "number of clusters", len(ind)
+
         clusterID = ind.astype(str)
         hdu = fits.BinTableHDU.from_columns(
             [fits.Column(name='Cluster_ID', format='20A', array=clusterID),
@@ -441,8 +451,8 @@ class MockCatalog:
              fits.Column(name='y_ind', format='E', array=ysave[ind]),
              fits.Column(name='redshift', format='E', array=sampZ[ind]),
              fits.Column(name='redshiftErr', format='E', array=sampZ[ind]*0.0),
-             fits.Column(name='fixed_y_c', format='E', array=sampY0[ind]),
-             fits.Column(name='err_fixed_y_c', format='E', array=sampY0err[ind]),
+             fits.Column(name='fixed_y_c', format='E', array=sampY0[ind]*1e4),
+             fits.Column(name='err_fixed_y_c', format='E', array=sampY0err[ind]*1e4),
              fits.Column(name='fixed_SNR', format='E', array=SNR[ind]),])
 
         hdu.writeto(filedir+filename+'.fits')

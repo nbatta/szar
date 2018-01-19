@@ -65,9 +65,11 @@ if args.test:
 elif args.s8test:
     dir_name1 = "/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACT_chains/"
     chain1 = "sz_chain_test_chains_v4_0.dat"
+    #chain1 = "sz_likelival_test_s8_mock.dat"
     burnins = 0 #,2000
 
-    likefile = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACT_chains/sz_likelival_test_chains_v4.dat'
+    likefile = dir_name1 + 'sz_likelival_test_chains_v4.dat'
+    #likefile = dir_name1 + 'sz_likelival_test_s8_mock.dat'
     
     As1D,like1D,  = np.loadtxt(likefile)
     
@@ -84,16 +86,16 @@ elif args.s8test:
     #print As1D
 
     indmin = np.argmax(like1D)
-    print As1D[indmin]
+    print As1D[indmin - 40]
 
-    print fint(As1D[indmin])
+    print fint(As1D[indmin - 40])
     
     #print len(indsort)
 
     plt.figure()
     g = plots.getSubplotPlotter()
     g.triangle_plot([samples1], params=['As','s8'], filled=True)
-    plt.savefig(outdir+"simtest_s8Testv4.png")
+    plt.savefig(outdir+"simtest_s8mockv1.png")
     
     
 

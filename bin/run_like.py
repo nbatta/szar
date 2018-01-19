@@ -75,30 +75,13 @@ else:
 
 fix_params = dict(zip(fixlist,fixvals))
 
+if args.printtest or args.simtest:
+    simtst = True
+else:
+    simtst = False
 
-CL = lk.clusterLike(iniFile,pardict,nemoOutputDir,noise_file,fix_params,test=args.test,simtest=args.simtest,simpars=args.simpars)
 
-if args.mockcat:
-    MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,mass_grid_log=[np.log10(8e13),np.log10(7e15),0.01],z_grid=[0.1,2.01,0.1])
-    
-    #print MC.Total_clusters(MC.fsky)
-
-    #start = time.time()
-    #blah = MC.create_basic_sample(MC.fsky)
-    #print ('sample time',time.time() - start)
-    #print np.shape(np.array(blah))
-    #start = time.time()
-    #xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = MC.create_obs_sample(MC.fsky)
-    #print ('sample time',time.time() - start)
-    #print sampY0[:10],sampY0err[:10]
-    #print len(np.where(SNR > 5.6)[0])
-    #MC.plot_obs_sample()
-    start = time.time()
-    filedir = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/'
-    filename = args.chain_name #,'mockCat_v1'
-    MC.write_obs_cat_toFits(filedir,filename)
-    print ('sample time',time.time() - start)    
-    sys.exit(0)
+CL = lk.clusterLike(iniFile,pardict,nemoOutputDir,noise_file,fix_params,test=args.test,simtest=simtst,simpars=args.simpars)
 
 if args.test:
     parlist = ['omch2','H0','As']
@@ -138,6 +121,32 @@ else:
     # prioravg = np.array([0.0223,0.96,67.3,0.8,0.2])
     # priorwth = np.array([0.0009,0.02,3.6,0.12,0.1])
     priorvals = np.array([prioravg,priorwth])
+
+if args.mockcat:
+    parlist = ['omch2','ombh2','H0','As','ns','tau','massbias','yslope','scat']
+    parvals = [0.1225,0.0245,70,2.0e-09,0.97,0.06,1.0,0.08,0.2]
+
+    MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[np.log10(8e13),np.log10(7e15),0.01],z_grid=[0.1,2.01,0.1])
+    
+    #print MC.Total_clusters(MC.fsky)
+    #start = time.time()
+    #blah = MC.create_basic_sample(MC.fsky)
+    #print ('sample time',time.time() - start)
+    #print np.shape(np.array(blah))
+    #start = time.time()
+    #xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = MC.create_obs_sample(MC.fsky)
+    #print ('sample time',time.time() - start)
+    #print sampY0[:10],sampY0err[:10]
+    #print len(np.where(SNR > 5.6)[0])
+    #MC.plot_obs_sample()
+    start = time.time()
+    filedir = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/'
+    filename = args.chain_name #,'mockCat_v1'
+    MC.write_obs_cat_toFits(filedir,filename)
+    print ('sample time',time.time() - start)    
+    sys.exit(0)
+
+
 
 if (args.printtest):
 
