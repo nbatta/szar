@@ -68,7 +68,8 @@ elif args.s8test:
     #chain1 = "sz_likelival_test_s8_mock.dat"
     burnins = 0 #,2000
 
-    likefile = dir_name1 + 'sz_likelival_test_chains_v4.dat'
+    likefile = dir_name1 + 'sz_likelival_test_s8_mock_D56Equ_v3.dat'
+    #likefile = dir_name1 + 'sz_likelival_test_chains_v4.dat'
     #likefile = dir_name1 + 'sz_likelival_test_s8_mock.dat'
     
     As1D,like1D,  = np.loadtxt(likefile)
@@ -86,9 +87,9 @@ elif args.s8test:
     #print As1D
 
     indmin = np.argmax(like1D)
-    print As1D[indmin - 40]
+    print As1D[indmin]
 
-    print fint(As1D[indmin - 40])
+    print fint(As1D[indmin])
     
     #print len(indsort)
 

@@ -108,8 +108,11 @@ elif args.simpars:
     priorwth = np.array([0.002])
     priorvals = np.array([prioravg,priorwth])
 else:
-    parlist = ['omch2','ombh2','H0','As','ns','massbias','yslope','scat']
-    parvals = [0.1194,0.022,67.0,2.2e-09,0.96,0.80,0.08,0.2]
+    #parlist = ['omch2','ombh2','H0','As','ns','massbias','yslope','scat']
+    #parvals = [0.1194,0.022,67.0,2.2e-09,0.96,0.80,0.08,0.2]
+    parlist = ['omch2','ombh2','H0','As','ns','tau','massbias','yslope','scat']
+    parvals = [0.1225,0.0245,70,2.0e-09,0.97,0.06,1.0,0.08,0.2]
+
     #parvals = [  1.88435449e-01,   3.58611034e-02,   7.11553421e+01 ,  3.16378460e-09, 8.79223364e-01,   2.53233761e-02,   2.79267165e-02,   1.99945364e-01]
     #nan pars
    
@@ -153,7 +156,7 @@ if (args.printtest):
     parvals2 = [3.46419819e-01,2.34697120e-02,6.50170056e+01,1.33398673e-09,9.36305025e-01,2.53310030e-01,1.93661978e-01,1.74839544e-01]
 #parvals2 = [1.194e-01,2.34697120e-02,6.50170056e+01,1.33398673e-09,9.36305025e-01,2.53310030e-01,1.93661978e-01,1.74839544e-01]
 
-    param_vals= CL.alter_fparams(fparams,parlist,parvals)
+    param_vals= lk.alter_fparams(fparams,parlist,parvals)
     cluster_props = np.array([CL.clst_z,CL.clst_zerr,CL.clst_y0*1e-4,CL.clst_y0err*1e-4])
     
     start = time.time()
@@ -185,7 +188,7 @@ if (args.printtest):
     print np.log(Y[-1,-1]) - np.log(Ytilde[-1,-1])
     print "P of Y", CL.P_Yo(LgYa,int_HMF.M.copy(),int_HMF.zarr[zbins],param_vals)[-1,-1], 
  
-    param_vals2= CL.alter_fparams(fparams,parlist,parvals2)
+    param_vals2= lk.alter_fparams(fparams,parlist,parvals2)
     int_cc2 = ClusterCosmology(param_vals2,CL.constDict,clTTFixFile=CL.clttfile) 
     int_HMF2 = Halo_MF(int_cc2,CL.mgrid,CL.zgrid)
     dn_dzdm_int2 = int_HMF2.inter_dndmLogm(200.)

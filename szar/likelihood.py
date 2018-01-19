@@ -95,7 +95,7 @@ class clusterLike:
         if self.simtest or self.simpars:
             print "mock catalog"
             #clust_cat = nemoOutputDir + 'mockCatalog_equD56.fits' #'ACTPol_mjh_cluster_cat.fits'
-            clust_cat = nemoOutputDir + 'mockCat_D56equ_v1.fits' #'ACTPol_mjh_cluster_cat.fits'
+            clust_cat = nemoOutputDir + 'mockCat_D56equ_v3.fits' #'ACTPol_mjh_cluster_cat.fits'
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat)
         else:
             print "real catalog"
