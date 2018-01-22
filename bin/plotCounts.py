@@ -64,9 +64,9 @@ gridName = "grid-default"
 version = "0.3_ysig_0.127"
 cal = "CMB_pol_miscentered"
 
-from orphics.io import dictFromSection, listFromConfig
-constDict = dictFromSection(Config,'constants')
-clusterDict = dictFromSection(Config,'cluster_params')
+from orphics.io import dict_from_section, list_from_config
+constDict = dict_from_section(Config,'constants')
+clusterDict = dict_from_section(Config,'cluster_params')
 
 fparams = {}   # the 
 for (key, val) in Config.items('params'):
@@ -100,11 +100,11 @@ for expName,col in zip(expList,colList):
 
     zrange = (z_edges[1:]+z_edges[:-1])/2.
 
-    beam = listFromConfig(Config,expName,'beams')
-    noise = listFromConfig(Config,expName,'noises')
-    freq = listFromConfig(Config,expName,'freqs')
-    lknee = listFromConfig(Config,expName,'lknee')[0]
-    alpha = listFromConfig(Config,expName,'alpha')[0]
+    beam = list_from_config(Config,expName,'beams')
+    noise = list_from_config(Config,expName,'noises')
+    freq = list_from_config(Config,expName,'freqs')
+    lknee = list_from_config(Config,expName,'lknee')[0]
+    alpha = list_from_config(Config,expName,'alpha')[0]
     fsky = Config.getfloat(expName,'fsky')
     HMF = Halo_MF(cc,mexp_edges,z_edges)
     HMF.sigN = siggrid.copy()

@@ -3,7 +3,7 @@ matplotlib.use('Agg')
 import numpy as np
 import sys, os, time
 from szar.counts import rebinN,getA
-from orphics.io import Plotter,dictFromSection,listFromConfig
+from orphics.io import Plotter,dict_from_section,list_from_config
 from configparser import SafeConfigParser 
 import pickle as pickle
 from szar.fisher import getFisher
@@ -87,7 +87,7 @@ print(err)
 # import camb
 # from szar.counts import ClusterCosmology
 
-# constDict = dictFromSection(Config,'constants')
+# constDict = dict_from_section(Config,'constants')
 
 
 # s8,As1 = getA(fparams,constDict,zrange)

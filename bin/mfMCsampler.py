@@ -1,7 +1,7 @@
 import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
-#from orphics import dictFromSection, listFromConfig
+#from orphics import dict_from_section, list_from_config
 from orphics.io import dict_from_section
 from ConfigParser import SafeConfigParser
 import cPickle as pickle
@@ -61,10 +61,10 @@ experimentName = expName
 
 beams = list_from_config(Config,experimentName,'beams')
 noises = list_from_config(Config,experimentName,'noises')
-freqs = listFromConfig(Config,experimentName,'freqs')
+freqs = list_from_config(Config,experimentName,'freqs')
 lmax = int(Config.getfloat(experimentName,'lmax'))
-lknee = listFromConfig(Config,experimentName,'lknee')[0]
-alpha = listFromConfig(Config,experimentName,'alpha')[0]
+lknee = list_from_config(Config,experimentName,'lknee')[0]
+alpha = list_from_config(Config,experimentName,'alpha')[0]
 fsky = Config.getfloat(experimentName,'fsky')
 
 SZProp = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)

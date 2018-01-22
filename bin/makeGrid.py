@@ -89,13 +89,13 @@ if rank==0:
         else:
             fparams[key] = float(val)
 
-    from orphics.io import dictFromSection, listFromConfig
+    from orphics.io import dict_from_section, list_from_config
 
     bigDataDir = Config.get('general','bigDataDirectory')
 
-    ms = listFromConfig(Config,gridName,'mexprange')
+    ms = list_from_config(Config,gridName,'mexprange')
     Mexp_edges = np.arange(ms[0],ms[1]+ms[2],ms[2])
-    zs = listFromConfig(Config,gridName,'zrange')
+    zs = list_from_config(Config,gridName,'zrange')
     z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 
 
@@ -106,15 +106,15 @@ if rank==0:
     zgrid = (z_edges[1:]+z_edges[:-1])/2.
 
     
-    beam = listFromConfig(Config,expName,'beams')
-    noise = listFromConfig(Config,expName,'noises')
-    freq = listFromConfig(Config,expName,'freqs')
-    lkneeT,lkneeP = listFromConfig(Config,expName,'lknee')
+    beam = list_from_config(Config,expName,'beams')
+    noise = list_from_config(Config,expName,'noises')
+    freq = list_from_config(Config,expName,'freqs')
+    lkneeT,lkneeP = list_from_config(Config,expName,'lknee')
     if lkneeTOverride is not None: lkneeT = lkneeTOverride
-    alphaT,alphaP = listFromConfig(Config,expName,'alpha')
+    alphaT,alphaP = list_from_config(Config,expName,'alpha')
     if alphaTOverride is not None: alphaT = alphaTOverride
-    tellmin,tellmax = listFromConfig(Config,expName,'halo_tellrange')
-    pellmin,pellmax = listFromConfig(Config,expName,'halo_pellrange')
+    tellmin,tellmax = list_from_config(Config,expName,'halo_tellrange')
+    pellmin,pellmax = list_from_config(Config,expName,'halo_pellrange')
     try:
         doFg = Config.getboolean(expName,'do_foregrounds')
     except:
@@ -128,7 +128,7 @@ if rank==0:
         dotsz_cib = True
 
     lmax = int(Config.getfloat(expName,'lmax'))
-    constDict = dictFromSection(Config,'constants')
+    constDict = dict_from_section(Config,'constants')
 
     if doLens:
         pols = Config.get(lensName,'polList').split(',')
@@ -257,7 +257,7 @@ if rank==0:
 
 
     if doSZ:
-        clusterDict = dictFromSection(Config,'cluster_params')
+        clusterDict = dict_from_section(Config,'cluster_params')
 
         cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
         if doSZ:

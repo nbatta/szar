@@ -1,7 +1,7 @@
 import itertools
 from szar.counts import rebinN
 import numpy as np
-from orphics.io import dictFromSection, listFromConfig
+from orphics.io import dict_from_section, list_from_config
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
 import pickle as pickle
@@ -81,15 +81,15 @@ def counts_from_config(Config,bigDataDir,version,expName,gridName,mexp_edges,z_e
         suffix += "_"+str(alphaTOverride)
     mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+suffix+".pkl",'rb'))
     experimentName = expName
-    cosmoDict = dictFromSection(Config,"params")
-    constDict = dictFromSection(Config,'constants')
-    clusterDict = dictFromSection(Config,'cluster_params')
+    cosmoDict = dict_from_section(Config,"params")
+    constDict = dict_from_section(Config,'constants')
+    clusterDict = dict_from_section(Config,'cluster_params')
     clttfile = Config.get("general","clttfile")
     cc = ClusterCosmology(cosmoDict,constDict,clTTFixFile = clttfile)
 
-    beam = listFromConfig(Config,experimentName,'beams')
-    noise = listFromConfig(Config,experimentName,'noises')
-    freq = listFromConfig(Config,experimentName,'freqs')
+    beam = list_from_config(Config,experimentName,'beams')
+    noise = list_from_config(Config,experimentName,'noises')
+    freq = list_from_config(Config,experimentName,'freqs')
     lmax = int(Config.getfloat(experimentName,'lmax'))
     lknee = float(Config.get(experimentName,'lknee').split(',')[0])
     alpha = float(Config.get(experimentName,'alpha').split(',')[0])
@@ -110,7 +110,7 @@ def priors_from_config(Config,expName,calName,fishName,paramList,tauOverride=Non
 
     try:
         priorNameList = Config.get(fishSection,'prior_names').split(',')
-        priorValueList = listFromConfig(Config,fishSection,'prior_values')
+        priorValueList = list_from_config(Config,fishSection,'prior_values')
     except:
         priorNameList = []
         priorValueList = []
@@ -130,8 +130,8 @@ def priors_from_config(Config,expName,calName,fishName,paramList,tauOverride=Non
 #        paramList.append("sigR")
 #        try:
 #            priorNameList.append("sigR")
-#            beam = listFromConfig(Config,expName,'beams')
-#            freq = listFromConfig(Config,expName,'freqs')
+#            beam = list_from_config(Config,expName,'beams')
+#            freq = list_from_config(Config,expName,'freqs')
 #            freq_to_use = Config.getfloat(calName,'freq')
 #            ind = np.where(np.isclose(freq,freq_to_use))
 #            beamFind = np.array(beam)[ind]
@@ -194,7 +194,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
 
     
     
-    zs = listFromConfig(Config,gridName,'zrange')
+    zs = list_from_config(Config,gridName,'zrange')
     z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 
 
@@ -209,7 +209,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
 
 
     # get mass and z grids
-    # ms = listFromConfig(Config,gridName,'mexprange')
+    # ms = list_from_config(Config,gridName,'mexprange')
     # mexp_edges = np.arange(ms[0],ms[1]+ms[2],ms[2])
     # M_edges = 10**mexp_edges
     # Masses = (M_edges[1:]+M_edges[:-1])/2.

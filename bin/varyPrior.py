@@ -4,7 +4,7 @@ from configparser import SafeConfigParser
 import pickle as pickle
 import numpy as np
 import sys
-from orphics.io import dictFromSection, listFromConfig
+from orphics.io import dict_from_section, list_from_config
 from orphics.io import Plotter
 import matplotlib.pyplot as plt
 from szar.fisher import getFisher
@@ -29,7 +29,7 @@ saveId = expName + "_" + gridName + "_" + calName + "_v" + version
 
 
 # get s/n q-bins
-qs = listFromConfig(Config,'general','qbins')
+qs = list_from_config(Config,'general','qbins')
 qspacing = Config.get('general','qbins_spacing')
 if qspacing=="log":
     qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2]))
@@ -42,9 +42,9 @@ dq = np.diff(qbins)
 fsky = Config.getfloat(expName,'fsky')
 
 # get mass and z grids
-ms = listFromConfig(Config,gridName,'mexprange')
+ms = list_from_config(Config,gridName,'mexprange')
 mexp_edges = np.arange(ms[0],ms[1]+ms[2],ms[2])
-zs = listFromConfig(Config,gridName,'zrange')
+zs = list_from_config(Config,gridName,'zrange')
 z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 dm = np.diff(10**mexp_edges)
 dz = np.diff(z_edges)

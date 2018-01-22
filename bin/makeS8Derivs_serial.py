@@ -4,7 +4,7 @@ import numpy as np
 import sys, os, time
 from szar.counts import ClusterCosmology,Halo_MF,getNmzq,getA
 from szar.szproperties import SZ_Cluster_Model
-from orphics.io import Plotter,dictFromSection,listFromConfig
+from orphics.io import Plotter,dict_from_section,list_from_config
 from configparser import SafeConfigParser 
 import pickle as pickle
 from orphics.io import Plotter
@@ -45,14 +45,14 @@ assert np.all(zrange==zgrid)
 
 saveId = expName + "_" + gridName + "_" + calName + "_v" + version
 
-from orphics.io import dictFromSection, listFromConfig
-constDict = dictFromSection(Config,'constants')
-clusterDict = dictFromSection(Config,'cluster_params')
-beam = listFromConfig(Config,expName,'beams')
-noise = listFromConfig(Config,expName,'noises')
-freq = listFromConfig(Config,expName,'freqs')
-lknee = listFromConfig(Config,expName,'lknee')[0]
-alpha = listFromConfig(Config,expName,'alpha')[0]
+from orphics.io import dict_from_section, list_from_config
+constDict = dict_from_section(Config,'constants')
+clusterDict = dict_from_section(Config,'cluster_params')
+beam = list_from_config(Config,expName,'beams')
+noise = list_from_config(Config,expName,'noises')
+freq = list_from_config(Config,expName,'freqs')
+lknee = list_from_config(Config,expName,'lknee')[0]
+alpha = list_from_config(Config,expName,'alpha')[0]
 fsky = Config.getfloat(expName,'fsky')
 
 massMultiplier = Config.getfloat('general','mass_calib_factor')
@@ -60,7 +60,7 @@ massMultiplier = Config.getfloat('general','mass_calib_factor')
 clttfile = Config.get('general','clttfile')
 
 # get s/n q-bins
-qs = listFromConfig(Config,'general','qbins')
+qs = list_from_config(Config,'general','qbins')
 qspacing = Config.get('general','qbins_spacing')
 if qspacing=="log":
     qbins = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2])+1)
@@ -107,7 +107,7 @@ np.save(bigDataDir+"Nup_mzq_"+saveId+"_"+param,Nup)
 np.save(bigDataDir+"Ndn_mzq_"+saveId+"_"+param,Ndn)
 np.save(bigDataDir+"dNdp_mzq_"+saveId+"_"+param,dNdp)
 
-zs = listFromConfig(Config,gridName,'zrange')
+zs = list_from_config(Config,gridName,'zrange')
 z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 
 nums8bins = z_edges.size -1.

@@ -1,5 +1,5 @@
 from configparser import SafeConfigParser
-from orphics.io import dictFromSection, listFromConfig
+from orphics.io import dict_from_section, list_from_config
 
 
 iniFile = "input/pipeline.ini"
@@ -17,9 +17,9 @@ noises={}
 for i,expName in enumerate(expList):
 
     
-    beams[expName] = listFromConfig(Config,expName,'beams')
+    beams[expName] = list_from_config(Config,expName,'beams')
 
-    freqs = listFromConfig(Config,expName,'freqs')
+    freqs = list_from_config(Config,expName,'freqs')
     if i==0: freqOrig = list(freqs)
     assert [f==forig for f,forig in zip(freqs,freqOrig)]
 
@@ -52,9 +52,9 @@ expList = ["dummy-S3","S4-1.5-0.7","S4-1.5-0.4","S4-1.5-0.2","S4-1.5-0.1","S4-1.
 for i,expName in enumerate(expList):
 
     
-    noises[expName] = listFromConfig(Config,expName,'noises')
+    noises[expName] = list_from_config(Config,expName,'noises')
 
-    freqs = listFromConfig(Config,expName,'freqs')
+    freqs = list_from_config(Config,expName,'freqs')
     if i==0: freqOrig = list(freqs)
     assert [f==forig for f,forig in zip(freqs,freqOrig)]
 
