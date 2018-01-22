@@ -70,7 +70,7 @@ def getA(fparams,constDict,zrange,kmax=11.):
 def rebinN(Nmzq,pzCutoff,zbin_edges,mass_bin=37):
     #return zbin_edges, Nmzq  #.sum(axis=0) # !!!
     x,y,z = Nmzq.shape
-    #print x
+    #print x,y,z
     if mass_bin is not None: Nmzq = bin_ndarray(Nmzq, (mass_bin,y,z), operation='sum')
     
     if pzCutoff>=zbin_edges[-2]: return zbin_edges,Nmzq
@@ -271,6 +271,7 @@ class Halo_MF:
         self.sigN = None
         self.YM = None
         self.Pfunc_qarr = None
+        self.Pfunc_qarr_corr = None
         self.Pfunc = None
 
         M_edges = 10**Mexp_edges
@@ -455,9 +456,9 @@ class Halo_MF:
         print("Calculating P_func_qarr. This takes a while...")
         self.Pfunc_qarr = SZCluster.Pfunc_qarr(self.sigN.copy(),self.M,self.zarr,q_arr)
 
-    def updatePfunc_qarr_corr(self,SZCluster,q_arr,mass_err):
+    def updatePfunc_qarr_corr(self,SZCluster,q_arr):
         print("Calculating P_func_qarr. This takes a while...")
-        self.Pfunc_qarr_corr = SZCluster.Pfunc_qarr_corr(self.sigN.copy(),self.M,self.zarr,q_arr,self.Mexp,mass_err)
+        self.Pfunc_qarr_corr = SZCluster.Pfunc_qarr_corr(self.sigN.copy(),self.M,self.zarr,q_arr,self.Mexp)
 
     def N_of_z_SZ(self,fsky,SZCluster):
         # this is dN/dz(z) with selection
@@ -554,8 +555,8 @@ class Halo_MF:
         m_wl = self.Mexp
         
         if self.sigN is None: self.updateSigN(SZCluster)
-        if self.Pfunc_qarr is None: self.updatePfunc_qarr_corr(SZCluster,q_arr,mass_err)
-        P_func = self.Pfunc_qarr
+        if self.Pfunc_qarr_corr is None: self.updatePfunc_qarr_corr(SZCluster,q_arr)
+        P_func = self.Pfunc_qarr_corr
 
         dn_dVdm = self.dn_dM(self.M200,200.)
         dV_dz = self.dVdz
@@ -566,7 +567,7 @@ class Halo_MF:
             for jj in range(m_wl.size):
                 for i in range (z_arr.size):
                     dM = np.diff(self.M200_edges[:,i])
-                    dNdzmq[jj,i,kk] = np.dot(dn_dVdm[:,i]*P_func[:,i,kk,jj],dM) * dV_dz[i]*4.*np.pi
+                    dNdzmq[jj,i,kk] = np.dot(dn_dVdm[:,i]*P_func[:,i,kk,jj]*SZCluster.Mwl_prob(10**(m_wl[jj]),M_arr[:,i],mass_err[:,i]),dM) * dV_dz[i]*4.*np.pi
         
         return dNdzmq
 
