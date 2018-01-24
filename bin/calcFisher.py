@@ -30,7 +30,7 @@ version = Config.get('general','version')
 pzcutoff = Config.getfloat('general','photoZCutOff')
 saveId = sfisher.save_id(expName,gridName,calName,version)
 derivRoot = sfisher.deriv_root(bigDataDir,saveId)
-    
+YWLcorrflag = Config.getfloat('general','ywl_corr_flag')    
 
 # get mass and z grids
 ms = list_from_config(Config,gridName,'mexprange')
@@ -53,7 +53,9 @@ print(("Actual number of clusters: ", actualN))
 FisherTot, paramList = sfisher.cluster_fisher_from_config(Config,expName,gridName,calName,fishName)
 ##########################
 
-
+if (YWLcorrflag == 0 and FisherTot[-1,-1] == 0):
+    FisherTot = FisherTot[:len(paramList)-2,:len(paramList)-2]
+    paramList = paramList[:len(paramList)-2]
 
 Finv = np.linalg.inv(FisherTot)
 
