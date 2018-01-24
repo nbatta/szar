@@ -204,7 +204,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     saveId = save_id(expName,gridName,calName,version)
     derivRoot = deriv_root(bigDataDir,saveId)
     # Fiducial number counts
-    new_z_edges, N_fid = rebinN(np.load(fid_file(bigDataDir,saveId)),pzcutoff,z_edges,mass_bin=None)
+    new_z_edges, N_fid = rebinN(np.load(fid_file(bigDataDir,saveId)),pzcutoff,z_edges)#,mass_bin=None)
     N_fid = N_fid*fsky
 
 
@@ -331,8 +331,8 @@ def getFisher(N_fid,paramList,priorNameList,priorValueList,derivRoot,pzcutoff,z_
         i = paramList.index(param1)
         j = paramList.index(param2)
         if not(param1=='tau' or param2=='tau'): 
-            new_z_edges, dN1 = rebinN(np.load(derivRoot+param1+".npy"),pzcutoff,z_edges,mass_bin=None)
-            new_z_edges, dN2 = rebinN(np.load(derivRoot+param2+".npy"),pzcutoff,z_edges,mass_bin=None)
+            new_z_edges, dN1 = rebinN(np.load(derivRoot+param1+".npy"),pzcutoff,z_edges)#,mass_bin=None)
+            new_z_edges, dN2 = rebinN(np.load(derivRoot+param2+".npy"),pzcutoff,z_edges)#,mass_bin=None)
             dN1 = dN1*fsky
             dN2 = dN2*fsky
 

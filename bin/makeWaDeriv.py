@@ -122,6 +122,8 @@ if rank==0:
         raise ValueError
 
     massMultiplier = Config.getfloat('general','mass_calib_factor')
+    YWLcorrflag = Config.getfloat('general','ywl_corr_flag')
+
     if debug: print("Finished rank 0 work.")
 
 else:
@@ -143,6 +145,7 @@ else:
     alpha = None
     massMultiplier = None
     siggrid = None
+    YWLcorrflag = None
 
 if rank==0: print("Broadcasting...")
 waDerivRoot = comm.bcast(waDerivRoot, root = 0)
@@ -163,6 +166,7 @@ lknee = comm.bcast(lknee, root = 0)
 alpha = comm.bcast(alpha, root = 0)
 massMultiplier = comm.bcast(massMultiplier, root = 0)
 siggrid = comm.bcast(siggrid, root = 0)
+YWLcorrflag = comm.bcast(YWLcorrflag, root = 0)
 if rank==0: print("Broadcasted.")
 
 myParamIndex = (rank+1)/2-1
@@ -192,8 +196,11 @@ cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(cc,mexp_edges,z_edges,kh=kh,powerZK=pk)
 HMF.sigN = siggrid.copy()
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
-dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbin_edges,SZProf)
 
+if (YWLcorrflag == 1):
+    dN_dmqz = HMF.N_of_mqz_SZ_corr(lndM*massMultiplier,qbin_edges,SZProf)
+else:
+    dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbin_edges,SZProf)
 
 if rank==0: 
     np.save(bigDataDir+"N_mzq_"+saveId+"_wa_fid",getNmzq(dN_dmqz,mexp_edges,z_edges,qbin_edges))

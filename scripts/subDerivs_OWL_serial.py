@@ -15,7 +15,7 @@ expList = ['S4-1.5-paper']
 
 #'SO-5m-noatm','SO-6m-noatm','SO-7m-noatm',
 #expList = ['AdvAct']
-calList = ['owl2-coarse']#,'owl1']#,'owl1']
+calList = ['owl2']#,'owl1']#,'owl1']
 
 #gridList = ["grid-owl2"]
 
