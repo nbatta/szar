@@ -428,7 +428,7 @@ class Halo_MF:
         #n_z = np.zeros(self.zarr.size)
         #for i in range(self.zarr.size):
             #n_z[i] = np.trapz(dn_dm[:,i],dx=np.diff(self.M200_edges[:,i]))
-        n_z = np.trapz(dn_dm,dx=np.diff(self.M200_edges),axis=0)
+        n_z = np.trapz(dn_dm,dx=np.diff(self.M200),axis=0)
         return n_z
 
     def updateSigN(self,SZCluster,tmaxN=5,numts=1000):

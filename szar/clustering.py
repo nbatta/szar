@@ -1,8 +1,9 @@
 import numpy as np
 from orphics.cosmology import Cosmology
 from szar.counts import ClusterCosmology,Halo_MF
-
-
+import tinker as tinker
+from configparser import SafeConfigParser
+from orphics.io import dict_from_section
 
 class clustering:
     def __init__(self,iniFile):
@@ -28,25 +29,28 @@ class clustering:
         self.cc = ClusterCosmology(self.fparams,self.constDict,clTTFixFile=self.clttfile)
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
 
-    def b_eff(self,):
+    def b_eff(self):
         ''' 
-        Number density! Change this
+        effective linear bias wieghted by number density
         '''
         nbar = self.HMF.nz()
 
-        z_arr = self.zarr
-        dndm = self.dn_dm(self.M200,200.)
-        blin = 1.
-        n_z = np.trapz(dndm*blin,dx=np.diff(self.M200_edges),axis=0)
+        z_arr = self.HMF.zarr
+        dndm = self.HMF.dn_dm(self.M200,200.)
+        
+        R = tinker.radius_from_mass(self.HMF.M200,self.cc.rhoc0om)
+        sigsq = tinker.sigma_sq_integral(R, self.HMF.pk, self.HMF.kh)
 
-        beff = N_z*4.*np.pi
+        blin = tinker.tinker_bias(sigsq,200.)
+        beff = np.trapz(dndm*blin,dx=np.diff(self.HMF.M200),axis=0)
+
         return beff
         
 
     def power_spec(self,z_arr):
         
-        k = self.kh
-        pk = self.pk
+        k = self.HMF.kh
+        pk = self.HMF.pk
         ans = 1 
         return ans
 
