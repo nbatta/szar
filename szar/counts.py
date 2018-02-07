@@ -421,6 +421,16 @@ class Halo_MF:
 
         return N_z*4.*np.pi
 
+    def nz(self):
+        # n(z) = 4pi fsky \int dm dN/dzdmdOmega 
+
+        dn_dm = self.dn_dM(self.M200,200.)
+        #n_z = np.zeros(self.zarr.size)
+        #for i in range(self.zarr.size):
+            #n_z[i] = np.trapz(dn_dm[:,i],dx=np.diff(self.M200_edges[:,i]))
+        n_z = np.trapz(dn_dm,dx=np.diff(self.M200_edges),axis=0)
+        return n_z
+
     def updateSigN(self,SZCluster,tmaxN=5,numts=1000):
         zs = self.zarr
         M = self.M
@@ -613,4 +623,21 @@ class Halo_MF:
         #ans  =1.    
         return ans
 
-    
+    def linBias(self,Masses):
+        # From Tinker 2010
+
+        M,self.zarr
+        self.cc.rhoc0om,self.kh,self.pk
+
+        z_arr = self.zarr
+        
+        ac = 0.75
+        pc = 0.3
+        dc = 1.69
+        
+        M = np.outer(Masses,np.ones([len(z_arr)]))
+        R = tinker.radius_from_mass(M,self.cc.rhoc0om)
+        sigsq = tinker.sigma_sq_integral(R, self.pk, self.kh)
+        
+        return 1. + (((ac*(dc**2.)/sigsq)-1.)/dc) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
+

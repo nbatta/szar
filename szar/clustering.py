@@ -32,14 +32,12 @@ class clustering:
         ''' 
         Number density! Change this
         '''
-        nbar = self.HMF.N_of_z()
+        nbar = self.HMF.nz()
 
         z_arr = self.zarr
-        dn_dzdm = self.N_of_Mz(self.M200,200.)
-        N_z = np.zeros(z_arr.size)
+        dndm = self.dn_dm(self.M200,200.)
         blin = 1.
-        for i in range(z_arr.size):
-            N_z[i] = np.trapz(dn_dzdm[:,i]*blin,dx=np.diff(self.M200_edges[:,i]))
+        n_z = np.trapz(dndm*blin,dx=np.diff(self.M200_edges),axis=0)
 
         beff = N_z*4.*np.pi
         return beff
