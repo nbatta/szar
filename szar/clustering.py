@@ -29,7 +29,7 @@ class clustering:
         self.cc = ClusterCosmology(self.fparams,self.constDict,clTTFixFile=self.clttfile)
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
 
-    def b_eff(self):
+    def b_eff_z(self):
         ''' 
         effective linear bias wieghted by number density
         '''
