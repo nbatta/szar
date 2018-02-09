@@ -470,6 +470,20 @@ class Halo_MF:
         print("Calculating P_func_qarr. This takes a while...")
         self.Pfunc_qarr_corr = SZCluster.Pfunc_qarr_corr(self.sigN.copy(),self.M,self.zarr,q_arr,self.Mexp)
 
+    def dn_dmz_SZ(self,SZCluster):
+        # this is dN/dz(z) with selection
+
+        z_arr = self.zarr
+        
+        if self.sigN is None: self.updateSigN(SZCluster)
+        if self.Pfunc is None: self.updatePfunc(SZCluster)
+        P_func = self.Pfunc.copy()
+
+        dn_dzdm = self.dn_dM(self.M200,200.)
+        n_z = dn_dzdm*P_func
+
+        return n_z
+
     def N_of_z_SZ(self,fsky,SZCluster):
         # this is dN/dz(z) with selection
 
@@ -485,6 +499,7 @@ class Halo_MF:
             N_z[i] = np.dot(dn_dzdm[:,i]*P_func[:,i],np.diff(self.M200_edges[:,i]))
 
         return N_z* self.dVdz[:]*4.*np.pi*fsky
+
 
     def N_of_mz_SZ(self,SZCluster):
 
