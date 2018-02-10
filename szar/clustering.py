@@ -62,13 +62,38 @@ class clustering:
     def Norm_Sfunc(self,fsky):
         z_arr = self.HMF.zarr
         nbar = self.ntilde()
-        ans = np.trapz(self.HMF.dVdz*nbar**2,dx=np.diff(z_arr))
+        ans = self.HMF.dVdz*nbar**2*np.diff(z_arr)
         return ans*4.*np.pi*fsky
 
-    def power_spec(self,z_arr):
+    def ps_tilde(self,mu):
         
-        k = self.HMF.kh
-        pk = self.HMF.pk
-        ans = 1 
+        beff_arr = np.outer(self.b_eff_z(),np.ones(len(mu)))
+        mu_arr = np.outer(len(self.b_eff_z()),mu)
+        logGrowth = 1. #FIX #np.outer()
+        prefac = (beff_arr + logGrowth*mu_arr**2)**2
+        pklin = self.HMF.pk
+    
+        ans = np.multily(prefac,pklin)
+
+        return ans
+
+    def ps_bar(self,mu,fsky):
+
+        z_arr = self.HMF.zarr
+        nbar = self.ntilde()
+        ans = self.ps_tilde(mu) * 0.0
+        prefac =  self.HMF.dVdz*nbar**2*np.diff(z_arr)[2]/self.Norm_Sfunc(fsky)
+        ans = np.multiply(self.ps_tilde(mu),prefac)
+        #for i in range(len(z_arr)): 
+        #    ans[:,:,i] = self.HMF.dVdz[i]*nbar[i]**2*ps_tilde[:,:,i]*np.diff(z_arr[i])/self.Norm_Sfunc(fsky)[i]
+        return ans
+
+    def V_eff(self,mu,fsky):
+        V0 = 1 #FIX
+        nbar = self.ntilde()
+        ps = self.ps_bar(mu,fsky)
+        npfact = np.multiply(ps,nbar)
+        frac = npfact / (1. + npfact)
+        ans = np.multiply(frac,V0)
         return ans
 
