@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 import sys, os, time
 from szar.counts import ClusterCosmology,Halo_MF,getTotN
 from szar.szproperties import SZ_Cluster_Model
-from orphics.tools.io import Plotter,dictFromSection,listFromConfig
+from orphics.io import Plotter,dict_from_section,list_from_config
 from configparser import SafeConfigParser 
-from orphics.analysis.flatMaps import interpolateGrid
+from orphics.maps import interpolate_grid
 import pickle as pickle
 
 zz = 0.5
@@ -25,9 +25,9 @@ Config.optionxform=str
 Config.read(iniFile)
 
 
-beam = listFromConfig(Config,experimentName,'beams')
-noise = listFromConfig(Config,experimentName,'noises')
-freq = listFromConfig(Config,experimentName,'freqs')
+beam = list_from_config(Config,experimentName,'beams')
+noise = list_from_config(Config,experimentName,'noises')
+freq = list_from_config(Config,experimentName,'freqs')
 lmax = int(Config.getfloat(experimentName,'lmax'))
 lknee = Config.getfloat(experimentName,'lknee')
 alpha = Config.getfloat(experimentName,'alpha')
@@ -52,10 +52,10 @@ numts=1000
 
 
 
-cosmoDict = dictFromSection(Config,cosmologyName)
-#cosmoDict = dictFromSection(Config,'WMAP9')
-constDict = dictFromSection(Config,'constants')
-clusterDict = dictFromSection(Config,clusterParams)
+cosmoDict = dict_from_section(Config,cosmologyName)
+#cosmoDict = dict_from_section(Config,'WMAP9')
+constDict = dict_from_section(Config,'constants')
+clusterDict = dict_from_section(Config,clusterParams)
 cc = ClusterCosmology(cosmoDict,constDict,pickling=True,clTTFixFile = "data/cltt_lensed_Feb18.txt")
 
 # make an SZ profile example
@@ -122,7 +122,7 @@ print(("Total number of clusters ", np.trapz(dndm ,zbin[:],np.diff(zbin[:]))*fsk
 mfile = "data/S4-7mCMB_all.pkl"
 minrange, zinrange, lndM = pickle.load(open(mfile,'rb'))
 
-outmerr = interpolateGrid(lndM,minrange,zinrange,Mexp,zbin,regular=False,kind="cubic",bounds_error=False,fill_value=np.inf)
+outmerr = interpolate_grid(lndM,minrange,zinrange,Mexp,zbin,regular=False,kind="cubic",bounds_error=False,fill_value=np.inf)
 
 
 q_arr = np.logspace(np.log10(6.),np.log10(500.),64)

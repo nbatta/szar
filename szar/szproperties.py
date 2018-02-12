@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 from scipy import special
 from orphics.cosmology import noise_func
@@ -5,6 +6,7 @@ from szar.foregrounds import fgNoises, f_nu
 from szar.counts import ClusterCosmology
 from scipy.special import j0
 from orphics.stats import timeit
+from orphics import io
 
 def gaussian(xx, mu, sig,noNorm=False):
     if (noNorm==True):
@@ -36,7 +38,7 @@ class SZ_Cluster_Model:
                  dell=10,pmaxN=5,numps=1000,nMax=1, \
                  ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1, qmin=5., \
                  ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt', \
-                 tsz_cib_file='input/sz_x_cib_template.dat',fg=True,tsz_cib=False):
+                 tsz_cib_file='input/sz_x_cib_template.dat',fg=True,tsz_cib=False,v3mode=-1,fsky=None):
 
         self.cc = clusterCosmology
         self.P0 = clusterDict['P0']
@@ -61,11 +63,39 @@ class SZ_Cluster_Model:
         self.nlinv_nofg = 0.
         self.nlinv_cmb_nofg = 0.
         self.evalells = np.arange(2,lmax,self.dell)
-        for freq,fwhm,noise in zip(freqs,fwhms,rms_noises):
+
+
+        if v3mode>-1:
+            print("V3 flag enabled.")
+            import szar.V3_calc_public as v3
+            vfreqs = v3.Simons_Observatory_V3_LA_bands()
+            print("Replacing ",freqs,  " with ", vfreqs)
+            freqs = vfreqs
+            vbeams = v3.Simons_Observatory_V3_LA_beams()
+            print("Replacing ",fwhms,  " with ", vbeams)
+            fwhms = vbeams
+
+            v3lmax = self.evalells.max()
+            v3dell = np.diff(self.evalells)[0]
+            v3ell, N_ell_T_LA, N_ell_P_LA, Map_white_noise_levels = v3.Simons_Observatory_V3_LA_noise(sensitivity_mode=v3mode,f_sky=fsky,ell_max=v3lmax+v3dell,delta_ell=v3dell)
+
+            assert np.all(v3ell==self.evalells)
+
+        
+        # pl = io.Plotter(yscale='log')
+            
+        for ii,(freq,fwhm,noise) in enumerate(zip(freqs,fwhms,rms_noises)):
             freq_fac = (f_nu(self.cc.c,freq))**2
 
 
-            inst_noise = ( noise_func(self.evalells,fwhm,noise,lknee,alpha,dimensionless=False) / self.cc.c['TCMBmuK']**2.)
+            if v3mode>-1:
+                inst_noise = N_ell_T_LA[ii]/ self.cc.c['TCMBmuK']**2.
+            else:
+                inst_noise = ( noise_func(self.evalells,fwhm,noise,lknee,alpha,dimensionless=False) / self.cc.c['TCMBmuK']**2.)
+
+            # pl.add(self.evalells,inst_noise*self.evalells**2.,color="C"+str(ii))
+            # pl.add(self.evalells,N_ell_T_LA[ii]*self.evalells**2./ self.cc.c['TCMBmuK']**2.,color="C"+str(ii),ls="--")
+            
             nells = self.cc.clttfunc(self.evalells)+inst_noise
             self.nlinv_nofg += (freq_fac)/nells
             self.nlinv_cmb_nofg += (1./inst_noise)
@@ -82,6 +112,10 @@ class SZ_Cluster_Model:
 
             self.nlinv += (freq_fac)/nells
             self.nlinv_cmb += (1./(inst_noise+totfg))
+
+
+        # pl.done(io.dout_dir+"v3comp.png")
+        
         self.nl_old = 1./self.nlinv
         self.nl_cmb = 1./self.nlinv_cmb
         self.nl_nofg = 1./self.nlinv_nofg
@@ -100,8 +134,27 @@ class SZ_Cluster_Model:
 
         for ii in range(len(self.evalells)):
             cmb_els = fq_mat*0.0 + self.cc.clttfunc(self.evalells[ii])
-            inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,dimensionless=False) / self.cc.c['TCMBmuK']**2.)
-            nells = np.diag(inst_noise)
+
+            if v3mode<0:
+                inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,dimensionless=False) / self.cc.c['TCMBmuK']**2.)
+                nells = np.diag(inst_noise)
+            else:
+                ndiags = []
+                for ff in range(len(freqs)):
+                    inst_noise = N_ell_T_LA[ff,ii]/ self.cc.c['TCMBmuK']**2.
+                    ndiags.append(inst_noise)
+                nells = np.diag(np.array(ndiags))
+                # Adding in atmo. freq-freq correlations
+                nells[0,1] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[1,0] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[2,3] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[3,2] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[4,5] = N_ell_T_LA[8,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[5,4] = N_ell_T_LA[8,ii]/ self.cc.c['TCMBmuK']**2.
+                                    
+                
+
+            
             totfg = (fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) 
                      + fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t)) \
                      / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
