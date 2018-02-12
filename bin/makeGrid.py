@@ -2,7 +2,7 @@ import matplotlib
 matplotlib.use('Agg')
 from mpi4py import MPI
 import numpy as np
-from alhazen.halos import NFWMatchedFilterSN
+from orphics.lensing import NFWMatchedFilterSN
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
 import szar.fisher as sfisher
