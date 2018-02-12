@@ -61,7 +61,7 @@ cmbfisher0 = getFisher(bigDataDir,"S4-1.0-0.4-0.95"+noatm,gridName,cal,cosmoFish
 
 
 from szar.counts import getA
-from orphics.io import Plotter,dictFromSection,listFromConfig
+from orphics.io import Plotter,dict_from_section,list_from_config
 fparams = {}   # the 
 for (key, val) in Config.items('params'):
     if ',' in val:
@@ -70,8 +70,8 @@ for (key, val) in Config.items('params'):
     else:
         fparams[key] = float(val)
 
-constDict = dictFromSection(Config,'constants')
-zs = listFromConfig(Config,gridName,'zrange')
+constDict = dict_from_section(Config,'constants')
+zs = list_from_config(Config,gridName,'zrange')
 z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 zrange = (z_edges[1:]+z_edges[:-1])/2.
 

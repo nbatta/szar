@@ -5,7 +5,7 @@ from configparser import SafeConfigParser
 import pickle as pickle
 import numpy as np
 import sys
-from orphics.io import dictFromSection, listFromConfig
+from orphics.io import dict_from_section, list_from_config
 from orphics.io import Plotter, nostdout
 import matplotlib.pyplot as plt
 from szar.fisher import getFisher
@@ -30,12 +30,12 @@ version = Config.get('general','version')
 pzcutoff = Config.getfloat('general','photoZCutOff')
 saveId = sfisher.save_id(expName,gridName,calName,version)
 derivRoot = sfisher.deriv_root(bigDataDir,saveId)
-    
+YWLcorrflag = Config.getfloat('general','ywl_corr_flag')    
 
 # get mass and z grids
-ms = listFromConfig(Config,gridName,'mexprange')
+ms = list_from_config(Config,gridName,'mexprange')
 mexp_edges = np.arange(ms[0],ms[1]+ms[2],ms[2])
-zs = listFromConfig(Config,gridName,'zrange')
+zs = list_from_config(Config,gridName,'zrange')
 z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 
 # Fisher params
@@ -53,7 +53,9 @@ print(("Actual number of clusters: ", actualN))
 FisherTot, paramList = sfisher.cluster_fisher_from_config(Config,expName,gridName,calName,fishName)
 ##########################
 
-
+if (YWLcorrflag == 0 and FisherTot[-1,-1] == 0):
+    FisherTot = FisherTot[:len(paramList)-2,:len(paramList)-2]
+    paramList = paramList[:len(paramList)-2]
 
 Finv = np.linalg.inv(FisherTot)
 

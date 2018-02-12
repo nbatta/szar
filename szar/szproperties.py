@@ -289,8 +289,8 @@ class SZ_Cluster_Model:
         Ma = np.outer(MM,np.ones(len(Y[0,:])))
         Ysig = self.scaling['Ysig'] * (1. + zz)**self.scaling['gammaYsig'] * (MM/1e14)**self.scaling['betaYsig']
         #Ysig = self.scaling['Ysig'] * (1. + zz)**self.scaling['gammaYsig'] * (Ma/1e14)**self.scaling['betaYsig']
-        Msig = self.scaling['Msig']
-        rho = self.scaling['rho_corr']
+        Msig = self.scaling['Msig'] * (1. + zz)**self.scaling['gammaMsig'] * (MM/1e14)**self.scaling['betaMsig']
+        rho = self.scaling['rho_corr'] * (1. + zz)**self.scaling['gammarho'] * (MM/1e14)**self.scaling['betarho']
         diff_Y = np.log(Y/self.Y_M(Ma,zz))
         diff_M = np.outer(np.log(Mwl*self.scaling['b_wl']/MM),np.ones(len(lnY[0,:])))
         diff_arr = np.array([diff_Y,diff_M])
@@ -298,7 +298,7 @@ class SZ_Cluster_Model:
         ans = Ma * 0.0
 
         for ii in range(len(MM)):
-            ans[ii,:] = gaussianMat2D(diff_arr[:,ii,:],Ysig[ii],Msig,rho)
+            ans[ii,:] = gaussianMat2D(diff_arr[:,ii,:],Ysig[ii],Msig[ii],rho[ii])
         return ans
 
     def P_of_q(self,lnY,MM,zz,sigma_N):

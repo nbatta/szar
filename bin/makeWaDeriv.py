@@ -100,19 +100,19 @@ if rank==0:
     
     saveId = expName + "_" + gridName + "_" + calName + "_v" + version
 
-    from orphics.io import dictFromSection, listFromConfig
-    constDict = dictFromSection(Config,'constants')
-    clusterDict = dictFromSection(Config,'cluster_params')
-    beam = listFromConfig(Config,expName,'beams')
-    noise = listFromConfig(Config,expName,'noises')
-    freq = listFromConfig(Config,expName,'freqs')
-    lknee = listFromConfig(Config,expName,'lknee')[0]
-    alpha = listFromConfig(Config,expName,'alpha')[0]
+    from orphics.io import dict_from_section, list_from_config
+    constDict = dict_from_section(Config,'constants')
+    clusterDict = dict_from_section(Config,'cluster_params')
+    beam = list_from_config(Config,expName,'beams')
+    noise = list_from_config(Config,expName,'noises')
+    freq = list_from_config(Config,expName,'freqs')
+    lknee = list_from_config(Config,expName,'lknee')[0]
+    alpha = list_from_config(Config,expName,'alpha')[0]
 
     clttfile = Config.get('general','clttfile')
 
     # get s/n q-bins
-    qs = listFromConfig(Config,'general','qbins')
+    qs = list_from_config(Config,'general','qbins')
     qspacing = Config.get('general','qbins_spacing')
     if qspacing=="log":
         qbin_edges = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2])+1)
@@ -122,6 +122,8 @@ if rank==0:
         raise ValueError
 
     massMultiplier = Config.getfloat('general','mass_calib_factor')
+    YWLcorrflag = Config.getfloat('general','ywl_corr_flag')
+
     if debug: print("Finished rank 0 work.")
 
 else:
@@ -143,6 +145,7 @@ else:
     alpha = None
     massMultiplier = None
     siggrid = None
+    YWLcorrflag = None
 
 if rank==0: print("Broadcasting...")
 waDerivRoot = comm.bcast(waDerivRoot, root = 0)
@@ -163,6 +166,7 @@ lknee = comm.bcast(lknee, root = 0)
 alpha = comm.bcast(alpha, root = 0)
 massMultiplier = comm.bcast(massMultiplier, root = 0)
 siggrid = comm.bcast(siggrid, root = 0)
+YWLcorrflag = comm.bcast(YWLcorrflag, root = 0)
 if rank==0: print("Broadcasted.")
 
 myParamIndex = (rank+1)/2-1
@@ -192,8 +196,11 @@ cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(cc,mexp_edges,z_edges,kh=kh,powerZK=pk)
 HMF.sigN = siggrid.copy()
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
-dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbin_edges,SZProf)
 
+if (YWLcorrflag == 1):
+    dN_dmqz = HMF.N_of_mqz_SZ_corr(lndM*massMultiplier,qbin_edges,SZProf)
+else:
+    dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbin_edges,SZProf)
 
 if rank==0: 
     np.save(bigDataDir+"N_mzq_"+saveId+"_wa_fid",getNmzq(dN_dmqz,mexp_edges,z_edges,qbin_edges))

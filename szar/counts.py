@@ -70,7 +70,7 @@ def getA(fparams,constDict,zrange,kmax=11.):
 def rebinN(Nmzq,pzCutoff,zbin_edges,mass_bin=37):
     #return zbin_edges, Nmzq  #.sum(axis=0) # !!!
     x,y,z = Nmzq.shape
-    #print x
+    #print x,y,z
     if mass_bin is not None: Nmzq = bin_ndarray(Nmzq, (mass_bin,y,z), operation='sum')
     
     if pzCutoff>=zbin_edges[-2]: return zbin_edges,Nmzq
@@ -271,6 +271,7 @@ class Halo_MF:
         self.sigN = None
         self.YM = None
         self.Pfunc_qarr = None
+        self.Pfunc_qarr_corr = None
         self.Pfunc = None
 
         M_edges = 10**Mexp_edges
@@ -420,6 +421,16 @@ class Halo_MF:
 
         return N_z*4.*np.pi
 
+    def nz(self):
+        # n(z) = 4pi fsky \int dm dN/dzdmdOmega 
+
+        dn_dm = self.dn_dM(self.M200,200.)
+        #n_z = np.zeros(self.zarr.size)
+        #for i in range(self.zarr.size):
+            #n_z[i] = np.trapz(dn_dm[:,i],dx=np.diff(self.M200_edges[:,i]))
+        n_z = np.trapz(dn_dm,dx=np.diff(self.M200),axis=0)
+        return n_z
+
     def updateSigN(self,SZCluster,tmaxN=5,numts=1000):
         zs = self.zarr
         M = self.M
@@ -455,9 +466,23 @@ class Halo_MF:
         print("Calculating P_func_qarr. This takes a while...")
         self.Pfunc_qarr = SZCluster.Pfunc_qarr(self.sigN.copy(),self.M,self.zarr,q_arr)
 
-    def updatePfunc_qarr_corr(self,SZCluster,q_arr,mass_err):
+    def updatePfunc_qarr_corr(self,SZCluster,q_arr):
         print("Calculating P_func_qarr. This takes a while...")
-        self.Pfunc_qarr_corr = SZCluster.Pfunc_qarr_corr(self.sigN.copy(),self.M,self.zarr,q_arr,self.Mexp,mass_err)
+        self.Pfunc_qarr_corr = SZCluster.Pfunc_qarr_corr(self.sigN.copy(),self.M,self.zarr,q_arr,self.Mexp)
+
+    def dn_dmz_SZ(self,SZCluster):
+        # this is dN/dz(z) with selection
+
+        z_arr = self.zarr
+        
+        if self.sigN is None: self.updateSigN(SZCluster)
+        if self.Pfunc is None: self.updatePfunc(SZCluster)
+        P_func = self.Pfunc.copy()
+
+        dn_dzdm = self.dn_dM(self.M200,200.)
+        n_z = dn_dzdm*P_func
+
+        return n_z
 
     def N_of_z_SZ(self,fsky,SZCluster):
         # this is dN/dz(z) with selection
@@ -474,6 +499,7 @@ class Halo_MF:
             N_z[i] = np.dot(dn_dzdm[:,i]*P_func[:,i],np.diff(self.M200_edges[:,i]))
 
         return N_z* self.dVdz[:]*4.*np.pi*fsky
+
 
     def N_of_mz_SZ(self,SZCluster):
 
@@ -554,8 +580,8 @@ class Halo_MF:
         m_wl = self.Mexp
         
         if self.sigN is None: self.updateSigN(SZCluster)
-        if self.Pfunc_qarr is None: self.updatePfunc_qarr_corr(SZCluster,q_arr,mass_err)
-        P_func = self.Pfunc_qarr
+        if self.Pfunc_qarr_corr is None: self.updatePfunc_qarr_corr(SZCluster,q_arr)
+        P_func = self.Pfunc_qarr_corr
 
         dn_dVdm = self.dn_dM(self.M200,200.)
         dV_dz = self.dVdz
@@ -566,7 +592,7 @@ class Halo_MF:
             for jj in range(m_wl.size):
                 for i in range (z_arr.size):
                     dM = np.diff(self.M200_edges[:,i])
-                    dNdzmq[jj,i,kk] = np.dot(dn_dVdm[:,i]*P_func[:,i,kk,jj],dM) * dV_dz[i]*4.*np.pi
+                    dNdzmq[jj,i,kk] = np.dot(dn_dVdm[:,i]*P_func[:,i,kk,jj]*SZCluster.Mwl_prob(10**(m_wl[jj]),M_arr[:,i],mass_err[:,i]),dM) * dV_dz[i]*4.*np.pi
         
         return dNdzmq
 
@@ -612,4 +638,21 @@ class Halo_MF:
         #ans  =1.    
         return ans
 
-    
+    def linBias(self,Masses):
+        # From Tinker 2010
+
+        M,self.zarr
+        self.cc.rhoc0om,self.kh,self.pk
+
+        z_arr = self.zarr
+        
+        ac = 0.75
+        pc = 0.3
+        dc = 1.69
+        
+        M = np.outer(Masses,np.ones([len(z_arr)]))
+        R = tinker.radius_from_mass(M,self.cc.rhoc0om)
+        sigsq = tinker.sigma_sq_integral(R, self.pk, self.kh)
+        
+        return 1. + (((ac*(dc**2.)/sigsq)-1.)/dc) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
+

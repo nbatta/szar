@@ -4,7 +4,7 @@ import sys
 import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF,sampleVarianceOverNsquareOverBsquare,haloBias,getTotN
 #from szar.szproperties import SZ_Cluster_Model
-from orphics.io import Plotter,dictFromSection,listFromConfig
+from orphics.io import Plotter,dict_from_section,list_from_config
 from configparser import SafeConfigParser 
 
 lmax = 1000
@@ -28,17 +28,17 @@ for (key, val) in Config.items('params'):
     else:
         fparams[key] = float(val)
 
-constDict = dictFromSection(Config,'constants')
-clusterDict = dictFromSection(Config,'cluster_params')
+constDict = dict_from_section(Config,'constants')
+clusterDict = dict_from_section(Config,'cluster_params')
 cc = ClusterCosmology(fparams,constDict,skipCls=True)
 
 fsky = Config.getfloat(expName,'fsky')
 
 saveId = expName + "_" + gridName + "_v" + version
 
-ms = listFromConfig(Config,gridName,'mexprange')
+ms = list_from_config(Config,gridName,'mexprange')
 mrange = np.arange(ms[0],ms[1]+ms[2],ms[2])
-zs = listFromConfig(Config,gridName,'zrange')
+zs = list_from_config(Config,gridName,'zrange')
 zrange = np.arange(zs[0],zs[1]+zs[2],zs[2])
 
 

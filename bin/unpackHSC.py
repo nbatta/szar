@@ -1,5 +1,5 @@
 import numpy as np
-from orphics.io import dictFromSection, listFromConfig, Plotter
+from orphics.io import dict_from_section, list_from_config, Plotter
 from orphics.flatMaps import interpolateGrid
 import sys, os
 from configparser import SafeConfigParser 
@@ -16,9 +16,9 @@ Config.read(iniFile)
 
 bigDataDir = Config.get('general','bigDataDirectory')
 outDir = bigDataDir
-ms = listFromConfig(Config,gridName,'mexprange')
+ms = list_from_config(Config,gridName,'mexprange')
 Mexp_edges = np.arange(ms[0],ms[1]+ms[2],ms[2])
-zs = listFromConfig(Config,gridName,'zrange')
+zs = list_from_config(Config,gridName,'zrange')
 z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 
 

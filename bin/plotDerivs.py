@@ -7,13 +7,13 @@ iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
-from orphics.io import dictFromSection, listFromConfig
-constDict = dictFromSection(Config,'constants')
+from orphics.io import dict_from_section, list_from_config
+constDict = dict_from_section(Config,'constants')
 clttfile = Config.get('general','clttfile')
 gridName = "grid-default"
-ms = listFromConfig(Config,gridName,'mexprange')
+ms = list_from_config(Config,gridName,'mexprange')
 Mexp_edges = np.arange(ms[0],ms[1]+ms[2],ms[2])
-zs = listFromConfig(Config,gridName,'zrange')
+zs = list_from_config(Config,gridName,'zrange')
 z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 
 

@@ -38,8 +38,8 @@ derivSet = "v0.3_ysig_0.127"
 gridName = "grid-high"
 
 cosmoFisher = Config.get('fisher-'+fishSection,'saveSuffix')
-from orphics.io import listFromConfig
-zs = listFromConfig(Config,gridName,'zrange')
+from orphics.io import list_from_config
+zs = list_from_config(Config,gridName,'zrange')
 z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 zrange = (z_edges[1:]+z_edges[:-1])/2.
 zlist = ["S8Z"+str(i) for i in range(len(zrange))]
