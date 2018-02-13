@@ -105,7 +105,7 @@ SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=fre
 
 HMF = Halo_MF(cc,Mexp,zbin)
 dvdz = HMF.dVdz#(zbin)
-dndm = HMF.N_of_z_SZ(SZProf)
+dndm = HMF.N_of_z_SZ(fsky,SZProf)
 
 sys.exit()
 print(("Time for N of z " , time.time() - start3))

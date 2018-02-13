@@ -108,6 +108,11 @@ if rank==0:
     freq = list_from_config(Config,expName,'freqs')
     lknee = list_from_config(Config,expName,'lknee')[0]
     alpha = list_from_config(Config,expName,'alpha')[0]
+    fsky = Config.getfloat(expName,'fsky')
+    try:
+        v3mode = Config.getint(expName,'V3mode')
+    except:
+        v3mode = -1
 
     clttfile = Config.get('general','clttfile')
 
@@ -143,9 +148,11 @@ else:
     freq = None
     lknee = None
     alpha = None
+    fsky = None
     massMultiplier = None
     siggrid = None
     YWLcorrflag = None
+    v3mode = None
 
 if rank==0: print("Broadcasting...")
 waDerivRoot = comm.bcast(waDerivRoot, root = 0)
@@ -164,9 +171,11 @@ noise = comm.bcast(noise, root = 0)
 freq = comm.bcast(freq, root = 0)
 lknee = comm.bcast(lknee, root = 0)
 alpha = comm.bcast(alpha, root = 0)
+fsky = comm.bcast(fsky, root = 0)
 massMultiplier = comm.bcast(massMultiplier, root = 0)
 siggrid = comm.bcast(siggrid, root = 0)
 YWLcorrflag = comm.bcast(YWLcorrflag, root = 0)
+v3mode = comm.bcast(v3mode, root = 0)
 if rank==0: print("Broadcasted.")
 
 myParamIndex = (rank+1)/2-1
@@ -192,10 +201,12 @@ else:
     kh = None
     pk = None
 
+if rank==0: print("v3mode", v3mode)
+
 cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(cc,mexp_edges,z_edges,kh=kh,powerZK=pk)
 HMF.sigN = siggrid.copy()
-SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
+SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha,v3mode=v3mode,fsky=fsky)
 
 if (YWLcorrflag == 1):
     dN_dmqz = HMF.N_of_mqz_SZ_corr(lndM*massMultiplier,qbin_edges,SZProf)

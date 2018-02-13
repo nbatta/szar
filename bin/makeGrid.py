@@ -109,6 +109,12 @@ if rank==0:
     beam = list_from_config(Config,expName,'beams')
     noise = list_from_config(Config,expName,'noises')
     freq = list_from_config(Config,expName,'freqs')
+    fsky = Config.getfloat(expName,'fsky')
+    try:
+        v3mode = Config.getint(expName,'V3mode')
+    except:
+        v3mode = -1
+
     lkneeT,lkneeP = list_from_config(Config,expName,'lknee')
     if lkneeTOverride is not None: lkneeT = lkneeTOverride
     alphaT,alphaP = list_from_config(Config,expName,'alpha')
@@ -291,6 +297,7 @@ else:
     clusterDict = None
     beam = None
     noise = None
+    fsky = None
     freq = None
     lkneeT = None
     alphaT = None
@@ -300,6 +307,7 @@ else:
     z_edges = None
     doFg = None
     dotsz_cib = None
+    v3mode = None
 
 if rank==0: print("Broadcasting...")
 #doRayDeriv = comm.bcast(doRayDeriv, root = 0)
@@ -322,6 +330,8 @@ clttfile = comm.bcast(clttfile, root = 0)
 clusterDict = comm.bcast(clusterDict, root = 0)
 beam = comm.bcast(beam, root = 0)
 noise = comm.bcast(noise, root = 0)
+fsky = comm.bcast(fsky, root = 0)
+v3mode = comm.bcast(v3mode, root = 0)
 freq = comm.bcast(freq, root = 0)
 lkneeT = comm.bcast(lkneeT, root = 0)
 alphaT = comm.bcast(alphaT, root = 0)
@@ -335,7 +345,7 @@ if rank==0: print("Broadcasted.")
 cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
 if doSZ:
     HMF = Halo_MF(cc,mgrid,zgrid,kh=kh,powerZK=pk)
-    SZCluster = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lkneeT,alpha=alphaT,fg=doFg,tsz_cib=dotsz_cib)
+    SZCluster = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lkneeT,alpha=alphaT,fg=doFg,tsz_cib=dotsz_cib,v3mode=v3mode,fsky=fsky)
 
 numms = mgrid.size
 numzs = zgrid.size

@@ -77,6 +77,8 @@ class SZ_Cluster_Model:
 
             v3lmax = self.evalells.max()
             v3dell = np.diff(self.evalells)[0]
+            print("Using ",fsky," for fsky")
+
             v3ell, N_ell_T_LA, N_ell_P_LA, Map_white_noise_levels = v3.Simons_Observatory_V3_LA_noise(sensitivity_mode=v3mode,f_sky=fsky,ell_max=v3lmax+v3dell,delta_ell=v3dell)
 
             assert np.all(v3ell==self.evalells)
