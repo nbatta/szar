@@ -1,5 +1,5 @@
 import numpy as np
-from orphics.cosmology import Cosmology
+#from orphics.cosmology import Cosmology
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
 import tinker as tinker
