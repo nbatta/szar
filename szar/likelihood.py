@@ -95,7 +95,7 @@ class clusterLike:
         if self.simtest or self.simpars:
             print "mock catalog"
             #clust_cat = nemoOutputDir + 'mockCatalog_equD56.fits' #'ACTPol_mjh_cluster_cat.fits'
-            clust_cat = nemoOutputDir + 'mockCat_D56equ_v3.fits' #'ACTPol_mjh_cluster_cat.fits'
+            clust_cat = nemoOutputDir + 'mockCat_D56equ_v8.fits' #'ACTPol_mjh_cluster_cat.fits'
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat)
         else:
             print "real catalog"
@@ -140,7 +140,8 @@ class clusterLike:
         #M500c has 1/h factors in it
         Ma = np.outer(M,np.ones(len(LgY[0,:])))
         Om = (param_vals['omch2'] + param_vals['ombh2']) / (param_vals['H0']/100.)**2
-        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'], H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = 1 - Om)#,tenToA0=YNorm)
+        OL = 1. - Om
+        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'], H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)#,tenToA0=YNorm)
         Y = 10**LgY
         numer = -1.*(np.log(Y/Ytilde))**2
         ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(numer/(2.*param_vals['scat']**2))
@@ -380,9 +381,11 @@ class MockCatalog:
         Ytilde = sampM * 0.0
         
         Om = (self.param_vals['omch2'] + self.param_vals['ombh2']) / (self.param_vals['H0']/100.)**2
+        OL = 1.-Om 
+        print "Omega_M", Om
 
         for i in range(nsamps):
-            Ytilde[i], theta0, Qfilt = simsTools.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM[i]/(self.param_vals['H0']/100.)), sampZ[i], self.tckQFit,sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = 1 - Om)
+            Ytilde[i], theta0, Qfilt = simsTools.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM[i]/(self.param_vals['H0']/100.)), sampZ[i], self.tckQFit,sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
             #simsTools.y0FromLogM500(np.log10(10**sampM[i]/(self.HMF.cc.H0/100.)), sampZ[i], self.tckQFit,)
         # add scatter of 20% percent
         np.random.seed(self.seedval)
@@ -442,7 +445,7 @@ class MockCatalog:
         ind = np.where(SNR >= 4.5)[0]
         #print "number of clusters", len(ind)
         ind2 = np.where(SNR >= 5.6)[0]
-        print "number of clusters", len(ind)
+        print "number of clusters SNR >= 4.5", len(ind), " SNR >= 5.6",len(ind2)
 
         clusterID = ind.astype(str)
         hdu = fits.BinTableHDU.from_columns(

@@ -68,7 +68,8 @@ elif args.s8test:
     #chain1 = "sz_likelival_test_s8_mock.dat"
     burnins = 0 #,2000
 
-    likefile = dir_name1 + 'sz_likelival_test_s8_mock_D56Equ_v3.dat'
+    #likefile = dir_name1 + 'sz_likelival_test_s8_mock_D56Equ_v3.dat'
+    likefile = dir_name1 + 'sz_likelival_mockCat_v7.dat'
     #likefile = dir_name1 + 'sz_likelival_test_chains_v4.dat'
     #likefile = dir_name1 + 'sz_likelival_test_s8_mock.dat'
     
@@ -82,7 +83,7 @@ elif args.s8test:
     indsort = np.argsort(out1[:,0])
     #print indsort
     
-    fint = interp1d(out1[:,0][indsort], out1[:,1][indsort])
+    fint = interp1d(out1[:,0][indsort], out1[:,1][indsort],fill_value='extrapolate')
     #print out1[:,0][indsort]
     #print As1D
 
@@ -93,10 +94,16 @@ elif args.s8test:
     
     #print len(indsort)
 
+    print As1D.shape
+
     plt.figure()
-    g = plots.getSubplotPlotter()
-    g.triangle_plot([samples1], params=['As','s8'], filled=True)
-    plt.savefig(outdir+"simtest_s8mockv1.png")
+    #plt.plot(fint(As1D), like1D)
+    plt.plot(As1D, like1D)
+    plt.savefig(outdir+"liketest_s8mockv7.png")
+    #plt.figure()
+    #g = plots.getSubplotPlotter()
+    #g.triangle_plot([samples1], params=['As','s8'], filled=True)
+    #plt.savefig(outdir+"simtest_s8mockv1.png")
     
     
 
