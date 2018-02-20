@@ -8,7 +8,7 @@ from orphics.io import Plotter,dict_from_section,list_from_config
 from configparser import SafeConfigParser 
 import pickle as pickle
 from orphics.io import Plotter
-from orphics.maps import interpolateGrid
+from orphics.maps import interpolate_grid
 
 expName = sys.argv[1]
 gridName = sys.argv[2]
@@ -77,7 +77,7 @@ HMF = Halo_MF(cc,mexprange,zrange)
 HMF.sigN = siggrid.copy()
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
 
-h = 0.01
+h = 0.05
 # s80, As = getA(fparams,constDict,zrange,kmax=11.)
 # s8zs = As*s80
 
@@ -110,7 +110,7 @@ np.save(bigDataDir+"dNdp_mzq_"+saveId+"_"+param,dNdp)
 zs = list_from_config(Config,gridName,'zrange')
 z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 
-nums8bins = z_edges.size -1.
+nums8bins = HMF.zarr.size
 
 for i in range(nums8bins):
     print(("Calculating derivatives for redshift ", HMF.zarr[i]))

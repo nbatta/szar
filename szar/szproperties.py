@@ -57,7 +57,7 @@ class SZ_Cluster_Model:
 
         fgs = fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv="input/sz_template_battaglia.csv")
 
-        self.dell = 10
+        self.dell = dell
         self.nlinv = 0.
         self.nlinv_cmb = 0.
         self.nlinv_nofg = 0.
