@@ -213,6 +213,22 @@ class ClusterCosmology(Cosmology):
         ans = self.results.hubble_parameter(z)/self.paramDict['H0'] # 0.1% different from sqrt(om*(1+z)^3+ol)
         return ans
 
+    def GrowthFunc(self,z):
+        #numerical growth function
+        a = 1./(1.+z)
+        Om = (self.paramDict['omch2'] + self.paramDict['ombh2']) / (self.paramDict['H0']/100.)**2
+        integ = np.zeros(len(z))
+        for i in range(len(a)):
+            integ[i] = np.trapz(1/(a[i]**3 * self.E_z(1./a[i] - 1.)**3),dx=np.diff(a[i]))
+        ans = 5.* Om / 2. *self.E_z(z) * integ
+        return ans
+
+    def fgrowth(self,z):
+        a = 1./(1. + z)
+        dgrowth = self.GrowthFunc(z)#cc.results.get_redshift_evolution(self.HMF.kh, zarr, ['growth'])
+        ans = np.diff(np.log(dgrowth))/np.diff(np.log(a))
+        return ans
+
     def rhoc(self,z):
         #critical density as a function of z
         ans = self.rho_crit0H100*self.E_z(z)**2.

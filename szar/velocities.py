@@ -55,11 +55,6 @@ class pairwise:
         
         return kh, powerZK
 
-    def fgrowth(self,zarr):
-        dgrowth = self.cc.results.get_redshift_evolution(self.HMF.kh, zarr, ['growth'])
-        ans = 1.
-        return ans
-
     def massWeightedbias(self,q):
 
         z_arr = self.HMF.zarr

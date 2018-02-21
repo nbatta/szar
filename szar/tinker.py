@@ -203,20 +203,20 @@ def dsigma_dkmax_dM(M, z, rho, k, P, comoving=False):
 def tinker_bias_params(Delta):
 
     y = np.log10(Delta)
-    A = 1.0 + 0.24*y*np.exp(-(4/y)**4)
+    A = 1.0 + 0.24*y*np.exp(-(4./y)**4.)
     a = 0.44*y - 0.88
     B = 0.183
     b = 1.5
-    C = 0.019 + 0.107*y + 0.19*np.exp(-(4/y)**4)
+    C = 0.019 + 0.107*y + 0.19*np.exp(-(4./y)**4.)
     c = 2.4
     
     return A,a,B,b,C,c
 
-def tinker_bias(sigsq,Delta):
+def tinker_bias(sig,Delta):
     
     A,a,B,b,C,c = tinker_bias_params(Delta)
     delc = 1.686
-    nu2 = delc**2 / sigsq
-    ans = 1 - A*nu2**a / (nu2**a + delc**a) + B*nu2**b + C*nu2**c
+    nu = delc / sig
+    ans = 1. - A*nu2**a / (nu2**a + delc**a) + B*nu2**b + C*nu2**c
 
     return ans

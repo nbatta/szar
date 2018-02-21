@@ -38,9 +38,11 @@ class clustering:
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
         self.SZProp = SZ_Cluster_Model(self.cc,self.clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
 
+        self.dndm_SZ = self.HMF.dn_dmz_SZ(self.SZProp)
+
     def ntilde(self):
-        dndm_SZ = self.HMF.dn_dmz_SZ(self.SZProp)
-        ans = np.trapz(dndm_SZ,dx=np.diff(self.HMF.M200),axis=0)
+        #dndm_SZ = self.HMF.dn_dmz_SZ(self.SZProp)
+        ans = np.trapz(self.dndm_SZ,dx=np.diff(self.HMF.M200,axis=0),axis=0)
         return ans
 
     def b_eff_z(self):
@@ -50,15 +52,15 @@ class clustering:
         nbar = self.ntilde()
 
         z_arr = self.HMF.zarr
-        dndm_SZ = self.HMF.dn_dmz_SZ(self.SZProp)
+        #dndm_SZ = self.HMF.dn_dmz_SZ(self.SZProp)
         
         R = tinker.radius_from_mass(self.HMF.M200,self.cc.rhoc0om)
-        sigsq = tinker.sigma_sq_integral(R, self.HMF.pk, self.HMF.kh)
+        sig = np.sqrt(tinker.sigma_sq_integral(R, self.HMF.pk, self.HMF.kh))
 
-        blin = tinker.tinker_bias(sigsq,200.)
-        beff = np.trapz(dndm_SZ*blin,dx=np.diff(self.HMF.M200),axis=0) / nbar
+        blin = tinker.tinker_bias(sig,200.)
+        beff = np.trapz(self.dndm_SZ*blin,dx=np.diff(self.HMF.M200,axis=0),axis=0) / nbar
 
-        return beff
+        return beff,blin
         
     def Norm_Sfunc(self,fsky):
         z_arr = self.HMF.zarr
@@ -90,11 +92,13 @@ class clustering:
         return ans
 
     def V_eff(self,mu,fsky):
-        V0 = 1 #FIX
+
+        V0 = self.HMF.dVdz*np.diff(z_arr)*4.*np.pi*fsky #FIX
         nbar = self.ntilde()
         ps = self.ps_bar(mu,fsky)
         npfact = np.multiply(ps,nbar)
         frac = npfact / (1. + npfact)
         ans = np.multiply(frac,V0)
+
         return ans
 
