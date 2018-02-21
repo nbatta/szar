@@ -4,10 +4,11 @@ from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
 import tinker as tinker
 from configparser import SafeConfigParser
-from orphics.io import dict_from_section
+from orphics.io import dict_from_section,list_from_config
+import cPickle as pickle
 
 class clustering:
-    def __init__(self,iniFile):
+    def __init__(self,iniFile,expName,gridName,version):
         Config = SafeConfigParser()
         Config.optionxform=str
         Config.read(iniFile)
@@ -23,13 +24,13 @@ class clustering:
         bigDataDir = Config.get('general','bigDataDirectory')
         self.clttfile = Config.get('general','clttfile')
         self.constDict = dict_from_section(Config,'constants')
-        self.clusterDict = dictFromSection(Config,'cluster_params')
-        version = Config.get('general','version')
-        beam = listFromConfig(Config,expName,'beams')
-        noise = listFromConfig(Config,expName,'noises')
-        freq = listFromConfig(Config,expName,'freqs')
-        lknee = listFromConfig(Config,expName,'lknee')[0]
-        alpha = listFromConfig(Config,expName,'alpha')[0]
+        self.clusterDict = dict_from_section(Config,'cluster_params')
+        #version = Config.get('general','version')
+        beam = list_from_config(Config,expName,'beams')
+        noise = list_from_config(Config,expName,'noises')
+        freq = list_from_config(Config,expName,'freqs')
+        lknee = list_from_config(Config,expName,'lknee')[0]
+        alpha = list_from_config(Config,expName,'alpha')[0]
 
         self.mgrid,self.zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))  
 
@@ -38,7 +39,7 @@ class clustering:
         self.SZProp = SZ_Cluster_Model(self.cc,self.clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
 
     def ntilde(self):
-        dndm_SZ = self.HMF.dn_dmz_SZ(self.SZprop)
+        dndm_SZ = self.HMF.dn_dmz_SZ(self.SZProp)
         ans = np.trapz(dndm_SZ,dx=np.diff(self.HMF.M200),axis=0)
         return ans
 
@@ -49,7 +50,7 @@ class clustering:
         nbar = self.ntilde()
 
         z_arr = self.HMF.zarr
-        dndm_SZ = self.HMF.dn_dmz_SZ(self.SZprop)
+        dndm_SZ = self.HMF.dn_dmz_SZ(self.SZProp)
         
         R = tinker.radius_from_mass(self.HMF.M200,self.cc.rhoc0om)
         sigsq = tinker.sigma_sq_integral(R, self.HMF.pk, self.HMF.kh)
