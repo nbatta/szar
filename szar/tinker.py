@@ -217,6 +217,6 @@ def tinker_bias(sig,Delta):
     A,a,B,b,C,c = tinker_bias_params(Delta)
     delc = 1.686
     nu = delc / sig
-    ans = 1. - A*nu2**a / (nu2**a + delc**a) + B*nu2**b + C*nu2**c
+    ans = 1. - A*nu**a / (nu**a + delc**a) + B*nu**b + C*nu**c
 
     return ans
