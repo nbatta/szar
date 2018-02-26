@@ -15,6 +15,7 @@ from orphics.cosmology import Cosmology
 import orphics.cosmology as cosmo
 from orphics.stats import timeit
 from scipy.interpolate import interp1d, interp2d, griddata
+from scipy.integrate import simps
 
 import szar._fast as fast
 
@@ -216,17 +217,27 @@ class ClusterCosmology(Cosmology):
     def GrowthFunc(self,z):
         #numerical growth function
         a = 1./(1.+z)
+        dela = 0.000001
         Om = (self.paramDict['omch2'] + self.paramDict['ombh2']) / (self.paramDict['H0']/100.)**2
         integ = np.zeros(len(z))
+        integ2 = np.zeros(len(z))
         for i in range(len(a)):
-            integ[i] = np.trapz(1/(a[i]**3 * self.E_z(1./a[i] - 1.)**3),dx=np.diff(a[i]))
+            aa = np.arange(dela,a[i],dela)
+            #print aa.shape
+            #print np.diff(aa).shape
+            #print (1./(aa**3 * self.E_z(1./aa - 1.)**3)).shape
+            integ[i] = np.trapz(1./(aa**3 * self.E_z(1./aa - 1.)**3),dx=np.diff(aa))
+            integ2[i] = simps(1./(aa**3 * self.E_z(1./aa - 1.)**3),aa)
+
+        print np.sum(integ - integ2)/np.sum(integ)
         ans = 5.* Om / 2. *self.E_z(z) * integ
         return ans
 
     def fgrowth(self,z):
         a = 1./(1. + z)
         dgrowth = self.GrowthFunc(z)#cc.results.get_redshift_evolution(self.HMF.kh, zarr, ['growth'])
-        ans = np.diff(np.log(dgrowth))/np.diff(np.log(a))
+        dlna = np.gradient(np.log(a),edge_order=2)
+        ans = np.gradient(np.log(dgrowth),edge_order=2)/dlna #/np.gradient(np.log(a))
         return ans
 
     def rhoc(self,z):
