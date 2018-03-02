@@ -141,7 +141,7 @@ class clusterLike:
         Ma = np.outer(M,np.ones(len(LgY[0,:])))
         Om = (param_vals['omch2'] + param_vals['ombh2']) / (param_vals['H0']/100.)**2
         OL = 1. - Om
-        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'], H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)#,tenToA0=YNorm)
+        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'], H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
         Y = 10**LgY
         numer = -1.*(np.log(Y/Ytilde))**2
         ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(numer/(2.*param_vals['scat']**2))
@@ -219,7 +219,6 @@ class clusterLike:
             #print "M200", M200
             N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
             ans = N_z_ind
-        #print Pfunc_ind
         return ans
 
     def lnprior(self,theta,parlist,priorval,priorlist):
@@ -284,7 +283,7 @@ class clusterLike:
                 #print np.log(N_per)
             Nind = Nind + np.log(N_per)
             #print N_per
-        #print Nind
+        print -Ntot, Nind
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist, priorval, priorlist):
@@ -387,7 +386,7 @@ class MockCatalog:
         for i in range(nsamps):
             Ytilde[i], theta0, Qfilt = simsTools.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM[i]/(self.param_vals['H0']/100.)), sampZ[i], self.tckQFit,sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
             #simsTools.y0FromLogM500(np.log10(10**sampM[i]/(self.HMF.cc.H0/100.)), sampZ[i], self.tckQFit,)
-        # add scatter of 20% percent
+        #add scatter of 20% percent
         np.random.seed(self.seedval)
         ymod = np.exp(self.scat_val * np.random.randn(nsamps))
         sampY0 = Ytilde*ymod
