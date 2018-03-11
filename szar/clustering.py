@@ -61,7 +61,30 @@ class clustering:
         beff = np.trapz(dndm_SZ*blin,dx=np.diff(self.HMF.M200,axis=0),axis=0) / nbar
 
         return beff
+
+    def non_linear_scale(self,z,M200):
+
+        zdiff = np.abs(self.HMF.zarr - z)
+        use_z = np.where(zdiff == np.min(zdiff))[0]
+
+        R = tinker.radius_from_mass(M200,self.cc.rhoc0om)
         
+        sig = np.sqrt(tinker.sigma_sq_integral(R, self.HMF.pk[use_z,:], self.HMF.kh))
+
+        #print sig[:,0],sig[0,:]
+        print sig.shape
+        print self.HMF.kh.shape
+        sig1 = sig[0,:]
+        print sig1
+        sigdiff = np.abs(sig1 - 1.)
+        use_sig = np.where(sigdiff == np.min(sigdiff))[0]
+        print use_sig
+        
+        
+
+        return 1./(R[use_sig]),sig1[use_sig],self.HMF.zarr[use_z]
+
+
     def Norm_Sfunc(self,fsky):
         #z_arr = self.HMF.zarr
         #Check this

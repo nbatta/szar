@@ -218,8 +218,8 @@ if rank==0:
         from orphics.io import Plotter
         ellkk = np.arange(2,9000,1)
         Clkk = theory.gCl("kk",ellkk)    
-        pl = Plotter(scaleY='log',scaleX='log')
-        pl.add(ellkk,4.*Clkk/2./np.pi)
+        #pl = Plotter(scaleY='log',scaleX='log')
+        #pl.add(ellkk,4.*Clkk/2./np.pi)
 
 
         # from orphics.tools.stats import bin1D
@@ -237,16 +237,16 @@ if rank==0:
         clfunc = interp1d(ellkk,Clkk,bounds_error=False,fill_value="extrapolate")
         clkk_binned = clfunc(ls)
 
-        pl.add(ls,4.*clkk_binned/2./np.pi,ls="none",marker="x")
-        pl.add(ls,4.*Nls/2./np.pi,ls="--")
+        #pl.add(ls,4.*clkk_binned/2./np.pi,ls="none",marker="x")
+        #pl.add(ls,4.*Nls/2./np.pi,ls="--")
         np.savetxt(bigDataDir+"nlsave_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
 
         Nls += clkk_binned
         np.savetxt(bigDataDir+"nlsaveTot_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
         
-        pl.add(ls,4.*Nls/2./np.pi,ls="-.")
-        pl.legendOn(loc='lower left',labsize=10)
-        pl.done("output/Nl_"+expName+lensName+".png")
+        #pl.add(ls,4.*Nls/2./np.pi,ls="-.")
+        #pl.legendOn(loc='lower left',labsize=10)
+        #pl.done("output/Nl_"+expName+lensName+".png")
         #ls,Nls = np.loadtxt("data/LA_pol_Nl.txt",unpack=True,delimiter=",")
         # print ls,Nls
     else:
