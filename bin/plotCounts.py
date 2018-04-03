@@ -10,7 +10,7 @@ from szar.counts import ClusterCosmology,Halo_MF,getNmzq
 from szar.szproperties import SZ_Cluster_Model
 import numpy as np
 
-from orphics.maps import interpolateGrid
+from orphics.maps import interpolate_grid
 
 def resample_bin(d, factors=[0.5], axes=None):
 	if np.allclose(factors,1): return d
@@ -51,7 +51,7 @@ def upsample_bin(d, steps=[2], axes=None):
 	# Finally reshape back to proper dimensionality
 	return np.reshape(d, np.array(shape)*np.array(fullsteps))
 
-outDir = "/gpfs01/astro/www/msyriac/web/work/"
+#outDir = "/gpfs01/astro/www/msyriac/web/work/"
 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
@@ -61,8 +61,10 @@ bigDataDir = Config.get('general','bigDataDirectory')
 clttfile = Config.get('general','clttfile')
 
 gridName = "grid-default"
-version = "0.3_ysig_0.127"
-cal = "CMB_pol_miscentered"
+#version = "0.3_ysig_0.127"
+version = "0.7"
+cal = "CMB_all_CDT"
+#cal = "CMB_pol_miscentered"
 
 from orphics.io import dict_from_section, list_from_config
 constDict = dict_from_section(Config,'constants')
@@ -82,12 +84,13 @@ cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
 from matplotlib.patches import Rectangle
 
 
-expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
+expList = ['S4-1.0-CDT','S4-1.5-CDT']#,'S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
+#expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
 #expList = ['S4-2.0-0.4']#,'S4-1.5-0.4','S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1','S4-1.5-0.05']
 #expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
 pad = 0.05
 
-pl = Plotter(labelX="$z$",labelY="$N(z)$",ftsize=12,scaleY='log')
+#pl = Plotter(labelX="$z$",labelY="$N(z)$",ftsize=12,scaleY='log')
 #pl = Plotter(labelX="$z$",labelY="$N(z)$",ftsize=12)
 
 colList = ['C0','C1','C2','C3','C4','C5']
@@ -111,7 +114,7 @@ for expName,col in zip(expList,colList):
 
     
     SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
-    Nofzs = np.multiply(HMF.N_of_z_SZ(SZProf)*fsky,np.diff(z_edges).reshape(1,z_edges.size-1)).ravel()
+    Nofzs = np.multiply(HMF.N_of_z_SZ(fsky,SZProf),np.diff(z_edges).reshape(1,z_edges.size-1)).ravel()
     print((Nofzs.sum()))
     #sys.exit()
 
@@ -136,13 +139,13 @@ for expName,col in zip(expList,colList):
         zcent = (zleft+zright)/2.
         xerr = (zright-zleft)/2.
         N = Nofzs[np.logical_and(zrange>zleft,zrange<=zright)].sum()
-        print(N)
+        print(zcent,N)
         N2 = Nz[np.logical_and(zrange>zleft,zrange<=zright)].sum()
         currentAxis.add_patch(Rectangle((zcent - xerr+pad, 0), 2*xerr-pad/2., N, facecolor=col,alpha=0.5))
         currentAxis.add_patch(Rectangle((zcent - xerr+pad+pad/3., 0), 2*xerr-pad/2., N2, facecolor=col))
 
     massSense = lndM #*100./np.sqrt(Nmz)
-    massSense = interpolateGrid(massSense,masses,zrange,10**mexp_new,z_new,regular=True)#,kind="cubic",bounds_error=False,fill_value=np.inf)
+    massSense = interpolate_grid(massSense,masses,zrange,10**mexp_new,z_new,regular=True)#,kind="cubic",bounds_error=False,fill_value=np.inf)
     print((massSense.shape))
     fsense = massSense/np.sqrt(rn)
     
