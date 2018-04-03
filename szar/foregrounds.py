@@ -58,8 +58,8 @@ class fgNoises(object):
             
         if components is not None:
             self.components = components
-            fgdict = {'tsz':self.tSZ,'cibc':self.cib_c,'cibp':self.cib_p,'radps':self.rad_ps}
-            self.fgdict_nu = {'tsz':self.tSZ_nu,'cibc':self.cib_nu,'cibp':self.cib_nu,'radps':self.rad_ps_nu}
+            fgdict = {'tsz':self.tSZ,'cibc':self.cib_c,'cibp':self.cib_p,'radps':self.rad_ps,'galdust':self.res_gal}
+            self.fgdict_nu = {'tsz':self.tSZ_nu,'cibc':self.cib_nu,'cibp':self.cib_nu,'radps':self.rad_ps_nu,'galdust':self.res_gal_nu}
             self.ells = np.arange(0,lmax,1)
             self.nu0 = self.c['nu0']
             self.noises = {}

@@ -270,6 +270,39 @@ class ClusterCosmology(Cosmology):
         c = c200*(Rdelc/R200m)**(1./3.)
         return c[0]
 
+    def theta(self,M,z,overdensity,critical,at_cluster_z):
+        zdensity = z if at_cluster_z else 0.
+
+        if critical:
+            r500 = cc.rdel_c(M,zdensity,overdensity).flatten()[0] # R500 in Mpc/h
+        else:
+            r500 = cc.rdel_m(M,zdensity,overdensity) # R500 in Mpc/h
+
+        dAz = self.results.angular_diameter_distance(z) * self.h  # dAz in Mpc/h
+        return r500/dAz
+
+    def theta200_from_richness(self,richness,z):
+        """
+        Get theta200 for *M200 definition wrt mean density at cluster redshift*
+        given cluster richness and redshift using the fit from Melchior et. al.
+        """
+
+        m200 = mass_from_richness_melchior(richness,z)
+        return self.theta(m200,z,overdensity=200.,critical=False,at_cluster_z=True)
+        
+def mass_from_richness_melchior(richness,z):
+    # Melchior et. al. richness,z to M200meanAtZ
+
+    M0 = 10.**14.371
+    lambda0 = 30.
+    z0 = 0.5
+    Fl = 1.12
+    Gz = 0.18
+
+    return M0*((richness/lambda0)**(Fl))*((z/z0)**Gz)
+    
+
+
 
 class Halo_MF:
     #@timeit
