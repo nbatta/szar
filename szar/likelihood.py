@@ -95,7 +95,7 @@ class clusterLike:
         if self.simtest or self.simpars:
             print "mock catalog"
             #clust_cat = nemoOutputDir + 'mockCatalog_equD56.fits' #'ACTPol_mjh_cluster_cat.fits'
-            clust_cat = nemoOutputDir + 'mockCat_D56equ_v8.fits' #'ACTPol_mjh_cluster_cat.fits'
+            clust_cat = nemoOutputDir + 'mockCat_D56equ_v10.fits' #'ACTPol_mjh_cluster_cat.fits'
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat)
         else:
             print "real catalog"
@@ -149,7 +149,11 @@ class clusterLike:
 
     def Y_erf(self,Y,Ynoise):
         qmin = self.qmin  # fixed 
-        ans = 0.5 * (1. + special.erf((Y - qmin*Ynoise)/(np.sqrt(2.)*Ynoise)))
+        #Gaussian
+        #ans = 0.5 * (1. + special.erf((Y - qmin*Ynoise)/(np.sqrt(2.)*Ynoise)))
+        #Heavy side
+        ans = Y*0.0
+        ans[Y - qmin*Ynoise > 0] = 1.
         return ans
 
     def P_of_gt_SN(self,LgY,MM,zz,Ynoise,param_vals):
@@ -356,7 +360,7 @@ class MockCatalog:
 
     def create_basic_sample(self,fsky):
         # create simple mock catalog of Mass and Redshift 
-        Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky) / 100.))
+        Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky) / 100.)) ## Note the default number of walkers in mcsample_mf is 100 
         mlim = [np.min(self.mgrid),np.max(self.mgrid)]
         zlim = [np.min(self.zgrid),np.max(self.zgrid)]
 
@@ -441,10 +445,10 @@ class MockCatalog:
 
         xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = self.plot_obs_sample(filename1=f1,filename2=f2)
 
-        ind = np.where(SNR >= 4.5)[0]
+        ind2 = np.where(SNR >= 4.5)[0]
         #print "number of clusters", len(ind)
-        ind2 = np.where(SNR >= 5.6)[0]
-        print "number of clusters SNR >= 4.5", len(ind), " SNR >= 5.6",len(ind2)
+        ind = np.where(SNR >= 5.6)[0]
+        print "number of clusters SNR >= 5.6", len(ind), " SNR >= 4.5",len(ind2)
 
         clusterID = ind.astype(str)
         hdu = fits.BinTableHDU.from_columns(
