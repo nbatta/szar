@@ -11,7 +11,8 @@ from configparser import SafeConfigParser
 #expList = ['AdvAct-s16_ud','AdvAct-s16_dp','AdvAct-s16_md','AdvAct-s16_wd','AdvAct-s16_uw']
 #expList = ['SO-v2C','SO-v2C-6m']
 #expList = ['S4-1.0-CDT-max']#,'S4-1.5-CDT']
-expList = ['SO-v3-base-40','SO-v3-goal-40','SO-v3-base-20']
+#expList = ['SO-v3-base-40','SO-v3-goal-40','SO-v3-base-20']
+expList = ['AdvACT_S19']
 #expList = ['SO-v3-goal-20','SO-v3-base-10','SO-v3-goal-10']
 
 #'SO-5m-noatm','SO-6m-noatm','SO-7m-noatm',

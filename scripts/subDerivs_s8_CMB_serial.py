@@ -7,7 +7,8 @@ import os
 #expList = ['S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1']
 #expList = ['S4-1.0-CDT-max']#,'S4-1.5-CDT'] #'S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1']
 #expList = ['SO-v3-base-40','SO-v3-goal-40','SO-v3-base-20']
-expList = ['SO-v3-base-20','SO-v3-goal-20']
+#expList = ['SO-v3-base-20','SO-v3-goal-20']
+expList = ['AdvACT_S19']
 #expList = ['SO-v3-goal-20','SO-v3-base-10','SO-v3-goal-10']                                                              
 calList = ['CMB_all']#,'CMB_pol','CMB_all_miscentered','CMB_pol_miscentered']
 
