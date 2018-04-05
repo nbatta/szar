@@ -23,7 +23,7 @@ def read_MJH_noisemap(noiseMap,maskMap):
     mmap=img2[0].data
     return rmsmap*mmap
 
-def read_clust_cat(fitsfile):
+def read_clust_cat(fitsfile,qmin):
     list = fits.open(fitsfile)
     data = list[1].data
     SNR = data.field('SNR2p4')
@@ -31,10 +31,10 @@ def read_clust_cat(fitsfile):
     zerr = data.field('zErr')
     Y0 = data.field('y0tilde')
     Y0err = data.field('y0tilde_err')
-    ind = np.where(SNR >= 5.6)[0]
+    ind = np.where(SNR >= qmin)[0]
     return z[ind],zerr[ind],Y0[ind],Y0err[ind]
 
-def read_mock_cat(fitsfile):
+def read_mock_cat(fitsfile,qmin):
     list = fits.open(fitsfile)
     data = list[1].data
     SNR = data.field('fixed_SNR')
@@ -42,7 +42,7 @@ def read_mock_cat(fitsfile):
     zerr = data.field('redshiftErr')
     Y0 = data.field('fixed_y_c')
     Y0err = data.field('err_fixed_y_c')
-    ind = np.where(SNR >= 5.6)[0]
+    ind = np.where(SNR >= qmin)[0]
     return z[ind],zerr[ind],Y0[ind],Y0err[ind]
 
 def alter_fparams(fparams,parlist,parvals):
@@ -74,15 +74,15 @@ class clusterLike:
         version = Config.get('general','version')
         
         #self.mgrid,self.zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
-        logm_min = 12.7
+        logm_min = 13.7
         logm_max = 15.72
-        logm_spacing = 0.04
+        logm_spacing = 0.02
         self.mgrid = np.arange(logm_min,logm_max,logm_spacing)
-        self.zgrid = np.arange(0.0,2.01,0.1)        
+        self.zgrid = np.arange(0.1,2.01,0.1)        
         #print self.mgrid
         #print self.zgrid
+        self.qmin = 4.5
         
-
         self.cc = ClusterCosmology(self.fparams,self.constDict,clTTFixFile=self.clttfile)
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
 
@@ -95,22 +95,21 @@ class clusterLike:
         if self.simtest or self.simpars:
             print "mock catalog"
             #clust_cat = nemoOutputDir + 'mockCatalog_equD56.fits' #'ACTPol_mjh_cluster_cat.fits'
-            clust_cat = nemoOutputDir + 'mockCat_D56equ_v10.fits' #'ACTPol_mjh_cluster_cat.fits'
-            self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat)
+            clust_cat = nemoOutputDir + 'mockCat_D56equ_v22.fits' #'ACTPol_mjh_cluster_cat.fits'
+            self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat,self.qmin)
         else:
             print "real catalog"
             clust_cat = nemoOutputDir + 'E-D56Clusters.fits' #'ACTPol_mjh_cluster_cat.fits'
-            self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat)
+            self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat,self.qmin)
 
         self.rms_noise_map  = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
         #self.wcs=astWCS.WCS(FilterNoiseMapFile) 
         #self.clst_RA,self.clst_DEC,
         #self.clst_xmapInd,self.clst_ymapInd = self.Find_nearest_pixel_ind(self.clst_RA,self.clst_DEC)
 
-        self.qmin = 5.6
         self.num_noise_bins = 10
         self.area_rads = 987.5/41252.9612 # fraction of sky - ACTPol D56-equ specific
-        self.LgY = np.arange(-6,-3,0.05)
+        self.LgY = np.arange(-6,-3,0.01)
 
         count_temp,bin_edge =np.histogram(np.log10(self.rms_noise_map[self.rms_noise_map>0]),bins=self.num_noise_bins)
         self.frac_of_survey = count_temp*1.0 / np.sum(count_temp)
@@ -219,7 +218,7 @@ class clusterLike:
             #print "PFunc",Pfunc_ind
             M200 = int_HMF.cc.Mass_con_del_2_del_mean200(int_HMF.M.copy(),500,c_z)
             dn_dzdm = dn_dzdm_int(c_z,np.log10(int_HMF.M.copy()))[:,0]
-            #print "dndm", dn_dzdm
+            #print "dndm", dn_dzdm,dn_dzdm_int(c_z,np.log10(int_HMF.M.copy()))
             #print "M200", M200
             N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
             ans = N_z_ind
@@ -287,7 +286,7 @@ class clusterLike:
                 #print np.log(N_per)
             Nind = Nind + np.log(N_per)
             #print N_per
-        print -Ntot, Nind
+        print -Ntot, Nind, -Ntot + Nind, theta
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist, priorval, priorlist):
@@ -365,6 +364,8 @@ class MockCatalog:
         zlim = [np.min(self.zgrid),np.max(self.zgrid)]
 
         samples = self.HMF.mcsample_mf(200.,Ntot100,mthresh = mlim,zthresh = zlim)
+
+        print mlim
         
         return samples[:,0],samples[:,1]
 
@@ -445,10 +446,10 @@ class MockCatalog:
 
         xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = self.plot_obs_sample(filename1=f1,filename2=f2)
 
-        ind2 = np.where(SNR >= 4.5)[0]
+        ind = np.where(SNR >= 4.5)[0]
         #print "number of clusters", len(ind)
-        ind = np.where(SNR >= 5.6)[0]
-        print "number of clusters SNR >= 5.6", len(ind), " SNR >= 4.5",len(ind2)
+        ind2 = np.where(SNR >= 5.6)[0]
+        print "number of clusters SNR >= 5.6", len(ind2), " SNR >= 4.5",len(ind)
 
         clusterID = ind.astype(str)
         hdu = fits.BinTableHDU.from_columns(
