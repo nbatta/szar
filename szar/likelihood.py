@@ -45,6 +45,16 @@ def read_mock_cat(fitsfile,qmin):
     ind = np.where(SNR >= qmin)[0]
     return z[ind],zerr[ind],Y0[ind],Y0err[ind]
 
+def read_test_mock_cat(fitsfile,mmin):
+    list = fits.open(fitsfile)
+    data = list[1].data
+    z = data.field('redshift')
+    zerr = data.field('redshiftErr')
+    m = data.field('fixed_m')
+    merr = data.field('err_fixed_m')
+    ind = np.where(m >= mmin)[0]
+    return z[ind],zerr[ind],m[ind],merr[ind]
+
 def alter_fparams(fparams,parlist,parvals):
     for k,parvals in enumerate(parvals):
         fparams[parlist[k]] = parvals
@@ -71,7 +81,7 @@ class clusterLike:
         bigDataDir = Config.get('general','bigDataDirectory')
         self.clttfile = Config.get('general','clttfile')
         self.constDict = dict_from_section(Config,'constants')
-        version = Config.get('general','version')
+        #version = Config.get('general','version')
         
         #self.mgrid,self.zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
         logm_min = 13.7
@@ -149,10 +159,10 @@ class clusterLike:
     def Y_erf(self,Y,Ynoise):
         qmin = self.qmin  # fixed 
         #Gaussian
-        #ans = 0.5 * (1. + special.erf((Y - qmin*Ynoise)/(np.sqrt(2.)*Ynoise)))
+        ans = 0.5 * (1. + special.erf((Y - qmin*Ynoise)/(np.sqrt(2.)*Ynoise)))
         #Heavy side
-        ans = Y*0.0
-        ans[Y - qmin*Ynoise > 0] = 1.
+        #ans = Y*0.0
+        #ans[Y - qmin*Ynoise > 0] = 1.
         return ans
 
     def P_of_gt_SN(self,LgY,MM,zz,Ynoise,param_vals):
@@ -319,7 +329,7 @@ class MockCatalog:
         bigDataDir = Config.get('general','bigDataDirectory')
         self.clttfile = Config.get('general','clttfile')
         self.constDict = dict_from_section(Config,'constants')
-        version = Config.get('general','version')
+        #version = Config.get('general','version')
 
         if mass_grid_log:
             logm_min,logm_max,logm_spacing = mass_grid_log
@@ -465,3 +475,67 @@ class MockCatalog:
         hdu.writeto(filedir+filename+'.fits')
 
         return 0
+
+class clustLikeTest:
+    def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,fix_params,test=False,simtest=False,simpars=False):
+        Config = SafeConfigParser()
+        Config.optionxform=str
+        Config.read(iniFile)
+
+        self.fparams = {}
+        for (key, val) in Config.items('params'):
+            if ',' in val:
+                param, step = val.split(',')
+                self.fparams[key] = float(param)
+            else:
+                self.fparams[key] = float(val)
+
+        bigDataDir = Config.get('general','bigDataDirectory')
+        self.clttfile = Config.get('general','clttfile')
+        self.constDict = dict_from_section(Config,'constants')
+
+        logm_min = 13.7
+        logm_max = 15.72
+        logm_spacing = 0.02
+        self.mgrid = np.arange(logm_min,logm_max,logm_spacing)
+        self.zgrid = np.arange(0.1,2.01,0.1)
+
+        self.cc = ClusterCosmology(self.fparams,self.constDict,clTTFixFile=self.clttfile)
+        self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
+
+        self.diagnosticsDir=nemoOutputDir+"diagnostics"
+        self.filteredMapsDir=nemoOutputDir+"filteredMaps"
+        self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, self.filteredMapsDir)
+        FilterNoiseMapFile = nemoOutputDir + noiseFile
+        MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
+
+        clust_cat = nemoOutputDir + 'mockCat_D56equ_v22.fits' #'ACTPol_mjh_cluster_cat.fits'                                     
+        self.clst_z,self.clst_zerr,self.clst_m,self.clst_merr = read_mock_test_cat(clust_cat,self.mmin)
+
+
+    def Ntot_survey(self,int_HMF,fsky,Ythresh,param_vals):
+
+        z_arr = self.HMF.zarr.copy()
+        Pfunc = self.PfuncY(Ythresh,self.HMF.M.copy(),z_arr,param_vals)
+        dn_dzdm = int_HMF.dn_dM(int_HMF.M200,200.)
+
+        N_z = np.trapz(dn_dzdm*Pfunc,dx=np.diff(int_HMF.M200,axis=0),axis=0)
+        Ntot = np.trapz(N_z*int_HMF.dVdz,dx=np.diff(z_arr))*4.*np.pi*fsky
+        return Ntot
+
+    def Prob_per_cluster(self,int_HMF,cluster_props,dn_dzdm_int,param_vals):
+        c_z, c_zerr, c_m, c_merr = cluster_props
+        if (c_zerr > 0):
+            z_arr = np.arange(-3.*c_zerr,(3.+0.1)*c_zerr,c_zerr) + c_z
+            Pfunc_ind,M200 = self.Pfunc_per_zarr(int_HMF.M.copy(),z_arr,c_y,c_yerr,int_HMF,param_vals)
+            dn_dzdm = dn_dzdm_int(z_arr,np.log10(int_HMF.M.copy()))
+            N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
+            N_per = np.trapz(N_z_ind*gaussian(z_arr,c_z,c_zerr),dx=np.diff(z_arr))
+            ans = N_per
+        else:
+            Pfunc_ind = self.Pfunc_per(int_HMF.M.copy(),c_z, c_y, c_yerr,param_vals)
+            M200 = int_HMF.cc.Mass_con_del_2_del_mean200(int_HMF.M.copy(),500,c_z)
+            dn_dzdm = dn_dzdm_int(c_z,np.log10(int_HMF.M.copy()))[:,0]
+            N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
+            ans = N_z_ind
+        return ans
