@@ -72,24 +72,27 @@ class BattagliaReader(object):
         self.files['y'] = lambda massIndex, snap: self.root + "GEN_Cluster_"+str(massIndex)+"L165.256.FBN2_snap"+str(snap)+"_comovFINE.d"
         self.files['ksz'] = lambda massIndex, snap: self.root + "GEN_Cluster_kSZ_"+str(massIndex)+"L165.256.FBN2_snap"+str(snap)+"_comovFINE.d"
 
+        self.PIX = 2048
         
-    def get_map(self,component,mass_index,snap):
-        z = self.snapToZ(snap)
-        PIX = 2048
-
+    def get_geometry(self,snap):
         # MAP DIMENSIONS: THIS NEEDS DEBUGGING
+        z = self.snapToZ(snap)
         stampWidthMpc = 8. / self.h
         comovingMpc = self.results.comoving_radial_distance(z)
         widthRadians = stampWidthMpc/comovingMpc
-        pixWidthRadians = widthRadians/PIX
+        pixWidthRadians = widthRadians/self.PIX
 
         shape,wcs = enmap.geometry(pos=np.array([[-widthRadians/2.,-widthRadians/2.],[widthRadians/2.,widthRadians/2.]]),res=pixWidthRadians,proj="car")
-        assert np.all(shape==(2048,2048))
+        return shape,wcs
+    
+    def get_map(self,component,mass_index,snap):
+        shape,wcs = self.get_geometry(snap)
+        assert np.all(shape==(self.PIX,self.PIX))
         filen = self.files[component](mass_index,snap)
         with open(filen, 'rb') as fd:
             temp = np.fromfile(file=fd, dtype=np.float32)
 
-        dat = np.reshape(temp,(PIX,PIX)) * self.h # THIS NEEDS DEBUGGING
+        dat = np.reshape(temp,(self.PIX,self.PIX)) * self.h # THIS NEEDS DEBUGGING
         imap = enmap.enmap(dat,wcs)
         return imap
 
@@ -115,6 +118,16 @@ class BattagliaReader(object):
 
     def get_ksz(self,mass_index,snap,tcmb=2.7255e6):
         return self.get_map('ksz',mass_index,snap)*tcmb
+
+    def info(self,mass_index,snap):
+        dat = {}
+        dat['z'] = self.snapToZ(snap)
+        dat['M500'] = self.trueM500[str(snap)][mass_index]
+        dat['R500'] = self.trueR500[str(snap)][mass_index]
+        shape,wcs = self.get_geometry(snap)
+        dat['shape'] = shape
+        dat['wcs'] = wcs
+        return dat
 
             
 # class BattagliaSims(object):
