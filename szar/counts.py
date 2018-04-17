@@ -270,6 +270,39 @@ class ClusterCosmology(Cosmology):
         c = c200*(Rdelc/R200m)**(1./3.)
         return c[0]
 
+    def theta(self,M,z,overdensity,critical,at_cluster_z):
+        zdensity = z if at_cluster_z else 0.
+
+        if critical:
+            r500 = self.rdel_c(M,zdensity,overdensity).flatten()[0] # R500 in Mpc/h
+        else:
+            r500 = self.rdel_m(M,zdensity,overdensity) # R500 in Mpc/h
+
+        dAz = self.results.angular_diameter_distance(z) * self.h  # dAz in Mpc/h
+        return r500/dAz
+
+    def theta200_from_richness(self,richness,z):
+        """
+        Get theta200 for *M200 definition wrt mean density at cluster redshift*
+        given cluster richness and redshift using the fit from Melchior et. al.
+        """
+
+        m200 = mass_from_richness_melchior(richness,z)
+        return self.theta(m200,z,overdensity=200.,critical=False,at_cluster_z=True)
+        
+def mass_from_richness_melchior(richness,z):
+    # Melchior et. al. richness,z to M200meanAtZ
+
+    M0 = 10.**14.371
+    lambda0 = 30.
+    z0 = 0.5
+    Fl = 1.12
+    Gz = 0.18
+
+    return M0*((richness/lambda0)**(Fl))*((z/z0)**Gz)
+    
+
+
 
 class Halo_MF:
     #@timeit
@@ -386,19 +419,25 @@ class Halo_MF:
     def inter_dndm(self,delta):
         #interpolating over M500c becasue that's a constant at every redshift 
         dndM = self.dn_dM(self.M200,delta)
-        ans = interp2d(self.zarr,self.M,dndM,kind='linear',fill_value=0)
+        ans = interp2d(self.zarr,self.M,dndM,kind='cubic',fill_value=0)
         return ans
 
     def inter_dndmLogm(self,delta):
-        #interpolating over M500c becasue that's a constant at every redshift, log10 M500c 
+        #interpolating over M500c becasue that's a constant vector at every redshift, log10 M500c 
         dndM = self.dn_dM(self.M200,delta)
-        ans = interp2d(self.zarr,np.log10(self.M),dndM,kind='linear',fill_value=0)
+        ans = interp2d(self.zarr,np.log10(self.M),dndM,kind='cubic',fill_value=0)
         return ans
 
     def inter_mf(self,delta):
-        #interpolating over M500c becasue that's a constant at every redshif 
+        #interpolating over M500c becasue that's a constant vector at every redshift 
         N_Mz = self.N_of_Mz(self.M200,delta)
         ans = interp2d(self.zarr,self.M,N_Mz,kind='linear',fill_value=0) 
+        return ans
+
+    def inter_mf_logM(self,delta):
+        #interpolating over M500c becasue that's a constant vector at every redshift
+        N_Mz = self.N_of_Mz(self.M200,delta)
+        ans = interp2d(self.zarr,np.log10(self.M),N_Mz,kind='linear',fill_value=0)
         return ans
 
     def inter_mf_bound(self,theta,mthresh,zthresh):
@@ -409,10 +448,10 @@ class Halo_MF:
             return 0
         return -np.inf
 
-    def inter_mf_func(self,theta,inter,mthresh):
+    def inter_mf_func(self,theta,inter):
         a1,a2temp = theta
-        a2 = 10**a2temp
-        mlim = 10**mthresh[0]
+        a2 = a2temp#10**a2temp
+        #mlim = 10**mthresh[0]
         
         return np.log(inter(a1,a2))#/inter(0.15,mlim))
     
@@ -420,16 +459,16 @@ class Halo_MF:
         lp = self.inter_mf_bound(theta, mthresh, zthresh)
         if not np.isfinite(lp):
             return -np.inf
-        return lp + self.inter_mf_func(theta,inter,mthresh)
+        return lp + self.inter_mf_func(theta,inter)
     
     def mcsample_mf(self,delta,nsamp100,nwalkers=100,nburnin=50,Ndim=2,mthresh=[14.6,15.6],zthresh=[0.2,1.95]):
         import emcee
 
-        N_mz_inter = self.inter_mf(delta)
+        N_mz_inter = self.inter_mf_logM(delta)
         P0 = np.array([1.,15.5])
         pos = [P0 + P0*2e-2*np.random.randn(Ndim) for i in range(nwalkers)]
 
-        corrlength = 20 # Roughly corresponds to number from sampler.acor
+        corrlength = 30 # Roughly corresponds to number from sampler.acor
         
         sampler = emcee.EnsembleSampler(nwalkers,Ndim,self.mf_inter_eval, args =[N_mz_inter,mthresh,zthresh] )
         sampler.run_mcmc(pos,corrlength*nsamp100+nburnin)

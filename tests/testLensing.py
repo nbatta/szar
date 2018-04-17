@@ -6,9 +6,10 @@ import numpy as np
 from scipy import special
 import matplotlib.pyplot as plt
 import sys, os, time
-from szar.counts import ClusterCosmology,SZ_Cluster_Model,Halo_MF
+from szar.counts import ClusterCosmology,Halo_MF
+from szar.szproperties import SZ_Cluster_Model
 
-from orphics.tools.io import Plotter,dictFromSection,listFromConfig
+from orphics.io import Plotter,dict_from_section,list_from_config
 from configparser import SafeConfigParser 
 
 import flipper.liteMap as lm
@@ -60,10 +61,10 @@ Config.read(iniFile)
 
 lmax = 8000
 
-cosmoDict = dictFromSection(Config,cosmologyName)
-constDict = dictFromSection(Config,'constants')
-clusterDict = dictFromSection(Config,clusterParams)
-cc = ClusterCosmology(cosmoDict,constDict,lmax)
+cosmoDict = dict_from_section(Config,cosmologyName)
+constDict = dict_from_section(Config,'constants')
+clusterDict = dict_from_section(Config,clusterParams)
+cc = ClusterCosmology(cosmoDict,constDict,lmax,pickling=True)
 
 
 cambRoot = "data/ell28k_highacc"
@@ -151,10 +152,10 @@ ls,Nls = myNls.getNl(polComb=polComb,halo=halo)
 
 ellkk = np.arange(2,9000,1)
 Clkk = theory.gCl("kk",ellkk)    
-pl = Plotter(scaleY='log',scaleX='log')
+pl = Plotter(yscale='log',xscale='log')
 pl.add(ellkk,4.*Clkk/2./np.pi)
 pl.add(ls,4.*Nls/2./np.pi)
-pl.legendOn(loc='lower left',labsize=10)
+pl.legend(loc='lower left',labsize=10)
 pl.done("output/"+saveId+"nl.png")
 
 bin_width = beamY

@@ -254,7 +254,7 @@ if args.simtest:
     
     filename = chain_out+"/sz_likelival_"+args.chain_name+".dat"
     
-    parvals_arr = parvals*(1+np.arange(-0.2,0.2001,0.01))
+    parvals_arr = parvals*(1+np.arange(-0.1,0.1001,0.01))
     ansout = parvals_arr*0.0
     for ii, vals in enumerate(parvals_arr):
         #print ii, vals
