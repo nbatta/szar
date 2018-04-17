@@ -9,6 +9,7 @@ def f_nu(constDict,nu):
     return ans
 
 def g_nu(constDict,nu):
+    nu = np.asarray(nu)
     c = constDict
     beta = (nu*1e9) * c['H_CGS'] / (c['K_CGS']*c['TCMB'])
     ans = 2.* c['H_CGS']**2 * (nu*1e9)**4 / (c['C']**2 *c['K_CGS'] * c['TCMB']**2) \
@@ -69,9 +70,10 @@ class fgNoises(object):
                 self.noises[component] = interp1d(self.ells,noise,bounds_error=False,fill_value=0.)
             
 
-    def get_tot_fg_noise(self,nu,ells):
+    def get_tot_fg_noise(self,nu,ells,components=None):
         totnoise = 0.
-        for component in self.components:
+        components = self.components if components is None else components
+        for component in components:
             totnoise += self.noises[component](ells)* self.fgdict_nu[component](nu)*self.fgdict_nu[component](nu)/self.fgdict_nu[component](self.nu0)**2.
         return totnoise
     
