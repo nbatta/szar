@@ -274,9 +274,9 @@ class ClusterCosmology(Cosmology):
         zdensity = z if at_cluster_z else 0.
 
         if critical:
-            r500 = cc.rdel_c(M,zdensity,overdensity).flatten()[0] # R500 in Mpc/h
+            r500 = self.rdel_c(M,zdensity,overdensity).flatten()[0] # R500 in Mpc/h
         else:
-            r500 = cc.rdel_m(M,zdensity,overdensity) # R500 in Mpc/h
+            r500 = self.rdel_m(M,zdensity,overdensity) # R500 in Mpc/h
 
         dAz = self.results.angular_diameter_distance(z) * self.h  # dAz in Mpc/h
         return r500/dAz
