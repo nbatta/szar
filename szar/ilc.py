@@ -185,7 +185,7 @@ class ILC_simple:
         pl = Plotter()
         for ii in range(len(self.freq)):
             pl.add(self.evalells,self.W_ll_tsz[:,ii],label=str(self.freq[ii])+' GHz')
-        pl.legendOn(loc='lower left',labsize=10)
+        pl.legend(loc='lower left',labsize=10)
         pl.done(outfile)
 
     def PlotcmbWeights(self,outfile):
@@ -194,7 +194,7 @@ class ILC_simple:
         pl = Plotter()
         for ii in range(len(self.freq)):
             pl.add(self.evalells,self.W_ll_cmb[:,ii],label=str(self.freq[ii])+' GHz')
-        pl.legendOn(loc='lower left',labsize=10)
+        pl.legend(loc='lower left',labsize=10)
         pl.done(outfile)
 
     def inner_app (self,ell,theta_a):

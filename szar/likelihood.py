@@ -513,17 +513,35 @@ class clustLikeTest:
         self.clst_z,self.clst_zerr,self.clst_m,self.clst_merr = read_mock_test_cat(clust_cat,self.mmin)
 
 
-    def Ntot_survey(self,int_HMF,fsky,Ythresh,param_vals):
+    def PfuncM(self,Mt,Marr):
+        ans = Marr * 0.0
+        ans[Marr >= Mt] = 1.0
+        return ans
+
+    def PfuncM_per(self,Mt,m_c):
+        ans = 0
+        if (m_c >= Mt):
+            ans = 1
+        return ans
+
+    def PfuncM_per_zarr(self,Mt,m_c,z_arr):
+        ans = 0*z_arr
+        if (m_c >= Mt):
+            ans[:] = 1
+        return ans
+
+
+    def Ntot_survey(self,int_HMF,fsky):
 
         z_arr = self.HMF.zarr.copy()
-        Pfunc = self.PfuncY(Ythresh,self.HMF.M.copy(),z_arr,param_vals)
+        Pfunc = self.PfuncM(Mthresh,self.HMF.M.copy())
         dn_dzdm = int_HMF.dn_dM(int_HMF.M200,200.)
 
         N_z = np.trapz(dn_dzdm*Pfunc,dx=np.diff(int_HMF.M200,axis=0),axis=0)
         Ntot = np.trapz(N_z*int_HMF.dVdz,dx=np.diff(z_arr))*4.*np.pi*fsky
         return Ntot
 
-    def Prob_per_cluster(self,int_HMF,cluster_props,dn_dzdm_int,param_vals):
+    def Prob_per_cluster(self,int_HMF,cluster_props,dn_dzdm_int):
         c_z, c_zerr, c_m, c_merr = cluster_props
         if (c_zerr > 0):
             z_arr = np.arange(-3.*c_zerr,(3.+0.1)*c_zerr,c_zerr) + c_z
@@ -533,7 +551,7 @@ class clustLikeTest:
             N_per = np.trapz(N_z_ind*gaussian(z_arr,c_z,c_zerr),dx=np.diff(z_arr))
             ans = N_per
         else:
-            Pfunc_ind = self.Pfunc_per(int_HMF.M.copy(),c_z, c_y, c_yerr,param_vals)
+            Pfunc_ind = self.Pfunc_per(int_HMF.M.copy())
             M200 = int_HMF.cc.Mass_con_del_2_del_mean200(int_HMF.M.copy(),500,c_z)
             dn_dzdm = dn_dzdm_int(c_z,np.log10(int_HMF.M.copy()))[:,0]
             N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
