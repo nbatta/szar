@@ -53,7 +53,7 @@ def read_test_mock_cat(fitsfile,mmin):
     zerr = data.field('redshift_err')
     merr = data.field('Mass_err')
     ind = np.where(m >= mmin)[0]
-    print len(ind),m[ind]
+    print len(ind)#,m[ind]
     return z[ind],zerr[ind],m[ind],merr[ind]
 
 def alter_fparams(fparams,parlist,parvals):
@@ -553,30 +553,37 @@ class clustLikeTest:
         z_arr = self.HMF.zarr.copy()
         Pfunc = np.outer(self.PfuncM(10**self.mmin,self.HMF.M.copy()),np.ones(len(z_arr)))
         dn_dzdm = int_HMF.dn_dM(int_HMF.M200,200.)
-
+        #print "dndm test", dn_dzdm
         N_z = np.trapz(dn_dzdm*Pfunc,dx=np.diff(int_HMF.M200,axis=0),axis=0)
+        print "N_z actual", N_z
         Ntot = np.trapz(N_z*int_HMF.dVdz,dx=np.diff(z_arr))*4.*np.pi*fsky
         return Ntot
 
-    def Prob_per_cluster(self,int_HMF,cluster_props,dn_dzdm_int):#,Mthresh):
+    def Ntot_survey_TEST(self,int_HMF,fsky):
+        z_arr = self.HMF.zarr.copy()
+        ind = np.where(self.HMF.M.copy() >= (10**self.mmin)*0.999)[0]
+        #print np.min(self.HMF.M.copy()[ind]),10**self.mmin
+        #print 10**self.mgrid
+        #print self.HMF.M.copy(), 10**self.mmin
+
+        #print len(ind), "of" , len(self.HMF.M.copy())
+        dn_dzdm = int_HMF.dn_dM(int_HMF.M200,200.)
+        #print "dndm test", dn_dzdm
+        N_z = np.trapz(dn_dzdm[ind,:],dx=np.diff(int_HMF.M200[ind,:],axis=0),axis=0)
+        print "N_z test", N_z
+        Ntot = np.trapz(N_z*int_HMF.dVdz,dx=np.diff(z_arr))*4.*np.pi*fsky
+        return Ntot
+
+    def Prob_per_cluster(self,int_HMF,cluster_props,dn_dzdm_int):
         c_z, c_zerr, c_m, c_merr = cluster_props
         if (c_zerr > 0):
             z_arr = np.arange(-3.*c_zerr,(3.+0.1)*c_zerr,c_zerr) + c_z
-            #Pfunc_ind = self.PfuncM_per_zarr(Mthresh,int_HMF.M.copy(),z_arr)
-            #N_z_ind = np.zeros(len(z_arr))
-            #for ii in xrange(len(z_arr)):
-            #M200 = int_HMF.cc.Mass_con_del_2_del_mean200(int_HMF.M.copy(),500,z_arr[ii])
-            #dn_dzdm = dn_dzdm_int(z_arr[ii],np.log10(int_HMF.M.copy()))
             dn_dzdm = dn_dzdm_int(z_arr,np.log10(c_m))
-            #N_z_ind[ii] = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
             N_per = np.trapz(dn_dzdm*gaussian(z_arr,c_z,c_zerr),dx=np.diff(z_arr))
             ans = N_per
         else:
-            #Pfunc_ind = self.PfuncM_per(Mthresh,)
-            #M200 = int_HMF.cc.Mass_con_del_2_del_mean200(int_HMF.M.copy(),500,c_z)
-            dn_dzdm = dn_dzdm_int(c_z,np.log10(c_m))#np.log10(int_HMF.M.copy()))[:,0]
-            #N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
-            ans = dn_dzdm #N_z_ind
+            dn_dzdm = dn_dzdm_int(c_z,np.log10(c_m))
+            ans = dn_dzdm
         return ans
 
     def lnlike(self,theta,parlist):
@@ -595,6 +602,7 @@ class clustLikeTest:
         cluster_prop = np.array([self.clst_z,self.clst_zerr,10**self.clst_m,self.clst_merr])
 
         Ntot = self.Ntot_survey(int_HMF,self.fsky)
+        print self.Ntot_survey_TEST(int_HMF,self.fsky)
 
         Nind = 0
         for i in xrange(len(self.clst_z)):

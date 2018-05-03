@@ -6,15 +6,13 @@ import os
 #expList = ['SO-3m','SO-5m','SO-6m','SO-7m','S4-3m','S4-5m','S4-6m','S4-7m','S4-5m-noatm','S4-6m-noatm','S4-7m-noatm','SO-5m-noatm','SO-6m-noatm','SO-7m-noatm','SO-3m-noatm','S4-3m-noatm']
 
 #expList = ['S4-1.0-CDT','S4-1.5-CDT']
-expList = ['SO-v3-goal-20','SO-v3-base-10','SO-v3-base-20','SO-v3-base-40']
+#expList = ['SO-v3-goal-20','SO-v3-base-10','SO-v3-base-20','SO-v3-base-40']
+expList = ['PlanckTest']
 
-calList = ['owl2']
+#calList = ['owl2']
 #['owl1']
 
-#calList = ['owl1-planck']
-
-
-
+calList = ['owl1-planck']
 
 from configparser import SafeConfigParser 
 iniFile = "input/pipeline.ini"
@@ -23,8 +21,6 @@ Config.optionxform=str
 Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
 version = Config.get('general','version')
-
-
 
 
 for exp in expList:
