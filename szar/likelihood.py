@@ -10,6 +10,7 @@ from configparser import SafeConfigParser
 from orphics.io import dict_from_section
 import cPickle as pickle
 import matplotlib.pyplot as plt
+from .tinker import dn_dlogM
 
 #import time
 from enlib import bench
@@ -359,6 +360,8 @@ class MockCatalog:
 
         self.rms_noise_map = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
         
+        self.wcs=astWCS.WCS(FilterNoiseMapFile)
+
         self.fsky = 987.5/41252.9612 # in rads ACTPol D56-equ specific
         self.scat_val = 0.2
         self.seedval = 1
@@ -482,11 +485,23 @@ class MockCatalog:
         ind2 = np.where(SNR >= 5.6)[0]
         print "number of clusters SNR >= 5.6", len(ind2), " SNR >= 4.5",len(ind)
 
+
+        RAdeg = xsave*0.0
+        DECdeg = ysave*0.0
+        count = 0
+        for xsv, ysv in zip(xsave,ysave):
+            ra,dec = self.wcs.pix2wcs(xsv,ysv)
+            RAdeg[count] = 360. - ra
+            DECdeg[count] = -1*dec
+            count +=1
+
         clusterID = ind.astype(str)
         hdu = fits.BinTableHDU.from_columns(
             [fits.Column(name='Cluster_ID', format='20A', array=clusterID),
              fits.Column(name='x_ind', format='E', array=xsave[ind]),
              fits.Column(name='y_ind', format='E', array=ysave[ind]),
+             fits.Column(name='RA', format='E', array=RAdeg[ind]),
+             fits.Column(name='DEC', format='E', array=DECdeg[ind]),
              fits.Column(name='redshift', format='E', array=sampZ[ind]),
              fits.Column(name='redshiftErr', format='E', array=sampZ[ind]*0.0),
              fits.Column(name='fixed_y_c', format='E', array=sampY0[ind]*1e4),
@@ -540,22 +555,24 @@ class clustLikeTest:
     def PfuncM_per(self,Mt,m_c):
         ans = 0
         if (m_c >= Mt):
-            ans = 1
+            ans = 1.
         return ans
 
     def PfuncM_per_zarr(self,Mt,m_c,z_arr):
         ans = 0*z_arr
         if (m_c >= Mt):
-            ans[:] = 1
+            ans[:] = 1.
         return ans
 
     def Ntot_survey(self,int_HMF,fsky):
         z_arr = self.HMF.zarr.copy()
         Pfunc = np.outer(self.PfuncM(10**self.mmin,self.HMF.M.copy()),np.ones(len(z_arr)))
+        #print Pfunc.shape
         dn_dzdm = int_HMF.dn_dM(int_HMF.M200,200.)
+        print "mass", int_HMF.M200
+        #print dn_dzdm.shape
         #print "dndm test", dn_dzdm
         N_z = np.trapz(dn_dzdm*Pfunc,dx=np.diff(int_HMF.M200,axis=0),axis=0)
-        print "N_z actual", N_z
         Ntot = np.trapz(N_z*int_HMF.dVdz,dx=np.diff(z_arr))*4.*np.pi*fsky
         return Ntot
 
@@ -584,6 +601,29 @@ class clustLikeTest:
         else:
             dn_dzdm = dn_dzdm_int(c_z,np.log10(c_m))
             ans = dn_dzdm
+            print dn_dzdm
+            kmin=1e-4
+            kmax=5.
+            knum=200
+
+            int_kh, int_pk = int_HMF._pk(c_z,kmin,kmax,knum)
+            delts = int_HMF.zarr*0.0 + 200.
+            print c_m
+            dn_dlnm = dn_dlogM(np.array([c_m,c_m*1.01]),c_z,int_HMF.cc.rhoc0om,200,int_kh,int_pk,'comoving')
+            print dn_dlogM(np.array([c_m,c_m*1.01]),int_HMF.zarr,int_HMF.cc.rhoc0om,delts,int_HMF.kh,int_HMF.pk,'comoving')
+            print dn_dlnm
+
+
+            print int_HMF.dn_dM(np.outer(np.array([1e14*1.01,1e14*1.05]),np.ones(len(int_HMF.zarr))),200.)
+            print int_HMF.M200[0:2,0]
+            m1 = int_HMF.M200[0,0]
+            m2 = int_HMF.M200[1,0]
+            print m1,m2,c_m
+            print int_HMF.dn_dM(np.outer(np.array([m1*1.01,c_m*1.01]),np.ones(len(int_HMF.zarr))),200.)
+            print int_HMF.dn_dM(int_HMF.M200[0:2,:],200.)
+            print int_HMF.dn_dM(np.outer(np.array([c_m*1.01,1e14*1.01]),np.ones(len(int_HMF.zarr))),200.)
+            blahs = dn_dlnm/np.array([c_m,c_m])
+            print blahs 
         return ans
 
     def lnlike(self,theta,parlist):

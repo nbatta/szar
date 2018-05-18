@@ -484,7 +484,7 @@ class Halo_MF:
         N_z = np.zeros(z_arr.size)
         for i in range(z_arr.size):
             N_z[i] = np.dot(dn_dzdm[:,i],np.diff(self.M200_edges[:,i]))
-
+        #N_z = np.trapz(dn_dzdm,dx=np.diff(self.M200),axis=0)
         return N_z*4.*np.pi
 
     def nz(self):
