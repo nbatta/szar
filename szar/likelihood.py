@@ -11,6 +11,7 @@ from orphics.io import dict_from_section
 import cPickle as pickle
 import matplotlib.pyplot as plt
 from .tinker import dn_dlogM
+import time
 
 #import time
 from enlib import bench
@@ -312,7 +313,7 @@ class clusterLike:
         return lp + lnlike,np.nan_to_num(self.s8)
 
 class MockCatalog:
-    def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,params,parlist,mass_grid_log=None,z_grid=None):
+    def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,params,parlist,mass_grid_log=None,z_grid=None,randoms=False):
 
         Config = SafeConfigParser()
         Config.optionxform=str
@@ -346,6 +347,11 @@ class MockCatalog:
             zmax = 2.01
             zdel = 0.1
         
+        if randoms:
+            self.rand = 1
+        else:
+            self.rand = 0
+
         self.mgrid = np.arange(logm_min,logm_max,logm_spacing)
         self.zgrid = np.arange(zmin,zmax,zdel)
 
@@ -364,7 +370,7 @@ class MockCatalog:
 
         self.fsky = 987.5/41252.9612 # in rads ACTPol D56-equ specific
         self.scat_val = 0.2
-        self.seedval = 1
+        self.seedval = np.int(np.round(time.time())) #1
 
     def Total_clusters(self,fsky):
         Nz = self.HMF.N_of_z()
@@ -373,7 +379,12 @@ class MockCatalog:
 
     def create_basic_sample(self,fsky):
         # create simple mock catalog of Mass and Redshift 
-        Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky) / 100.)) ## Note the default number of walkers in mcsample_mf is 100 
+
+        if (self.rand):
+            Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky))) ## Note for randoms increasing the number density by factor of 100
+        else:
+            Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky) / 100.)) ## Note the default number of walkers in mcsample_mf is 100 
+
         mlim = [np.min(self.mgrid),np.max(self.mgrid)]
         zlim = [np.min(self.zgrid),np.max(self.zgrid)]
 
