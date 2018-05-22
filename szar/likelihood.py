@@ -424,7 +424,7 @@ class MockCatalog:
         #calculate noise for a given object for a random place on the map and save coordinates
 
         np.random.seed(self.seedval+1)
-        nmap = self.rms_noise_map[::-1,:]
+        nmap = self.rms_noise_map #[::-1,:]
         
         ylims = nmap.shape[0]
         xlims = nmap.shape[1]
@@ -452,7 +452,7 @@ class MockCatalog:
         plt.plot(sampZ[ind],sampM[ind],'o')
         plt.savefig(filename1+'.png', bbox_inches='tight',format='png')
 
-        nmap = self.rms_noise_map[::-1,:]
+        nmap = np.flipud(self.rms_noise_map)#[::-1,:]
         plt.figure(figsize=(40,6))
         plt.imshow(nmap,cmap='Blues')
         plt.plot(xsave[ind],ysave[ind],'ko')
@@ -502,8 +502,8 @@ class MockCatalog:
         count = 0
         for xsv, ysv in zip(xsave,ysave):
             ra,dec = self.wcs.pix2wcs(xsv,ysv)
-            RAdeg[count] = 360. - ra
-            DECdeg[count] = -1*dec
+            RAdeg[count] = ra#360. - ra
+            DECdeg[count] = dec#-1*dec
             count +=1
 
         clusterID = ind.astype(str)
@@ -520,6 +520,21 @@ class MockCatalog:
              fits.Column(name='fixed_SNR', format='E', array=SNR[ind]),])
 
         hdu.writeto(filedir+filename+'.fits',overwrite=True)
+
+        clusterID = ind.astype(str)
+        hdu = fits.BinTableHDU.from_columns(
+            [fits.Column(name='Cluster_ID', format='20A', array=clusterID),
+             fits.Column(name='x_ind', format='E', array=xsave),
+             fits.Column(name='y_ind', format='E', array=ysave),
+             fits.Column(name='RA', format='E', array=RAdeg),
+             fits.Column(name='DEC', format='E', array=DECdeg),
+             fits.Column(name='redshift', format='E', array=sampZ),
+             fits.Column(name='redshiftErr', format='E', array=sampZ*0.0),
+             fits.Column(name='fixed_y_c', format='E', array=sampY0*1e4),
+             fits.Column(name='err_fixed_y_c', format='E', array=sampY0err*1e4),
+             fits.Column(name='fixed_SNR', format='E', array=SNR),])
+
+        hdu.writeto(filedir+filename+'all.fits',overwrite=True)
 
         return 0
 
