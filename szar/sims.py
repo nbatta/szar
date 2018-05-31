@@ -20,7 +20,7 @@ def f_nu(nu):
 
 class BattagliaReader(object):
 
-    def __init__(self,sim_path="/gpfs01/astro/workarea/msyriac/sims/ClusterSims/"):
+    def __init__(self,sim_path="/gpfs01/astro/workarea/msyriac/data/sims/battaglia/"):
         import camb
 
         self.root = sim_path
