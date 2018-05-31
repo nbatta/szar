@@ -71,6 +71,7 @@ class BattagliaReader(object):
         self.files['gas'] = lambda massIndex, snap: self.root + "GEN_Cluster_MassGas_"+str(massIndex)+"L165.256.FBN2_snap"+str(snap)+"_comovFINE.d"
         self.files['y'] = lambda massIndex, snap: self.root + "GEN_Cluster_"+str(massIndex)+"L165.256.FBN2_snap"+str(snap)+"_comovFINE.d"
         self.files['ksz'] = lambda massIndex, snap: self.root + "GEN_Cluster_kSZ_"+str(massIndex)+"L165.256.FBN2_snap"+str(snap)+"_comovFINE.d"
+        self.files['kszN'] = lambda massIndex, snap: self.root + "GEN_Cluster_kSZ_"+str(massIndex)+"L165.256.FBN2_snap"+str(snap)+"MAT.d"
 
         self.PIX = 2048
         
@@ -85,14 +86,17 @@ class BattagliaReader(object):
         shape,wcs = enmap.geometry(pos=np.array([[-widthRadians/2.,-widthRadians/2.],[widthRadians/2.,widthRadians/2.]]),res=pixWidthRadians,proj="car")
         return shape,wcs
     
-    def get_map(self,component,mass_index,snap):
-        shape,wcs = self.get_geometry(snap)
-        assert np.all(shape==(self.PIX,self.PIX))
+    def get_map(self,component,mass_index,snap,shape=None,wcs=None):
+        if shape is None: 
+            assert wcs is None
+            shape,wcs = self.get_geometry(snap)
+            assert np.all(shape==(self.PIX,self.PIX))
+        
         filen = self.files[component](mass_index,snap)
         with open(filen, 'rb') as fd:
             temp = np.fromfile(file=fd, dtype=np.float32)
 
-        dat = np.reshape(temp,(self.PIX,self.PIX)) * self.h # THIS NEEDS DEBUGGING
+        dat = np.reshape(temp,shape) * self.h # THIS NEEDS DEBUGGING
         imap = enmap.enmap(dat,wcs)
         return imap
 
@@ -118,6 +122,10 @@ class BattagliaReader(object):
 
     def get_ksz(self,mass_index,snap,tcmb=2.7255e6):
         return self.get_map('ksz',mass_index,snap)*tcmb
+
+    def get_ksz_special(self,mass_index,snap,tcmb=2.7255e6):
+        shape,wcs = fmaps.rect_geometry(width_arcmin=20.,px_res_arcmin=20./128.)
+        return self.get_map('kszN',mass_index,snap,shape=shape,wcs=wcs)*tcmb
 
     def info(self,mass_index,snap):
         dat = {}
