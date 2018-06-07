@@ -220,31 +220,30 @@ class ILC_simple:
         return ans
 
     def AP_filter (self,ell,theta_a,theta_b):
-        ans = self.inner_app(ell,theta_a)+self.outer_app(ell,theta_a,theta_b)
+        ans = self.inner_app(ell,theta_a)-self.outer_app(ell,theta_a,theta_b)
         return ans
 
-    def filter_var (self,theta1,theta2,Nell):
-        ells  = np.arange(1,3e4)
-        var1  = np.trapz(ells*Nell*AP_filter(ells,theta1,self.disc_fac*theta1)**2,dx=np.diff(ells))
-        var2  = np.trapz(ells*Nell*AP_filter(ells,theta2,self.disc_fac*theta2)**2,dx=np.diff(ells))
-        var12 = 2.*np.trapz(ells*Nell*AP_filter(ells,theta1,self.disc_fac*theta1)
+    def filter_var (self,theta1,theta2,ells,Nell):
+        if (theta1 == theta2):
+            ans  = np.trapz(ells*Nell*AP_filter(ells,theta1,self.disc_fac*theta1)**2,dx=np.diff(ells))
+        else:
+            var1  = np.trapz(ells*Nell*AP_filter(ells,theta1,self.disc_fac*theta1)**2,dx=np.diff(ells))
+            var2  = np.trapz(ells*Nell*AP_filter(ells,theta2,self.disc_fac*theta2)**2,dx=np.diff(ells))
+            var12 = np.trapz(ells*Nell*AP_filter(ells,theta1,self.disc_fac*theta1)
                        *AP_filter(ells,theta2,self.disc_fac*theta2),dx=np.diff(ells))
-
-        ans = var1 + var2 - var12
+            ans = (var1 + var2 - 2.*var12)/(2.*np.pi))
         return ans
 
+#    def beam_func(ell,theta_b):
+#        theta_b /= 60.
+#        theta_b *= np.pi/180.
+#        ans = np.exp(-1.0*ell**2*theta_b**2/(16.*np.log(2.0)))
+#        return ans
 
-    def beam_func(ell,theta_b):
-        theta_b /= 60.
-        theta_b *= np.pi/180.
-        ans = np.exp(-1.0*ell**2*theta_b**2/(16.*np.log(2.0)))
-        return ans
-
-
-    def variance(self,ell,theta,disc_fac,cltot):
-        cl_var = np.sqrt(np.sum(self.beam_func(ell,theta)**2 * cltot * self.inner_app(ell,theta)**2) \
-                             +np.sum(self.beam_func(ell,theta)**2 * cltot * self.outer_app(ell,theta,theta*disc_fac)**2) \
-                             -2.0*np.sum(self.beam_func(ell,theta)**2 * cltot * self.inner_app(ell,theta) \
-                                             * self.outer_app(ell,theta,theta*disc_fac)))
-        return cl_var
+#    def variance(self,ell,theta,disc_fac,cltot):
+#        cl_var = np.sqrt(np.sum(self.beam_func(ell,theta)**2 * cltot * self.inner_app(ell,theta)**2) \
+#                             +np.sum(self.beam_func(ell,theta)**2 * cltot * self.outer_app(ell,theta,theta*disc_fac)**2) \
+#                             -2.0*np.sum(self.beam_func(ell,theta)**2 * cltot * self.inner_app(ell,theta) \
+#                                             * self.outer_app(ell,theta,theta*disc_fac)))
+#        return cl_var
 
