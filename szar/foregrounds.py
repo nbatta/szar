@@ -158,9 +158,9 @@ class fgNoises(object):
         return self.c['A_tsz']*self.tsz_template(ell)*self.tSZ_nu(nu1)*self.tSZ_nu(nu2)
 
     def gal_dust_pol(self,ell,nu1,nu2):
-        mu1 = nu1**self.c['al_cib']*self.B_nu(self.c['Td'],nu1) * self.g_nu(nu1)
-        mu2 = nu2**self.c['al_cib']*self.B_nu(self.c['Td'],nu2) * self.g_nu(nu2)
-        mu0 = self.c['nu0']**self.c['al_cib']*self.B_nu(self.c['Td'],self.c['nu0']) \
+        mu1 = nu1**self.c['al_gal']*self.B_nu(self.c['Td_gal'],nu1) * self.g_nu(nu1)
+        mu2 = nu2**self.c['al_gal']*self.B_nu(self.c['Td_gal'],nu2) * self.g_nu(nu2)
+        mu0 = self.c['nu0']**self.c['al_gal']*self.B_nu(self.c['Td_gal'],self.c['nu0']) \
             * self.g_nu(self.c['nu0'])
 
         ans = self.c['A_gal_dust'] * (ell/self.c['ell0sec']) ** self.c['alpha_gd'] * mu1 * mu2 / mu0**2
