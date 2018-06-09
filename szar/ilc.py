@@ -230,7 +230,7 @@ class Filters:
             var2  = np.trapz(ells*Nell*AP_filter(ells,theta2,self.disc_fac*theta2)**2,dx=np.diff(ells))
             var12 = np.trapz(ells*Nell*AP_filter(ells,theta1,self.disc_fac*theta1)
                        *AP_filter(ells,theta2,self.disc_fac*theta2),dx=np.diff(ells))
-            ans = (var1 + var2 - 2.*var12)/(2.*np.pi))
+            ans = (var1 + var2 - 2.*var12)/(2.*np.pi)
         return ans
 
 #    def beam_func(ell,theta_b):
@@ -281,9 +281,9 @@ class ILC_simple_pol:
             
             totfg = (self.fgs.rad_pol_ps(self.evalells[ii],fq_mat,fq_mat_t) + \
                          self.fgs.gal_dust_pol(self.evalells[ii],fq_mat,fq_mat_t) + \
-                         self.fgs.gal_sync_pol(self.evalells[ii],fq_mat,fq_mat_t) 
+                         self.fgs.gal_sync_pol(self.evalells[ii],fq_mat,fq_mat_t))
 
-            N_ll_for_cmb = nells + totfg + tsz + ksz
+            N_ll_for_cmb = nells + totfg
 
             N_ll_for_cmb_inv = np.linalg.inv(N_ll_for_cmb)
 
