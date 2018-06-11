@@ -22,6 +22,7 @@ parser.add_argument("-s", "--simtest", action='store_true',help='Do a test quick
 parser.add_argument("-S", "--simpars", action='store_true',help='Do a test quickly by setting Ntot=60 and just 1 params.')
 parser.add_argument("-p", "--printtest", action='store_true',help='Do quick print tests of likelihood functions.')
 parser.add_argument("-m", "--mockcat", action='store_true',help='test making a mock catalog.')
+parser.add_argument("-r", "--randcat", action='store_true',help='making a random catalog.')
 
 args = parser.parse_args()
 
@@ -125,11 +126,14 @@ else:
     # priorwth = np.array([0.0009,0.02,3.6,0.12,0.1])
     priorvals = np.array([prioravg,priorwth])
 
-if args.mockcat:
+if args.mockcat or args.randcat:
     parlist = ['omch2','ombh2','H0','As','ns','tau','massbias','yslope','scat']
     parvals = [0.1225,0.0245,70,2.0e-09,0.97,0.06,1.0,0.08,0.2]
 
-    MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[np.log10(8e13),np.log10(7e15),0.01],z_grid=[0.1,2.01,0.1])
+    if args.mockcat:
+        MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[np.log10(8e13),np.log10(7e15),0.01],z_grid=[0.1,2.01,0.1])
+    if args.randcat:
+        MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[np.log10(8e13),np.log10(7e15),0.01],z_grid=[0.1,2.01,0.1],randoms=True)
     
     #print MC.Total_clusters(MC.fsky)
     #start = time.time()

@@ -5,6 +5,7 @@ from orphics.cosmology import LensForecast
 from szar.foregrounds import fgNoises, f_nu
 from orphics.io import Plotter
 import numpy.matlib
+from scipy.special import j1
 
 class ILC_simple:
     def __init__(self,clusterCosmology, \
@@ -22,12 +23,11 @@ class ILC_simple:
             fq_mat_t = freqs
 
         self.fgs = fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
-
+        
         self.dell = dell
         self.evalells = np.arange(2,lmax,self.dell)
         self.N_ll_tsz = self.evalells*0.0
         self.N_ll_cmb = self.evalells*0.0
-        self.N_ll_tsz = self.evalells*0.0
         self.N_ll_cmb_c_tsz = self.evalells*0.0
         self.N_ll_tsz_c_cmb = self.evalells*0.0
         self.N_ll_tsz_c_cib = self.evalells*0.0
@@ -197,6 +197,10 @@ class ILC_simple:
         pl.legend(loc='lower left',labsize=10)
         pl.done(outfile)
 
+class Filters:
+    def __init__(self):
+        self.disc_fac = np.sqrt(2)
+
     def inner_app (self,ell,theta_a):
         theta_a /= 60. #arcmin to degs
         theta_a *= np.pi/180. #degs to rad 
@@ -213,3 +217,82 @@ class ILC_simple:
         yy = ell*theta_b
         ans = 2./(yy*theta_b - xx*theta_a)*(theta_b*j1(yy)- theta_a*j1(xx))
         return ans
+
+    def AP_filter (self,ell,theta_a,theta_b):
+        ans = self.inner_app(ell,theta_a)-self.outer_app(ell,theta_a,theta_b)
+        return ans
+
+    def filter_var (self,theta1,theta2,ells,Nell):
+        if (theta1 == theta2):
+            ans  = np.trapz(ells*Nell*AP_filter(ells,theta1,self.disc_fac*theta1)**2,dx=np.diff(ells))
+        else:
+            var1  = np.trapz(ells*Nell*AP_filter(ells,theta1,self.disc_fac*theta1)**2,dx=np.diff(ells))
+            var2  = np.trapz(ells*Nell*AP_filter(ells,theta2,self.disc_fac*theta2)**2,dx=np.diff(ells))
+            var12 = np.trapz(ells*Nell*AP_filter(ells,theta1,self.disc_fac*theta1)
+                       *AP_filter(ells,theta2,self.disc_fac*theta2),dx=np.diff(ells))
+            ans = (var1 + var2 - 2.*var12)/(2.*np.pi)
+        return ans
+
+#    def beam_func(ell,theta_b):
+#        theta_b /= 60.
+#        theta_b *= np.pi/180.
+#        ans = np.exp(-1.0*ell**2*theta_b**2/(16.*np.log(2.0)))
+#        return ans
+
+#    def variance(self,ell,theta,disc_fac,cltot):
+#        cl_var = np.sqrt(np.sum(self.beam_func(ell,theta)**2 * cltot * self.inner_app(ell,theta)**2) \
+#                             +np.sum(self.beam_func(ell,theta)**2 * cltot * self.outer_app(ell,theta,theta*disc_fac)**2) \
+#                             -2.0*np.sum(self.beam_func(ell,theta)**2 * cltot * self.inner_app(ell,theta) \
+#                                             * self.outer_app(ell,theta,theta*disc_fac)))
+#        return cl_var
+
+class ILC_simple_pol:
+    def __init__(self,clusterCosmology, \
+                 fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1., \
+                 dell=1.,ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt', \
+                 tsz_cib_file='input/sz_x_cib_template.dat',fg=True):
+
+        self.cc = clusterCosmology
+
+        if (len(freqs) > 1):
+            fq_mat   = np.matlib.repmat(freqs,len(freqs),1) 
+            fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
+        else:
+            fq_mat   = freqs
+            fq_mat_t = freqs
+
+        self.fgs = fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
+        
+        self.dell = dell
+        self.evalells = np.arange(2,lmax,self.dell)
+        self.N_ll_cmb = self.evalells*0.0
+
+        self.W_ll_cmb = np.zeros([len(self.evalells),len(np.array(freqs))])
+        self.freq = freqs
+
+        f_nu_cmb = f_nu_tsz*0.0 + 1.
+
+        for ii in range(len(self.evalells)):
+            cmb_els = fq_mat*0.0 + self.cc.cleefunc(self.evalells[ii])
+            ## MAKE POL NOISE
+            inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,dimensionless=False) / self.cc.c['TCMBmuK']**2.)
+        
+            nells = np.diag(inst_noise)
+            
+            totfg = (self.fgs.rad_pol_ps(self.evalells[ii],fq_mat,fq_mat_t) + \
+                         self.fgs.gal_dust_pol(self.evalells[ii],fq_mat,fq_mat_t) + \
+                         self.fgs.gal_sync_pol(self.evalells[ii],fq_mat,fq_mat_t))
+
+            N_ll_for_cmb = nells + totfg
+
+            N_ll_for_cmb_inv = np.linalg.inv(N_ll_for_cmb)
+
+            self.W_ll_cmb[ii,:] = 1./np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_cmb_inv,f_nu_cmb)) \
+                                  * np.dot(np.transpose(f_nu_cmb),N_ll_for_cmb_inv)
+
+            self.N_ll_cmb[ii] = np.dot(np.transpose(self.W_ll_cmb[ii,:]),np.dot(N_ll_for_cmb,self.W_ll_cmb[ii,:]))
+
+
+
+
+
