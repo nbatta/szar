@@ -125,22 +125,22 @@ def priors_from_config(Config,expName,calName,fishName,paramList,tauOverride=Non
             priorValueList.append(tauOverride)
             
 
-#    if "CMB" in calName:
-#        assert "sigR" not in paramList
-#        paramList.append("sigR")
-#        try:
-#            priorNameList.append("sigR")
-#            beam = list_from_config(Config,expName,'beams')
-#            freq = list_from_config(Config,expName,'freqs')
-#            freq_to_use = Config.getfloat(calName,'freq')
-#            ind = np.where(np.isclose(freq,freq_to_use))
-#            beamFind = np.array(beam)[ind]
-#            priorValueList.append(beamFind/2.)
-#            print "Added sigR prior ", priorValueList[-1]
-#        except:
-#            traceback.print_exc()
-#            print "Couldn't add sigR prior. Is this CMB lensing? Exiting."
-#            sys.exit(1)
+    if "CMB" in calName:
+        assert "sigR" not in paramList
+        paramList.append("sigR")
+        try:
+            priorNameList.append("sigR")
+            beam = list_from_config(Config,expName,'beams')
+            freq = list_from_config(Config,expName,'freqs')
+            freq_to_use = Config.getfloat(calName,'freq')
+            ind = np.where(np.isclose(freq,freq_to_use))
+            beamFind = np.array(beam)[ind]
+            priorValueList.append(beamFind/2.)
+            print "Added sigR prior ", priorValueList[-1]
+        except:
+            traceback.print_exc()
+            print "Couldn't add sigR prior. Is this CMB lensing? Exiting."
+            sys.exit(1)
 
 
     # if not("b_wl" in paramList):

@@ -60,10 +60,10 @@ Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
 clttfile = Config.get('general','clttfile')
 
-gridName = "grid-owl2"#"grid-default"
+gridName = "grid-default"
 #version = "0.3_ysig_0.127"
 version = "1.0"#"0.7"
-cal = "owl2"#"CMB_all_CDT"
+cal = "CMB_all"
 #cal = "CMB_pol_miscentered"
 
 from orphics.io import dict_from_section, list_from_config
@@ -84,11 +84,12 @@ cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
 from matplotlib.patches import Rectangle
 
 
-expList = ['CMB-Probe-v3-1']
+#expList = ['CMB-Probe-v3-1']
 #expList = ['S4-1.0-CDT','S4-1.5-CDT']#,'S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
 #expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
 #expList = ['S4-2.0-0.4']#,'S4-1.5-0.4','S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1','S4-1.5-0.05']
 #expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
+expList = ['SO-v3-goal-40','SO-v3-base-40','SO-v3-goal-20','SO-v3-base-20','SO-v3-goal-10','SO-v3-base-10']
 pad = 0.05
 
 #pl = Plotter(labelX="$z$",labelY="$N(z)$",ftsize=12,scaleY='log')
