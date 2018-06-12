@@ -38,7 +38,8 @@ class SZ_Cluster_Model:
                  dell=10,pmaxN=5,numps=1000,nMax=1, \
                  ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1, qmin=5., \
                  ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt', \
-                 tsz_cib_file='input/sz_x_cib_template.dat',fg=True,tsz_cib=False,v3mode=-1,fsky=None):
+                 tsz_cib_file='input/sz_x_cib_template.dat',fg=True,tsz_cib=False,
+                 tsz_battaglia_template_csv="input/sz_template_battaglia.csv",v3mode=-1,fsky=None):
 
         self.cc = clusterCosmology
         self.P0 = clusterDict['P0']
@@ -55,7 +56,7 @@ class SZ_Cluster_Model:
         lnYmax = np.log(ymax)
         self.lnY = np.arange(lnYmin,lnYmax,dlnY)
 
-        fgs = fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv="input/sz_template_battaglia.csv")
+        fgs = fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv=tsz_battaglia_template_csv)
 
         self.dell = dell
         self.nlinv = 0.
