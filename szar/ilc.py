@@ -8,7 +8,7 @@ import numpy.matlib
 from scipy.special import j1
 
 class ILC_simple:
-    def __init__(self,clusterCosmology, fgs,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1.,dell=1.):
+    def __init__(self,clusterCosmology, fgs,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1.,dell=1.,v3mode=-1):
 
                  #ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt', \
                  #tsz_cib_file='input/sz_x_cib_template.dat',fg=True):
@@ -23,7 +23,7 @@ class ILC_simple:
             fq_mat_t = freqs
 
         self.fgs = fgs#fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
-        
+
         self.dell = dell
         self.evalells = np.arange(2,lmax,self.dell)
         self.N_ll_tsz = self.evalells*0.0
@@ -31,6 +31,31 @@ class ILC_simple:
         self.N_ll_cmb_c_tsz = self.evalells*0.0
         self.N_ll_tsz_c_cmb = self.evalells*0.0
         self.N_ll_tsz_c_cib = self.evalells*0.0
+
+        if v3mode>-1:
+            print("V3 flag enabled.")
+            import szar.V3_calc_public as v3
+
+            if v3mode <= 2:
+                vfreqs = v3.Simons_Observatory_V3_LA_bands()
+                freqs = vfreqs
+                vbeams = v3.Simons_Observatory_V3_LA_beams()
+                fwhms = vbeams
+
+                v3lmax = self.evalells.max()
+                v3dell = np.diff(self.evalells)[0]
+
+                v3ell, N_ell_T_LA, N_ell_P_LA, Map_white_noise_levels = v3.Simons_Observatory_V3_LA_noise(sensitivity_mode=v3mode,f_sky=fsky,ell_max=v3lmax+v3dell,delta_ell=v3dell)
+            elif v3mode == 3:
+                vfreqs = v3.AdvACT_bands()
+                freqs = vfreqs
+                vbeams = v3.AdvACT_beams()
+                fwhms = vbeams
+
+                v3lmax = self.evalells.max()
+                v3dell = np.diff(self.evalells)[0]
+                v3ell, N_ell_T_LA, N_ell_P_LA, Map_white_noise_levels = v3.AdvACT_noise(f_sky=fsky,ell_max=v3lmax+v3dell,delta_ell=\
+v3dell)
 
         self.W_ll_tsz = np.zeros([len(self.evalells),len(np.array(freqs))])
         self.W_ll_cmb = np.zeros([len(self.evalells),len(np.array(freqs))])
@@ -46,11 +71,38 @@ class ILC_simple:
         for ii in range(len(self.evalells)):
 
             cmb_els = fq_mat*0.0 + self.cc.clttfunc(self.evalells[ii])
-
-            inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,dimensionless=False) / self.cc.c['TCMBmuK']**2.)
-        
-            nells = np.diag(inst_noise)
             
+            if v3mode < 0:
+                inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,dimensionless=False) / self.cc.c['TCMBmuK']**2.)
+                nells = np.diag(inst_noise)
+            elif v3mode<=2:
+                ndiags = []
+                for ff in range(len(freqs)):
+                    inst_noise = N_ell_T_LA[ff,ii]/ self.cc.c['TCMBmuK']**2.
+                    ndiags.append(inst_noise)
+                nells = np.diag(np.array(ndiags))
+                # Adding in atmo. freq-freq correlations 
+                nells[0,1] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[1,0] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[2,3] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[3,2] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[4,5] = N_ell_T_LA[8,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[5,4] = N_ell_T_LA[8,ii]/ self.cc.c['TCMBmuK']**2.
+
+            elif v3mode==3:
+                ndiags = []
+                for ff in range(len(freqs)):
+                    inst_noise = N_ell_T_LA[ff,ii]/ self.cc.c['TCMBmuK']**2.
+                    ndiags.append(inst_noise)
+                nells = np.diag(np.array(ndiags))
+                # Adding in atmo. freq-freq correlations
+                nells[0,1] = N_ell_T_LA[5,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[1,0] = N_ell_T_LA[5,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[2,3] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[3,2] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[3,4] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[4,3] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
+
             totfg = (self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
                       self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) \
                       / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi 
