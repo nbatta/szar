@@ -14,7 +14,7 @@ from configparser import SafeConfigParser
 #expList = ['SO-v3-base-40','SO-v3-goal-40','SO-v3-base-20']
 #expList = ['CMB-Probe-v3-1']
 #expList = ['AdvACT_S19']
-expList = ['SO-v3-goal-40']#,'SO-v3-base-10','SO-v3-goal-10']
+expList = ['SO-v3-base-40']#,'SO-v3-base-10','SO-v3-goal-10']
 
 #'SO-5m-noatm','SO-6m-noatm','SO-7m-noatm',
 #expList = ['AdvAct']

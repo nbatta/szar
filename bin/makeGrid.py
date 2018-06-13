@@ -142,7 +142,7 @@ if rank==0:
             #     0: threshold, 
             #     1: baseline, 
             #     2: goal
-            senstr = ['threshold','baseline','goal'][v3mode]
+            senstr = ['threshold','base','goal'][v3mode]
             fstr = expName[-2:]
             fskystr = {'10':'4000','20':'8000','40':'16000'}[fstr]
             
