@@ -52,6 +52,8 @@ def upsample_bin(d, steps=[2], axes=None):
 	return np.reshape(d, np.array(shape)*np.array(fullsteps))
 
 #outDir = "/gpfs01/astro/www/msyriac/web/work/"
+outDir = "/Users/nab/Desktop/"
+
 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
@@ -89,10 +91,11 @@ from matplotlib.patches import Rectangle
 #expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
 #expList = ['S4-2.0-0.4']#,'S4-1.5-0.4','S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1','S4-1.5-0.05']
 #expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
-expList = ['SO-v3-goal-40','SO-v3-base-40','SO-v3-goal-20','SO-v3-base-20','SO-v3-goal-10','SO-v3-base-10']
+expList = ['SO-v3-goal-40','SO-v3-base-40']#,'SO-v3-goal-20','SO-v3-base-20','SO-v3-goal-10','SO-v3-base-10']
+
 pad = 0.05
 
-#pl = Plotter(labelX="$z$",labelY="$N(z)$",ftsize=12,scaleY='log')
+pl = Plotter(xlabel="$z$",ylabel="$N(z)$",ftsize=12,yscale='log')
 #pl = Plotter(labelX="$z$",labelY="$N(z)$",ftsize=12)
 
 colList = ['C0','C1','C2','C3','C4','C5']
@@ -143,9 +146,9 @@ for expName,col in zip(expList,colList):
         N = Nofzs[np.logical_and(zrange>zleft,zrange<=zright)].sum()
         print(zcent,N)
         N2 = Nz[np.logical_and(zrange>zleft,zrange<=zright)].sum()
-        currentAxis.add_patch(Rectangle((zcent - xerr+pad, 0), 2*xerr-pad/2., N, facecolor=col,alpha=0.5))
-        currentAxis.add_patch(Rectangle((zcent - xerr+pad+pad/3., 0), 2*xerr-pad/2., N2, facecolor=col))
-
+        currentAxis.add_patch(Rectangle((zcent - xerr+pad, 0), 2*xerr-pad/2., N, facecolor=col))#,alpha=0.5))
+        #currentAxis.add_patch(Rectangle((zcent - xerr+pad+pad/3., 0), 2*xerr-pad/2., N2, facecolor=col))
+    pl.add([0,0],[0,0],ls='-',linewidth=4,label=expName,color=col)
     massSense = lndM #*100./np.sqrt(Nmz)
     massSense = interpolate_grid(massSense,masses,zrange,10**mexp_new,z_new,regular=True)#,kind="cubic",bounds_error=False,fill_value=np.inf)
     print((massSense.shape))
@@ -153,7 +156,7 @@ for expName,col in zip(expList,colList):
     
     
 
-#pl.legendOn(labsize=9)
+pl.legend(labsize=9)
 pl._ax.set_ylim(1,5.e4) # fsky
 pl._ax.set_xlim(0.,3.)
 pl.done(outDir+"Nofz.png")
@@ -166,7 +169,7 @@ mmax = mgrid.max()
 zmin = zgrid.min()
 zmax = zgrid.max()
 pgrid = np.rot90((fsense))
-pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
+pl = Plotter(xlabel="$\\mathrm{log}_{10}(M)$",ylabel="$z$",ftsize=14)
 pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],labsize=14,aspect="auto",lim=[0.,10.])
 pl.done(outDir+"massSense.png")
 
