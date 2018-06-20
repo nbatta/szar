@@ -36,7 +36,7 @@ class fgNoises(object):
     Returns fgPower * l(l+1)/2pi in uK^2                                                                                            
     '''
 
-    def __init__(self,constDict,ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',tsz_cib_file='input/sz_x_cib_template.dat',ksz_battaglia_test_csv=None,tsz_battaglia_template_csv="input/sz_template_battaglia.csv",components=None,lmax=None):
+    def __init__(self,constDict,ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',tsz_cib_file='input/sz_x_cib_template.dat',ksz_battaglia_test_csv=None,tsz_battaglia_template_csv="input/sz_template_battaglia.csv",rs_template="input/fiducial_scalCls_lensed_5_5.dat",rsx_template="input/fiducial_scalCls_lensed_1_5.dat",components=None,lmax=None):
         self.c = constDict
         el,ksz = np.loadtxt(ksz_file,unpack=True)
         self.ksz_func = interp1d(el,ksz,bounds_error=False,fill_value=0.)
@@ -44,6 +44,14 @@ class fgNoises(object):
         self.ksz_p_func = interp1d(elp,kszp,bounds_error=False,fill_value=0.)
         eltc,tsz_cib = np.loadtxt(tsz_cib_file,unpack=True)
         self.tsz_cib_func = interp1d(eltc,tsz_cib,bounds_error=False,fill_value=0.)
+        elrs,rs_auto,rs_autoEE = np.loadtxt(rs_template,unpack=True,usecols=[0,1,2])
+        self.rs_auto_func = interp1d(elrs,rs_auto,bounds_error=False,fill_value=0.)
+        self.rs_auto_funcEE = interp1d(elrs,rs_autoEE,bounds_error=False,fill_value=0.)
+        elrsx,rs_cross,rs_crossEE = np.loadtxt(rsx_template,unpack=True,usecols=[0,1,2])
+        self.rs_cross_func = interp1d(elrsx,rs_cross,bounds_error=False,fill_value=0.)
+        self.rs_cross_funcEE = interp1d(elrsx,rs_crossEE,bounds_error=False,fill_value=0.)
+
+        self.nu_rs = 145. ## hard coded from template
 
         if ksz_battaglia_test_csv is not None:
             ells,cls = np.loadtxt(ksz_battaglia_test_csv,delimiter=',',unpack=True)
@@ -177,7 +185,25 @@ class fgNoises(object):
         ans = self.c['A_ps_pol'] * (ell/self.c['ell0sec']) ** 2 * (nu1*nu2/self.c['nu0']**2) ** self.c['al_ps'] \
             * self.g_nu(nu1) * self.g_nu(nu2) / (self.g_nu(self.c['nu0']))**2
         return ans
+    
+    def rs_nu(self,nu):
+        return (nu/self.nu_rs)**4
 
+    def rs_auto(self,ell,nu1,nu2):
+        ans = self.rs_auto_func(ell) * self.rs_nu(nu1) * self.rs_nu(nu2)
+        return ans
+
+    def rs_cross(self,ell,nu):
+        ans = self.rs_cross_func(ell) * self.rs_nu(nu)
+        return ans
+
+    def rs_autoEE(self,ell,nu1,nu2):
+        ans = self.rs_auto_funcEE(ell) * self.rs_nu(nu1) *self.rs_nu(nu2)
+        return ans
+
+    def rs_crossEE(self,ell,nu):
+        ans = self.rs_cross_funcEE(ell) * self.rs_nu(nu)
+        return ans
 
 
 class fgGenerator(fgNoises):

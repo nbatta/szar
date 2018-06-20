@@ -159,7 +159,7 @@ for expName,col in zip(expList,colList):
 pl.legend(labsize=9)
 pl._ax.set_ylim(1,5.e4) # fsky
 pl._ax.set_xlim(0.,3.)
-pl.done(outDir+"Nofz.png")
+pl.done(outDir+"clNofz.pdf")
 
 fsense[fsense>10.] = np.nan
 from orphics.io import Plotter
