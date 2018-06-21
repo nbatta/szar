@@ -69,7 +69,7 @@ v3dell)
         f_nu_tsz = f_nu(self.cc.c,np.array(freqs)) 
         f_nu_cmb = f_nu_tsz*0.0 + 1.
         f_nu_cib = self.fgs.f_nu_cib(np.array(freqs))
-        f_nu_rsx = self.fgs.f_nu_rs(np.array(freqs))
+        f_nu_rsx = self.fgs.rs_nu(np.array(freqs))
 
         for ii in range(len(self.evalells)):
 
@@ -112,7 +112,7 @@ v3dell)
 
             totfgrs = (self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
                        self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.rs_auto(self.evalells[ii],fq_mat,fq_mat_t) + \
-                       self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) + \
+                       self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) \
                       / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii] ) * 2.* np.pi 
 
             totfg_cib = (self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) \

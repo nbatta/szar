@@ -36,7 +36,7 @@ class fgNoises(object):
     Returns fgPower * l(l+1)/2pi in uK^2                                                                                            
     '''
 
-    def __init__(self,constDict,ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',tsz_cib_file='input/sz_x_cib_template.dat',ksz_battaglia_test_csv=None,tsz_battaglia_template_csv="input/sz_template_battaglia.csv",rs_template="input/fiducial_scalCls_lensed_5_5.dat",rsx_template="input/fiducial_scalCls_lensed_1_5.dat",components=None,lmax=None):
+    def __init__(self,constDict,ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt',tsz_cib_file='input/sz_x_cib_template.txt',ksz_battaglia_test_csv=None,tsz_battaglia_template_csv="input/sz_template_battaglia.csv",rs_template="input/fiducial_scalCls_lensed_5_5.txt",rsx_template="input/fiducial_scalCls_lensed_1_5.txt",components=None,lmax=None):
         self.c = constDict
         el,ksz = np.loadtxt(ksz_file,unpack=True)
         self.ksz_func = interp1d(el,ksz,bounds_error=False,fill_value=0.)
