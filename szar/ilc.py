@@ -26,6 +26,7 @@ class ILC_simple:
 
         self.dell = dell
         self.evalells = np.arange(2,lmax,self.dell)
+        self.N_ll_noILC = self.evalells*0.0
         self.N_ll_tsz = self.evalells*0.0
         self.N_ll_cmb = self.evalells*0.0
         self.N_ll_rsx = self.evalells*0.0
@@ -85,12 +86,12 @@ v3dell)
                     ndiags.append(inst_noise)
                 nells = np.diag(np.array(ndiags))
                 # Adding in atmo. freq-freq correlations 
-                nells[0,1] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[1,0] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[2,3] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[3,2] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[4,5] = N_ell_T_LA[8,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[5,4] = N_ell_T_LA[8,ii]/ self.cc.c['TCMBmuK']**2.
+                #nells[0,1] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
+                #nells[1,0] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
+                #nells[2,3] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
+                #nells[3,2] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
+                #nells[4,5] = N_ell_T_LA[8,ii]/ self.cc.c['TCMBmuK']**2.
+                #nells[5,4] = N_ell_T_LA[8,ii]/ self.cc.c['TCMBmuK']**2.
 
             elif v3mode==3:
                 ndiags = []
@@ -99,12 +100,14 @@ v3dell)
                     ndiags.append(inst_noise)
                 nells = np.diag(np.array(ndiags))
                 # Adding in atmo. freq-freq correlations
-                nells[0,1] = N_ell_T_LA[5,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[1,0] = N_ell_T_LA[5,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[2,3] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[3,2] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[3,4] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[4,3] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
+                #nells[0,1] = N_ell_T_LA[5,ii]/ self.cc.c['TCMBmuK']**2.
+                #nells[1,0] = N_ell_T_LA[5,ii]/ self.cc.c['TCMBmuK']**2.
+                #nells[2,3] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
+                #nells[3,2] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
+                #nells[3,4] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
+                #nells[4,3] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
+
+            self.N_ll_noILC[ii] = nells[3,3]
 
             totfg = (self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
                       self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) \
@@ -127,7 +130,7 @@ v3dell)
                      / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
 
             N_ll_for_tsz = nells + totfg + cmb_els + ksz 
-            N_ll_for_cmb = nells + totfg + tsz + ksz
+            N_ll_for_cmb = nells + totfg + tsz + ksz 
             N_ll_for_rsx = nells + totfg + tsz + ksz + cmb_els
 
             N_ll_for_tsz_c_cmb = nells + totfg 
@@ -247,23 +250,28 @@ v3dell)
 
         return ellMids,cls_out,errs,sn
 
-    def Forecast_Cellrsx(self,ellBinEdges,fsky):
+    def Forecast_Cellrsx(self,ellBinEdges,fsky,option='None'):
 
         ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1]) / 2
 
         cls_rsx = self.fgs.rs_cross(self.evalells,self.freq[0]) / self.cc.c['TCMBmuK']**2. \
                 / ((self.evalells+1.)*self.evalells) * 2.* np.pi
 
-        #cls_rsx = cls_tsz / (f_nu(self.cc.c,self.freq[0]))**2  # Normalized to get Cell^yy 
+        cls_rsx = cls_rsx / (self.fgs.rs_nu(self.freq[0]))  # Normalized to get Cell^rsrs fiducial 
 
-        #LF = LensForecast()
-        #LF.loadGenericCls("rsx",self.evalells,cls_yy,self.evalells,self.N_ll_tsz_c_cib)
-        
-        #sn,errs = LF.sn(ellBinEdges,fsky,"rsx") # not squared 
+        LF = LensForecast()
+        if (option=='None'):        
+            LF.loadGenericCls("rr",self.evalells,cls_rsx,self.evalells,self.N_ll_rsx)
+        elif (option=='NoILC'):
+            LF.loadGenericCls("rr",self.evalells,cls_rsx,self.evalells,self.N_ll_noILC)
+        else:
+            return "Wrong option"
 
-        #cls_out = np.interp(ellMids,self.evalells,cls_rsx)
+        sn,errs = LF.sn(ellBinEdges,fsky,"rr") # not squared 
 
-        return 0 #ellMids,cls_out,errs,sn
+        cls_out = np.interp(ellMids,self.evalells,cls_rsx)
+
+        return ellMids,cls_out,errs,sn
 
 
     def PlotyWeights(self,outfile):
