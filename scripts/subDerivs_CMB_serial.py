@@ -12,13 +12,13 @@ from configparser import SafeConfigParser
 #expList = ['SO-v2C','SO-v2C-6m']
 #expList = ['S4-1.0-CDT-max']#,'S4-1.5-CDT']
 #expList = ['SO-v3-base-40','SO-v3-goal-40','SO-v3-base-20']
-expList = ['CMB-Probe-v3-1']
+#expList = ['CMB-Probe-v3-1']
 #expList = ['AdvACT_S19']
-#expList = ['SO-v3-goal-20','SO-v3-base-10','SO-v3-goal-10']
+expList = ['SO-v3-base-40']#,'SO-v3-base-10','SO-v3-goal-10']
 
 #'SO-5m-noatm','SO-6m-noatm','SO-7m-noatm',
 #expList = ['AdvAct']
-calList = ['CMB_all_PICO']#,'owl1']#,'owl1']
+calList = ['CMB_all']#,'owl1']#,'owl1']
 
 gridName = "grid-default"
 

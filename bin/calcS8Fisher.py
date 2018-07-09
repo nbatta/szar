@@ -84,6 +84,8 @@ err = np.sqrt(np.diagonal(inv))[len(origParams):]
 
 print(err)
 
+print(bigDataDir+"savedS8Fisher_"+saveId+"_"+saveName+".pkl")
+
 # import camb
 # from szar.counts import ClusterCosmology
 

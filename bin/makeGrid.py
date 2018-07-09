@@ -137,112 +137,124 @@ if rank==0:
     constDict = dict_from_section(Config,'constants')
 
     if doLens:
-        pols = Config.get(lensName,'polList').split(',')
-        miscentering = Config.getboolean(lensName,'miscenter')
-        delens = Config.getboolean(lensName,'delens')
-        freq_to_use = Config.getfloat(lensName,'freq')
-        ind = np.where(np.isclose(freq,freq_to_use))
-        beamFind = np.array(beam)[ind]
-        noiseFind = np.array(noise)[ind]
-        assert beamFind.size==1
-        assert noiseFind.size==1
-        
-       
-        testFreq = freq_to_use
-        from szar.foregrounds import fgNoises
-        fgs = fgNoises(constDict,ksz_battaglia_test_csv="data/ksz_template_battaglia.csv",tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
-        tcmbmuk = constDict['TCMB'] * 1.0e6
-        ksz = lambda x: fgs.ksz_temp(x)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
-        radio = lambda x: fgs.rad_ps(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
-        cibp = lambda x: fgs.cib_p(x,testFreq,testFreq) /x/(x+1.)*2.*np.pi/ tcmbmuk**2.
-        cibc = lambda x: fgs.cib_c(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
-        tsz = lambda x: fgs.tSZ(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
 
-        fgFunc =  lambda x: ksz(x)+radio(x)+cibp(x)+cibc(x)+tsz(x)
-
-        beamTX = 5.0
-        noiseTX = 42.0
-        tellminX = 2
-        tellmaxX = 3000
-        lkneeTX = 0
-        alphaTX = 1
-        fgFuncX = None
-       
-
-        beamPX = beamTY = beamPY = beamFind
-        beamY = beamTY
-        noiseTY = noiseFind
-        noisePX = np.sqrt(2.)*noiseTY
-        noisePY = np.sqrt(2.)*noiseTY
-        pellminX = pellmin
-        pellmaxX = pellmax
-        pellminY = pellmin
-        pellmaxY = pellmax
-        tellminY = tellmin
-        tellmaxY = tellmax
-        lkneeTY = lkneeT
-        lkneePX = lkneePY = lkneeP
-        alphaTY = alphaT
-        alphaPX = alphaPY = alphaP
-        if doFg:
-            fgFuncY = fgFunc
-        else:
-            fgFuncY = None
-        
-
-        import flipper.liteMap as lm
-        from alhazen.quadraticEstimator import NlGenerator,getMax
-        deg = 5.
-        px = 1.0
-        dell = 10
-        gradCut = 2000
-        kellmin = 10
-        lmap = lm.makeEmptyCEATemplate(raSizeDeg=deg, decSizeDeg=deg,pixScaleXarcmin=px,pixScaleYarcmin=px)
-        kellmax = max(tellmax,pellmax)
-        from orphics.cosmology import Cosmology
-        cc = Cosmology(lmax=int(kellmax),pickling=True)
-        theory = cc.theory
-        bin_edges = np.arange(kellmin,kellmax,dell)
-        myNls = NlGenerator(lmap,theory,bin_edges,gradCut=gradCut)
-        nTX,nPX,nTY,nPY = myNls.updateNoiseAdvanced(beamTX,noiseTX,beamPX,noisePX,tellminX,tellmaxX,pellminX,pellmaxX,beamTY,noiseTY,beamPY,noisePY,tellminY,tellmaxY,pellminY,pellmaxY,(lkneeTX,lkneePX),(alphaTX,alphaPX),(lkneeTY,lkneePY),(alphaTY,alphaPY),None,None,None,None,None,None,None,None,fgFuncX,fgFuncY,None,None,None,None,None,None,None,None)
-
-
-        ls,Nls,ells,dclbb,efficiency = myNls.getNlIterative(pols,kellmin,kellmax,tellmax,pellmin,pellmax,dell=dell,halo=True)
-
-        ls = ls[1:-1]
-        Nls = Nls[1:-1]
+        if v3mode>-1:
+            #     0: threshold, 
+            #     1: baseline, 
+            #     2: goal
+            senstr = ['threshold','base','goal'][v3mode]
+            fstr = expName[-2:]
+            fskystr = {'10':'4000','20':'8000','40':'16000'}[fstr]
             
+            ls,Nls,_ = np.loadtxt(bigDataDir+"so_v3_halo_lensing_nmv_%s_%s.txt" % (senstr,fskystr),unpack=True)
+            print("=== Loaded SO Halo Lensing Noise ===")
+        else:
+            pols = Config.get(lensName,'polList').split(',')
+            miscentering = Config.getboolean(lensName,'miscenter')
+            delens = Config.getboolean(lensName,'delens')
+            freq_to_use = Config.getfloat(lensName,'freq')
+            ind = np.where(np.isclose(freq,freq_to_use))
+            beamFind = np.array(beam)[ind]
+            noiseFind = np.array(noise)[ind]
+            assert beamFind.size==1
+            assert noiseFind.size==1
 
-        from scipy.interpolate import interp1d
 
-        from orphics.io import Plotter
-        ellkk = np.arange(2,9000,1)
-        Clkk = theory.gCl("kk",ellkk)    
-        #pl = Plotter(scaleY='log',scaleX='log')
-        #pl.add(ellkk,4.*Clkk/2./np.pi)
+            testFreq = freq_to_use
+            from szar.foregrounds import fgNoises
+            fgs = fgNoises(constDict,ksz_battaglia_test_csv="data/ksz_template_battaglia.csv",tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
+            tcmbmuk = constDict['TCMB'] * 1.0e6
+            ksz = lambda x: fgs.ksz_temp(x)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
+            radio = lambda x: fgs.rad_ps(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
+            cibp = lambda x: fgs.cib_p(x,testFreq,testFreq) /x/(x+1.)*2.*np.pi/ tcmbmuk**2.
+            cibc = lambda x: fgs.cib_c(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
+            tsz = lambda x: fgs.tSZ(x,testFreq,testFreq)/x/(x+1.)*2.*np.pi/ tcmbmuk**2.
+
+            fgFunc =  lambda x: ksz(x)+radio(x)+cibp(x)+cibc(x)+tsz(x)
+
+            beamTX = 5.0
+            noiseTX = 42.0
+            tellminX = 2
+            tellmaxX = 3000
+            lkneeTX = 0
+            alphaTX = 1
+            fgFuncX = None
 
 
-        # from orphics.tools.stats import bin1D
-        # dls = np.diff(ls)[0]
-        # bin_edges_nls = np.arange(ls[0]-dls/2.,ls[-1]+dls*3./2.,dls)
+            beamPX = beamTY = beamPY = beamFind
+            beamY = beamTY
+            noiseTY = noiseFind
+            noisePX = np.sqrt(2.)*noiseTY
+            noisePY = np.sqrt(2.)*noiseTY
+            pellminX = pellmin
+            pellmaxX = pellmax
+            pellminY = pellmin
+            pellmaxY = pellmax
+            tellminY = tellmin
+            tellmaxY = tellmax
+            lkneeTY = lkneeT
+            lkneePX = lkneePY = lkneeP
+            alphaTY = alphaT
+            alphaPX = alphaPY = alphaP
+            if doFg:
+                fgFuncY = fgFunc
+            else:
+                fgFuncY = None
 
-        # print ls
-        # print dls
-        # print bin_edges_nls
-        # print bin_edges
-        
-        # binner1d = bin1D(bin_edges_nls)
-        # ellcls , clkk_binned = binner1d.binned(ellkk,Clkk)
 
-        clfunc = interp1d(ellkk,Clkk,bounds_error=False,fill_value="extrapolate")
-        clkk_binned = clfunc(ls)
+            import flipper.liteMap as lm
+            from alhazen.quadraticEstimator import NlGenerator,getMax
+            deg = 5.
+            px = 1.0
+            dell = 10
+            gradCut = 2000
+            kellmin = 10
+            lmap = lm.makeEmptyCEATemplate(raSizeDeg=deg, decSizeDeg=deg,pixScaleXarcmin=px,pixScaleYarcmin=px)
+            kellmax = max(tellmax,pellmax)
+            from orphics.cosmology import Cosmology
+            cc = Cosmology(lmax=int(kellmax),pickling=True)
+            theory = cc.theory
+            bin_edges = np.arange(kellmin,kellmax,dell)
+            myNls = NlGenerator(lmap,theory,bin_edges,gradCut=gradCut)
+            nTX,nPX,nTY,nPY = myNls.updateNoiseAdvanced(beamTX,noiseTX,beamPX,noisePX,tellminX,tellmaxX,pellminX,pellmaxX,beamTY,noiseTY,beamPY,noisePY,tellminY,tellmaxY,pellminY,pellmaxY,(lkneeTX,lkneePX),(alphaTX,alphaPX),(lkneeTY,lkneePY),(alphaTY,alphaPY),None,None,None,None,None,None,None,None,fgFuncX,fgFuncY,None,None,None,None,None,None,None,None)
 
-        #pl.add(ls,4.*clkk_binned/2./np.pi,ls="none",marker="x")
-        #pl.add(ls,4.*Nls/2./np.pi,ls="--")
-        np.savetxt(bigDataDir+"nlsave_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
 
-        Nls += clkk_binned
-        np.savetxt(bigDataDir+"nlsaveTot_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
+            ls,Nls,ells,dclbb,efficiency = myNls.getNlIterative(pols,kellmin,kellmax,tellmax,pellmin,pellmax,dell=dell,halo=True)
+
+            ls = ls[1:-1]
+            Nls = Nls[1:-1]
+
+
+            from scipy.interpolate import interp1d
+
+            from orphics.io import Plotter
+            ellkk = np.arange(2,9000,1)
+            Clkk = theory.gCl("kk",ellkk)    
+            #pl = Plotter(scaleY='log',scaleX='log')
+            #pl.add(ellkk,4.*Clkk/2./np.pi)
+
+
+            # from orphics.tools.stats import bin1D
+            # dls = np.diff(ls)[0]
+            # bin_edges_nls = np.arange(ls[0]-dls/2.,ls[-1]+dls*3./2.,dls)
+
+            # print ls
+            # print dls
+            # print bin_edges_nls
+            # print bin_edges
+
+            # binner1d = bin1D(bin_edges_nls)
+            # ellcls , clkk_binned = binner1d.binned(ellkk,Clkk)
+
+            clfunc = interp1d(ellkk,Clkk,bounds_error=False,fill_value="extrapolate")
+            clkk_binned = clfunc(ls)
+
+            #pl.add(ls,4.*clkk_binned/2./np.pi,ls="none",marker="x")
+            #pl.add(ls,4.*Nls/2./np.pi,ls="--")
+            np.savetxt(bigDataDir+"nlsave_"+expName+"_"+lensName+".txt",np.vstack((ls,Nls)).transpose())
+
+            Nls += clkk_binned
+        np.savetxt(bigDataDir+"nlsaveTot_"+expName+"_"+lensName+"_v3_"+str(v3mode)+".txt",np.vstack((ls,Nls)).transpose())
         
         #pl.add(ls,4.*Nls/2./np.pi,ls="-.")
         #pl.legendOn(loc='lower left',labsize=10)
@@ -252,8 +264,8 @@ if rank==0:
     else:
         ls = None
         Nls = None
-        beamY = None
-        miscentering = None
+        #beamY = None
+        #miscentering = None
         #doRayDeriv = False
         rayFid = None
         rayStep = None
@@ -285,8 +297,8 @@ else:
     rayStep = None
     doLens = None
     doSZ = None
-    beamY = None
-    miscentering = None
+    #beamY = None
+    #miscentering = None
     mgrid = None
     zgrid = None
     ls = None
@@ -318,8 +330,8 @@ rayFid = comm.bcast(rayFid, root = 0)
 rayStep = comm.bcast(rayStep, root = 0)
 doLens = comm.bcast(doLens, root = 0)
 doSZ = comm.bcast(doSZ, root = 0)
-beamY = comm.bcast(beamY, root = 0)
-miscentering = comm.bcast(miscentering, root = 0)
+#beamY = comm.bcast(beamY, root = 0)
+#miscentering = comm.bcast(miscentering, root = 0)
 mgrid = comm.bcast(mgrid, root = 0)
 zgrid = comm.bcast(zgrid, root = 0)
 ls = comm.bcast(ls, root = 0)

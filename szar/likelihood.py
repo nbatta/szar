@@ -521,20 +521,20 @@ class MockCatalog:
 
         hdu.writeto(filedir+filename+'.fits',overwrite=True)
 
-        clusterID = ind.astype(str)
-        hdu = fits.BinTableHDU.from_columns(
-            [fits.Column(name='Cluster_ID', format='20A', array=clusterID),
-             fits.Column(name='x_ind', format='E', array=xsave),
-             fits.Column(name='y_ind', format='E', array=ysave),
-             fits.Column(name='RA', format='E', array=RAdeg),
-             fits.Column(name='DEC', format='E', array=DECdeg),
-             fits.Column(name='redshift', format='E', array=sampZ),
-             fits.Column(name='redshiftErr', format='E', array=sampZ*0.0),
-             fits.Column(name='fixed_y_c', format='E', array=sampY0*1e4),
-             fits.Column(name='err_fixed_y_c', format='E', array=sampY0err*1e4),
-             fits.Column(name='fixed_SNR', format='E', array=SNR),])
-
-        hdu.writeto(filedir+filename+'all.fits',overwrite=True)
+#        clusterID = ind.astype(str)
+#        hdu = fits.BinTableHDU.from_columns(
+#            [fits.Column(name='Cluster_ID', format='20A', array=clusterID),
+#             fits.Column(name='x_ind', format='E', array=xsave),
+#             fits.Column(name='y_ind', format='E', array=ysave),
+#             fits.Column(name='RA', format='E', array=RAdeg),
+#             fits.Column(name='DEC', format='E', array=DECdeg),
+#             fits.Column(name='redshift', format='E', array=sampZ),
+#             fits.Column(name='redshiftErr', format='E', array=sampZ*0.0),
+#             fits.Column(name='fixed_y_c', format='E', array=sampY0*1e4),
+#             fits.Column(name='err_fixed_y_c', format='E', array=sampY0err*1e4),
+#             fits.Column(name='fixed_SNR', format='E', array=SNR),])
+#
+#        hdu.writeto(filedir+filename+'all.fits',overwrite=True)
 
         return 0
 
