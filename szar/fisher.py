@@ -306,12 +306,18 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
         print("No other fishers found.")
         otherFishers = []
     for otherFisherFile in otherFishers:
+        do_other = True
         try:
             other_fisher = np.loadtxt(otherFisherFile)
         except:
-            other_fisher = np.loadtxt(otherFisherFile,delimiter=',')
-        other_fisher = pad_fisher(other_fisher,numLeft)
-        Fisher += other_fisher
+            try:
+                other_fisher = np.loadtxt(otherFisherFile,delimiter=',')
+            except:
+                do_other = False
+                pass
+        if do_other:
+            other_fisher = pad_fisher(other_fisher,numLeft)
+            Fisher += other_fisher
             
         
 
