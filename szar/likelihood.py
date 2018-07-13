@@ -390,8 +390,6 @@ class MockCatalog:
 
         samples = self.HMF.mcsample_mf(200.,Ntot100,mthresh = mlim,zthresh = zlim)
 
-        #print mlim
-        
         return samples[:,0],samples[:,1]
 
     def plot_basic_sample(self,fname='default_mockcat.png'):
@@ -413,9 +411,9 @@ class MockCatalog:
         OL = 1.-Om 
         print "Omega_M", Om
 
+        #the call now includes cosmological dependences
         for i in range(nsamps):
             Ytilde[i], theta0, Qfilt = simsTools.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM[i]/(self.param_vals['H0']/100.)), sampZ[i], self.tckQFit,sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
-            #simsTools.y0FromLogM500(np.log10(10**sampM[i]/(self.HMF.cc.H0/100.)), sampZ[i], self.tckQFit,)
         #add scatter of 20% percent
         np.random.seed(self.seedval)
         ymod = np.exp(self.scat_val * np.random.randn(nsamps))
@@ -452,7 +450,7 @@ class MockCatalog:
         plt.plot(sampZ[ind],sampM[ind],'o')
         plt.savefig(filename1+'.png', bbox_inches='tight',format='png')
 
-        nmap = np.flipud(self.rms_noise_map)#[::-1,:]
+        nmap = self.rms_noise_map # np.flipud(self.rms_noise_map)#[::-1,:]
         plt.figure(figsize=(40,6))
         plt.imshow(nmap,cmap='Blues')
         plt.plot(xsave[ind],ysave[ind],'ko')
@@ -462,7 +460,9 @@ class MockCatalog:
         return xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM
 
     def write_test_cat_toFits(self, filedir,filename):
-
+        '''
+        Write out the catalog
+        '''
         f1 = filedir+filename+'_testsamp_mz'
         sampZ,sampM = self.plot_basic_sample(f1)
         sampZerr = sampZ * 0.0
@@ -483,27 +483,25 @@ class MockCatalog:
         return 0
 
     def write_obs_cat_toFits(self, filedir,filename):
-        #fsky = self.fsky
-        #xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = self.create_obs_sample(fsky)
-        # ADD RA and DEC to calatog
+        '''
+        Write out the catalog
+        '''
         f1 = filedir+filename+'_mockobscat'
         f2 = filedir+filename+'_obs_mock_footprint'
 
         xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = self.plot_obs_sample(filename1=f1,filename2=f2)
 
         ind = np.where(SNR >= 4.5)[0]
-        #print "number of clusters", len(ind)
         ind2 = np.where(SNR >= 5.6)[0]
         print "number of clusters SNR >= 5.6", len(ind2), " SNR >= 4.5",len(ind)
-
 
         RAdeg = xsave*0.0
         DECdeg = ysave*0.0
         count = 0
         for xsv, ysv in zip(xsave,ysave):
             ra,dec = self.wcs.pix2wcs(xsv,ysv)
-            RAdeg[count] = ra#360. - ra
-            DECdeg[count] = dec#-1*dec
+            RAdeg[count] = ra
+            DECdeg[count] = dec
             count +=1
 
         clusterID = ind.astype(str)
@@ -520,21 +518,6 @@ class MockCatalog:
              fits.Column(name='fixed_SNR', format='E', array=SNR[ind]),])
 
         hdu.writeto(filedir+filename+'.fits',overwrite=True)
-
-#        clusterID = ind.astype(str)
-#        hdu = fits.BinTableHDU.from_columns(
-#            [fits.Column(name='Cluster_ID', format='20A', array=clusterID),
-#             fits.Column(name='x_ind', format='E', array=xsave),
-#             fits.Column(name='y_ind', format='E', array=ysave),
-#             fits.Column(name='RA', format='E', array=RAdeg),
-#             fits.Column(name='DEC', format='E', array=DECdeg),
-#             fits.Column(name='redshift', format='E', array=sampZ),
-#             fits.Column(name='redshiftErr', format='E', array=sampZ*0.0),
-#             fits.Column(name='fixed_y_c', format='E', array=sampY0*1e4),
-#             fits.Column(name='err_fixed_y_c', format='E', array=sampY0err*1e4),
-#             fits.Column(name='fixed_SNR', format='E', array=SNR),])
-#
-#        hdu.writeto(filedir+filename+'all.fits',overwrite=True)
 
         return 0
 
