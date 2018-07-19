@@ -306,12 +306,18 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
         print("No other fishers found.")
         otherFishers = []
     for otherFisherFile in otherFishers:
+        do_other = True
         try:
             other_fisher = np.loadtxt(otherFisherFile)
         except:
-            other_fisher = np.loadtxt(otherFisherFile,delimiter=',')
-        other_fisher = pad_fisher(other_fisher,numLeft)
-        Fisher += other_fisher
+            try:
+                other_fisher = np.loadtxt(otherFisherFile,delimiter=',')
+            except:
+                do_other = False
+                pass
+        if do_other:
+            other_fisher = pad_fisher(other_fisher,numLeft)
+            Fisher += other_fisher
             
         
 
@@ -330,9 +336,14 @@ def getFisher(N_fid,paramList,priorNameList,priorValueList,derivRoot,pzcutoff,z_
     for param1,param2 in paramCombs:
         i = paramList.index(param1)
         j = paramList.index(param2)
-        if not(param1=='tau' or param2=='tau'): 
-            new_z_edges, dN1 = rebinN(np.load(derivRoot+param1+".npy"),pzcutoff,z_edges)#,mass_bin=None)
-            new_z_edges, dN2 = rebinN(np.load(derivRoot+param2+".npy"),pzcutoff,z_edges)#,mass_bin=None)
+        if not(param1=='tau' or param2=='tau'):
+            ppfstr1 = ""
+            ppfstr2 = ""
+            
+            if param1=='w0': ppfstr1 = '_ppf'
+            if param2=='w0': ppfstr2 = '_ppf'
+            new_z_edges, dN1 = rebinN(np.load(derivRoot+param1+ppfstr1+".npy"),pzcutoff,z_edges)#,mass_bin=None)
+            new_z_edges, dN2 = rebinN(np.load(derivRoot+param2+ppfstr2+".npy"),pzcutoff,z_edges)#,mass_bin=None)
             dN1 = dN1*fsky
             dN2 = dN2*fsky
 

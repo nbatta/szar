@@ -205,8 +205,8 @@ def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,z_edges,fsky,lmax=1000):
 class ClusterCosmology(Cosmology):
     
     def __init__(self,paramDict=cosmo.defaultCosmology,constDict=cosmo.defaultConstants,lmax=None,
-                 clTTFixFile=None,skipCls=False,pickling=False,fill_zero=True,dimensionless=True,verbose=True):
-        Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls,pickling,fill_zero,dimensionless=dimensionless,verbose=verbose)
+                 clTTFixFile=None,skipCls=False,pickling=False,fill_zero=True,dimensionless=True,verbose=True,skipPower=True,skip_growth=True):
+        Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls,pickling,fill_zero,dimensionless=dimensionless,verbose=verbose,skipPower=skipPower,skip_growth=skip_growth)
         self.rhoc0om = self.rho_crit0H100*self.om
         
     def E_z(self,z):
