@@ -53,6 +53,8 @@ print(("Actual number of clusters: ", actualN))
 FisherTot, paramList = sfisher.cluster_fisher_from_config(Config,expName,gridName,calName,fishName)
 ##########################
 
+print FisherTot[6:8,6:8], paramList[6:8]
+
 if (YWLcorrflag == 0 and FisherTot[-1,-1] == 0):
     FisherTot = FisherTot[:len(paramList)-2,:len(paramList)-2]
     paramList = paramList[:len(paramList)-2]
@@ -60,6 +62,9 @@ if (YWLcorrflag == 0 and FisherTot[-1,-1] == 0):
 pickle.dump((paramList,FisherTot),open(bigDataDir+"savedFisher_"+saveId+"_"+saveName+".pkl",'wb'))
     
 Finv = np.linalg.inv(FisherTot)
+
+print  np.linalg.det(Finv[6:8,6:8])
+print "FOM", 1./np.sqrt(np.linalg.det(Finv[6:8,6:8]))
 
 errs = np.sqrt(np.diagonal(Finv))
 errDict = {}

@@ -38,7 +38,7 @@ class SZ_Cluster_Model:
                  dell=10,pmaxN=5,numps=1000,nMax=1, \
                  ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1, qmin=5., \
                  ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt', \
-                 tsz_cib_file='input/sz_x_cib_template.dat',fg=True,tsz_cib=False,
+                 tsz_cib_file='input/sz_x_cib_template.txt',fg=True,tsz_cib=False,
                  tsz_battaglia_template_csv="input/sz_template_battaglia.csv",v3mode=-1,fsky=None):
 
         self.cc = clusterCosmology
