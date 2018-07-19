@@ -30,7 +30,6 @@ if debug: print("Starting common module imports...")
 from mpi4py import MPI
 from szar.counts import ClusterCosmology,Halo_MF,getNmzq
 from szar.szproperties import SZ_Cluster_Model
-import szar.fisher as sfisher
 import numpy as np
     
 if debug: print("Finished common module imports.")
@@ -56,11 +55,10 @@ if rank==0:
     if debug: print("Finished rank 0 imports. Starting rank 0 work...")
     
 
-    inParamList = sys.argv[1].split(',')
-    expName = sys.argv[2]
-    gridName = sys.argv[3]
-    calName = sys.argv[4]
-    calFile = sys.argv[5]
+    expName = sys.argv[1]
+    gridName = sys.argv[2]
+    calName = sys.argv[3]
+    calFile = sys.argv[4]
 
     # Let's read in all parameters that can be varied by looking
     # for those that have step sizes specified. All the others
@@ -70,17 +68,14 @@ if rank==0:
     Config.optionxform=str
     Config.read(iniFile)
     bigDataDir = Config.get('general','bigDataDirectory')
+    waDerivRoot = bigDataDir+Config.get('general','waDerivRoot')
 
-    manualParamList = Config.get('general','manualParams').split(',')
 
-    paramList = [] # the parameters that can be varied
     fparams = {}   # the 
     stepSizes = {}
     for (key, val) in Config.items('params'):
-        if key in manualParamList: continue
         if ',' in val:
             param, step = val.split(',')
-            paramList.append(key)
             fparams[key] = float(param)
             stepSizes[key] = float(step)
         else:
@@ -88,28 +83,11 @@ if rank==0:
 
 
 
-    if inParamList[0]=="allParams":
-        assert len(inParamList)==1, "I'm confused why you'd specify more params with allParams."
-        
-        inParamList = paramList
 
-    else:
-        for param in inParamList:
-            assert param in paramList, param + " not found in ini file with a specified step size."
-            assert param in list(stepSizes.keys()), param + " not found in stepSizes dict. Looks like a bug in the code."
+    w0Step = stepSizes['w0']
 
-
-
-    print(paramList)
-
-    numParams = len(inParamList)
-    neededCores = 2*numParams+1
-    try:
-        assert numcores==neededCores, "I need 2N+1 cores to do my job for N params. \
-        You gave me "+str(numcores)+ " core(s) for "+str(numParams)+" param(s)."
-    except:
-        print inParamList
-        sys.exit(0)
+    assert numcores==3, "I need 3 cores to do my job for 1 params. \
+    You gave me "+str(numcores)+ " core(s) for 1 param(s)."
 
 
     version = Config.get('general','version')
@@ -136,7 +114,6 @@ if rank==0:
     except:
         v3mode = -1
 
-
     clttfile = Config.get('general','clttfile')
 
     # get s/n q-bins
@@ -155,8 +132,8 @@ if rank==0:
     if debug: print("Finished rank 0 work.")
 
 else:
-    inParamList = None
-    stepSizes = None
+    waDerivRoot = None
+    w0Step = None
     fparams = None
     mexp_edges = None
     z_edges = None
@@ -178,8 +155,8 @@ else:
     v3mode = None
 
 if rank==0: print("Broadcasting...")
-inParamList = comm.bcast(inParamList, root = 0)
-stepSizes = comm.bcast(stepSizes, root = 0)
+waDerivRoot = comm.bcast(waDerivRoot, root = 0)
+w0Step = comm.bcast(w0Step, root = 0)
 fparams = comm.bcast(fparams, root = 0)
 mexp_edges = comm.bcast(mexp_edges, root = 0)
 z_edges = comm.bcast(z_edges, root = 0)
@@ -204,57 +181,60 @@ if rank==0: print("Broadcasted.")
 myParamIndex = (rank+1)/2-1
 passParams = fparams.copy()
 
+    
+if rank==1:
+    fileSuff = "Up"
+    passParams['w0'] += w0Step/2.
+elif rank==2:
+    fileSuff = "Dn"
+    passParams['w0'] -= w0Step/2.
 
-# If boss, do the fiducial. If odd rank, the minion is doing an "up" job, else doing a "down" job
-if rank==0:
-    pass
-elif rank%2==1:
-    myParam = inParamList[myParamIndex]
-    passParams[myParam] = fparams[myParam] + stepSizes[myParam]/2.
-elif rank%2==0:
-    myParam = inParamList[myParamIndex]
-    passParams[myParam] = fparams[myParam] - stepSizes[myParam]/2.
+if rank!=0:    
+    pFile = lambda z: waDerivRoot+str(w0Step)+fileSuff+"_w_matterpower_%.2f.dat" % z
+    zcents = (z_edges[1:]+z_edges[:-1])/2.
+    for inum,z in enumerate(zcents):
+        kh,p = np.loadtxt(pFile(z),unpack=True)
+        if inum==0:
+            khorig = kh.copy()
+            pk = np.zeros((zcents.size,kh.size))
+        assert np.all(np.isclose(kh,khorig))
+        pk[inum,:] = p.copy()
+else:
+    kh = None
+    pk = None
 
+if rank==0: print("v3mode", v3mode)
 
-if rank!=0: print((rank,myParam,fparams[myParam],passParams[myParam]))
 cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
-HMF = Halo_MF(cc,mexp_edges,z_edges)
+HMF = Halo_MF(cc,mexp_edges,z_edges,kh=kh,powerZK=pk)
 HMF.sigN = siggrid.copy()
 SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha,v3mode=v3mode,fsky=fsky)
+
 if (YWLcorrflag == 1):
     dN_dmqz = HMF.N_of_mqz_SZ_corr(lndM*massMultiplier,qbin_edges,SZProf)
 else:
     dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbin_edges,SZProf)
 
 if rank==0: 
-    #np.save(bigDataDir+"N_dzmq_"+saveId+"_fid",dN_dmqz)
-    np.save(sfisher.fid_file(bigDataDir,saveId),getNmzq(dN_dmqz,mexp_edges,z_edges,qbin_edges))
-    dUps = {}
-    dDns = {}
+    np.save(bigDataDir+"N_mzq_"+saveId+"_w0_ppf_fid",getNmzq(dN_dmqz,mexp_edges,z_edges,qbin_edges))
 
     print("Waiting for ups and downs...")
     for i in range(1,numcores):
         data = np.empty(dN_dmqz.shape, dtype=np.float64)
         comm.Recv(data, source=i, tag=77)
-        myParamIndex = (i+1)/2-1
-        if i%2==1:
-            dUps[inParamList[myParamIndex]] = data.copy()
-        elif i%2==0:
-            dDns[inParamList[myParamIndex]] = data.copy()
-
-    for param in inParamList:
-        # dN = (dUps[param]-dDns[param])/stepSizes[param]
-        # np.save(bigDataDir+"dNup_dzmq_"+saveId+"_"+param,dUps[param])
-        # np.save(bigDataDir+"dNdn_dzmq_"+saveId+"_"+param,dDns[param])
-        # np.save(bigDataDir+"dN_dzmq_"+saveId+"_"+param,dN)
-        
-        Nup = getNmzq(dUps[param],mexp_edges,z_edges,qbin_edges)        
-        Ndn = getNmzq(dDns[param],mexp_edges,z_edges,qbin_edges)
-        dNdp = (Nup-Ndn)/stepSizes[param]
-        np.save(bigDataDir+"Nup_mzq_"+saveId+"_"+param,Nup)
-        np.save(bigDataDir+"Ndn_mzq_"+saveId+"_"+param,Ndn)
-        np.save(sfisher.deriv_root(bigDataDir,saveId)+param,dNdp)
-        
+        if i==1:
+            dUp = data.copy()
+        elif i==2:
+            dDn = data.copy()
+            
+            
+    Nup = getNmzq(dUp,mexp_edges,z_edges,qbin_edges)        
+    Ndn = getNmzq(dDn,mexp_edges,z_edges,qbin_edges)
+    dNdp = (Nup-Ndn)/w0Step
+    np.save(bigDataDir+"Nup_mzq_"+saveId+"_w0_ppf",Nup)
+    np.save(bigDataDir+"Ndn_mzq_"+saveId+"_w0_ppf",Ndn)
+    np.save(bigDataDir+"dNdp_mzq_"+saveId+"_w0_ppf",dNdp)
+    
 else:
     data = dN_dmqz.astype(np.float64)
     comm.Send(data, dest=0, tag=77)

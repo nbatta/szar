@@ -20,7 +20,7 @@ def f_nu(nu):
 
 class BattagliaReader(object):
 
-    def __init__(self,sim_path="/gpfs01/astro/workarea/msyriac/sims/ClusterSims/"):
+    def __init__(self,sim_path="/gpfs01/astro/workarea/msyriac/data/sims/battaglia/"):
         import camb
 
         self.root = sim_path
@@ -71,7 +71,7 @@ class BattagliaReader(object):
         self.files['gas'] = lambda massIndex, snap: self.root + "GEN_Cluster_MassGas_"+str(massIndex)+"L165.256.FBN2_snap"+str(snap)+"_comovFINE.d"
         self.files['y'] = lambda massIndex, snap: self.root + "GEN_Cluster_"+str(massIndex)+"L165.256.FBN2_snap"+str(snap)+"_comovFINE.d"
         self.files['ksz'] = lambda massIndex, snap: self.root + "GEN_Cluster_kSZ_"+str(massIndex)+"L165.256.FBN2_snap"+str(snap)+"_comovFINE.d"
-        self.files['kszN'] = lambda massIndex, snap: self.root + "GEN_Cluster_kSZ_"+str(massIndex)+"L165.256.FBN2_snap"+str(snap)+"MAT.d"
+        self.files['kszN'] = lambda massIndex, snap: self.root + "GEN_Cluster_kSZ_"+str(massIndex)+"L165.256.FBN2_snap"+str(snap)+"MAT2.d"
 
         self.PIX = 2048
         

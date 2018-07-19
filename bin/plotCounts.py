@@ -139,19 +139,22 @@ for expName,col in zip(expList,colList):
 
     currentAxis = plt.gca()
 
+    testcount = 0.
+
     zbins = z_edges #np.arange(0.,3.5,0.5)
     for zleft,zright in zip(zbins[:-1],zbins[1:]):
         zcent = (zleft+zright)/2.
         xerr = (zright-zleft)/2.
         N = Nofzs[np.logical_and(zrange>zleft,zrange<=zright)].sum()
         print(zcent,N)
+	testcount += N
         N2 = Nz[np.logical_and(zrange>zleft,zrange<=zright)].sum()
         currentAxis.add_patch(Rectangle((zcent - xerr+pad, 0), 2*xerr-pad/2., N, facecolor=col))#,alpha=0.5))
         #currentAxis.add_patch(Rectangle((zcent - xerr+pad+pad/3., 0), 2*xerr-pad/2., N2, facecolor=col))
     pl.add([0,0],[0,0],ls='-',linewidth=4,label=expName,color=col)
     massSense = lndM #*100./np.sqrt(Nmz)
     massSense = interpolate_grid(massSense,masses,zrange,10**mexp_new,z_new,regular=True)#,kind="cubic",bounds_error=False,fill_value=np.inf)
-    print((massSense.shape))
+    print((massSense.shape),testcount)
     fsense = massSense/np.sqrt(rn)
     
     
