@@ -332,7 +332,6 @@ class MockCatalog:
         bigDataDir = Config.get('general','bigDataDirectory')
         self.clttfile = Config.get('general','clttfile')
         self.constDict = dict_from_section(Config,'constants')
-        #version = Config.get('general','version')
 
         if mass_grid_log:
             logm_min,logm_max,logm_spacing = mass_grid_log
@@ -378,8 +377,9 @@ class MockCatalog:
         return ans
 
     def create_basic_sample(self,fsky):
-        # create simple mock catalog of Mass and Redshift 
-
+        '''
+        Create simple mock catalog of Mass and Redshift by sampling the mass function
+        '''
         if (self.rand):
             Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky))) ## Note for randoms increasing the number density by factor of 100
         else:
@@ -411,7 +411,7 @@ class MockCatalog:
         OL = 1.-Om 
         print "Omega_M", Om
 
-        #the call now includes cosmological dependences
+        #the function call now includes cosmological dependences
         for i in range(nsamps):
             Ytilde[i], theta0, Qfilt = simsTools.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM[i]/(self.param_vals['H0']/100.)), sampZ[i], self.tckQFit,sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
         #add scatter of 20% percent
