@@ -340,8 +340,6 @@ def getFisher(N_fid,paramList,priorNameList,priorValueList,derivRoot,pzcutoff,z_
             ppfstr1 = ""
             ppfstr2 = ""
             
-            if param1=='w0': ppfstr1 = '_ppf'
-            if param2=='w0': ppfstr2 = '_ppf'
             new_z_edges, dN1 = rebinN(np.load(derivRoot+param1+ppfstr1+".npy"),pzcutoff,z_edges)#,mass_bin=None)
             new_z_edges, dN2 = rebinN(np.load(derivRoot+param2+ppfstr2+".npy"),pzcutoff,z_edges)#,mass_bin=None)
             dN1 = dN1*fsky
