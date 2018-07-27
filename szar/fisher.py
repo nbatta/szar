@@ -235,7 +235,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
 
     # Number of non-SZ params (params that will be in Planck/BAO)
     numCosmo = Config.getint(fishSection,'numCosmo')
-    numLeft = len(paramList) - numCosmo
+    #numLeft = len(paramList) - numCosmo
 
 
     try:
@@ -286,18 +286,19 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
                 dCls[paramName] = np.loadtxt(cmbDerivRoot+'_dCls_'+paramName+'.csv',delimiter=',')
 
             print("Calculating CMB fisher matrix...")
+            print(cmbParamList,expName,lensName)
             cmb_fisher = pyfish.fisher_from_config(fidCls,dCls,cmbParamList,Config,expName,lensName)
             if pickling:
                 print("Pickling CMB fisher...")
                 pickle.dump(cmb_fisher,open(pkl_file,'wb'))
 
-
+        numLeft = len(paramList) - cmb_fisher.shape[0]
         cmb_fisher = pad_fisher(cmb_fisher,numLeft)
     else:
         cmb_fisher = 0.    
 
 
-
+    np.savetxt("tsz.txt",Fisher)
 
     try:
         otherFishers = Config.get(fishSection,'otherFishers').split(',')
@@ -311,15 +312,20 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
             other_fisher = np.loadtxt(otherFisherFile)
         except:
             try:
-                other_fisher = np.loadtxt(otherFisherFile,delimiter=',')
+                other_fisher = np.loadtxt(otherFisherFile,delimiter=',')[:numCosmo,:numCosmo]
             except:
+                print("WARNING: Skipped ",otherFisherFile, " either because it was not found or doesn't have enough elements. This means no external fishers have been added!!!")
                 do_other = False
                 pass
         if do_other:
+            numLeft = len(paramList) - other_fisher.shape[0]
             other_fisher = pad_fisher(other_fisher,numLeft)
+            np.savetxt("other.txt",other_fisher)
             Fisher += other_fisher
             
         
+    np.savetxt("cmb.txt",cmb_fisher)
+    print(paramList)
 
 
 
