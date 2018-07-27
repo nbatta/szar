@@ -47,6 +47,21 @@ def read_mock_cat(fitsfile,qmin):
     ind = np.where(SNR >= qmin)[0]
     return z[ind],zerr[ind],Y0[ind],Y0err[ind]
 
+def read_full_mock_cat(fitsfile):
+    list = fits.open(fitsfile)
+    data = list[1].data
+    ID = data.field('Cluster_ID')
+    x = data.field('x_ind')
+    y = data.field('y_ind')
+    ra = data.field('RA')
+    dec = data.field('DEC')
+    z = data.field('redshift')
+    zerr = data.field('redshiftErr')
+    Y0 = data.field('fixed_y_c')
+    Y0err = data.field('err_fixed_y_c')
+    SNR = data.field('fixed_SNR')
+    return ID,x,y,ra,dec,z,zerr,Y0,Y0err,SNR
+
 def read_test_mock_cat(fitsfile,mmin):
     list = fits.open(fitsfile)
     data = list[1].data
@@ -518,6 +533,26 @@ class MockCatalog:
              fits.Column(name='fixed_SNR', format='E', array=SNR[ind]),])
 
         hdu.writeto(filedir+filename+'.fits',overwrite=True)
+
+        return 0
+
+    def Add_completeness(filedir,filename,compfile,zcut=False):
+        '''
+        Add in observing and filter completeness to the selection the mock catalogs
+        '''
+
+        fitsfile = filedir+filename+'.fits'
+        ID,x,y,ra,dec,z,zerr,Y0,Y0err,SNR = read_full_mock_cat(fitsfile)
+        
+        rands = np.random.uniform(0,1,len(z))        
+        
+        compvals = np.load(compfile)
+        test = interp2d(compvals['log10M500c'],compvals['z'],compvals['M500Completeness'],kind='cubic',fill_value=0)
+
+        if (zcut):
+            ind = np.where(z < zcut)[0]
+        
+        fitsout = filedir+filename+'_comp_added.fits'
 
         return 0
 
