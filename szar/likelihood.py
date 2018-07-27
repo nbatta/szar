@@ -4,6 +4,7 @@ from szar.szproperties import gaussian
 import emcee
 import simsTools
 from scipy import special,stats
+from scipy.interpolate import interp2d
 from astropy.io import fits
 from astLib import astWCS
 from configparser import SafeConfigParser
@@ -60,7 +61,8 @@ def read_full_mock_cat(fitsfile):
     Y0 = data.field('fixed_y_c')
     Y0err = data.field('err_fixed_y_c')
     SNR = data.field('fixed_SNR')
-    return ID,x,y,ra,dec,z,zerr,Y0,Y0err,SNR
+    M = data.field('M500')
+    return ID,x,y,ra,dec,z,zerr,Y0,Y0err,SNR,M
 
 def read_test_mock_cat(fitsfile,mmin):
     list = fits.open(fitsfile)
@@ -396,7 +398,7 @@ class MockCatalog:
         Create simple mock catalog of Mass and Redshift by sampling the mass function
         '''
         if (self.rand):
-            Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky))) ## Note for randoms increasing the number density by factor of 100
+            Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky))*4.) ## Note for randoms increasing the number density by factor of 100
         else:
             Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky) / 100.)) ## Note the default number of walkers in mcsample_mf is 100 
 
@@ -504,11 +506,11 @@ class MockCatalog:
         f1 = filedir+filename+'_mockobscat'
         f2 = filedir+filename+'_obs_mock_footprint'
 
-        xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = self.plot_obs_sample(filename1=f1,filename2=f2)
+        xsave,ysave,z,sampY0,sampY0err,SNR,sampM = self.plot_obs_sample(filename1=f1,filename2=f2)
 
-        ind = np.where(SNR >= 4.5)[0]
+        ind = np.where(SNR >= 4.0)[0]
         ind2 = np.where(SNR >= 5.6)[0]
-        print "number of clusters SNR >= 5.6", len(ind2), " SNR >= 4.5",len(ind)
+        print "number of clusters SNR >= 5.6", len(ind2), " SNR >= 4.0",len(ind)
 
         RAdeg = xsave*0.0
         DECdeg = ysave*0.0
@@ -526,33 +528,56 @@ class MockCatalog:
              fits.Column(name='y_ind', format='E', array=ysave[ind]),
              fits.Column(name='RA', format='E', array=RAdeg[ind]),
              fits.Column(name='DEC', format='E', array=DECdeg[ind]),
-             fits.Column(name='redshift', format='E', array=sampZ[ind]),
-             fits.Column(name='redshiftErr', format='E', array=sampZ[ind]*0.0),
+             fits.Column(name='redshift', format='E', array=z[ind]),
+             fits.Column(name='redshiftErr', format='E', array=z[ind]*0.0),
              fits.Column(name='fixed_y_c', format='E', array=sampY0[ind]*1e4),
              fits.Column(name='err_fixed_y_c', format='E', array=sampY0err[ind]*1e4),
-             fits.Column(name='fixed_SNR', format='E', array=SNR[ind]),])
+             fits.Column(name='fixed_SNR', format='E', array=SNR[ind]),
+             fits.Column(name='M500', format='E', array=sampM[ind]),])
 
         hdu.writeto(filedir+filename+'.fits',overwrite=True)
 
         return 0
 
-    def Add_completeness(filedir,filename,compfile,zcut=False):
+    def Add_completeness(self,filedir,filename,compfile,zcut=False):
         '''
         Add in observing and filter completeness to the selection the mock catalogs
         '''
 
         fitsfile = filedir+filename+'.fits'
-        ID,x,y,ra,dec,z,zerr,Y0,Y0err,SNR = read_full_mock_cat(fitsfile)
+        ID,x,y,ra,dec,z,zerr,Y0,Y0err,SNR,M500 = read_full_mock_cat(fitsfile)
         
         rands = np.random.uniform(0,1,len(z))        
         
         compvals = np.load(compfile)
-        test = interp2d(compvals['log10M500c'],compvals['z'],compvals['M500Completeness'],kind='cubic',fill_value=0)
+        inter = interp2d(compvals['log10M500c'],compvals['z'],compvals['M500Completeness'],kind='cubic',fill_value=0)
+        use = 0.0*z
+
+        for ii in xrange(len(z)):
+            comp = inter(M500[ii],z[ii])
+            if (comp > rands[ii]):
+                use[ii] = 1
 
         if (zcut):
-            ind = np.where(z < zcut)[0]
+            ind = np.where((z < zcut)*(use > 0))[0]
         
+        print "number of clusters SNR >= 4.0 plus completeness",len(ind)
         fitsout = filedir+filename+'_comp_added.fits'
+
+        hdu = fits.BinTableHDU.from_columns(
+            [fits.Column(name='Cluster_ID', format='20A', array=ID),
+             fits.Column(name='x_ind', format='E', array=x[ind]),
+             fits.Column(name='y_ind', format='E', array=y[ind]),
+             fits.Column(name='RA', format='E', array=ra[ind]),
+             fits.Column(name='DEC', format='E', array=dec[ind]),
+             fits.Column(name='redshift', format='E', array=z[ind]),
+             fits.Column(name='redshiftErr', format='E', array=zerr[ind]),
+             fits.Column(name='fixed_y_c', format='E', array=Y0[ind]),
+             fits.Column(name='err_fixed_y_c', format='E', array=Y0err[ind]),
+             fits.Column(name='fixed_SNR', format='E', array=SNR[ind]),
+             fits.Column(name='M500', format='E', array=M500[ind]),])
+
+        hdu.writeto(fitsout,overwrite=True)
 
         return 0
 

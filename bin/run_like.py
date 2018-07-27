@@ -149,11 +149,21 @@ if args.mockcat or args.randcat:
     start = time.time()
     filedir = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/'
     filename = args.chain_name #,'mockCat_v1'
-    MC.write_obs_cat_toFits(filedir,filename)
+    compfile = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/M500Completeness_HSC_SNRCut4.0.npz'
+    compflag = 1
+
+    import os.path
+    check = os.path.isfile(filedir+filename+'.fits')
+    if (check == False):
+        MC.write_obs_cat_toFits(filedir,filename)
+    else:
+        print "Mockcat already exists"
+
+    if (compflag == 1):
+        MC.Add_completeness(filedir,filename,compfile,zcut=0.7)
+
     print ('sample time',time.time() - start)    
     sys.exit(0)
-
-
 
 if (args.printtest):
 
