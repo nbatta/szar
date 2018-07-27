@@ -109,7 +109,7 @@ if rank==0:
         You gave me "+str(numcores)+ " core(s) for "+str(numParams)+" param(s)."
     except:
         print inParamList
-        sys.exit(0)
+        sys.exit()
 
 
     version = Config.get('general','version')
