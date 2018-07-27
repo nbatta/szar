@@ -183,6 +183,8 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
                         matrix specified in ini. Can be zero.
     
     """
+
+    pickling = False #!!!!!
     
     bigDataDir = Config.get('general','bigDataDirectory')
     version = Config.get('general','version') 
@@ -306,6 +308,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
         traceback.print_exc()
         print("No other fishers found.")
         otherFishers = []
+    all_others = 0.
     for otherFisherFile in otherFishers:
         do_other = True
         try:
@@ -320,18 +323,18 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
         if do_other:
             numLeft = len(paramList) - other_fisher.shape[0]
             other_fisher = pad_fisher(other_fisher,numLeft)
-            np.savetxt("other.txt",other_fisher)
-            Fisher += other_fisher
+            all_others += other_fisher
             
         
+    np.savetxt("other.txt",all_others)
     np.savetxt("cmb.txt",cmb_fisher)
-    print(paramList)
+    # print(paramList)
 
 
 
-    Fisher = Fisher + cmb_fisher
+    retfish = Fisher + cmb_fisher + all_others
     
-    return Fisher, paramList
+    return retfish, paramList
 
 
 
