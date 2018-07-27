@@ -8,6 +8,17 @@ from scipy.special import j0
 from orphics.stats import timeit
 from orphics import io
 
+def gnfw(xx, P0 = 8.403, xc = 1.156, gm = 0.3292, al = 1.062, bt = 5.4807):
+    ans = P0 / ((xx*xc)**gm * (1 + (xx*xc)**al)**((bt-gm)/al))
+    return ans
+
+def bbps(cc,M,z):
+    R500 = cc.rdel_c(M,z,500.).flatten()[0] / (cc.H0/100.) # Mpc No hs
+    DA_z = cc.results.angular_diameter_distance(z) # No hs
+    M_fac = M / (3e14) * (100./cc.H0)
+    P500 = 1.65e-3 * (100./cc.H0)**2 * M_fac**(2./3.) * self.cc.E_z(z) #keV cm^3
+    intgrl = P500*np.sum(self.GNFW(rr/R500)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
+        
 def gaussian(xx, mu, sig,noNorm=False):
     if (noNorm==True):
         return np.exp(-1.*(xx - mu)**2 / (2. * sig**2.))

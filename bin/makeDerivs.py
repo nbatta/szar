@@ -100,7 +100,7 @@ if rank==0:
 
 
 
-
+    print(paramList)
 
     numParams = len(inParamList)
     neededCores = 2*numParams+1

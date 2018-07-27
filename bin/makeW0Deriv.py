@@ -184,8 +184,10 @@ passParams = fparams.copy()
     
 if rank==1:
     fileSuff = "Up"
+    passParams['w0'] += w0Step/2.
 elif rank==2:
     fileSuff = "Dn"
+    passParams['w0'] -= w0Step/2.
 
 if rank!=0:    
     pFile = lambda z: waDerivRoot+str(w0Step)+fileSuff+"_w_matterpower_%.2f.dat" % z
