@@ -560,12 +560,12 @@ class MockCatalog:
 
         if (zcut):
             ind = np.where((z < zcut)*(use > 0))[0]
-        
+
         print "number of clusters SNR >= 4.0 plus completeness",len(ind)
         fitsout = filedir+filename+'_comp_added.fits'
 
         hdu = fits.BinTableHDU.from_columns(
-            [fits.Column(name='Cluster_ID', format='20A', array=ID),
+            [fits.Column(name='Cluster_ID', format='20A', array=ID[ind]),
              fits.Column(name='x_ind', format='E', array=x[ind]),
              fits.Column(name='y_ind', format='E', array=y[ind]),
              fits.Column(name='RA', format='E', array=ra[ind]),
@@ -601,11 +601,11 @@ class clustLikeTest:
         self.clttfile = Config.get('general','clttfile')
         self.constDict = dict_from_section(Config,'constants')
 
-        logm_min = 13.7
-        logm_max = 15.72
-        logm_spacing = 0.02
+        logm_min = 14.3
+        logm_max = 15.702
+        logm_spacing = 0.01
         self.mgrid = np.arange(logm_min,logm_max,logm_spacing)
-        self.zgrid = np.arange(0.1,2.01,0.1)
+        self.zgrid = np.arange(0.1,2.001,0.05)
 
         self.cc = ClusterCosmology(self.fparams,self.constDict,clTTFixFile=self.clttfile)
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
@@ -638,7 +638,7 @@ class clustLikeTest:
         Pfunc = np.outer(self.PfuncM(10**self.mmin,self.HMF.M.copy()),np.ones(len(z_arr)))
         #print Pfunc.shape
         dn_dzdm = int_HMF.dn_dM(int_HMF.M200,200.)
-        print "mass", int_HMF.M200
+        #print "mass", int_HMF.M200
         #print dn_dzdm.shape
         #print "dndm test", dn_dzdm
         N_z = np.trapz(dn_dzdm*Pfunc,dx=np.diff(int_HMF.M200,axis=0),axis=0)
@@ -656,7 +656,7 @@ class clustLikeTest:
         dn_dzdm = int_HMF.dn_dM(int_HMF.M200,200.)
         #print "dndm test", dn_dzdm
         N_z = np.trapz(dn_dzdm[ind,:],dx=np.diff(int_HMF.M200[ind,:],axis=0),axis=0)
-        print "N_z test", N_z
+        #print "N_z test", N_z
         Ntot = np.trapz(N_z*int_HMF.dVdz,dx=np.diff(z_arr))*4.*np.pi*fsky
         return Ntot
 
@@ -670,29 +670,28 @@ class clustLikeTest:
         else:
             dn_dzdm = dn_dzdm_int(c_z,np.log10(c_m))
             ans = dn_dzdm
-            print dn_dzdm
-            kmin=1e-4
-            kmax=5.
-            knum=200
+            #print dn_dzdm
+            #kmin=1e-4
+            #kmax=5.
+            #knum=200
 
-            int_kh, int_pk = int_HMF._pk(c_z,kmin,kmax,knum)
-            delts = int_HMF.zarr*0.0 + 200.
-            print c_m
-            dn_dlnm = dn_dlogM(np.array([c_m,c_m*1.01]),c_z,int_HMF.cc.rhoc0om,200,int_kh,int_pk,'comoving')
-            print dn_dlogM(np.array([c_m,c_m*1.01]),int_HMF.zarr,int_HMF.cc.rhoc0om,delts,int_HMF.kh,int_HMF.pk,'comoving')
-            print dn_dlnm
+            #int_kh, int_pk = int_HMF._pk(c_z,kmin,kmax,knum)
+            #delts = int_HMF.zarr*0.0 + 200.
+            #print c_m
+            #dn_dlnm = dn_dlogM(np.array([c_m,c_m*1.01]),c_z,int_HMF.cc.rhoc0om,200,int_kh,int_pk,'comoving')
+            #print dn_dlogM(np.array([c_m,c_m*1.01]),int_HMF.zarr,int_HMF.cc.rhoc0om,delts,int_HMF.kh,int_HMF.pk,'comoving')
+            #print dn_dlnm
 
-
-            print int_HMF.dn_dM(np.outer(np.array([1e14*1.01,1e14*1.05]),np.ones(len(int_HMF.zarr))),200.)
-            print int_HMF.M200[0:2,0]
-            m1 = int_HMF.M200[0,0]
-            m2 = int_HMF.M200[1,0]
-            print m1,m2,c_m
-            print int_HMF.dn_dM(np.outer(np.array([m1*1.01,c_m*1.01]),np.ones(len(int_HMF.zarr))),200.)
-            print int_HMF.dn_dM(int_HMF.M200[0:2,:],200.)
-            print int_HMF.dn_dM(np.outer(np.array([c_m*1.01,1e14*1.01]),np.ones(len(int_HMF.zarr))),200.)
-            blahs = dn_dlnm/np.array([c_m,c_m])
-            print blahs 
+            #print int_HMF.dn_dM(np.outer(np.array([1e14*1.01,1e14*1.05]),np.ones(len(int_HMF.zarr))),200.)
+            #print int_HMF.M200[0:2,0]
+            #m1 = int_HMF.M200[0,0]
+            #m2 = int_HMF.M200[1,0]
+            #print m1,m2,c_m
+            #print int_HMF.dn_dM(np.outer(np.array([m1*1.01,c_m*1.01]),np.ones(len(int_HMF.zarr))),200.)
+            #print int_HMF.dn_dM(int_HMF.M200[0:2,:],200.)
+            #print int_HMF.dn_dM(np.outer(np.array([c_m*1.01,1e14*1.01]),np.ones(len(int_HMF.zarr))),200.)
+            #blahs = dn_dlnm/np.array([c_m,c_m])
+            #print blahs 
         return ans
 
     def lnlike(self,theta,parlist):
@@ -711,13 +710,15 @@ class clustLikeTest:
         cluster_prop = np.array([self.clst_z,self.clst_zerr,10**self.clst_m,self.clst_merr])
 
         Ntot = self.Ntot_survey(int_HMF,self.fsky)
-        print self.Ntot_survey_TEST(int_HMF,self.fsky)
+        print "Ntot comparion, and catalog"
+        print self.Ntot_survey_TEST(int_HMF,self.fsky), Ntot, len(self.clst_z)
 
         Nind = 0
         for i in xrange(len(self.clst_z)):
             N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int)
             Nind = Nind + np.log(N_per)
 
+        print "-NTOT, Nind, Total, As"
         print -Ntot, Nind, -Ntot + Nind, theta
         return -Ntot + Nind
 
