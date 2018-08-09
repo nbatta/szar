@@ -468,7 +468,7 @@ class Halo_MF:
         P0 = np.array([1.,15.5])
         pos = [P0 + P0*2e-2*np.random.randn(Ndim) for i in range(nwalkers)]
 
-        corrlength = 30 # Roughly corresponds to number from sampler.acor
+        corrlength = 50 # Roughly corresponds to number from sampler.acor
         
         sampler = emcee.EnsembleSampler(nwalkers,Ndim,self.mf_inter_eval, args =[N_mz_inter,mthresh,zthresh] )
         sampler.run_mcmc(pos,corrlength*nsamp100+nburnin)

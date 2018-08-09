@@ -72,7 +72,7 @@ def read_test_mock_cat(fitsfile,mmin):
     zerr = data.field('redshift_err')
     merr = data.field('Mass_err')
     ind = np.where(m >= mmin)[0]
-    print len(ind)#,m[ind]
+    print "number of clusters above threshold",mmin,"is", len(ind)#,m[ind]
     return z[ind],zerr[ind],m[ind],merr[ind]
 
 def alter_fparams(fparams,parlist,parvals):
@@ -485,15 +485,15 @@ class MockCatalog:
         sampZerr = sampZ * 0.0
         sampMerr = sampM * 0.0
 
-        ind = np.where(10**sampM >= 2.0*10**(np.min(self.mgrid)))[0]
+        #ind = np.where(10**sampM >= 2.0*10**(np.min(self.mgrid)))[0]
 
-        clusterID = ind.astype(str)
+        clusterID = np.arange(len(sampM)).astype(str)
         hdu = fits.BinTableHDU.from_columns(
             [fits.Column(name='Cluster_ID', format='20A', array=clusterID),
-             fits.Column(name='redshift', format='E', array=sampZ[ind]),
-             fits.Column(name='redshift_err', format='E', array=sampZerr[ind]),
-             fits.Column(name='Mass', format='E', array=sampM[ind]),
-             fits.Column(name='Mass_err', format='E', array=sampMerr[ind]),])
+             fits.Column(name='redshift', format='E', array=sampZ),
+             fits.Column(name='redshift_err', format='E', array=sampZerr),
+             fits.Column(name='Mass', format='E', array=sampM),
+             fits.Column(name='Mass_err', format='E', array=sampMerr),])
 
         hdu.writeto(filedir+filename+'.fits',overwrite=True)
 
@@ -582,7 +582,7 @@ class MockCatalog:
         return 0
 
 class clustLikeTest:
-    def __init__(self,iniFile,test_cat_file,fix_params):
+    def __init__(self,iniFile,test_cat_file,fix_params,mmin=14.3):
 
         self.fix_params = fix_params
         Config = SafeConfigParser()
@@ -601,7 +601,7 @@ class clustLikeTest:
         self.clttfile = Config.get('general','clttfile')
         self.constDict = dict_from_section(Config,'constants')
 
-        logm_min = 14.3
+        logm_min = 14.0
         logm_max = 15.702
         logm_spacing = 0.01
         self.mgrid = np.arange(logm_min,logm_max,logm_spacing)
@@ -611,7 +611,7 @@ class clustLikeTest:
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
 
         self.fsky = 987.5/41252.9612
-        self.mmin = 14.3
+        self.mmin = mmin
         clust_cat = test_cat_file + '.fits' 
         self.clst_z,self.clst_zerr,self.clst_m,self.clst_merr = read_test_mock_cat(clust_cat,self.mmin)
         #self.clst_z,self.clst_m = read_mock_test_cat(clust_cat,self.mmin)
