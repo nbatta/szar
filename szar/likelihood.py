@@ -409,7 +409,7 @@ class MockCatalog:
 
         return samples[:,0],samples[:,1]
 
-    def plot_basic_sample(self,fname='default_mockcat.png'):
+    def plot_basic_sample(self,fname='default_mockcat.png',):
         fsky = self.fsky
         sampZ,sampM = self.create_basic_sample(fsky)
         plt.figure()
@@ -498,6 +498,15 @@ class MockCatalog:
         hdu.writeto(filedir+filename+'.fits',overwrite=True)
 
         return 0
+
+    def test_Mockcat_Nums(self, mmin):
+        '''
+        Quick write out of the number clusters in the mock catalog, for testing
+        '''
+        sampZ,sampM = self.create_basic_sample(self.fsky)
+        ind = np.where(sampM >= mmin)[0]
+
+        return len(ind)
 
     def write_obs_cat_toFits(self, filedir,filename):
         '''
