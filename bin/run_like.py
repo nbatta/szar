@@ -56,9 +56,11 @@ nemoOutputDirOut = PathConfig.get("likepaths","nemoOutputDirOut")
 chain_out = PathConfig.get("likepaths","chains")
 # nemoOutputDir = '/gpfs01/astro/workarea/msyriac/data/depot/SZruns/ACTdata/' #/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACTdata/'
 # nemoOutputDirOut = '/gpfs01/astro/workarea/msyriac/data/depot/SZruns/ACTdata_out/'
+print nemoOutputDir
 
 pardict = nemoOutputDir + 'equD56.par'
 noise_file = 'RMSMap_Arnaud_M2e14_z0p4.fits'
+fitsfile = '../'+args.chain_name + '.fits'
 
 
 if args.test:
@@ -81,8 +83,6 @@ if args.printtest or args.simtest:
 else:
     simtst = False
 
-
-CL = lk.clusterLike(iniFile,pardict,nemoOutputDir,noise_file,fix_params,test=args.test,simtest=simtst,simpars=args.simpars)
 
 if args.test:
     parlist = ['omch2','H0','As']
@@ -131,9 +131,9 @@ if args.mockcat or args.randcat:
     parvals = [0.1225,0.0245,70,2.0e-09,0.97,0.06,1.0,0.08,0.2]
 
     if args.mockcat:
-        MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[np.log10(8e13),np.log10(7e15),0.01],z_grid=[0.1,2.01,0.1])
+        MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[np.log10(2e14),np.log10(7e15),0.01],z_grid=[0.1,2.01,0.1])
     if args.randcat:
-        MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[np.log10(8e13),np.log10(7e15),0.01],z_grid=[0.1,2.01,0.1],randoms=True)
+        MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[np.log10(2e14),np.log10(7e15),0.01],z_grid=[0.1,1.01,0.1],randoms=True)
     
     #print MC.Total_clusters(MC.fsky)
     #start = time.time()
@@ -164,6 +164,8 @@ if args.mockcat or args.randcat:
 
     print ('sample time',time.time() - start)    
     sys.exit(0)
+
+CL = lk.clusterLike(iniFile,pardict,nemoOutputDir,noise_file,fix_params,fitsfile,test=args.test,simtest=simtst,simpars=args.simpars)
 
 if (args.printtest):
 
@@ -268,7 +270,7 @@ if args.simtest:
     
     filename = chain_out+"/sz_likelival_"+args.chain_name+".dat"
     
-    parvals_arr = parvals*(1+np.arange(-0.1,0.1001,0.01))
+    parvals_arr = parvals*(1+np.arange(-0.1,0.1001,0.02))
     ansout = parvals_arr*0.0
     for ii, vals in enumerate(parvals_arr):
         #print ii, vals

@@ -81,7 +81,7 @@ def alter_fparams(fparams,parlist,parvals):
     return fparams
 
 class clusterLike:
-    def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,fix_params,test=False,simtest=False,simpars=False):
+    def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,fix_params,fitsfile,test=False,simtest=False,simpars=False):
         self.fix_params = fix_params
         self.test = test
         self.simtest = simtest
@@ -122,14 +122,22 @@ class clusterLike:
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
         
+        #if self.simtest or self.simpars:
+        #    print "mock catalog"
+            #clust_cat = nemoOutputDir + 'mockCatalog_equD56.fits' #'ACTPol_mjh_cluster_cat.fits'
+        #    clust_cat = nemoOutputDir + 'mockCat_D56equ_v22.fits' #'ACTPol_mjh_cluster_cat.fits'
+        #    self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat,self.qmin)
+        #else:
+        #    print "real catalog"
+        #    clust_cat = nemoOutputDir + 'E-D56Clusters.fits' #'ACTPol_mjh_cluster_cat.fits'
+        #    self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat,self.qmin)
+
+        clust_cat = nemoOutputDir + fitsfile 
         if self.simtest or self.simpars:
             print "mock catalog"
-            #clust_cat = nemoOutputDir + 'mockCatalog_equD56.fits' #'ACTPol_mjh_cluster_cat.fits'
-            clust_cat = nemoOutputDir + 'mockCat_D56equ_v22.fits' #'ACTPol_mjh_cluster_cat.fits'
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat,self.qmin)
         else:
             print "real catalog"
-            clust_cat = nemoOutputDir + 'E-D56Clusters.fits' #'ACTPol_mjh_cluster_cat.fits'
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat,self.qmin)
 
         self.rms_noise_map  = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
