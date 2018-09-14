@@ -1,4 +1,6 @@
 from __future__ import print_function
+from __future__ import division
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 import camb
@@ -86,7 +88,7 @@ HMF.sigN = siggrid.copy()
 #print HMF.N_of_z()
 
 Nzs =  HMF.N_of_z_SZ(fsky,SZProfExample)*np.diff(z_edges)
-zcents = (z_edges[1:]+z_edges[:-1])/2.
+zcents = old_div((z_edges[1:]+z_edges[:-1]),2.)
 pl = Plotter()
 pl.add(zcents,Nzs)
 pl.done("nz.png")

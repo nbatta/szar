@@ -1,4 +1,6 @@
 from __future__ import print_function
+from __future__ import division
+from past.utils import old_div
 import szar.sims as s
 import orphics.tools.io as io
 from configparser import SafeConfigParser
@@ -55,7 +57,7 @@ sys.exit()
 # === TEMPLATE MAP ===
 px = 0.05
 arc = 20
-hwidth = arc/2.
+hwidth = old_div(arc,2.)
 deg = utils.degree
 arcmin =  utils.arcmin
 shape, wcs = enmap.geometry(pos=[[-hwidth*arcmin,-hwidth*arcmin],[hwidth*arcmin,hwidth*arcmin]], res=px*arcmin, proj="car")
@@ -110,7 +112,7 @@ io.quickPlot2d(np.sum(alpha_pix**2,0)**0.5,out_dir+"alpha_pix.png")
 
 TCMB = 2.7255e6
 ps = powspec.read_spectrum("../alhazen/data/cl_lensinput.dat")
-cmb_map = enmap.rand_map(shape, wcs, ps)/TCMB
+cmb_map = old_div(enmap.rand_map(shape, wcs, ps),TCMB)
 
 lensed = lensing.lens_map_flat_pix(cmb_map, alpha_pix,order=5)
 #lensed = lensing.lens_map_flat(cmb_map, phi)

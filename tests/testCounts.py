@@ -1,4 +1,6 @@
 from __future__ import print_function
+from __future__ import division
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 import camb
@@ -87,8 +89,8 @@ print(R500)
 print((cc.rhoc(0)))
 print((cc.rhoc(zz)))
 #sys.exit()
-DAz = cc.results.angular_diameter_distance(zz) * (cc.H0/100.) 
-thetc = R500/DAz
+DAz = cc.results.angular_diameter_distance(zz) * (old_div(cc.H0,100.)) 
+thetc = old_div(R500,DAz)
 print(("thetc = ", thetc))
 
 

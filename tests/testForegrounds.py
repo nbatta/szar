@@ -1,4 +1,8 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import zip
+from builtins import str
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
@@ -47,7 +51,7 @@ SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms
 #print SZProfExample.nl / SZProfExample.nl_new
 
 pl = Plotter()
-pl.add(SZProfExample.evalells,SZProfExample.nl_old / SZProfExample.nl)
+pl.add(SZProfExample.evalells,old_div(SZProfExample.nl_old, SZProfExample.nl))
 pl.done("tests/new_nl_test.png")
 
 #ILC = ILC_simple(clusterCosmology=cc, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
@@ -149,7 +153,7 @@ f_nu_arr = f_nu(cc.c,np.array(freqs))
 #print fq_mat
 #print fq_mat_t
 
-radio_mat = fgs.rad_ps(print_ells[4],fq_mat,fq_mat_t) / cc.c['TCMBmuK']**2.
+radio_mat = old_div(fgs.rad_ps(print_ells[4],fq_mat,fq_mat_t), cc.c['TCMBmuK']**2.)
 
 #print "contraction", np.dot(np.transpose(f_nu_arr),np.dot(np.linalg.inv(radio_mat),f_nu_arr))
 
@@ -157,14 +161,14 @@ radio_mat = fgs.rad_ps(print_ells[4],fq_mat,fq_mat_t) / cc.c['TCMBmuK']**2.
 
 #print fgs.rad_ps(ls[10],fq_mat_t,fq_mat)*0.0 + 1.
 
-print(("noise", noise_func(print_ells[4],np.array(beams),np.array(noises),lknee,alpha,dimensionless=False) / cc.c['TCMBmuK']**2.))
+print(("noise", old_div(noise_func(print_ells[4],np.array(beams),np.array(noises),lknee,alpha,dimensionless=False), cc.c['TCMBmuK']**2.)))
 
 fac_norm = ls*(ls+1.)/(2.*np.pi) * cc.c['TCMBmuK']**2
 
 for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
     totCl = 0.
     #print testFreq
-    noise = noise_func(ls,fwhm,noiseT,lknee,alpha,dimensionless=False) / cc.c['TCMBmuK']**2.
+    noise = old_div(noise_func(ls,fwhm,noiseT,lknee,alpha,dimensionless=False), cc.c['TCMBmuK']**2.)
     
     radio = fgs.rad_ps(ls,testFreq,testFreq)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
     cibp = fgs.cib_p(ls,testFreq,testFreq) /ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
@@ -176,7 +180,7 @@ for fwhm,noiseT,testFreq in zip(beams,noises,freqs):
     pol_ps   = fgs.rad_pol_ps(ls,testFreq,testFreq) /ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
     pol_sync = fgs.gal_sync_pol(ls,testFreq,testFreq) /ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
 
-    print((ls[print_ells],tsz[print_ells],tsz_cib[print_ells],tsz[print_ells]/tsz_cib[print_ells])) 
+    print((ls[print_ells],tsz[print_ells],tsz_cib[print_ells],old_div(tsz[print_ells],tsz_cib[print_ells]))) 
 
 
     totCl = cc.theory.lCl('TT',ls)+ksz+radio+cibp+cibc+noise+tsz+tsz_cib

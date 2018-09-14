@@ -1,4 +1,6 @@
 from __future__ import print_function
+from __future__ import division
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
@@ -130,28 +132,28 @@ if (cf == 1):
 #    elnc4,nlc4 = ILC4.Noise_ellcmb(constraint='tsz')
 
 pl = Plotter(labelX="$\ell$",labelY="Noise Ratio",ftsize=12,figsize=(8,6))
-pl.add(eln2,nl2/nl,label="SO/CCATP")
+pl.add(eln2,old_div(nl2,nl),label="SO/CCATP")
 #pl.add(eln3,nl3/nl,label="90 - 270 / Full")
 #pl.add(eln4,nl4/nl,label="90 - 220 / Full")
 #pl.legend(loc='upper right',labsize=10)
 pl.done(outDir+experimentName+"_y_noise_ratio"+constraint_tag[cf]+".png")
 
 pl = Plotter(labelX="$\ell$",labelY="Noise Ratio",ftsize=12,figsize=(8,6))
-pl.add(elnc2,nlc2/nlc,label="SO/CCATP")
+pl.add(elnc2,old_div(nlc2,nlc),label="SO/CCATP")
 #pl.add(elnc3,nlc3/nlc,label="90 - 270 / Full")
 #pl.add(elnc4,nlc4/nlc,label="90 - 220 / Full")
 #pl.legend(loc='upper right',labsize=10)
 pl.done(outDir+experimentName+"_cmb_noise_ratio"+constraint_tag[cf]+".png")
 
 pl = Plotter(labelX="$\ell$",labelY="Error Ratio",ftsize=12,figsize=(8,6))
-pl.add(el_il2,err_il2/err_il,label="SO/CCATP")
+pl.add(el_il2,old_div(err_il2,err_il),label="SO/CCATP")
 #pl.add(el_il3,err_il3/err_il,label="90 - 270 / Full")
 #pl.add(el_il4,err_il4/err_il,label="90 - 220 / Full")
 #pl.legend(loc='upper right',labsize=10)
 pl.done(outDir+experimentName+"_y_error_ratio"+constraint_tag[cf]+".png")
 
 pl = Plotter(labelX="$\ell$",labelY="Noise Ratio",ftsize=12,figsize=(8,6))
-pl.add(el_ilc2,err_ilc2/err_ilc,label="SO/CCATP")
+pl.add(el_ilc2,old_div(err_ilc2,err_ilc),label="SO/CCATP")
 #pl.add(el_ilc3,err_ilc3/err_ilc,label="90 - 270 / Full")
 #pl.add(el_ilc4,err_ilc4/err_ilc,label="90 - 220 / Full")
 #pl.legend(loc='upper right',labsize=10)

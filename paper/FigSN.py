@@ -1,4 +1,7 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import zip
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -38,9 +41,9 @@ for gridFile,ls,lab,outPlot in zip(gridList,['-','--'],['CMB lensing','optical l
     filen = gridFile
     medges,zedges,errgrid = pickle.load(open(filen,'rb'))
     M_edges = 10**medges
-    M = (M_edges[1:]+M_edges[:-1])/2.
+    M = old_div((M_edges[1:]+M_edges[:-1]),2.)
     mexpgrid = np.log10(M)
-    zgrid = (zedges[1:]+zedges[:-1])/2.
+    zgrid = old_div((zedges[1:]+zedges[:-1]),2.)
 
     mmin = mexpgrid[0]
     mmax = mexpgrid[-1]
@@ -58,7 +61,7 @@ for gridFile,ls,lab,outPlot in zip(gridList,['-','--'],['CMB lensing','optical l
     dms.append(min(np.diff(mexpgrid)))
     dzs.append(min(np.diff(zgrid)))
 
-    sngrid = 1./errgrid
+    sngrid = old_div(1.,errgrid)
     print((sngrid.shape))
     
     # pgrid = np.rot90(sngrid)
@@ -74,7 +77,7 @@ for gridFile,ls,lab,outPlot in zip(gridList,['-','--'],['CMB lensing','optical l
 
     for ind,col in zip(mindicesList,collist):
         if "CMB" in lab:
-            labadd = '{:02.1f}'.format(10**(mexpgrid[ind])/1e14)+" $10^{14}  M_{\odot}/h$"
+            labadd = '{:02.1f}'.format(old_div(10**(mexpgrid[ind]),1e14))+" $10^{14}  M_{\odot}/h$"
         else:
             labadd = None
         pl.add(zgrid,sngrid[ind,:].ravel(),ls=ls,label=labadd,color=col)
@@ -110,10 +113,10 @@ for key in grids:
     # pl.done(outDir+key+".png")
 
 
-    jointgridsqinv += (1./outerrgrid**2.)
+    jointgridsqinv += (old_div(1.,outerrgrid**2.))
 
 
-jointgrid = np.sqrt(1./jointgridsqinv)
+jointgrid = np.sqrt(old_div(1.,jointgridsqinv))
 
 # sngrid = 1./jointgrid
 # lab = "joint"
@@ -127,7 +130,7 @@ pl.done(outDir+"FigSN.pdf")
 
 
 from orphics.tools.io import Plotter
-pgrid = np.rot90(1./jointgrid)
+pgrid = np.rot90(old_div(1.,jointgrid))
 pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
 pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],levels=[1.0,3.0,5.0],labsize=14)
 pl.done(outDir+"joint.png")

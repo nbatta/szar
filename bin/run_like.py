@@ -1,4 +1,9 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import zip
+from builtins import range
+from past.utils import old_div
 import numpy as np
 import szar.likelihood as lk
 import matplotlib.pyplot as plt
@@ -77,7 +82,7 @@ else:
     fixlist = ['tau']
     fixvals = [0.06]
 
-fix_params = dict(zip(fixlist,fixvals))
+fix_params = dict(list(zip(fixlist,fixvals)))
 
 if args.printtest or args.simtest:
     simtst = True
@@ -198,10 +203,10 @@ if (args.printtest):
     print(parvals)
     print("ln prob", np.log(CL.Prob_per_cluster(int_HMF,cluster_props[:,clustind],dn_dzdm_int,param_vals)))
     print(LgYa[-1,-1])
-    Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])
+    Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(old_div(param_vals['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])
     print("ln Y val",np.log10(Y[-1,-1]))
     print("ln Y~", np.log10(Ytilde[-1,-1]))
-    print(Y[-1,30:35]/Ytilde[-1,-1])
+    print(old_div(Y[-1,30:35],Ytilde[-1,-1]))
     print(np.log(Y[-1,-1]) - np.log(Ytilde[-1,-1]))
     print("P of Y", CL.P_Yo(LgYa,int_HMF.M.copy(),int_HMF.zarr[zbins],param_vals)[-1,-1], end=' ') 
  
@@ -213,12 +218,12 @@ if (args.printtest):
     print('pars2', parvals2)
     print("ln prop", np.log(CL.Prob_per_cluster(int_HMF2,cluster_props[:,clustind],dn_dzdm_int2,param_vals2)))
     print(LgYa[-1,-1])
-    Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals2['massbias']*Ma/(param_vals2['H0']/100.)), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals2['scat'],B0=param_vals2['yslope'])
+    Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals2['massbias']*Ma/(old_div(param_vals2['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals2['scat'],B0=param_vals2['yslope'])
     print("ln Y val",np.log10(Y[-1,-1]))
     print("ln Y~", np.log10(Ytilde[-1,-1]))
     #print np.log(Ytilde[-1,30:35])
-    print(Y[-1,-1]/Ytilde[-1,-1])
-    print(np.log(Y[-1,-1]/Ytilde[-1,-1]))
+    print(old_div(Y[-1,-1],Ytilde[-1,-1]))
+    print(np.log(old_div(Y[-1,-1],Ytilde[-1,-1])))
     #print -1.*(np.log(Y[-1,30:35]/Ytilde[-1,30:35]))
 
     print("P of Y", CL.P_Yo(np.outer(np.ones(len(int_HMF.M.copy())),CL.LgY),int_HMF2.M.copy(),int_HMF2.zarr[zbins],param_vals2)[-1,-1])

@@ -1,4 +1,7 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import zip
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -64,9 +67,9 @@ for cmbfile,cmbtype,save_func in zip([fidcmb_file,upcmb_file,dncmb_file],['fid',
 
         print(errgrid.shape)
         M_edges = 10**medges
-        M = (M_edges[1:]+M_edges[:-1])/2.
+        M = old_div((M_edges[1:]+M_edges[:-1]),2.)
         mexpgrid = np.log10(M)
-        zgrid = (zedges[1:]+zedges[:-1])/2.
+        zgrid = old_div((zedges[1:]+zedges[:-1]),2.)
 
         if "cmb" in outPlot:
             outmedges = medges.copy()
@@ -91,11 +94,11 @@ for cmbfile,cmbtype,save_func in zip([fidcmb_file,upcmb_file,dncmb_file],['fid',
         dms.append(min(np.diff(mexpgrid)))
         dzs.append(min(np.diff(zgrid)))
 
-        sngrid = 1./errgrid
+        sngrid = old_div(1.,errgrid)
         print(sngrid.shape)
         for ind in mindicesList:
             if "CMB" in lab:
-                labadd = '{:02.1f}'.format(10**(mexpgrid[ind])/1e14)+" $10^{14}  M_{\odot}/h$"
+                labadd = '{:02.1f}'.format(old_div(10**(mexpgrid[ind]),1e14))+" $10^{14}  M_{\odot}/h$"
             else:
                 labadd = None
             pl.add(zgrid,sngrid[ind,:].ravel(),ls=ls,label=labadd)
@@ -121,11 +124,11 @@ for cmbfile,cmbtype,save_func in zip([fidcmb_file,upcmb_file,dncmb_file],['fid',
 
 
 
-        jointgridsqinv += (1./outerrgrid**2.)
+        jointgridsqinv += (old_div(1.,outerrgrid**2.))
 
 
-    jointgrid = np.sqrt(1./jointgridsqinv)
-    snjoint = 1./jointgrid
+    jointgrid = np.sqrt(old_div(1.,jointgridsqinv))
+    snjoint = old_div(1.,jointgrid)
 
     for ind in mindicesList:
         pl.add(outzgrid,snjoint[ind,:].ravel(),ls="-.")
@@ -140,7 +143,7 @@ for cmbfile,cmbtype,save_func in zip([fidcmb_file,upcmb_file,dncmb_file],['fid',
 
 
     #from orphics.io import Plotter
-    pgrid = np.rot90(1./jointgrid)
+    pgrid = np.rot90(old_div(1.,jointgrid))
     pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
     pl.plot2d(pgrid,extent=[mmin,mmax,zmin,zmax],levels=[1.0,3.0,5.0],labsize=14)
     pl.done(outDir+"joint"+cmbtype+".png")

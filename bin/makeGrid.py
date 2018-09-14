@@ -1,4 +1,8 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 from mpi4py import MPI
@@ -105,10 +109,10 @@ if rank == 0:
 
 
     M_edges = 10**Mexp_edges
-    M = (M_edges[1:]+M_edges[:-1])/2.
+    M = old_div((M_edges[1:]+M_edges[:-1]),2.)
     mgrid = np.log10(M)
 
-    zgrid = (z_edges[1:]+z_edges[:-1])/2.
+    zgrid = old_div((z_edges[1:]+z_edges[:-1]),2.)
 
     
     beam = list_from_config(Config,expName,'beams')
@@ -387,7 +391,7 @@ if rank==0:
     print("I have ",numcores, " cores to work with.")
     print("And I have ", numes, " tasks to do.")
     print("Each worker gets at least ", mintasks, " tasks and at most ", maxtasks, " tasks.")
-    zfrac = float(len(z_edges[np.where( check_pzcut_less(z_edges, pzcut) )]))/len(z_edges)
+    zfrac = old_div(float(len(z_edges[np.where( check_pzcut_less(z_edges, pzcut) )])),len(z_edges))
     buestguess = (0.5*int(doSZ)+((1.+(2.*zfrac))*5.0*int(doLens)))*maxtasks
     print("My best guess is that this will take ", buestguess, " seconds.")
     print("Starting the slow part...")
@@ -401,7 +405,7 @@ if doLens:
     import enlib.fft as fftfast
     arcStamp = 100.
     pxStamp = 0.05
-    Npix = int(arcStamp/pxStamp)
+    Npix = int(old_div(arcStamp,pxStamp))
     B = fftfast.fft(np.zeros((Npix,Npix)),axes=[-2,-1],flags=['FFTW_MEASURE'])
 # Ndown = fftfast.fft_len(Npix,direction="below")
 # Nup = fftfast.fft_len(Npix,direction="above")
@@ -429,20 +433,20 @@ for index in mySplit:
             ray = None
         
         snRet,k500,std = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=ray,arcStamp=arcStamp,pxStamp=pxStamp)
-        MerrGrid[mindex,zindex] = 1./snRet
+        MerrGrid[mindex,zindex] = old_div(1.,snRet)
         if True: #doRayDeriv:
-            rayUp = rayFid+rayStep/2.
+            rayUp = rayFid+old_div(rayStep,2.)
             if check_pzcut_less(z, pzcut):
                 snRetUp,k500Up,stdUp = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=rayUp,arcStamp=arcStamp,pxStamp=pxStamp)
             else:
                 snRetUp = snRet
-            MerrGridUp[mindex,zindex] = 1./snRetUp
-            rayDn = rayFid-rayStep/2.
+            MerrGridUp[mindex,zindex] = old_div(1.,snRetUp)
+            rayDn = rayFid-old_div(rayStep,2.)
             if check_pzcut_less(z, pzcut):
                 snRetDn,k500Dn,stdDn = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=rayDn,arcStamp=arcStamp,pxStamp=pxStamp)
             else:
                 snRetDn = snRet
-            MerrGridDn[mindex,zindex] = 1./snRetDn
+            MerrGridDn[mindex,zindex] = old_div(1.,snRetDn)
 
         
     if doSZ:

@@ -1,5 +1,10 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
+from past.utils import old_div
 import numpy as np
 #from orphics.cosmology import Cosmology
 from szar.counts import ClusterCosmology,Halo_MF
@@ -7,9 +12,9 @@ from szar.szproperties import SZ_Cluster_Model
 from . import tinker as tinker
 from configparser import SafeConfigParser
 from orphics.io import dict_from_section,list_from_config
-import cPickle as pickle
+import pickle as pickle
 
-class clustering:
+class clustering(object):
     def __init__(self,iniFile,expName,gridName,version):
         Config = SafeConfigParser()
         Config.optionxform=str
@@ -60,7 +65,7 @@ class clustering:
         sig = np.sqrt(tinker.sigma_sq_integral(R, self.HMF.pk, self.HMF.kh))
 
         blin = tinker.tinker_bias(sig,200.)
-        beff = np.trapz(dndm_SZ*blin,dx=np.diff(self.HMF.M200,axis=0),axis=0) / nbar
+        beff = old_div(np.trapz(dndm_SZ*blin,dx=np.diff(self.HMF.M200,axis=0),axis=0), nbar)
 
         return beff
 
@@ -84,7 +89,7 @@ class clustering:
         
         
 
-        return 1./(R[use_sig]),sig1[use_sig],self.HMF.zarr[use_z]
+        return old_div(1.,(R[use_sig])),sig1[use_sig],self.HMF.zarr[use_z]
 
 
     def Norm_Sfunc(self,fsky):
@@ -123,7 +128,7 @@ class clustering:
         nbar = self.ntilde()
         ps = self.ps_bar(mu,fsky)
         npfact = np.multiply(ps,nbar)
-        frac = npfact / (1. + npfact)
+        frac = old_div(npfact, (1. + npfact))
         ans = np.multiply(frac,V0)
 
         return ans

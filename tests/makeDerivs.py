@@ -1,9 +1,13 @@
 from __future__ import print_function
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from past.utils import old_div
 import numpy as np
 import orphics.tools.io as io
 import sys, time
 from szar.counts import ClusterCosmology,Halo_MF
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 
 paramName = sys.argv[1]
 key = paramName
@@ -28,8 +32,8 @@ upDict = cosmoDict.copy()
 dnDict = cosmoDict.copy()
 
 try:
-    upDict[key] = cosmoListDict[key][0] + cosmoListDict[key][1]/2.
-    dnDict[key] = cosmoListDict[key][0] - cosmoListDict[key][1]/2.
+    upDict[key] = cosmoListDict[key][0] + old_div(cosmoListDict[key][1],2.)
+    dnDict[key] = cosmoListDict[key][0] - old_div(cosmoListDict[key][1],2.)
 except:
     print(("No step size specified for ", key))
     sys.exit()    

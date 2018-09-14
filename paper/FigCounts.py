@@ -1,4 +1,7 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import zip
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -68,7 +71,7 @@ for expName,col,labres in zip(expList,colList,labList):
     mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
     
     z_edges = zgrid
-    zrange = (z_edges[1:]+z_edges[:-1])/2.
+    zrange = old_div((z_edges[1:]+z_edges[:-1]),2.)
     mexp_edges = mgrid
 
     beam = listFromConfig(Config,expName,'beams')
@@ -91,8 +94,8 @@ for expName,col,labres in zip(expList,colList,labList):
     k = 0
     Ndict[labres] = []
     for zleft,zright in zip(zbins[:-1],zbins[1:]):
-        zcent = (zleft+zright)/2.
-        xerr = (zright-zleft)/2.
+        zcent = old_div((zleft+zright),2.)
+        xerr = old_div((zright-zleft),2.)
         N = Nofzs[np.logical_and(zrange>zleft,zrange<=zright)].sum()
         print((zleft,zright,N))
         if k==0:
@@ -101,7 +104,7 @@ for expName,col,labres in zip(expList,colList,labList):
             lab = None
             
         
-        currentAxis.add_patch(Rectangle((zcent - xerr+pad, 0), 2*xerr-pad/2., N, facecolor=col,label=lab))#,alpha=0.5))
+        currentAxis.add_patch(Rectangle((zcent - xerr+pad, 0), 2*xerr-old_div(pad,2.), N, facecolor=col,label=lab))#,alpha=0.5))
         Ndict[labres].append(N)
         k+=1
     
@@ -129,9 +132,9 @@ for expName,col,labres in zip(expList,colList,labList):
 
     k = 0
     for zleft,zright in zip(zbins[:-1],zbins[1:]):
-        zcent = (zleft+zright)/2.
-        xerr = (zright-zleft)/2.
-        N = Ndict[labres][k]/Nref[k]
+        zcent = old_div((zleft+zright),2.)
+        xerr = old_div((zright-zleft),2.)
+        N = old_div(Ndict[labres][k],Nref[k])
         print((zleft,zright,N))
         if k==0:
             lab = labres
@@ -139,7 +142,7 @@ for expName,col,labres in zip(expList,colList,labList):
             lab = None
             
         
-        currentAxis.add_patch(Rectangle((zcent - xerr+pad, 1+pad), 2*xerr-pad/2., N, facecolor=col,label=lab))#,alpha=0.5))
+        currentAxis.add_patch(Rectangle((zcent - xerr+pad, 1+pad), 2*xerr-old_div(pad,2.), N, facecolor=col,label=lab))#,alpha=0.5))
         k+=1
     
     

@@ -1,4 +1,7 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import str
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
@@ -15,7 +18,7 @@ maxSteps = None
 outDir = os.environ['WWW']+"plots/steps/"
 
 def getCents(xs):
-    return (xs[1:]+xs[:-1])/2.
+    return old_div((xs[1:]+xs[:-1]),2.)
 
 expName = sys.argv[1]
 gridName = sys.argv[2]
@@ -95,8 +98,8 @@ if True:
         uppassparams = fparams.copy()
         dnpassparams = fparams.copy()
 
-        uppassparams[key] = fparams[key]+val/2.
-        dnpassparams[key] = fparams[key]-val/2.
+        uppassparams[key] = fparams[key]+old_div(val,2.)
+        dnpassparams[key] = fparams[key]-old_div(val,2.)
 
 
         cc = ClusterCosmology(uppassparams,constDict,clTTFixFile=clttfile)
@@ -113,7 +116,7 @@ if True:
         Ndn = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbin_edges,SZProf)
         
     
-        dNdp = (getNmzq(Nup,mexp_edges,z_edges,qbin_edges)-getNmzq(Ndn,mexp_edges,z_edges,qbin_edges))/val
+        dNdp = old_div((getNmzq(Nup,mexp_edges,z_edges,qbin_edges)-getNmzq(Ndn,mexp_edges,z_edges,qbin_edges)),val)
 
 
         Nz = dNdp.copy().sum(axis=-1).sum(axis=0)
@@ -128,21 +131,21 @@ if True:
     xstep = 0.01
     for i,val in enumerate(vals):
         assert yNzs[key][i][0]==val
-        pl.add(getCents(z_edges)+((i-len(vals)/2)*xstep),yNzs[key][i][1],label=key+" "+str(val))
+        pl.add(getCents(z_edges)+((i-old_div(len(vals),2))*xstep),yNzs[key][i][1],label=key+" "+str(val))
     pl.legendOn(labsize=10,loc='upper right')
     pl.done(outDir+key+"_Nz_step.png")
     pl = Plotter(labelX="$M$",labelY="$dN$")
     xstep = 0.01
     for i,val in enumerate(vals):
         assert yNzs[key][i][0]==val
-        pl.add(getCents(mexp_edges)+((i-len(vals)/2)*xstep),yNzs[key][i][2],label=key+" "+str(val))
+        pl.add(getCents(mexp_edges)+((i-old_div(len(vals),2))*xstep),yNzs[key][i][2],label=key+" "+str(val))
     pl.legendOn(labsize=10,loc='upper right')
     pl.done(outDir+key+"_Nm_step.png")
     pl = Plotter(labelX="$q$",labelY="$dN$",scaleX='log')
     xstep = 0.1
     for i,val in enumerate(vals):
         assert yNzs[key][i][0]==val
-        pl.add(getCents(qbin_edges)+((i-len(vals)/2)*xstep),yNzs[key][i][3],label=key+" "+str(val))
+        pl.add(getCents(qbin_edges)+((i-old_div(len(vals),2))*xstep),yNzs[key][i][3],label=key+" "+str(val))
     pl.legendOn(labsize=10,loc='upper right')
     pl.done(outDir+key+"_Nq_step.png")
 

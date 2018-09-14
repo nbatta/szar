@@ -5,7 +5,11 @@ they are well behaved.
 
 Feb 24, 2017 - MM 
 """
+from __future__ import division
 
+from builtins import zip
+from builtins import str
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
@@ -28,7 +32,7 @@ for stepSize,ls in zip([0.2,0.1,0.05],['-','--','-.']):
 
         assert np.all(kh_camb_dn==kh_camb_up)
 
-        Pderiv = np.abs(P_camb_up-P_camb_dn)/stepSize
+        Pderiv = old_div(np.abs(P_camb_up-P_camb_dn),stepSize)
 
         if i%5==0:
             pl.add(kh_camb_up,Pderiv,ls=ls)

@@ -1,4 +1,6 @@
 from __future__ import print_function
+from __future__ import division
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 from configparser import SafeConfigParser 
@@ -44,7 +46,7 @@ cosmoFisher = Config.get('fisher-'+fishSection,'saveSuffix')
 from orphics.tools.io import listFromConfig
 zs = listFromConfig(Config,gridName,'zrange')
 z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
-zrange = (z_edges[1:]+z_edges[:-1])/2.
+zrange = old_div((z_edges[1:]+z_edges[:-1]),2.)
 paramList = Config.get('fisher-'+fishSection,'paramList').split(',')
 
 

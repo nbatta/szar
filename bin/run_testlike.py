@@ -1,4 +1,8 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import zip
+from builtins import range
+from past.utils import old_div
 import numpy as np
 import szar.likelihood as lk
 import matplotlib.pyplot as plt
@@ -49,7 +53,7 @@ noise_file = 'RMSMap_Arnaud_M2e14_z0p4.fits'
 
 fixlist = ['omch2','ombh2','H0','ns','tau','massbias','yslope','scat']
 fixvals = [0.1225,0.0245,70,0.97,0.06,1.0,0.08,0.2]
-fix_params = dict(zip(fixlist,fixvals))
+fix_params = dict(list(zip(fixlist,fixvals)))
 
 parlist = ['As']
 parvals = [2.0e-09]
@@ -74,10 +78,10 @@ if args.testMock:
     print("Testing Mockcat Numbers")
     MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[mmin-0.1,15.7,0.01],z_grid=[0.1,2.01,0.1])
     saveNum = []
-    for i in xrange(args.testMock):
+    for i in range(args.testMock):
         Nums = MC.test_Mockcat_Nums(mmin)
         saveNum = np.append(saveNum,Nums)
-        if (np.mod(i,args.testMock/10) == 0):
+        if (np.mod(i,old_div(args.testMock,10)) == 0):
             print(".")
     #print saveNum
     f = open(filedir+filename+'.txt', "w")

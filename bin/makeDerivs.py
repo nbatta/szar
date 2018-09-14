@@ -22,7 +22,11 @@ calibration error over mass.
 
 """
 from __future__ import print_function
+from __future__ import division
 
+from builtins import str
+from builtins import range
+from past.utils import old_div
 debug = False
 
 
@@ -202,7 +206,7 @@ YWLcorrflag = comm.bcast(YWLcorrflag, root = 0)
 v3mode = comm.bcast(v3mode, root = 0)
 if rank==0: print("Broadcasted.")
 
-myParamIndex = (rank+1)/2-1
+myParamIndex = old_div((rank+1),2)-1
 passParams = fparams.copy()
 
 
@@ -211,10 +215,10 @@ if rank==0:
     pass
 elif rank%2==1:
     myParam = inParamList[myParamIndex]
-    passParams[myParam] = fparams[myParam] + stepSizes[myParam]/2.
+    passParams[myParam] = fparams[myParam] + old_div(stepSizes[myParam],2.)
 elif rank%2==0:
     myParam = inParamList[myParamIndex]
-    passParams[myParam] = fparams[myParam] - stepSizes[myParam]/2.
+    passParams[myParam] = fparams[myParam] - old_div(stepSizes[myParam],2.)
 
 
 if rank!=0: print(rank,myParam,fparams[myParam],passParams[myParam])
@@ -237,7 +241,7 @@ if rank==0:
     for i in range(1,numcores):
         data = np.empty(dN_dmqz.shape, dtype=np.float64)
         comm.Recv(data, source=i, tag=77)
-        myParamIndex = (i+1)/2-1
+        myParamIndex = old_div((i+1),2)-1
         if i%2==1:
             dUps[inParamList[myParamIndex]] = data.copy()
         elif i%2==0:
@@ -251,7 +255,7 @@ if rank==0:
         
         Nup = getNmzq(dUps[param],mexp_edges,z_edges,qbin_edges)        
         Ndn = getNmzq(dDns[param],mexp_edges,z_edges,qbin_edges)
-        dNdp = (Nup-Ndn)/stepSizes[param]
+        dNdp = old_div((Nup-Ndn),stepSizes[param])
         np.save(bigDataDir+"Nup_mzq_"+saveId+"_"+param,Nup)
         np.save(bigDataDir+"Ndn_mzq_"+saveId+"_"+param,Ndn)
         np.save(sfisher.deriv_root(bigDataDir,saveId)+param,dNdp)

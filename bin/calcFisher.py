@@ -1,4 +1,7 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import str
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 import traceback
@@ -65,7 +68,7 @@ pickle.dump((paramList,FisherTot),open(bigDataDir+"savedFisher_"+saveId+"_"+save
 Finv = np.linalg.inv(FisherTot)
 
 print(np.linalg.det(Finv[6:8,6:8]))
-print("FOM", 1./np.sqrt(np.linalg.det(Finv[6:8,6:8])))
+print("FOM", old_div(1.,np.sqrt(np.linalg.det(Finv[6:8,6:8]))))
 
 errs = np.sqrt(np.diagonal(Finv))
 errDict = {}

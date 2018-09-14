@@ -1,4 +1,6 @@
 from __future__ import print_function
+from __future__ import division
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 import camb
@@ -58,7 +60,7 @@ else:
 
 Mexp_edges, z_edges, lndM = pickle.load(open(calFile,"rb"))
 mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
-zs = (z_edges[1:]+z_edges[:-1])/2.
+zs = old_div((z_edges[1:]+z_edges[:-1]),2.)
 
 
 hmf = Halo_MF(cc,Mexp_edges,z_edges)
@@ -97,7 +99,7 @@ elif qspacing=="linear":
 else:
     raise ValueError
 
-q_arr = (qbin_edges[1:]+qbin_edges[:-1])/2.
+q_arr = old_div((qbin_edges[1:]+qbin_edges[:-1]),2.)
 
 dnqmz = hmf.N_of_mqz_SZ(outmerr,qbin_edges,SZProf)
 

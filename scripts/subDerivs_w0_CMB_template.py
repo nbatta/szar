@@ -1,4 +1,7 @@
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 import time
 import os
 
@@ -30,7 +33,7 @@ calList = ['CMB_all']
 #grid = "grid-1.2"
 grid = "grid-default"
 
-from ConfigParser import SafeConfigParser 
+from configparser import SafeConfigParser 
 iniFile = "input/pipeline.ini"
 Config = SafeConfigParser()
 Config.optionxform=str
