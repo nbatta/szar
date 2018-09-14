@@ -1,3 +1,4 @@
+from __future__ import print_function
 from orphics.tools.io import Plotter
 import flipper.liteMap as lm
 from szar.counts import ClusterCosmology

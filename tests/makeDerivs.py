@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import orphics.tools.io as io
 import sys, time

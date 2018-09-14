@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
@@ -38,17 +39,17 @@ mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName
 start = time.clock()
 cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
 elapsed1 = (time.clock() - start)
-print elapsed1
+print(elapsed1)
 start = time.clock()
 HMF = Halo_MF(cc,mgrid,zgrid)
 elapsed1 = (time.clock() - start)
-print elapsed1
+print(elapsed1)
 
 start = time.clock()
 samples = HMF.mcsample_mf(200.,200,mthresh=[np.log10(3e14),np.log10(7e15)])
 elapsed1 = (time.clock() - start)
-print elapsed1
-print len(samples)
+print(elapsed1)
+print(len(samples))
 
 nclust = 100
 ids = np.random.randint(len(samples)/2.,size=nclust)

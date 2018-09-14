@@ -1,3 +1,4 @@
+from __future__ import print_function
 import orphics.tools.io as io
 import numpy as np
 import sys, os

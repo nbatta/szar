@@ -1,3 +1,4 @@
+from __future__ import print_function
 from szar.counts import ClusterCosmology,Halo_MF,getNmzq
 from szar.szproperties import SZ_Cluster_Model
 import szar.fisher as sfisher

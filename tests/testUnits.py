@@ -1,3 +1,4 @@
+from __future__ import print_function
 import unittest
 from orphics.tools.io import dictFromSection, listFromConfig
 from configparser import SafeConfigParser 

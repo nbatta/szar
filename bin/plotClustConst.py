@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 from getdist import plots, MCSamples
@@ -88,13 +89,13 @@ elif args.s8test:
     #print As1D
 
     indmin = np.argmax(like1D)
-    print As1D[indmin]
+    print(As1D[indmin])
 
-    print fint(As1D[indmin])
+    print(fint(As1D[indmin]))
     
     #print len(indsort)
 
-    print As1D.shape
+    print(As1D.shape)
 
     plt.figure()
     #plt.plot(fint(As1D), like1D)
@@ -141,5 +142,5 @@ if not args.s8test:
     print(samples1.getTable(limit=1).tableTex())
     
     constraints = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(out1, [16, 50, 84],axis=0)))
-    print constraints
+    print(constraints)
     

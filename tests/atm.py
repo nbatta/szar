@@ -1,3 +1,4 @@
+from __future__ import print_function
 import orphics.tools.cmb as cmb
 from configparser import SafeConfigParser 
 from orphics.tools.io import dictFromSection, listFromConfig

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 from orphics.io import dict_from_section, list_from_config, Plotter
 from orphics.flatMaps import interpolateGrid
@@ -43,7 +44,7 @@ pl.plot2d(pgrid,extent=[MMexp.min(),MMexp.max(),zz.min(),zz.max()],levels=[3.0,5
 pl.done(outDir+"origHSCgrid.png")
 
 
-print((hscgrid.shape))
+print(hscgrid.shape)
 
 
 #outmerr = interpolateGrid(hscgrid,MM,zz,M,zgrid,regular=False,kind="cubic",bounds_error=False,fill_value=np.inf)

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 from scipy.interpolate import interp1d
 from orphics.cosmology import noise_func

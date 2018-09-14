@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import gaussian
@@ -72,7 +73,7 @@ def read_test_mock_cat(fitsfile,mmin):
     zerr = data.field('redshift_err')
     merr = data.field('Mass_err')
     ind = np.where(m >= mmin)[0]
-    print "number of clusters above threshold",mmin,"is", len(ind)#,m[ind]
+    print("number of clusters above threshold",mmin,"is", len(ind))#,m[ind]
     return z[ind],zerr[ind],m[ind],merr[ind]
 
 def alter_fparams(fparams,parlist,parvals):
@@ -134,10 +135,10 @@ class clusterLike:
 
         clust_cat = nemoOutputDir + fitsfile 
         if self.simtest or self.simpars:
-            print "mock catalog"
+            print("mock catalog")
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat,self.qmin)
         else:
-            print "real catalog"
+            print("real catalog")
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat,self.qmin)
 
         self.rms_noise_map  = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
@@ -326,7 +327,7 @@ class clusterLike:
             Nind = Nind + np.log(N_per)
             #Nind2 *= N_per
             #print N_per
-        print -Ntot, Nind, -Ntot + Nind, theta#, np.log(np.exp(-Ntot)*Nind2)
+        print(-Ntot, Nind, -Ntot + Nind, theta)#, np.log(np.exp(-Ntot)*Nind2)
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist, priorval, priorlist):
@@ -436,7 +437,7 @@ class MockCatalog:
         
         Om = (self.param_vals['omch2'] + self.param_vals['ombh2']) / (self.param_vals['H0']/100.)**2
         OL = 1.-Om 
-        print "Omega_M", Om
+        print("Omega_M", Om)
 
         #the function call now includes cosmological dependences
         for i in range(nsamps):
@@ -529,7 +530,7 @@ class MockCatalog:
 
         ind = np.where(SNR >= 4.0)[0]
         ind2 = np.where(SNR >= 5.6)[0]
-        print "number of clusters SNR >= 5.6", len(ind2), " SNR >= 4.0",len(ind)
+        print("number of clusters SNR >= 5.6", len(ind2), " SNR >= 4.0",len(ind))
 
         RAdeg = xsave*0.0
         DECdeg = ysave*0.0
@@ -580,7 +581,7 @@ class MockCatalog:
         if (zcut):
             ind = np.where((z < zcut)*(use > 0))[0]
 
-        print "number of clusters SNR >= 4.0 plus completeness",len(ind)
+        print("number of clusters SNR >= 4.0 plus completeness",len(ind))
         fitsout = filedir+filename+'_comp_added.fits'
 
         hdu = fits.BinTableHDU.from_columns(
@@ -729,16 +730,16 @@ class clustLikeTest:
         cluster_prop = np.array([self.clst_z,self.clst_zerr,10**self.clst_m,self.clst_merr])
 
         Ntot = self.Ntot_survey(int_HMF,self.fsky)
-        print "Ntot comparion, and catalog"
-        print self.Ntot_survey_TEST(int_HMF,self.fsky), Ntot, len(self.clst_z)
+        print("Ntot comparion, and catalog")
+        print(self.Ntot_survey_TEST(int_HMF,self.fsky), Ntot, len(self.clst_z))
 
         Nind = 0
         for i in xrange(len(self.clst_z)):
             N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int)
             Nind = Nind + np.log(N_per)
 
-        print "-NTOT, Nind, Total, As"
-        print -Ntot, Nind, -Ntot + Nind, theta
+        print("-NTOT, Nind, Total, As")
+        print(-Ntot, Nind, -Ntot + Nind, theta)
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist):

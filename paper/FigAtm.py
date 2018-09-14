@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 from configparser import SafeConfigParser 
 import szar.fisher as sfisher

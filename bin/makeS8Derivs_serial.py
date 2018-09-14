@@ -1,3 +1,4 @@
+from __future__ import print_function
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
@@ -113,7 +114,7 @@ z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 nums8bins = HMF.zarr.size
 
 for i in range(nums8bins):
-    print(("Calculating derivatives for redshift ", HMF.zarr[i]))
+    print("Calculating derivatives for redshift ", HMF.zarr[i])
     HMF.pk = origPk.copy()
     HMF.pk[i,:] *= (1.+h/2.)**2. #((1.+h/2.)*s8zs[i])**2./s8zs[i]**2.                                                                    
     dNUp_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)

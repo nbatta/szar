@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 from scipy.special import spence
 from scipy.optimize import fmin
@@ -158,7 +159,7 @@ def rho_outtest(x,Mvir,theta, theta2):
     rvir = r200(Mvir)
     beta = rho_0/P_0 * Gravity*Mvir/rvir*c/gx(c)
     theta2_use = beta, x_f
-    print(("inside rhoout", theta2_use))
+    print("inside rhoout", theta2_use)
     ans = rho_0*(theta_func(x,Mvir,theta,theta2_use))**nn
     return ans
 

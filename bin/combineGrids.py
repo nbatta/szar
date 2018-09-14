@@ -1,3 +1,4 @@
+from __future__ import print_function
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -61,7 +62,7 @@ for cmbfile,cmbtype,save_func in zip([fidcmb_file,upcmb_file,dncmb_file],['fid',
         medges,zedges,errgrid = pickle.load(open(gridFile,'rb'))
 
 
-        print((errgrid.shape))
+        print(errgrid.shape)
         M_edges = 10**medges
         M = (M_edges[1:]+M_edges[:-1])/2.
         mexpgrid = np.log10(M)
@@ -79,7 +80,7 @@ for cmbfile,cmbtype,save_func in zip([fidcmb_file,upcmb_file,dncmb_file],['fid',
         zmin = zgrid[0]
         zmax = zgrid[-1]
 
-        print((mmin,mmax,zmin,zmax))
+        print(mmin,mmax,zmin,zmax)
 
         grids[gridFile] = (mexpgrid,zgrid,errgrid)
 
@@ -91,20 +92,20 @@ for cmbfile,cmbtype,save_func in zip([fidcmb_file,upcmb_file,dncmb_file],['fid',
         dzs.append(min(np.diff(zgrid)))
 
         sngrid = 1./errgrid
-        print((sngrid.shape))
+        print(sngrid.shape)
         for ind in mindicesList:
             if "CMB" in lab:
                 labadd = '{:02.1f}'.format(10**(mexpgrid[ind])/1e14)+" $10^{14}  M_{\odot}/h$"
             else:
                 labadd = None
             pl.add(zgrid,sngrid[ind,:].ravel(),ls=ls,label=labadd)
-            print((mexpgrid[ind]))
+            print(mexpgrid[ind])
 
         rtol = 1.e-3
         plt.gca().set_color_cycle(None)
 
-    print((outmgrid[0],outmgrid[-1],outmgrid.shape))
-    print((outzgrid[0],outzgrid[-1],outzgrid.shape))
+    print(outmgrid[0],outmgrid[-1],outmgrid.shape)
+    print(outzgrid[0],outzgrid[-1],outzgrid.shape)
     from orphics.maps import interpolateGrid
 
     jointgridsqinv = 0.
@@ -128,7 +129,7 @@ for cmbfile,cmbtype,save_func in zip([fidcmb_file,upcmb_file,dncmb_file],['fid',
 
     for ind in mindicesList:
         pl.add(outzgrid,snjoint[ind,:].ravel(),ls="-.")
-        print((mexpgrid[ind]))
+        print(mexpgrid[ind])
 
     pl.legendOn(loc='upper right',labsize=10)
     pl.done(outDir+"slice"+cmbtype+".pdf")

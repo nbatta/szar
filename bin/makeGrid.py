@@ -1,3 +1,4 @@
+from __future__ import print_function
 import matplotlib
 matplotlib.use('Agg')
 from mpi4py import MPI
@@ -10,15 +11,19 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 numcores = comm.Get_size()    
 
+# Hacky fix to python 2 vs 3 problem. Should return desired results in both versions when comparing floats to None
+def check_pzcut_less(a, pzcut):
+    if pzcut is None:
+        return True
+    elif a > pzcut:
+        return True
+    else:
+        return False
 
-
-if rank==0:
-
+if rank == 0:
     import sys
     from configparser import SafeConfigParser 
     import pickle as pickle
-
-
     import argparse
 
     parser = argparse.ArgumentParser(description='Make an M,z grid using MPI. Currently implements CMB lensing \
@@ -52,10 +57,10 @@ if rank==0:
     suffix = ""
     if lkneeTOverride is not None:
         suffix += "_"+str(lkneeTOverride)
-        print(("Overriding lknee with ", lkneeTOverride))
+        print("Overriding lknee with ", lkneeTOverride)
     if alphaTOverride is not None:
         suffix += "_"+str(alphaTOverride)
-        print(("Overriding alpha with ", alphaTOverride))
+        print("Overriding alpha with ", alphaTOverride)
 
     
     #doRayDeriv = not(args.skipRay)
@@ -379,12 +384,12 @@ if rank==0:
     lengths = [len(split) for split in splits]
     mintasks = min(lengths)
     maxtasks = max(lengths)
-    print(("I have ",numcores, " cores to work with."))
-    print(("And I have ", numes, " tasks to do."))
-    print(("Each worker gets at least ", mintasks, " tasks and at most ", maxtasks, " tasks."))
-    zfrac = float(len(z_edges[np.where(z_edges>pzcut)]))/len(z_edges)
+    print("I have ",numcores, " cores to work with.")
+    print("And I have ", numes, " tasks to do.")
+    print("Each worker gets at least ", mintasks, " tasks and at most ", maxtasks, " tasks.")
+    zfrac = float(len(z_edges[np.where( check_pzcut_less(z_edges, pzcut) )]))/len(z_edges)
     buestguess = (0.5*int(doSZ)+((1.+(2.*zfrac))*5.0*int(doLens)))*maxtasks
-    print(("My best guess is that this will take ", buestguess, " seconds."))
+    print("My best guess is that this will take ", buestguess, " seconds.")
     print("Starting the slow part...")
 
 
@@ -418,7 +423,7 @@ for index in mySplit:
         #     ray = beamY/2.
         # else:
         #     ray = None
-        if z>pzcut:
+        if check_pzcut_less(z, pzcut):
             ray = rayFid
         else:
             ray = None
@@ -427,13 +432,13 @@ for index in mySplit:
         MerrGrid[mindex,zindex] = 1./snRet
         if True: #doRayDeriv:
             rayUp = rayFid+rayStep/2.
-            if z>pzcut:
+            if check_pzcut_less(z, pzcut):
                 snRetUp,k500Up,stdUp = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=rayUp,arcStamp=arcStamp,pxStamp=pxStamp)
             else:
                 snRetUp = snRet
             MerrGridUp[mindex,zindex] = 1./snRetUp
             rayDn = rayFid-rayStep/2.
-            if z>pzcut:
+            if check_pzcut_less(z, pzcut):
                 snRetDn,k500Dn,stdDn = NFWMatchedFilterSN(cc,mass,concentration,z,ells=ls,Nls=Nls,kellmax=kmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,saveId=None,rayleighSigmaArcmin=rayDn,arcStamp=arcStamp,pxStamp=pxStamp)
             else:
                 snRetDn = snRet
@@ -468,7 +473,7 @@ else:
 
     if doLens:
         for i in range(1,numcores):
-            print(("Waiting for lens ", i ," / ", numcores))
+            print("Waiting for lens ", i ," / ", numcores)
             data = np.zeros(MerrGrid.shape, dtype=np.float64)
             comm.Recv(data, source=i, tag=77)
             MerrGrid += data.copy()
@@ -487,7 +492,7 @@ else:
         
     if doSZ:
         for i in range(1,numcores):
-            print(("Waiting for sz ", i," / ", numcores))
+            print("Waiting for sz ", i," / ", numcores)
             data = np.zeros(siggrid.shape, dtype=np.float64)
             comm.Recv(data, source=i, tag=78)
             siggrid += data.copy()

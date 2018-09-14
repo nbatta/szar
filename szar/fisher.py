@@ -1,3 +1,4 @@
+from __future__ import print_function
 import itertools
 from szar.counts import rebinN
 import numpy as np
@@ -136,10 +137,10 @@ def priors_from_config(Config,expName,calName,fishName,paramList,tauOverride=Non
             ind = np.where(np.isclose(freq,freq_to_use))
             beamFind = np.array(beam)[ind]
             priorValueList.append(beamFind/2.)
-            print "Added sigR prior ", priorValueList[-1]
+            print("Added sigR prior ", priorValueList[-1])
         except:
             traceback.print_exc()
-            print "Couldn't add sigR prior. Is this CMB lensing? Exiting."
+            print("Couldn't add sigR prior. Is this CMB lensing? Exiting.")
             sys.exit(1)
 
 

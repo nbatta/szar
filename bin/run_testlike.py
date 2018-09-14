@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import szar.likelihood as lk
 import matplotlib.pyplot as plt
@@ -53,7 +54,7 @@ fix_params = dict(zip(fixlist,fixvals))
 parlist = ['As']
 parvals = [2.0e-09]
 mmin = 14.3
-print mmin
+print(mmin)
 
 priorlist = []
 prioravg = np.array([])
@@ -70,18 +71,18 @@ filedir = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/'
 filename = args.chain_name #,'mockCat_v1'
 
 if args.testMock:
-    print "Testing Mockcat Numbers"
+    print("Testing Mockcat Numbers")
     MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[mmin-0.1,15.7,0.01],z_grid=[0.1,2.01,0.1])
     saveNum = []
     for i in xrange(args.testMock):
         Nums = MC.test_Mockcat_Nums(mmin)
         saveNum = np.append(saveNum,Nums)
         if (np.mod(i,args.testMock/10) == 0):
-            print "."
+            print(".")
     #print saveNum
     f = open(filedir+filename+'.txt', "w")
     np.savetxt(f,saveNum)
-    print ('sample time',time.time() - start)    
+    print('sample time',time.time() - start)    
     sys.exit(0)
 else:
     check = os.path.isfile(filedir+filename+'.fits')
@@ -90,14 +91,14 @@ else:
         MC.write_test_cat_toFits(filedir,filename)
     #MC.write_obs_cat_toFits(filedir,filename)
     else:
-        print "Mockcat already exists"
+        print("Mockcat already exists")
 
-print ('sample time',time.time() - start)    
+print('sample time',time.time() - start)    
 
 
 MC2 = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[mmin,15.7,0.01],z_grid=[0.1,2.01,0.1])
 
-print "pre-predictions Ntot ", MC2.Total_clusters(MC2.fsky)   
+print("pre-predictions Ntot ", MC2.Total_clusters(MC2.fsky))   
 #list = fits.open(filedir+filename+'.fits')
 #if list:
 #    print "Using file", filename+'.fits'
@@ -123,7 +124,7 @@ savemat = [parvals_arr,ansout]
 np.savetxt(f,savemat)
 
 indmin = np.argmax(ansout)
-print parvals_arr[indmin]
+print(parvals_arr[indmin])
 
 sys.exit(0)
 

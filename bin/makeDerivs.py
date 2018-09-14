@@ -21,6 +21,7 @@ that specifies an experiment.
 calibration error over mass.
 
 """
+from __future__ import print_function
 
 debug = False
 
@@ -108,7 +109,7 @@ if rank==0:
         assert numcores==neededCores, "I need 2N+1 cores to do my job for N params. \
         You gave me "+str(numcores)+ " core(s) for "+str(numParams)+" param(s)."
     except:
-        print inParamList
+        print(inParamList)
         sys.exit()
 
 
@@ -216,7 +217,7 @@ elif rank%2==0:
     passParams[myParam] = fparams[myParam] - stepSizes[myParam]/2.
 
 
-if rank!=0: print((rank,myParam,fparams[myParam],passParams[myParam]))
+if rank!=0: print(rank,myParam,fparams[myParam],passParams[myParam])
 cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
 HMF = Halo_MF(cc,mexp_edges,z_edges)
 HMF.sigN = siggrid.copy()

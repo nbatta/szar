@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import szar.likelihood as lk
 import matplotlib.pyplot as plt
@@ -38,7 +39,7 @@ diagnosticsDir = '/Users/nab/Downloads/countsCheck/equD56-countsCheck/diagnostic
 nmap = lk.read_MJH_noisemap(nemoOutputDir+noise_file,diagnosticsDir+'areaMask.fits')
 
 
-print nmap.shape
+print(nmap.shape)
 m_nmap = np.mean(nmap[nmap>0])
 print (m_nmap)
 
@@ -112,20 +113,20 @@ params= CL.alter_fparams(fparams,parlist,parvals)
 
 start = time.time()
 int_cc = ClusterCosmology(params,CL.constDict,clTTFixFile=CL.clttfile) # internal HMF call
-print ('CC',time.time() - start)
+print(('CC',time.time() - start))
 start = time.time()
 int_HMF = Halo_MF(int_cc,CL.mgrid,CL.zgrid)
-print ('HMF',time.time() - start)
+print(('HMF',time.time() - start))
 
 cluster_prop = np.array([CL.clst_z,CL.clst_zerr,CL.clst_y0,CL.clst_y0err])
 cluster_prop2 = np.array([CL.clst_z,CL.clst_zerr,CL.clst_y0*1e-4,CL.clst_y0err*1e-4])
-print cluster_prop.shape
+print(cluster_prop.shape)
 
 dndm_int = int_HMF.inter_dndm(200.)
 
 start = time.time()
-print np.log(CL.Prob_per_cluster(int_HMF,cluster_prop2[:,0],dndm_int,params))
-print ('per cluster spec z',time.time() - start)
+print(np.log(CL.Prob_per_cluster(int_HMF,cluster_prop2[:,0],dndm_int,params)))
+print(('per cluster spec z',time.time() - start))
 
 c_z, c_zerr, c_y, c_yerr = cluster_prop[:,0]
 c_y *= 1e-4
@@ -134,8 +135,8 @@ c_yerr *= 1e-4
 #print int_HMF.zarr
 
 start = time.time()
-print np.log(CL.Prob_per_cluster(int_HMF,cluster_prop2[:,1],dndm_int,params))
-print ('per cluster photo z',time.time() - start)
+print(np.log(CL.Prob_per_cluster(int_HMF,cluster_prop2[:,1],dndm_int,params)))
+print(('per cluster photo z',time.time() - start))
 
 #mind = 50
 
@@ -164,10 +165,10 @@ priorwth = np.array([0.01,0.01,3,0.12,0.05])
 priorvals = np.array([prioravg,priorwth])
 
 start = time.time()
-print CL.lnprob(parvals,parlist,priorvals,priorlist)
-print ('Ln Like Func',time.time() - start)
+print(CL.lnprob(parvals,parlist,priorvals,priorlist))
+print(('Ln Like Func',time.time() - start))
 
-print CL.lnprior(parvals,parlist,priorvals,priorlist)
+print(CL.lnprior(parvals,parlist,priorvals,priorlist))
 
 ##test likelihood
 #Ndim, nwalkers = 5 , 10

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import camb
 from camb import model
@@ -229,7 +230,7 @@ class ClusterCosmology(Cosmology):
             integ[i] = np.trapz(1./(aa**3 * self.E_z(1./aa - 1.)**3),dx=np.diff(aa))
             integ2[i] = simps(1./(aa**3 * self.E_z(1./aa - 1.)**3),aa)
 
-        print np.sum(integ - integ2)/np.sum(integ)
+        print(np.sum(integ - integ2)/np.sum(integ))
         ans = 5.* Om / 2. *self.E_z(z) * integ
         return ans
 

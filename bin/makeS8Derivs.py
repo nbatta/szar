@@ -1,3 +1,4 @@
+from __future__ import print_function
 from mpi4py import MPI
 import matplotlib
 matplotlib.use('Agg')
@@ -124,7 +125,7 @@ else:
 
     
     i = rank-1
-    print(("Calculating derivatives for redshift ", HMF.zarr[i]))
+    print("Calculating derivatives for redshift ", HMF.zarr[i])
     HMF.pk = origPk.copy()
     HMF.pk[i,:] *= (1.+h/2.)**2. #((1.+h/2.)*s8zs[i])**2./s8zs[i]**2.
     dNUp_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)

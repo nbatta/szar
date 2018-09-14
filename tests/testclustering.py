@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
@@ -17,12 +18,12 @@ clst = clustering(iniFile,expName,gridName,version)
 M200temp = np.arange(1,1000,1) * 1e11
 
 #print M200temp
-print clst.non_linear_scale(1.95,M200temp)
+print(clst.non_linear_scale(1.95,M200temp))
 
 #print clst.HMF.M200.shape
-print clst.ntilde()
-print clst.b_eff_z()
-print clst.Norm_Sfunc(0.4)
+print(clst.ntilde())
+print(clst.b_eff_z())
+print(clst.Norm_Sfunc(0.4))
 
 zarrs = np.arange(0,4,0.05)
 #print clst.cc.GrowthFunc(zarrs)

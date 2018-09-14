@@ -1,8 +1,10 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import numpy as np
 #from orphics.cosmology import Cosmology
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
-import tinker as tinker
+from . import tinker as tinker
 from configparser import SafeConfigParser
 from orphics.io import dict_from_section,list_from_config
 import cPickle as pickle
@@ -72,13 +74,13 @@ class clustering:
         sig = np.sqrt(tinker.sigma_sq_integral(R, self.HMF.pk[use_z,:], self.HMF.kh))
 
         #print sig[:,0],sig[0,:]
-        print sig.shape
-        print self.HMF.kh.shape
+        print(sig.shape)
+        print(self.HMF.kh.shape)
         sig1 = sig[0,:]
-        print sig1
+        print(sig1)
         sigdiff = np.abs(sig1 - 1.)
         use_sig = np.where(sigdiff == np.min(sigdiff))[0]
-        print use_sig
+        print(use_sig)
         
         
 

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -133,7 +134,7 @@ for i,(f,lab,col) in enumerate(zip([cmbfisher1,cmbfisher0],['1.5\'','1.0\''],col
         xerr = (zright-zleft)/2.
         xerrs.append(xerr)
         s8now = np.mean(s81zs[np.logical_and(zrange>=zleft,zrange<zright)])
-        print((lab,zleft,zright, yerr,s8now, yerr*100./s8now, "%"))
+        print(lab,zleft,zright, yerr,s8now, yerr*100./s8now, "%")
         #s8now = np.mean(s81zs[np.logical_and(zrange>=zleft,zrange<zright)])/s81
         #yerrsq = (1./sum([1/x**2. for x in errselect]))
         #yerr = (s8now/s80mean)*np.sqrt(yerrsq/s8now**2. + yerrsq0/s80mean**2.)
