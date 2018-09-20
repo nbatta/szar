@@ -1,3 +1,4 @@
+from __future__ import print_function
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
@@ -35,8 +36,8 @@ try:
     assert np.all(np.isclose(NFid_mzq,NFid_mzq_alt))
 except:
     print("ERROR: Sigma8 and fid saves are not identical")
-    print((NFid_mzq.shape))
-    print((NFid_mzq_alt.shape))
+    print(NFid_mzq.shape)
+    print(NFid_mzq_alt.shape)
     from orphics.io import quickPlot2d
     quickPlot2d(NFid_mzq[0,:,:],os.environ['WWW']+"debug_sig8.png")
     quickPlot2d(NFid_mzq_alt[0,:,:],os.environ['WWW']+"debug_fid.png")

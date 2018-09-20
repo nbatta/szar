@@ -21,7 +21,12 @@ that specifies an experiment.
 calibration error over mass.
 
 """
+from __future__ import print_function
+from __future__ import division
 
+from builtins import str
+from builtins import range
+from past.utils import old_div
 debug = False
 
 
@@ -170,7 +175,7 @@ massMultiplier = comm.bcast(massMultiplier, root = 0)
 siggrid = comm.bcast(siggrid, root = 0)
 if rank==0: print("Broadcasted.")
 
-myParamIndex = (rank+1)/2-1
+myParamIndex = old_div((rank+1),2)-1
 passParams = fparams.copy()
 
     
@@ -198,7 +203,7 @@ if rank==0:
             
     Nup = getNmzq(dUp,mexp_edges,z_edges,qbin_edges)        
     Ndn = getNmzq(dDn,mexp_edges,z_edges,qbin_edges)
-    dNdp = (Nup-Ndn)/rayStep
+    dNdp = old_div((Nup-Ndn),rayStep)
     np.save(bigDataDir+"Nup_mzq_"+saveId+"_sigR",Nup)
     np.save(bigDataDir+"Ndn_mzq_"+saveId+"_sigR",Ndn)
     np.save(bigDataDir+"dNdp_mzq_"+saveId+"_sigR",dNdp)

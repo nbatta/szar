@@ -1,10 +1,15 @@
+from __future__ import print_function
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from past.utils import old_div
 import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
 #from orphics import dict_from_section, list_from_config
 from orphics.io import dict_from_section
-from ConfigParser import SafeConfigParser
-import cPickle as pickle
+from configparser import SafeConfigParser
+import pickle as pickle
 import matplotlib.pyplot as plt
 #import emcee
 import time
@@ -38,20 +43,20 @@ mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName
 start = time.clock()
 cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
 elapsed1 = (time.clock() - start)
-print elapsed1
+print(elapsed1)
 start = time.clock()
 HMF = Halo_MF(cc,mgrid,zgrid)
 elapsed1 = (time.clock() - start)
-print elapsed1
+print(elapsed1)
 
 start = time.clock()
 samples = HMF.mcsample_mf(200.,200,mthresh=[np.log10(3e14),np.log10(7e15)])
 elapsed1 = (time.clock() - start)
-print elapsed1
-print len(samples)
+print(elapsed1)
+print(len(samples))
 
 nclust = 100
-ids = np.random.randint(len(samples)/2.,size=nclust)
+ids = np.random.randint(old_div(len(samples),2.),size=nclust)
 
 plt.plot(samples[:,0],samples[:,1],'x')
 plt.plot(samples[ids,0],samples[ids,1],'o')
@@ -97,7 +102,7 @@ def Rand_arr(cmat,Nsamps):
     
 
 
-pars1 = 1.,5./3.
+pars1 = 1.,old_div(5.,3.)
 Y = M_obs_rel(MM,pars1)
 
 pars2 = 1.,1.

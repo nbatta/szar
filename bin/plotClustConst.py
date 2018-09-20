@@ -1,3 +1,8 @@
+from __future__ import print_function
+from __future__ import division
+from builtins import zip
+from builtins import range
+from past.utils import old_div
 import numpy as np
 import matplotlib.pyplot as plt
 from getdist import plots, MCSamples
@@ -26,7 +31,7 @@ def bring_together_samples(home,chain_name,burnin):
         if (i == 0): all_samps = a
         all_samps = np.append(all_samps,a,axis=0)
 
-    Om_samps = np.array([(all_samps[:,0] + all_samps[:,1])/(all_samps[:,2]/100.)**2])
+    Om_samps = np.array([old_div((all_samps[:,0] + all_samps[:,1]),(old_div(all_samps[:,2],100.))**2)])
     all_samps = np.concatenate((all_samps,Om_samps.T),axis=1)
 
     return all_samps
@@ -55,7 +60,7 @@ if args.test:
     samples1 = MCSamples(samples=out1,names = names, labels = labels)
 
     p = samples1.getParams() 
-    samples1.addDerived((p.omch2 + p.ombh2) /0.7**2, name='om', label='\Omega_M')
+    samples1.addDerived(old_div((p.omch2 + p.ombh2),0.7**2), name='om', label='\Omega_M')
     
     plt.figure()
     g = plots.getSubplotPlotter()
@@ -88,13 +93,13 @@ elif args.s8test:
     #print As1D
 
     indmin = np.argmax(like1D)
-    print As1D[indmin]
+    print(As1D[indmin])
 
-    print fint(As1D[indmin])
+    print(fint(As1D[indmin]))
     
     #print len(indsort)
 
-    print As1D.shape
+    print(As1D.shape)
 
     plt.figure()
     #plt.plot(fint(As1D), like1D)
@@ -140,6 +145,6 @@ if not args.s8test:
 
     print(samples1.getTable(limit=1).tableTex())
     
-    constraints = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(out1, [16, 50, 84],axis=0)))
-    print constraints
+    constraints = [(v[1], v[2]-v[1], v[1]-v[0]) for v in zip(*np.percentile(out1, [16, 50, 84],axis=0))]
+    print(constraints)
     

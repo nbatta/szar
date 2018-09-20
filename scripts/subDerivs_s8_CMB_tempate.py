@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import str
 from orphics.tools.io import listFromConfig
 import numpy as np
 import time

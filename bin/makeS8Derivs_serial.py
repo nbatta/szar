@@ -1,3 +1,8 @@
+from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
@@ -89,17 +94,17 @@ origPk = HMF.pk.copy()
     
 print("Calculating derivatives for overall power ...")
 HMF.pk = origPk.copy()
-HMF.pk[:,:] *= (1.+h/2.)**2. 
+HMF.pk[:,:] *= (1.+old_div(h,2.))**2. 
 dNUp_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbins,SZProf)
 Nup = getNmzq(dNUp_dmqz,mgrid,zrange,qbins)
 
 HMF.pk = origPk.copy()
-HMF.pk[:,:] *= (1.-h/2.)**2.
+HMF.pk[:,:] *= (1.-old_div(h,2.))**2.
 dNDn_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbins,SZProf)
 Ndn = getNmzq(dNDn_dmqz,mgrid,zrange,qbins)
 
 
-dNdp = (Nup-Ndn)/h
+dNdp = old_div((Nup-Ndn),h)
 
 param = "S8All"
 
@@ -113,19 +118,19 @@ z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 nums8bins = HMF.zarr.size
 
 for i in range(nums8bins):
-    print(("Calculating derivatives for redshift ", HMF.zarr[i]))
+    print("Calculating derivatives for redshift ", HMF.zarr[i])
     HMF.pk = origPk.copy()
-    HMF.pk[i,:] *= (1.+h/2.)**2. #((1.+h/2.)*s8zs[i])**2./s8zs[i]**2.                                                                    
+    HMF.pk[i,:] *= (1.+old_div(h,2.))**2. #((1.+h/2.)*s8zs[i])**2./s8zs[i]**2.                                                                    
     dNUp_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
     Nup = getNmzq(dNUp_dmqz,mgrid,zrange,qbins)
 
     HMF.pk = origPk.copy()
-    HMF.pk[i,:] *= (1.-h/2.)**2.
+    HMF.pk[i,:] *= (1.-old_div(h,2.))**2.
     dNDn_dmqz = HMF.N_of_mqz_SZ(lndM,qbins,SZProf)
     Ndn = getNmzq(dNDn_dmqz,mgrid,zrange,qbins)
 
 
-    dNdp = (Nup-Ndn)/h
+    dNdp = old_div((Nup-Ndn),h)
 
     param = "S8Z"+str(i)
 

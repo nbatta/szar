@@ -8,7 +8,9 @@ Fisher matrices.
 
 Feb 24, 2017 - MM 
 """
+from __future__ import print_function
 
+from builtins import str
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np

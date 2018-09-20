@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import division
+from past.utils import old_div
 import camb
 import numpy as np
 
@@ -90,7 +93,7 @@ rps  = SZ.rad_ps(ells,freq[0],freq[0])
 
 
 pl = Plotter()                                                                                                          
-pl.add(ells,nl/nl2)
+pl.add(ells,old_div(nl,nl2))
 #pl.add(ells,nl*(ells+1.)*ells/ (2.* np.pi) * constDict['TCMBmuK']**2)
 #pl.add(ells,cibp )#/ ((ells+1.)*ells) * 2.* np.pi)
 #pl.add(ells,cibc )#/ ((ells+1.)*ells) * 2.* np.pi)

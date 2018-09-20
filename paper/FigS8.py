@@ -1,3 +1,7 @@
+from __future__ import print_function
+from __future__ import division
+from builtins import zip
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -63,7 +67,7 @@ for (key, val) in Config.items('params'):
 constDict = dictFromSection(Config,'constants')
 zs = listFromConfig(Config,gridName,'zrange')
 z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
-zrange = (z_edges[1:]+z_edges[:-1])/2.
+zrange = old_div((z_edges[1:]+z_edges[:-1]),2.)
 
 s81,As1 = getA(fparams,constDict,zrange)
 print(s81)
@@ -99,7 +103,7 @@ for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1
     ms8 = []
     pad = 0.05
     s80mean = np.mean(s81zs[np.logical_and(zrange>=zbins[0],zrange<zbins[1])])
-    yerrsq0 = (1./sum([1/x**2. for x in err[np.logical_and(zrange>=zbins[0],zrange<zbins[1])]]))
+    yerrsq0 = (old_div(1.,sum([old_div(1,x**2.) for x in err[np.logical_and(zrange>=zbins[0],zrange<zbins[1])]])))
 
     for zleft,zright in zip(zbins[:-1],zbins[1:]):
         try:
@@ -108,10 +112,10 @@ for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1
             print((lab, zleft, zright))
             sys.exit()
             
-        zcent = (zleft+zright)/2.
+        zcent = old_div((zleft+zright),2.)
         zcents.append(zcent)
-        yerr = np.sqrt(1./sum([1/x**2. for x in errselect]))
-        xerr = (zright-zleft)/2.
+        yerr = np.sqrt(old_div(1.,sum([old_div(1,x**2.) for x in errselect])))
+        xerr = old_div((zright-zleft),2.)
         xerrs.append(xerr)
         s8now = np.mean(s81zs[np.logical_and(zrange>=zleft,zrange<zright)])
         print((lab,zleft,zright, yerr,s8now, yerr*100./s8now, "%"))
@@ -120,7 +124,7 @@ for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1
         #yerr = (s8now/s80mean)*np.sqrt(yerrsq/s8now**2. + yerrsq0/s80mean**2.)
         errcents.append(yerr)
         ms8.append(s8now)
-        currentAxis.add_patch(Rectangle((zcent - xerr+pad, 1. - yerr/s8now), 2*xerr-pad/2., 2.*yerr/s8now, facecolor=col,alpha=0.3))
+        currentAxis.add_patch(Rectangle((zcent - xerr+pad, 1. - old_div(yerr,s8now)), 2*xerr-old_div(pad,2.), 2.*yerr/s8now, facecolor=col,alpha=0.3))
     print("=====================")
     #pl._ax.fill_between(zrange, 1., 1.,label=lab,alpha=0.75,color=col)
 
@@ -145,14 +149,14 @@ for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1
     ms8 = []
     pad = 0.05
     s80mean = np.mean(s81zs[np.logical_and(zrange>=zbins[0],zrange<zbins[1])])
-    yerrsq0 = (1./sum([1/x**2. for x in err[np.logical_and(zrange>=zbins[0],zrange<zbins[1])]]))
+    yerrsq0 = (old_div(1.,sum([old_div(1,x**2.) for x in err[np.logical_and(zrange>=zbins[0],zrange<zbins[1])]])))
 
     for zleft,zright in zip(zbins[:-1],zbins[1:]):
         errselect = err[np.logical_and(zrange>=zleft,zrange<zright)]
-        zcent = (zleft+zright)/2.
+        zcent = old_div((zleft+zright),2.)
         zcents.append(zcent)
-        yerr = np.sqrt(1./sum([1/x**2. for x in errselect]))
-        xerr = (zright-zleft)/2.
+        yerr = np.sqrt(old_div(1.,sum([old_div(1,x**2.) for x in errselect])))
+        xerr = old_div((zright-zleft),2.)
         xerrs.append(xerr)
         s8now = np.mean(s81zs[np.logical_and(zrange>=zleft,zrange<zright)])
         print((lab,zleft,zright, yerr,s8now, yerr*100./s8now, "%"))
@@ -161,13 +165,13 @@ for i,(f,lab,col) in enumerate(zip([cmbfisher3,cmbfisher2,cmbfisher15,cmbfisher1
         #yerr = (s8now/s80mean)*np.sqrt(yerrsq/s8now**2. + yerrsq0/s80mean**2.)
         errcents.append(yerr)
         ms8.append(s8now)
-        currentAxis.add_patch(Rectangle((zcent - xerr+pad, 1. - yerr/s8now), 2*xerr-pad/2., 2.*yerr/s8now, facecolor=col,alpha=1.0))
+        currentAxis.add_patch(Rectangle((zcent - xerr+pad, 1. - old_div(yerr,s8now)), 2*xerr-old_div(pad,2.), 2.*yerr/s8now, facecolor=col,alpha=1.0))
     print("=====================")
     pl._ax.fill_between(zrange, 1., 1.,label=lab,alpha=0.75,color=col)
     
 
 #pl.add(zrange,s82zs/s81zs,label="$w=-0.97$",color='red',alpha=0.5)
-pl.add(zrange,s81zs/s81zs,color='white',alpha=0.5,ls="--")#,label="$w=-1$")
+pl.add(zrange,old_div(s81zs,s81zs),color='white',alpha=0.5,ls="--")#,label="$w=-1$")
 
 # pl.add(zrange,s82zs/s81zs/s82*s81,label="$w=-0.97$",color='red',alpha=0.5)
 # pl.add(zrange,s81zs*0.+1.,label="$w=-1$",color='black',alpha=0.5,ls="--")

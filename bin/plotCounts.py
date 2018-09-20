@@ -1,3 +1,4 @@
+from __future__ import print_function
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -120,21 +121,21 @@ for expName,col in zip(expList,colList):
     
     SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
     Nofzs = np.multiply(HMF.N_of_z_SZ(fsky,SZProf),np.diff(z_edges).reshape(1,z_edges.size-1)).ravel()
-    print((Nofzs.sum()))
+    print(Nofzs.sum())
     #sys.exit()
 
     saveId = expName + "_" + gridName + "_" + cal + "_v" + version
     Nmzq = np.load(bigDataDir+"N_mzq_"+saveId+"_fid.npy")*fsky
     Nmz = Nmzq.sum(axis=-1)
     Nz = Nmzq.sum(axis=0).sum(axis=-1)
-    print((Nz.shape))
+    print(Nz.shape)
 
 
     m_edges = 10**mexp_edges
     masses = (m_edges[1:]+m_edges[:-1])/2.
     mexp_new = np.log10(np.linspace(masses[0],masses[-1],10))
     z_new = np.linspace(0.25,2.75,10)
-    print((Nmz.sum()))
+    print(Nmz.sum()
     rn = resample_bin(Nmz,factors=[float(mexp_new.size)/Nmz.shape[0],float(z_new.size)/Nmz.shape[1]],axes=[-2,-1])
 
     currentAxis = plt.gca()
