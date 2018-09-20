@@ -14,7 +14,7 @@ from configparser import SafeConfigParser
 from orphics.io import dict_from_section,list_from_config
 import pickle as pickle
 
-class clustering(object):
+class Clustering(object):
     def __init__(self,iniFile,expName,gridName,version):
         Config = SafeConfigParser()
         Config.optionxform=str
@@ -69,7 +69,7 @@ class clustering(object):
 
         return beff
 
-    def non_linear_scale(self,z,M200):
+    def non_linear_scale(self,z,M200): #?Who are you?
 
         zdiff = np.abs(self.HMF.zarr - z)
         use_z = np.where(zdiff == np.min(zdiff))[0]

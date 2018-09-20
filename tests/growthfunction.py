@@ -26,7 +26,9 @@ clttfile = Config.get('general','clttfile')
 
 cc = ClusterCosmology(fparams, constDict, clTTFixFile=clttfile)
 
-zarrs = np.arange(0,9,0.005)
+Om = (cc.paramDict['omch2'] + cc.paramDict['ombh2'])/((cc.paramDict['H0']/100.)**2)
+
+zarrs = np.arange(0,9,0.05)
 scalefacs = 1/(1+zarrs)
 scalefacs = np.flip(scalefacs)
 
@@ -40,9 +42,9 @@ plt.gcf().clear()
 
 logderiv = cc.fgrowth(zarrs)
 
-g = lambda x: (0.3*(1 + x)**3)**0.55
+g = lambda x: (Om*(1 + x)**3/cc.E_z(x)**2)**0.55
 
 plt.plot(zarrs, logderiv)
-#plt.plot(zarrs, g(zarrs))
+plt.plot(zarrs, g(zarrs))
 plt.savefig("logderiv_growth_test.svg")
 

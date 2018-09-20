@@ -220,30 +220,31 @@ class ClusterCosmology(Cosmology):
         ans = old_div(self.results.hubble_parameter(z),self.paramDict['H0']) # 0.1% different from sqrt(om*(1+z)^3+ol)
         return ans
 
-    def GrowthFunc(self,z):
+    def growthfunc(self,z):
         #numerical growth function
         a = old_div(1.,(1.+z))
         dela = 0.000001
         Om = old_div((self.paramDict['omch2'] + self.paramDict['ombh2']), (old_div(self.paramDict['H0'],100.))**2)
         integ = np.zeros(len(z))
-        integ2 = np.zeros(len(z))
+
         for i in range(len(a)):
             aa = np.arange(dela,a[i],dela)
-            #print aa.shape
-            #print np.diff(aa).shape
-            #print (1./(aa**3 * self.E_z(1./aa - 1.)**3)).shape
-            integ[i] = np.trapz(old_div(1.,(aa**3 * self.E_z(old_div(1.,aa) - 1.)**3)),dx=np.diff(aa))
-            integ2[i] = simps(old_div(1.,(aa**3 * self.E_z(old_div(1.,aa) - 1.)**3)),aa)
+            integrand = 1./( (aa * self.E_z(1./aa - 1.))**3 )
+            integ[i] = np.trapz(integrand, dx=np.diff(aa))
 
-        print(old_div(np.sum(integ - integ2),np.sum(integ)))
         ans = 5.* Om / 2. *self.E_z(z) * integ
         return ans
 
     def fgrowth(self,z):
         a = old_div(1.,(1. + z))
-        dgrowth = self.GrowthFunc(z)#cc.results.get_redshift_evolution(self.HMF.kh, zarr, ['growth'])
-        dlna = np.gradient(np.log(a),edge_order=2)
-        ans = old_div(np.gradient(np.log(dgrowth),edge_order=2),dlna) #/np.gradient(np.log(a))
+        
+        dgrowth = self.growthfunc(z)#cc.results.get_redshift_evolution(self.HMF.kh, zarr, ['growth'])
+        
+        dlog = np.gradient(np.log(dgrowth), np.log(a))
+        #dlna = np.gradient(np.log(a), edge_order=2)
+        #dlng = np.gradient(np.log(dgrowth), edge_order=2)
+        
+        ans = dlog #dlng/dlna #/np.gradient(np.log(a))
         return ans
 
     def rhoc(self,z):
