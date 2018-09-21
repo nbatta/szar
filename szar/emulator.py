@@ -38,8 +38,8 @@ class NmzEmulator(object):
         return mzs
 
 def lnlike(nobs,ntheory):
-    factorial = lambda x : x*np.log(x) - x
-    lnfac = np.log(factorial(nobs))
+    lnfactorial = lambda x : x*np.log(x) - x
+    lnfac = lnfactorial(nobs)
     return np.nansum(nobs * np.log(ntheory)-ntheory-lnfac)
 
 
