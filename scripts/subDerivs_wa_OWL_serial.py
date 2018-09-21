@@ -9,7 +9,7 @@ from configparser import SafeConfigParser
 #expList = ['CCATP-propv2']#,'CMB-Probe-nohf']
 #expList = ['AdvACT_S19']
 #expList = ['SO-v3-goal-40']
-expList = ['CMB-Probe-v3-1']
+expList = ['S4-1.4-0.4-v2']
 #expList = ['CCATP-MSIP','CCATP-SO-MSIP']
 #expList = ['CMB-Probe-v3-1']
 #expList = ['S4-1.0-CDT-max']#,'S4-1.5-CDT']
