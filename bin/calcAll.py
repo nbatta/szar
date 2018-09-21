@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 cmdRoot = "python bin/calcFisher.py "
 

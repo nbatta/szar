@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import division
+from past.utils import old_div
 import unittest
 from orphics.tools.io import dictFromSection, listFromConfig
 from configparser import SafeConfigParser 
@@ -58,7 +61,7 @@ class TestHMF(unittest.TestCase):
         beta_ym = 0.66666 
         gamma_ym = 0 
         beta_fac = 1.
-        ans = Y_star*((b_ym)*MM/(self.cc.H0/100.)/6e14)**alpha_ym *(1e-4/DA_z**2) * beta_fac * self.cc.E_z(zz) ** (2./3.) * (1. + zz)**gamma_ym
+        ans = Y_star*((b_ym)*MM/(old_div(self.cc.H0,100.))/6e14)**alpha_ym *(old_div(1e-4,DA_z**2)) * beta_fac * self.cc.E_z(zz) ** (old_div(2.,3.)) * (1. + zz)**gamma_ym
         #print (0.01/DA_z)**2
         return ans
 

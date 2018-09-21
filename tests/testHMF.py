@@ -1,9 +1,13 @@
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from past.utils import old_div
 import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
 from configparser import SafeConfigParser
 from orphics.tools.io import dictFromSection,listFromConfig
-import cPickle as pickle
+import pickle as pickle
 
 
 iniFile = 'input/pipeline.ini'
@@ -66,7 +70,7 @@ if HMF.sigN is None: HMF.updateSigN(SZProp)
 sigN = HMF.sigN
 
 
-q_arr = (qbin_edges[1:]+qbin_edges[:-1])/2.
+q_arr = old_div((qbin_edges[1:]+qbin_edges[:-1]),2.)
 
 blah = SZProp.P_of_qn_corr(SZProp.lnY,M_arr,z_arr,sigN,q_arr,Mwl)#,lndM)
 

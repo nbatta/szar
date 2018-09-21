@@ -1,3 +1,7 @@
+from __future__ import print_function
+from __future__ import division
+from builtins import zip
+from past.utils import old_div
 import orphics.tools.io as io
 import numpy as np
 import sys, os
@@ -73,8 +77,8 @@ for cal, grid in zip(calList,gridList):
     pl._ax.set_ylim(0,62)
     min_mass = 58.
     pl._ax.axhline(y=min_mass,ls="-",color="k",alpha=0.3)
-    pl._ax.axhline(y=min_mass/3.,ls="--",color="k")
-    pl._ax.axhline(y=min_mass/5.,ls="-.",color="k")
+    pl._ax.axhline(y=old_div(min_mass,3.),ls="--",color="k")
+    pl._ax.axhline(y=old_div(min_mass,5.),ls="-.",color="k")
     pl.legendOn(labsize=16)
     pl.done(out_dir+"FigBar"+cal+".pdf")
 

@@ -1,3 +1,7 @@
+from __future__ import print_function
+from __future__ import division
+from builtins import zip
+from past.utils import old_div
 import orphics.tools.cmb as cmb
 from configparser import SafeConfigParser 
 from orphics.tools.io import dictFromSection, listFromConfig
@@ -65,7 +69,7 @@ size = np.array([0.5,5.,7.]) # size in meters
 
 freq = 150.e9
 cspeed = 299792458.
-wavelength = cspeed/freq
+wavelength = old_div(cspeed,freq)
 resin = 1.22*wavelength/size*60.*180./np.pi
 
 

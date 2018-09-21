@@ -1,3 +1,6 @@
+from __future__ import division
+from builtins import object
+from past.utils import old_div
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -5,7 +8,7 @@ def f_nu(constDict,nu):
     nu = np.asarray(nu)
     c = constDict
     mu = c['H_CGS']*(1e9*nu)/(c['K_CGS']*c['TCMB'])
-    ans = mu/np.tanh(mu/2.0) - 4.0
+    ans = old_div(mu,np.tanh(old_div(mu,2.0))) - 4.0
     return ans
 
 def g_nu(constDict,nu):
@@ -19,7 +22,7 @@ def g_nu(constDict,nu):
 
 def totTTNoise(ells,constDict,beamFWHM,noiseT,freq,lknee,alpha,tsz_battaglia_template_csv="input/sz_template_battaglia.csv",TCMB=2.7255e6):
     ls = ells
-    instrument = noise_func(ls,beamFWHM,noiseT,lknee,alpha,dimensionless=False)/ cc.c['TCMBmuK']**2.
+    instrument = old_div(noise_func(ls,beamFWHM,noiseT,lknee,alpha,dimensionless=False), cc.c['TCMBmuK']**2.)
     fgs = fgNoises(constDict,tsz_battaglia_template_csv)
     ksz = fgs.ksz_temp(ls)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
     radio = fgs.rad_ps(ls,freq,freq)/ls/(ls+1.)*2.*np.pi/ cc.c['TCMBmuK']**2.
@@ -100,19 +103,19 @@ class fgNoises(object):
         return ans
 
     def rad_ps_nu(self,nu):
-        return (nu/self.c['nu0']) ** self.c['al_ps'] \
+        return (old_div(nu,self.c['nu0'])) ** self.c['al_ps'] \
             * self.g_nu(nu)  / (self.g_nu(self.c['nu0']))
         
     def rad_ps(self,ell,nu1,nu2):
-        ans = self.c['A_ps'] * (ell/self.c['ell0sec']) ** 2 * self.rad_ps_nu(nu1)*self.rad_ps_nu(nu2)
+        ans = self.c['A_ps'] * (old_div(ell,self.c['ell0sec'])) ** 2 * self.rad_ps_nu(nu1)*self.rad_ps_nu(nu2)
         return ans
 
     def res_gal_nu(self,nu):
-        return (nu/self.c['nu0']) ** self.c['al_g'] \
+        return (old_div(nu,self.c['nu0'])) ** self.c['al_g'] \
             * self.g_nu(nu)  / (self.g_nu(self.c['nu0']))
     
     def res_gal(self,ell,nu1,nu2):
-        ans = self.c['A_g'] * (ell/self.c['ell0sec']) ** self.c['n_g'] * self.res_gal_nu(nu1)*self.res_gal_nu(nu2)
+        ans = self.c['A_g'] * (old_div(ell,self.c['ell0sec'])) ** self.c['n_g'] * self.res_gal_nu(nu1)*self.res_gal_nu(nu2)
         return ans
 
     def cib_nu(self,nu):
@@ -120,16 +123,16 @@ class fgNoises(object):
         mu = nu**self.c['al_cib']*self.B_nu(self.c['Td'],nu) * self.g_nu(nu)
         mu0 = self.c['nu0']**self.c['al_cib']*self.B_nu(self.c['Td'],self.c['nu0']) \
             * self.g_nu(self.c['nu0'])
-        return mu  / mu0
+        return old_div(mu, mu0)
 
     def cib_p(self,ell,nu1,nu2):
         
-        ans = self.c['A_cibp'] * (ell/self.c['ell0sec']) ** 2.0 * self.cib_nu(nu1)*self.cib_nu(nu2) 
+        ans = self.c['A_cibp'] * (old_div(ell,self.c['ell0sec'])) ** 2.0 * self.cib_nu(nu1)*self.cib_nu(nu2) 
         return ans
 
     def cib_c(self,ell,nu1,nu2):
 
-        ans = self.c['A_cibc'] * (ell/self.c['ell0sec']) ** (2.-self.c['n_cib']) * self.cib_nu(nu1)*self.cib_nu(nu2) 
+        ans = self.c['A_cibc'] * (old_div(ell,self.c['ell0sec'])) ** (2.-self.c['n_cib']) * self.cib_nu(nu1)*self.cib_nu(nu2) 
         return ans
 
     def f_nu_cib(self,nu1):
@@ -157,11 +160,11 @@ class fgNoises(object):
         return ans
 
     def ksz_temp(self,ell):
-        ans = self.ksz_func(ell) * (1.65/1.5) + self.ksz_p_func(ell)
+        ans = self.ksz_func(ell) * (old_div(1.65,1.5)) + self.ksz_p_func(ell)
         return ans
 
     def tSZ_nu(self,nu):
-        return f_nu(self.c,nu)/f_nu(self.c,self.c['nu0'])
+        return old_div(f_nu(self.c,nu),f_nu(self.c,self.c['nu0']))
     
     def tSZ(self,ell,nu1,nu2):
         assert self.tsz_template is not None, "You did not initialize this object with tsz_battaglia_template_csv."
@@ -173,21 +176,21 @@ class fgNoises(object):
         mu0 = self.c['nu0']**self.c['al_gal']*self.B_nu(self.c['Td_gal'],self.c['nu0']) \
             * self.g_nu(self.c['nu0'])
 
-        ans = self.c['A_gal_dust'] * (ell/self.c['ell0sec']) ** self.c['alpha_gd'] * mu1 * mu2 / mu0**2
+        ans = self.c['A_gal_dust'] * (old_div(ell,self.c['ell0sec'])) ** self.c['alpha_gd'] * mu1 * mu2 / mu0**2
         return ans
 
     def gal_sync_pol(self,ell,nu1,nu2):
-        ans = self.c['A_gal_sync'] * (ell/self.c['ell0sec']) ** self.c['alpha_gs'] \
+        ans = self.c['A_gal_sync'] * (old_div(ell,self.c['ell0sec'])) ** self.c['alpha_gs'] \
             * (nu1*nu2/self.c['nu0']**2) ** self.c['al_ps'] * self.g_nu(nu1) * self.g_nu(nu2) / (self.g_nu(self.c['nu0']))**2
         return ans
 
     def rad_pol_ps(self,ell,nu1,nu2):
-        ans = self.c['A_ps_pol'] * (ell/self.c['ell0sec']) ** 2 * (nu1*nu2/self.c['nu0']**2) ** self.c['al_ps'] \
+        ans = self.c['A_ps_pol'] * (old_div(ell,self.c['ell0sec'])) ** 2 * (nu1*nu2/self.c['nu0']**2) ** self.c['al_ps'] \
             * self.g_nu(nu1) * self.g_nu(nu2) / (self.g_nu(self.c['nu0']))**2
         return ans
     
     def rs_nu(self,nu):
-        return (nu/self.nu_rs)**4
+        return (old_div(nu,self.nu_rs))**4
 
     def rs_auto(self,ell,nu1,nu2):
         ans = self.rs_auto_func(ell) * self.rs_nu(nu1) * self.rs_nu(nu2)

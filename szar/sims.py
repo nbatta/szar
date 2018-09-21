@@ -1,4 +1,9 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import configparser
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,7 +19,7 @@ def f_nu(nu):
     c = {'H_CGS': 6.62608e-27, 'K_CGS': 1.3806488e-16, 'TCMB': 2.7255}
     nu = np.asarray(nu)
     mu = c['H_CGS']*(1e9*nu)/(c['K_CGS']*c['TCMB'])
-    ans = mu/np.tanh(mu/2.0) - 4.0
+    ans = old_div(mu,np.tanh(old_div(mu,2.0))) - 4.0
     return ans
 
 
@@ -30,7 +35,7 @@ class BattagliaReader(object):
         mnu = 0.
         ns = 0.96
         As = 2.e-9
-        h = H0/100.
+        h = old_div(H0,100.)
         ombh2 = ob*h**2.
         omh2 = om*h**2.
         omch2 = omh2-ombh2
@@ -44,7 +49,7 @@ class BattagliaReader(object):
 
         # Snap to  Z
         alist = np.loadtxt(self.root + 'outputSel.txt')
-        zlist = np.array((1./alist)-1.)
+        zlist = np.array((old_div(1.,alist))-1.)
         snaplist = np.arange(55,55-len(zlist),-1)
         self.snapToZ = lambda s: zlist[snaplist==s][0] 
         self.allSnaps = list(range(54,34,-1))
@@ -78,12 +83,12 @@ class BattagliaReader(object):
     def get_geometry(self,snap):
         # MAP DIMENSIONS: THIS NEEDS DEBUGGING
         z = self.snapToZ(snap)
-        stampWidthMpc = 8. / self.h
+        stampWidthMpc = old_div(8., self.h)
         comovingMpc = self.results.comoving_radial_distance(z)
-        widthRadians = stampWidthMpc/comovingMpc
-        pixWidthRadians = widthRadians/self.PIX
+        widthRadians = old_div(stampWidthMpc,comovingMpc)
+        pixWidthRadians = old_div(widthRadians,self.PIX)
 
-        shape,wcs = enmap.geometry(pos=np.array([[-widthRadians/2.,-widthRadians/2.],[widthRadians/2.,widthRadians/2.]]),res=pixWidthRadians,proj="car")
+        shape,wcs = enmap.geometry(pos=np.array([[old_div(-widthRadians,2.),old_div(-widthRadians,2.)],[old_div(widthRadians,2.),old_div(widthRadians,2.)]]),res=pixWidthRadians,proj="car")
         return shape,wcs
     
     def get_map(self,component,mass_index,snap,shape=None,wcs=None):
@@ -111,7 +116,7 @@ class BattagliaReader(object):
 
         const12 = 2.*9.571e-20 #4G/c^2 in Mpc / solar mass 
         sigmaCr = comS/np.pi/const12/comLS/comL/1e6/(1.+z)**2. # Msolar/kpc2 # NEEDS DEBUGGING!!!
-        return self.get_projected_mass_density(mass_index,snap)/sigmaCr
+        return old_div(self.get_projected_mass_density(mass_index,snap),sigmaCr)
 
     def get_tsz(self,mass_index,snap,freq_ghz,tcmb=2.7255e6):
         fnu = f_nu(freq_ghz)
@@ -124,7 +129,7 @@ class BattagliaReader(object):
         return self.get_map('ksz',mass_index,snap)*tcmb
 
     def get_ksz_special(self,mass_index,snap,tcmb=2.7255e6):
-        shape,wcs = fmaps.rect_geometry(width_arcmin=20.,px_res_arcmin=20./128.)
+        shape,wcs = fmaps.rect_geometry(width_arcmin=20.,px_res_arcmin=old_div(20.,128.))
         return self.get_map('kszN',mass_index,snap,shape=shape,wcs=wcs)*tcmb
 
     def info(self,mass_index,snap):

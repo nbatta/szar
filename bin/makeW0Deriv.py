@@ -21,7 +21,12 @@ that specifies an experiment.
 calibration error over mass.
 
 """
+from __future__ import print_function
+from __future__ import division
 
+from builtins import str
+from builtins import range
+from past.utils import old_div
 debug = False
 
 
@@ -178,20 +183,20 @@ YWLcorrflag = comm.bcast(YWLcorrflag, root = 0)
 v3mode = comm.bcast(v3mode, root = 0)
 if rank==0: print("Broadcasted.")
 
-myParamIndex = (rank+1)/2-1
+myParamIndex = old_div((rank+1),2)-1
 passParams = fparams.copy()
 
     
 if rank==1:
     fileSuff = "Up"
-    passParams['w0'] += w0Step/2.
+    passParams['w0'] += old_div(w0Step,2.)
 elif rank==2:
     fileSuff = "Dn"
-    passParams['w0'] -= w0Step/2.
+    passParams['w0'] -= old_div(w0Step,2.)
 
 if rank!=0:    
     pFile = lambda z: waDerivRoot+str(w0Step)+fileSuff+"_w_matterpower_%.2f.dat" % z
-    zcents = (z_edges[1:]+z_edges[:-1])/2.
+    zcents = old_div((z_edges[1:]+z_edges[:-1]),2.)
     for inum,z in enumerate(zcents):
         kh,p = np.loadtxt(pFile(z),unpack=True)
         if inum==0:
@@ -230,7 +235,7 @@ if rank==0:
             
     Nup = getNmzq(dUp,mexp_edges,z_edges,qbin_edges)        
     Ndn = getNmzq(dDn,mexp_edges,z_edges,qbin_edges)
-    dNdp = (Nup-Ndn)/w0Step
+    dNdp = old_div((Nup-Ndn),w0Step)
     np.save(bigDataDir+"Nup_mzq_"+saveId+"_w0_ppf",Nup)
     np.save(bigDataDir+"Ndn_mzq_"+saveId+"_w0_ppf",Ndn)
     np.save(bigDataDir+"dNdp_mzq_"+saveId+"_w0_ppf",dNdp)

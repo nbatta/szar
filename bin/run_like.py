@@ -1,3 +1,9 @@
+from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import zip
+from builtins import range
+from past.utils import old_div
 import numpy as np
 import szar.likelihood as lk
 import matplotlib.pyplot as plt
@@ -27,7 +33,7 @@ parser.add_argument("-r", "--randcat", action='store_true',help='making a random
 args = parser.parse_args()
 
 # index = int(sys.argv[1])
-print "Index ", args.index
+print("Index ", args.index)
 index = args.index
 
 iniFile = "input/pipeline.ini"
@@ -56,7 +62,7 @@ nemoOutputDirOut = PathConfig.get("likepaths","nemoOutputDirOut")
 chain_out = PathConfig.get("likepaths","chains")
 # nemoOutputDir = '/gpfs01/astro/workarea/msyriac/data/depot/SZruns/ACTdata/' #/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/ACTdata/'
 # nemoOutputDirOut = '/gpfs01/astro/workarea/msyriac/data/depot/SZruns/ACTdata_out/'
-print nemoOutputDir
+print(nemoOutputDir)
 
 pardict = nemoOutputDir + 'equD56.par'
 noise_file = 'RMSMap_Arnaud_M2e14_z0p4.fits'
@@ -76,7 +82,7 @@ else:
     fixlist = ['tau']
     fixvals = [0.06]
 
-fix_params = dict(zip(fixlist,fixvals))
+fix_params = dict(list(zip(fixlist,fixvals)))
 
 if args.printtest or args.simtest:
     simtst = True
@@ -157,12 +163,12 @@ if args.mockcat or args.randcat:
     if (check == False):
         MC.write_obs_cat_toFits(filedir,filename)
     else:
-        print "Mockcat already exists"
+        print("Mockcat already exists")
 
     if (compflag == 1):
         MC.Add_completeness(filedir,filename,compfile,zcut=0.7)
 
-    print ('sample time',time.time() - start)    
+    print('sample time',time.time() - start)    
     sys.exit(0)
 
 CL = lk.clusterLike(iniFile,pardict,nemoOutputDir,noise_file,fix_params,fitsfile,test=args.test,simtest=simtst,simpars=args.simpars)
@@ -178,11 +184,11 @@ if (args.printtest):
     start = time.time()
     int_cc = ClusterCosmology(param_vals,CL.constDict,clTTFixFile=CL.clttfile) 
     
-    print ('CC',time.time() - start)
+    print('CC',time.time() - start)
     start = time.time()
     int_HMF = Halo_MF(int_cc,CL.mgrid,CL.zgrid)
     
-    print ('HMF',time.time() - start)
+    print('HMF',time.time() - start)
     dn_dzdm_int = int_HMF.inter_dndmLogm(200.)
 
     zbins = 10
@@ -192,35 +198,35 @@ if (args.printtest):
     clustind = 1
 
 
-    print cluster_props[:,clustind]
-    print parlist
-    print parvals
-    print "ln prob", np.log(CL.Prob_per_cluster(int_HMF,cluster_props[:,clustind],dn_dzdm_int,param_vals))
-    print LgYa[-1,-1]
-    Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])
-    print "ln Y val",np.log10(Y[-1,-1])
-    print "ln Y~", np.log10(Ytilde[-1,-1])
-    print Y[-1,30:35]/Ytilde[-1,-1]
-    print np.log(Y[-1,-1]) - np.log(Ytilde[-1,-1])
-    print "P of Y", CL.P_Yo(LgYa,int_HMF.M.copy(),int_HMF.zarr[zbins],param_vals)[-1,-1], 
+    print(cluster_props[:,clustind])
+    print(parlist)
+    print(parvals)
+    print("ln prob", np.log(CL.Prob_per_cluster(int_HMF,cluster_props[:,clustind],dn_dzdm_int,param_vals)))
+    print(LgYa[-1,-1])
+    Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(old_div(param_vals['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])
+    print("ln Y val",np.log10(Y[-1,-1]))
+    print("ln Y~", np.log10(Ytilde[-1,-1]))
+    print(old_div(Y[-1,30:35],Ytilde[-1,-1]))
+    print(np.log(Y[-1,-1]) - np.log(Ytilde[-1,-1]))
+    print("P of Y", CL.P_Yo(LgYa,int_HMF.M.copy(),int_HMF.zarr[zbins],param_vals)[-1,-1], end=' ') 
  
     param_vals2= lk.alter_fparams(fparams,parlist,parvals2)
     int_cc2 = ClusterCosmology(param_vals2,CL.constDict,clTTFixFile=CL.clttfile) 
     int_HMF2 = Halo_MF(int_cc2,CL.mgrid,CL.zgrid)
     dn_dzdm_int2 = int_HMF2.inter_dndmLogm(200.)
-    print
-    print 'pars2', parvals2
-    print "ln prop", np.log(CL.Prob_per_cluster(int_HMF2,cluster_props[:,clustind],dn_dzdm_int2,param_vals2))
-    print LgYa[-1,-1]
-    Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals2['massbias']*Ma/(param_vals2['H0']/100.)), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals2['scat'],B0=param_vals2['yslope'])
-    print "ln Y val",np.log10(Y[-1,-1])
-    print "ln Y~", np.log10(Ytilde[-1,-1])
+    print()
+    print('pars2', parvals2)
+    print("ln prop", np.log(CL.Prob_per_cluster(int_HMF2,cluster_props[:,clustind],dn_dzdm_int2,param_vals2)))
+    print(LgYa[-1,-1])
+    Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals2['massbias']*Ma/(old_div(param_vals2['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals2['scat'],B0=param_vals2['yslope'])
+    print("ln Y val",np.log10(Y[-1,-1]))
+    print("ln Y~", np.log10(Ytilde[-1,-1]))
     #print np.log(Ytilde[-1,30:35])
-    print Y[-1,-1]/Ytilde[-1,-1]
-    print np.log(Y[-1,-1]/Ytilde[-1,-1])
+    print(old_div(Y[-1,-1],Ytilde[-1,-1]))
+    print(np.log(old_div(Y[-1,-1],Ytilde[-1,-1])))
     #print -1.*(np.log(Y[-1,30:35]/Ytilde[-1,30:35]))
 
-    print "P of Y", CL.P_Yo(np.outer(np.ones(len(int_HMF.M.copy())),CL.LgY),int_HMF2.M.copy(),int_HMF2.zarr[zbins],param_vals2)[-1,-1]
+    print("P of Y", CL.P_Yo(np.outer(np.ones(len(int_HMF.M.copy())),CL.LgY),int_HMF2.M.copy(),int_HMF2.zarr[zbins],param_vals2)[-1,-1])
 
     #pl = Plotter()
     #pl.add(np.log10(int_HMF.M200[:,zbins]),np.log10(int_HMF.dn_dM(int_HMF.M200,200)[:,zbins]*int_HMF.M200[:,zbins]),color='b',alpha=0.9)
@@ -231,23 +237,23 @@ if (args.printtest):
 
     #print np.log10(dn_dzdm_int(int_HMF.zarr[zbins],np.log10(int_HMF.M.copy()))[:,0]*int_HMF.M200[:,zbins])
 
-    print "MF interp check", np.sum(np.log10(int_HMF.dn_dM(int_HMF.M200,200)[:,zbins]*int_HMF.M200[:,zbins]) - np.log10(dn_dzdm_int(int_HMF.zarr[zbins],np.log10(int_HMF.M.copy()))[:,0]*int_HMF.M200[:,zbins]))
+    print("MF interp check", np.sum(np.log10(int_HMF.dn_dM(int_HMF.M200,200)[:,zbins]*int_HMF.M200[:,zbins]) - np.log10(dn_dzdm_int(int_HMF.zarr[zbins],np.log10(int_HMF.M.copy()))[:,0]*int_HMF.M200[:,zbins])))
 
-    print int_HMF.zarr[zbins]
+    print(int_HMF.zarr[zbins])
     
     start = time.time()
-    print CL.lnlike(parvals,parlist)#,priorvals,priorlist)
-    print ("like call", time.time() - start)
-    print "prior",CL.lnprior(parvals,parlist,priorvals,priorlist)
+    print(CL.lnlike(parvals,parlist))#,priorvals,priorlist)
+    print("like call", time.time() - start)
+    print("prior",CL.lnprior(parvals,parlist,priorvals,priorlist))
 #print "Prob",CL.lnprob(parvals,parlist,priorvals,priorlist)
     
     start = time.time()
-    print CL.lnlike(parvals2,parlist)#,priorvals,priorlist)
-    print ("like call", time.time() - start)
-    print "prior",CL.lnprior(parvals2,parlist,priorvals,priorlist)
+    print(CL.lnlike(parvals2,parlist))#,priorvals,priorlist)
+    print("like call", time.time() - start)
+    print("prior",CL.lnprior(parvals2,parlist,priorvals,priorlist))
 #print "Prob",CL.lnprob(parvals2,parlist,priorvals,priorlist)
     
-    print parlist
+    print(parlist)
 
     sys.exit(0)
 
@@ -281,11 +287,11 @@ if args.simtest:
     np.savetxt(f,savemat)
 
     indmin = np.argmax(ansout)
-    print parvals_arr[indmin]
+    print(parvals_arr[indmin])
 
 else:
     Nruns = args.nruns #int(1e6)
-    print (nwalkers,Nruns)
+    print(nwalkers,Nruns)
 #nwalkers = 1
     sampler = emcee.EnsembleSampler(nwalkers,Ndim,CL.lnprob,args =(parlist,priorvals,priorlist))#,pool=pool)
 #sampler.run_mcmc(pos,Nruns)
@@ -302,7 +308,7 @@ else:
         savemat = np.concatenate((position,s8),axis=1)
         np.savetxt(f,savemat)
         f.close()
-        print "Saved a sample."
+        print("Saved a sample.")
 
 # pool.close()
 

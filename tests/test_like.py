@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import division
+from past.utils import old_div
 import numpy as np
 import szar.likelihood as lk
 import matplotlib.pyplot as plt
@@ -38,7 +41,7 @@ diagnosticsDir = '/Users/nab/Downloads/countsCheck/equD56-countsCheck/diagnostic
 nmap = lk.read_MJH_noisemap(nemoOutputDir+noise_file,diagnosticsDir+'areaMask.fits')
 
 
-print nmap.shape
+print(nmap.shape)
 m_nmap = np.mean(nmap[nmap>0])
 print (m_nmap)
 
@@ -52,7 +55,7 @@ blah = CL.Y_erf(10**LgY,m_nmap)
 print (time.time() - start)
 #blah2 = stats.norm.sf(m_nmap,loc = 10**LgY,scale=m_nmap/CL.qmin)
 blah2 = 1. - stats.norm.sf(10**LgY,loc = m_nmap*CL.qmin,scale=m_nmap)
-blah3 = 1. - stats.norm.sf(10**LgY,loc = m_nmap,scale=m_nmap/CL.qmin)
+blah3 = 1. - stats.norm.sf(10**LgY,loc = m_nmap,scale=old_div(m_nmap,CL.qmin))
 
 #for i in range(len(blah)):
 #    print blah[i],blah2[i],blah[i]/blah2[i]
@@ -65,7 +68,7 @@ plt.tick_params(size=14,width=thk,labelsize = 16)
 plt.xlabel(r'$\mathrm{Log}_{10}Y$', fontsize=32,weight='bold')
 plt.ylabel(r'$P(Y)$', fontsize=32,weight='bold')
 plt.plot(LgY,blah,linewidth=thk)
-plt.plot(LgY,blah2,'--',linewidth=thk/2.)
+plt.plot(LgY,blah2,'--',linewidth=old_div(thk,2.))
 plt.plot(LgY,blah3,'--',linewidth=thk)
 plt.plot(np.log10([m_nmap,m_nmap]),[0,1],'--k',linewidth=thk)
 plt.plot(np.log10([CL.qmin*m_nmap,CL.qmin*m_nmap]),[0,1],'--r',linewidth=thk)
@@ -91,7 +94,7 @@ plt.savefig(nemoOutputDirOut+'P_Y_erf_comp_MJH.png',bbox_inches='tight',format='
 #print (time.time() - start)
 #print (blah)
 
-area_rads = 987.5/41252.9612
+area_rads = old_div(987.5,41252.9612)
 
 counts = 0.
 
@@ -99,7 +102,7 @@ counts = 0.
 count_temp,bin_edge =np.histogram(np.log10(nmap[nmap>0]),bins=20)
 
 frac_of_survey = count_temp*1.0 / np.sum(count_temp)
-thresh_bin = 10**((bin_edge[:-1] + bin_edge[1:])/2.)
+thresh_bin = 10**(old_div((bin_edge[:-1] + bin_edge[1:]),2.))
 
 parlist = ['omch2','ombh2','H0','As','ns','tau','massbias','yslope','scat']
 parvals = [0.1194,0.022,67.0,2.2e-09,0.96,0.06,0.80,0.08,0.2]
@@ -112,20 +115,20 @@ params= CL.alter_fparams(fparams,parlist,parvals)
 
 start = time.time()
 int_cc = ClusterCosmology(params,CL.constDict,clTTFixFile=CL.clttfile) # internal HMF call
-print ('CC',time.time() - start)
+print(('CC',time.time() - start))
 start = time.time()
 int_HMF = Halo_MF(int_cc,CL.mgrid,CL.zgrid)
-print ('HMF',time.time() - start)
+print(('HMF',time.time() - start))
 
 cluster_prop = np.array([CL.clst_z,CL.clst_zerr,CL.clst_y0,CL.clst_y0err])
 cluster_prop2 = np.array([CL.clst_z,CL.clst_zerr,CL.clst_y0*1e-4,CL.clst_y0err*1e-4])
-print cluster_prop.shape
+print(cluster_prop.shape)
 
 dndm_int = int_HMF.inter_dndm(200.)
 
 start = time.time()
-print np.log(CL.Prob_per_cluster(int_HMF,cluster_prop2[:,0],dndm_int,params))
-print ('per cluster spec z',time.time() - start)
+print(np.log(CL.Prob_per_cluster(int_HMF,cluster_prop2[:,0],dndm_int,params)))
+print(('per cluster spec z',time.time() - start))
 
 c_z, c_zerr, c_y, c_yerr = cluster_prop[:,0]
 c_y *= 1e-4
@@ -134,8 +137,8 @@ c_yerr *= 1e-4
 #print int_HMF.zarr
 
 start = time.time()
-print np.log(CL.Prob_per_cluster(int_HMF,cluster_prop2[:,1],dndm_int,params))
-print ('per cluster photo z',time.time() - start)
+print(np.log(CL.Prob_per_cluster(int_HMF,cluster_prop2[:,1],dndm_int,params)))
+print(('per cluster photo z',time.time() - start))
 
 #mind = 50
 
@@ -164,10 +167,10 @@ priorwth = np.array([0.01,0.01,3,0.12,0.05])
 priorvals = np.array([prioravg,priorwth])
 
 start = time.time()
-print CL.lnprob(parvals,parlist,priorvals,priorlist)
-print ('Ln Like Func',time.time() - start)
+print(CL.lnprob(parvals,parlist,priorvals,priorlist))
+print(('Ln Like Func',time.time() - start))
 
-print CL.lnprior(parvals,parlist,priorvals,priorlist)
+print(CL.lnprior(parvals,parlist,priorvals,priorlist))
 
 ##test likelihood
 #Ndim, nwalkers = 5 , 10

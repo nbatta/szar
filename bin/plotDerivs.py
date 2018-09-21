@@ -1,3 +1,7 @@
+from __future__ import division
+from builtins import zip
+from builtins import str
+from past.utils import old_div
 import os, sys
 import numpy as np
 from orphics.io import Plotter
@@ -17,7 +21,7 @@ zs = list_from_config(Config,gridName,'zrange')
 z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 
 
-zrange = (z_edges[1:]+z_edges[:-1])/2.
+zrange = old_div((z_edges[1:]+z_edges[:-1]),2.)
 #np.arange(0.05,3.05,0.1)
 
 cambRoot = os.environ['HOME']+"/software/CAMB_wa/"
@@ -41,7 +45,7 @@ for step,col in zip(stepList,colList):
         khdn,Pdn = np.loadtxt(dRoot+"Dn_matterpower_"+str(z)+".dat",unpack=True)
         assert np.all(np.isclose(khup,khdn))
         stepF = float(step)
-        dP = (Pup-Pdn)/stepF
+        dP = old_div((Pup-Pdn),stepF)
 
         #if z<2.5: continue
         if z>0.2: continue
@@ -84,7 +88,7 @@ for i,z in enumerate(zrange[:]):
 
     pkfidI = interp1d(khfid,pkfid,bounds_error=False,fill_value=np.nan)(kh)
 
-    pl.add(kh,(pk[i]-pkfidI)*100./pk[i],alpha=1.-z/3.0,color="C1")
+    pl.add(kh,(pk[i]-pkfidI)*100./pk[i],alpha=1.-old_div(z,3.0),color="C1")
     
     
 # pl.legendOn()
