@@ -25,6 +25,7 @@ for exp in expList:
 
         # do only sz
         cmd = "nohup mpirun -np "+str(numCores)+" python bin/makeGrid.py "+exp+" "+gridName+" --skip-lensing > output"+str(time.time())+"_szgrid_"+exp+".log  &"
+
         #cmd = "nohup mpirun python bin/makeGrid.py "+exp+" "+gridName+" --skip-lensing \" > output"+str(time.time())+"_szgrid_"+exp+".log  &"
 
         print(cmd)
