@@ -22,6 +22,7 @@ import orphics.cosmology as cosmo
 from orphics.stats import timeit
 from scipy.interpolate import interp1d, interp2d, griddata
 from scipy.integrate import simps
+from scipy.interpolate import UnivariateSpline
 
 import szar._fast as fast
 
@@ -230,22 +231,30 @@ class ClusterCosmology(Cosmology):
         for i in range(len(a)):
             aa = np.arange(dela,a[i],dela)
             integrand = 1./( (aa * self.E_z(1./aa - 1.))**3 )
-            integ[i] = np.trapz(integrand, dx=np.diff(aa))
+            integ[i] = simps(integrand, aa)
+        #test timing for trapz vs simps
 
         ans = 5.* Om / 2. *self.E_z(z) * integ
         return ans
 
     def fgrowth(self,z):
         a = old_div(1.,(1. + z))
+        a = np.flip(a)
         
         dgrowth = self.growthfunc(z)#cc.results.get_redshift_evolution(self.HMF.kh, zarr, ['growth'])
-        
-        dlog = np.gradient(np.log(dgrowth), np.log(a))
-        #dlna = np.gradient(np.log(a), edge_order=2)
-        #dlng = np.gradient(np.log(dgrowth), edge_order=2)
-        
-        ans = dlog #dlng/dlna #/np.gradient(np.log(a))
-        return ans
+        dgrowth = np.flip(dgrowth)
+
+        n = len(z)
+        k = 5 # 5th degree spline
+        s = n - np.sqrt(2*n) # smoothing factor
+
+        dgrowth_spline = UnivariateSpline(a, dgrowth, k=k, s=s)
+        dgrowth_spline_deriv = UnivariateSpline(a, dgrowth, k=k, s=s).derivative(n=1)
+
+        dlogd_dloga = a*(dgrowth_spline_deriv(a)/dgrowth_spline(a))
+        dlogd_dloga = np.flip(dlogd_dloga)
+        #dlog = np.gradient(np.log(dgrowth), np.log(a), edge_order=2)
+        return dlogd_dloga
 
     def rhoc(self,z):
         #critical density as a function of z

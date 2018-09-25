@@ -4,6 +4,7 @@ import seaborn as sns
 sns.set()
 
 def f(x):
+    integral = 
     return 0.5*np.exp(x**2/2)
 
 g = lambda x: x**2

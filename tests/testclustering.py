@@ -19,9 +19,9 @@ import matplotlib.pyplot as plt
 
 # Load ini
 iniFile = 'input/pipeline.ini'
-expName = 'S4-1.0-CDT' #?Presumably provides selection or window functions?
-gridName = 'grid-owl2' #?What is this?
-version = '0.6' #?What significance does this variable have?
+expName = 'S4-1.0-CDT' 
+gridName = 'grid-owl2' 
+version = '0.6' 
 clst = Clustering(iniFile,expName,gridName,version)
 
 M200temp = np.arange(1,1000,1) * 1e11

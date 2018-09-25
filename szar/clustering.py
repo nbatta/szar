@@ -91,7 +91,7 @@ class Clustering(object):
 
         return old_div(1.,(R[use_sig])),sig1[use_sig],self.HMF.zarr[use_z]
 
-
+# norm is off by 4 pi from ps_bar
     def Norm_Sfunc(self,fsky):
         #z_arr = self.HMF.zarr
         #Check this
@@ -103,11 +103,12 @@ class Clustering(object):
         
         beff_arr = np.outer(self.b_eff_z(),np.ones(len(mu)))
         mu_arr = np.outer(len(self.b_eff_z()),mu)
-        logGrowth = 1. #FIX #np.outer()
+        #logGrowth = self.cc.fgrowth() #FIX #np.outer()
+        logGrowth = 1.
         prefac = (beff_arr + logGrowth*mu_arr**2)**2
         pklin = self.HMF.pk
     
-        ans = np.multily(prefac,pklin)
+        ans = np.multiply(prefac,pklin)
 
         return ans
 
@@ -115,9 +116,9 @@ class Clustering(object):
 
         z_arr = self.HMF.zarr
         nbar = self.ntilde()
-        ans = self.ps_tilde(mu) * 0.0
+        #ans = self.ps_tilde(mu) * 0.0
         prefac =  self.HMF.dVdz*nbar**2*np.diff(z_arr)[2]/self.Norm_Sfunc(fsky)
-        ans = np.multiply(self.ps_tilde(mu),prefac)
+        ans = np.multiply(prefac, self.ps_tilde(mu).T).T
         #for i in range(len(z_arr)): 
         #    ans[:,:,i] = self.HMF.dVdz[i]*nbar[i]**2*ps_tilde[:,:,i]*np.diff(z_arr[i])/self.Norm_Sfunc(fsky)[i]
         return ans
