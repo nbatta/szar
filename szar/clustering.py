@@ -110,22 +110,19 @@ class Clustering(object):
 
     def ps_tilde(self,mu):
         
-        beff_arr = np.outer(self.b_eff_z(),np.ones(len(mu)))
-        mu_arr = np.outer(len(self.b_eff_z()),mu)
-        #logGrowth = self.cc.fgrowth() #FIX #np.outer()
-        logGrowth = 1.
+        beff_arr = np.outer(np.ones(len(mu)), self.b_eff_z())
+        mu_arr = np.outer(mu, np.ones(len(self.b_eff_z())))
+        logGrowth = np.outer(np.ones(len(mu)), self.cc.fgrowth(self.HMF.zarr))
         prefac = (beff_arr + logGrowth*mu_arr**2)**2
         pklin = self.HMF.pk
-    
-        ans = np.multiply(prefac,pklin)
 
+        ans = np.multiply(prefac,pklin.T).T
         return ans
 
     def ps_bar(self,mu,fsky):
 
         z_arr = self.HMF.zarr
         nbar = self.ntilde()
-        #ans = self.ps_tilde(mu) * 0.0
         prefac =  self.HMF.dVdz*nbar**2*np.diff(z_arr)[2]/self.Norm_Sfunc(fsky)
         ans = np.multiply(prefac, self.ps_tilde(mu).T).T
         #for i in range(len(z_arr)): 
