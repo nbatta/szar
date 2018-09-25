@@ -53,7 +53,7 @@ class clustering(object):
         #NOT SURE we need this for loop
         for i in range (zarr.size):
             dV_dz[i] /= (self.HMF.cc.results.h_of_z(zarr[i]))
-            dV_dz *= (old_div(self.HMF.cc.H0,100.))**3. # was h0
+        dV_dz *= (old_div(self.HMF.cc.H0,100.))**3. # was h0
         return dV_dz
 
     def ntilde(self):
