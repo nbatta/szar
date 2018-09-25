@@ -47,6 +47,15 @@ class clustering(object):
         self.HMF.sigN = siggrid.copy()
         #self.dndm_SZ = self.HMF.dn_dmz_SZ(self.SZProp)
 
+    def dVdz_fine(self,zarr):
+        DA_z = self.HMF.cc.results.angular_diameter_distance(zarr)
+        dV_dz = DA_z**2 * (1.+zarr)**2
+        #NOT SURE we need this for loop
+        for i in range (zarr.size):
+            dV_dz[i] /= (self.HMF.cc.results.h_of_z(zarr[i]))
+            dV_dz *= (old_div(self.HMF.cc.H0,100.))**3. # was h0
+        return dV_dz
+
     def ntilde(self):
         dndm_SZ = self.HMF.dn_dmz_SZ(self.SZProp)
         ans = np.trapz(dndm_SZ,dx=np.diff(self.HMF.M200,axis=0),axis=0)
