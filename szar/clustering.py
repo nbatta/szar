@@ -108,6 +108,10 @@ class Clustering(object):
         ans = self.HMF.dVdz*nbar**2*np.diff(self.HMF.zarr_edges)
         return ans*4.*np.pi*fsky
 
+    def v0(self, fsky):
+        ans = self.HMF.dVdz * np.diff(self.HMF.zarr_edges)
+        return ans * 4 * np.pi * fsky
+
     def ps_tilde(self,mu):
         
         beff_arr = np.outer(np.ones(len(mu)), self.b_eff_z())
