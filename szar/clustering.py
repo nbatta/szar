@@ -14,7 +14,7 @@ from configparser import SafeConfigParser
 from orphics.io import dict_from_section,list_from_config
 import pickle as pickle
 
-class clustering(object):
+class Clustering(object):
     def __init__(self,iniFile,expName,gridName,version):
         Config = SafeConfigParser()
         Config.optionxform=str
@@ -78,7 +78,7 @@ class clustering(object):
 
         return beff
 
-    def non_linear_scale(self,z,M200):
+    def non_linear_scale(self,z,M200): #?Who are you?
 
         zdiff = np.abs(self.HMF.zarr - z)
         use_z = np.where(zdiff == np.min(zdiff))[0]
@@ -100,7 +100,7 @@ class clustering(object):
 
         return old_div(1.,(R[use_sig])),sig1[use_sig],self.HMF.zarr[use_z]
 
-
+# norm is off by 4 pi from ps_bar
     def Norm_Sfunc(self,fsky):
         #z_arr = self.HMF.zarr
         #Check this
@@ -110,23 +110,21 @@ class clustering(object):
 
     def ps_tilde(self,mu):
         
-        beff_arr = np.outer(self.b_eff_z(),np.ones(len(mu)))
-        mu_arr = np.outer(len(self.b_eff_z()),mu)
-        logGrowth = 1. #FIX #np.outer()
+        beff_arr = np.outer(np.ones(len(mu)), self.b_eff_z())
+        mu_arr = np.outer(mu, np.ones(len(self.b_eff_z())))
+        logGrowth = np.outer(np.ones(len(mu)), self.cc.fgrowth(self.HMF.zarr))
         prefac = (beff_arr + logGrowth*mu_arr**2)**2
         pklin = self.HMF.pk
-    
-        ans = np.multily(prefac,pklin)
 
+        ans = np.multiply(prefac,pklin.T).T
         return ans
 
     def ps_bar(self,mu,fsky):
 
         z_arr = self.HMF.zarr
         nbar = self.ntilde()
-        ans = self.ps_tilde(mu) * 0.0
         prefac =  self.HMF.dVdz*nbar**2*np.diff(z_arr)[2]/self.Norm_Sfunc(fsky)
-        ans = np.multiply(self.ps_tilde(mu),prefac)
+        ans = np.multiply(prefac, self.ps_tilde(mu).T).T
         #for i in range(len(z_arr)): 
         #    ans[:,:,i] = self.HMF.dVdz[i]*nbar[i]**2*ps_tilde[:,:,i]*np.diff(z_arr[i])/self.Norm_Sfunc(fsky)[i]
         return ans

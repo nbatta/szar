@@ -6,3 +6,5 @@
 *.pkl
 *.dat
 V3_calc_public.py
+*.svg
+__pycache__
