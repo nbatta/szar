@@ -134,13 +134,16 @@ class Clustering(object):
         return ans
 
     def V_eff(self,mu,fsky):
+        V0 = self.v0(fsky)
+        V0 = np.reshape(V0, (V0.size,1))
 
-        V0 = self.HMF.dVdz*np.diff(z_arr)*4.*np.pi*fsky #FIX
         nbar = self.ntilde()
-        ps = self.ps_bar(mu,fsky)
-        npfact = np.multiply(ps,nbar)
-        frac = old_div(npfact, (1. + npfact))
-        ans = np.multiply(frac,V0)
+        nbar = np.reshape(nbar, (nbar.size,1))
 
+        ps = self.ps_bar(mu,fsky)
+        npfact = np.multiply(nbar, ps)
+        frac = npfact/(1. + npfact)
+
+        ans = np.multiply(frac,V0)
         return ans
 
