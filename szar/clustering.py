@@ -13,6 +13,8 @@ from . import tinker as tinker
 from configparser import SafeConfigParser
 from orphics.io import dict_from_section,list_from_config
 import pickle as pickle
+from scipy.interpolate import interp1d
+from scipy.interpolate import UnivariateSpline
 
 class Clustering(object):
     def __init__(self,iniFile,expName,gridName,version):
@@ -59,6 +61,21 @@ class Clustering(object):
     def ntilde(self):
         dndm_SZ = self.HMF.dn_dmz_SZ(self.SZProp)
         ans = np.trapz(dndm_SZ,dx=np.diff(self.HMF.M200,axis=0),axis=0)
+        return ans
+
+    def ntilde_interpol(self,zarr_int):
+        ntil = self.ntilde()
+        z_arr = self.HMF.zarr
+
+        #n = len(z_arr)
+        #k = 5 # 5th degree spline 
+        #s = 20.#(n - np.sqrt(2*n))* 1.3 # smoothing factor 
+
+        #ntilde_spline = UnivariateSpline(z_arr, np.log(ntil), k=k, s=s)
+        #ans = np.exp(ntilde_spline(zarr_int))
+        f_int = interp1d(z_arr, np.log(ntil),kind='slinear')
+        ans = np.exp(f_int(zarr_int)) 
+
         return ans
 
     def b_eff_z(self):
@@ -114,7 +131,7 @@ class Clustering(object):
         mu_arr = np.outer(mu, np.ones(len(self.b_eff_z())))
         logGrowth = np.outer(np.ones(len(mu)), self.cc.fgrowth(self.HMF.zarr))
         prefac = (beff_arr + logGrowth*mu_arr**2)**2
-        pklin = self.HMF.pk
+        pklin = self.HMF.pk # not actually pklin
 
         ans = np.multiply(prefac,pklin.T).T
         return ans
