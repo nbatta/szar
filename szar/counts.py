@@ -240,10 +240,10 @@ class ClusterCosmology(Cosmology):
 
     def fgrowth(self,z):
         a = old_div(1.,(1. + z))
-        a = np.flip(a)
+        a = a[::-1] #np.flip(a)
         
         dgrowth = self.growthfunc(z)#cc.results.get_redshift_evolution(self.HMF.kh, zarr, ['growth'])
-        dgrowth = np.flip(dgrowth)
+        dgrowth = dgrowth[::-1] #np.flip(dgrowth)
 
         n = len(z)
         k = 5 # 5th degree spline
@@ -253,7 +253,7 @@ class ClusterCosmology(Cosmology):
         dgrowth_spline_deriv = UnivariateSpline(a, dgrowth, k=k, s=s).derivative(n=1)
 
         dlogd_dloga = a*(dgrowth_spline_deriv(a)/dgrowth_spline(a))
-        dlogd_dloga = np.flip(dlogd_dloga)
+        dlogd_dloga = dlogd_dloga[::-1] #np.flip(dlogd_dloga)
         #dlog = np.gradient(np.log(dgrowth), np.log(a), edge_order=2)
         return dlogd_dloga
 
