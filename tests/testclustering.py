@@ -21,13 +21,14 @@ import matplotlib.pyplot as plt
 iniFile = 'input/pipeline.ini'
 expName = 'S4-1.0-CDT' 
 gridName = 'grid-owl2' 
-version = '0.6' 
+version = '0.7' 
 clst = Clustering(iniFile,expName,gridName,version)
 
 M200temp = np.arange(1,1000,1) * 1e11
 
 print(clst.non_linear_scale(1.95,M200temp))
 
+print()
 print(clst.ntilde())
 print(clst.b_eff_z())
 print(clst.Norm_Sfunc(0.4))
@@ -39,7 +40,7 @@ aarrs = old_div(1.,(1. + zarrs))
 
 g = lambda x: (0.3*(1 + x)**3)**0.55 #?Is this the analytic growth function?
 
-
+zarrs2 = clst.HMF.zarr
 
 thk = 3 #Controls plot linewidth
 
@@ -52,3 +53,15 @@ plt.ylabel(r'$f_g$', fontsize=32,weight='bold')
 plt.plot(zarrs,g(zarrs),linewidth=thk) #?Compare analytic growth against...?
 plt.plot(zarrs,fg,linewidth=thk) #?...the calculated?
 plt.savefig('testing_fg.png', bbox_inches='tight',format='png')
+
+zint = np.arange(0.05,1.5,0.01)
+ntilde_int = clst.ntilde_interpol(zint)
+
+plt.figure(figsize=(10,8))
+plt.rc('axes', linewidth=thk)
+plt.tick_params(which='both',size=14,width=thk,labelsize = 24)
+plt.tick_params(which='major',size=18,width=thk,labelsize = 24)
+plt.xlabel(r'$z$', fontsize=32,weight='bold')
+plt.semilogy(zarrs2,clst.ntilde(),linewidth=thk) 
+plt.plot(zint,ntilde_int,linewidth=thk) 
+plt.savefig('testing_ntilde.png', bbox_inches='tight',format='png')
