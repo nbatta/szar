@@ -17,49 +17,47 @@ clst = Clustering(INIFILE,expName,gridName,version)
 
 n_ks = 200
 ks = clst.HMF.kh
+zs = clst.HMF.zarr
 ZLO = 1e-3
 ZUP = 1e-1
 
 #ps
-
-ps = clst.HMF.pk
-
-plt.plot(ks, ps[0], label="$P_lin$")
-plt.xscale('log')
-plt.yscale('log')
-#plt.xlabel(r'$k$')
-#plt.ylabel(r'$P(k)$')
-plt.xlim(ZLO, ZUP)
-plt.legend(loc='lower left')
+#
+#ps = clst.HMF.pk
+#
+#plt.plot(ks, ps[0], label="$P_lin$")
+#plt.xscale('log')
+#plt.yscale('log')
+##plt.xlabel(r'$k$')
+##plt.ylabel(r'$P(k)$')
+#plt.xlim(ZLO, ZUP)
+#plt.legend(loc='lower left')
 
 #ps_tilde
 mus = np.array([0])
-pstildes = clst.ps_tilde(mus)
-
-plt.plot(ks, pstildes[0], label="$P_{tilde}$")
-plt.xscale('log')
-plt.yscale('log')
-#plt.xlabel(r'$k$')
-#plt.ylabel(r'$\tilde P(k, \mu=0)$')
-plt.xlim(ZLO,ZUP)
-plt.legend(loc='lower left')
+#pstildes = clst.ps_tilde(mus)
+#
+#plt.plot(ks, pstildes[0], label="$P_{tilde}$")
+#plt.xscale('log')
+#plt.yscale('log')
+##plt.xlabel(r'$k$')
+##plt.ylabel(r'$\tilde P(k, \mu=0)$')
+#plt.xlim(ZLO,ZUP)
+#plt.legend(loc='lower left')
 
 
 #ps_bar
-fsky = 1
-ps_bar = clst.ps_bar(mus, fsky)
+fsky = 1.
+ps_bars = clst.ps_bar(mus, fsky)
+print(ps_bars.shape)
 
-plt.plot(ks, ps_bar[0], '--', label="$P_{bar}$")
-plt.xscale('log')
-plt.yscale('log')
+plt.plot(zs, ps_bars, marker='.')
+#plt.xscale('log')
+#plt.yscale('log')
 
-plt.xlabel(r'$k$')
-plt.ylabel(r'$\bar P(k, \mu=0)$')
-plt.xlim(ZLO, ZUP)
+plt.xlabel(r'$z$')
+plt.ylabel(r'$\bar P(k=const, \mu=0)$')
+#plt.xlim(ZLO, ZUP)
 plt.legend(loc='lower left')
 
-plt.savefig("ps_all_test.png")
-
-plt.gcf().clear()
-
-print(np.mean(ps[0]/ps_bar[0]))
+plt.savefig("ps_bar_of_z_test.png")

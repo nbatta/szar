@@ -15,6 +15,7 @@ from orphics.io import dict_from_section,list_from_config
 import pickle as pickle
 from scipy.interpolate import interp1d
 from scipy.interpolate import UnivariateSpline
+from scipy.integrate import simps
 
 class Clustering(object):
     def __init__(self,iniFile,expName,gridName,version):
@@ -68,8 +69,8 @@ class Clustering(object):
         z_arr = self.HMF.zarr
 
         #n = len(z_arr)
-        #k = 5 # 5th degree spline 
-        #s = 20.#(n - np.sqrt(2*n))* 1.3 # smoothing factor 
+        #k = 4 # 5th degree spline 
+        #s = 20.*(n - np.sqrt(2*n))* 1.3 # smoothing factor 
 
         #ntilde_spline = UnivariateSpline(z_arr, np.log(ntil), k=k, s=s)
         #ans = np.exp(ntilde_spline(zarr_int))
@@ -125,6 +126,24 @@ class Clustering(object):
         ans = self.HMF.dVdz*nbar**2*np.diff(self.HMF.zarr_edges)
         return ans*4.*np.pi*fsky
 
+    def fine_sfunc(self, fsky, nsubsamples):
+        zs = self.HMF.zarr
+        zgridedges = self.HMF.zarr_edges
+
+        values = np.empty(zs.size)
+        for i in range(zs.size):
+            if i == 0:
+                fine_zs = np.linspace(zs[i], zgridedges[i+1], nsubsamples)
+            elif i == zs.size - 1:
+                fine_zs = np.linspace(zgridedges[i], zs[i])
+            else:
+                fine_zs = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
+            ntils = self.ntilde_interpol(fine_zs)
+            dvdz = self.dVdz_fine(fine_zs)
+            integral = simps(dvdz * ntils**2, fine_zs)
+            values[i] = integral * 4 * np.pi * fsky
+        return values
+
     def v0(self, fsky):
         ans = self.HMF.dVdz * np.diff(self.HMF.zarr_edges)
         return ans * 4 * np.pi * fsky
@@ -149,6 +168,27 @@ class Clustering(object):
         #for i in range(len(z_arr)): 
         #    ans[:,:,i] = self.HMF.dVdz[i]*nbar[i]**2*ps_tilde[:,:,i]*np.diff(z_arr[i])/self.Norm_Sfunc(fsky)[i]
         return ans
+
+    #NOT READY FOR USE
+    def ps_bar_fine(self,mu,fsky):
+        zs = self.HMF.zarr
+        ntils = self.ntilde()
+        
+        for i in range(zs.size):
+            if i == 0:
+                fine_zs = np.linspace(zs[i], zgridedges[i+1], nsubsamples)
+            elif i == zs.size - 1:
+                fine_zs = np.linspace(zgridedges[i], zs[i])
+            else:
+                fine_zs = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
+            ntils = self.ntilde_interpol(fine_zs)
+            dvdz = self.dVdz_fine(fine_zs)
+            prefac = dvdz * ntils**2
+            
+
+            integral = simps(dvdz * ntils**2, fine_zs)
+            values[i] = integral * 4 * np.pi * fsky
+        return values
 
     def V_eff(self,mu,fsky):
         V0 = self.v0(fsky)

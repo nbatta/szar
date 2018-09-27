@@ -19,8 +19,13 @@ FSKY = 1.
 coarse_v0_vals = clst.v0(FSKY)
 zs = clst.HMF.zarr
 zedges = clst.HMF.zarr_edges
+fine_zs = np.linspace(zs[0], zs[-1], 1000)
+mus = np.array([0])
 
 ntildes = clst.ntilde()
+#ntildes_ipolated = clst.ntilde_interpol(fine_zs)
+
+pstildes = clst.ps_tilde(mus)
 
 def fine_v0(fsky, zgrid, zgridedges, npoints):
     values = np.zeros(zgrid.size)
@@ -33,22 +38,21 @@ def fine_v0(fsky, zgrid, zgridedges, npoints):
 
 import time
 start = time.time()
-fine_v0_vals = fine_v0(FSKY, zs, zedges, 100)
+#fine_v0_vals = fine_v0(FSKY, zs, zedges, 100)
 end = time.time()
 print(end - start)
-
-fine_zs = np.linspace(zs[0], zs[-1], 1000)
 
 #plt.plot(zs, coarse_v0_vals, label="coarse", marker='o')
 #plt.plot(zs, fine_v0_vals, '--', label="fine", marker='.')
 #plt.plot(fine_zs, clst.dVdz_fine(fine_zs), label="dVdz")
 #plt.plot(zs, coarse_v0_vals/fine_v0_vals, label="ratio")
-plt.plot(zs, ntildes**2 * clst.HMF.dVdz, label="dV/dz * n^2")
+plt.plot(zs, pstildes, '-', marker='.')
+#plt.plot(fine_zs, ntildes_ipolated**2 * clst.dVdz_fine(fine_zs), label="interp")
 #plt.xscale('log')
 #plt.yscale('log')
 #for z in zs:
 #    plt.axvline(x=z)
 plt.xlabel(r'$z_\ell$')
-plt.ylabel(r'$V_0(z_\ell)$')
+plt.ylabel(r'$\tilde P$')
 plt.legend(loc='lower left')
-plt.savefig('nsqr_dvdz_test.png')
+plt.savefig('pstilde_of_z_test.png')
