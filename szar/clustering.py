@@ -145,8 +145,19 @@ class Clustering(object):
         return values
 
     def v0(self, fsky):
-        ans = self.HMF.dVdz * np.diff(self.HMF.zarr_edges)
-        return ans * 4 * np.pi * fsky
+        values = np.empty(zgrid.size)
+        for i in range(zs.size):
+            if i == 0:
+                fine_zs = np.linspace(zs[i], zgridedges[i+1], nsubsamples)
+            elif i == zs.size - 1:
+                fine_zs = np.linspace(zgridedges[i], zs[i])
+            else:
+                fine_zs = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
+            dvdz = clst.dVdz_fine(fine_zs)
+            integral = simps(dvdz, fine_zs)
+            values[i] = integral * 4 * np.pi * fsky
+
+        return values
 
     def ps_tilde(self,mu):
         
