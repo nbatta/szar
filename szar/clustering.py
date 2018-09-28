@@ -201,6 +201,6 @@ class Clustering(object):
         npfact = np.multiply(nbar, ps)
         frac = npfact/(1. + npfact)
 
-        ans = np.multiply(frac,V0)
+        ans = np.multiply(frac**2,V0)
         return ans
 
