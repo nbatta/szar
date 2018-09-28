@@ -144,8 +144,11 @@ class Clustering(object):
             values[i] = integral * 4 * np.pi * fsky
         return values
 
-    def v0(self, fsky):
-        values = np.empty(zgrid.size)
+    def v0(self, fsky, nsubsamples):
+        zs = self.HMF.zarr
+        zgridedges = self.HMF.zarr_edges
+
+        values = np.empty(zs.size)
         for i in range(zs.size):
             if i == 0:
                 fine_zs = np.linspace(zs[i], zgridedges[i+1], nsubsamples)
@@ -153,7 +156,7 @@ class Clustering(object):
                 fine_zs = np.linspace(zgridedges[i], zs[i])
             else:
                 fine_zs = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
-            dvdz = clst.dVdz_fine(fine_zs)
+            dvdz = self.dVdz_fine(fine_zs)
             integral = simps(dvdz, fine_zs)
             values[i] = integral * 4 * np.pi * fsky
 
@@ -201,8 +204,8 @@ class Clustering(object):
             values[i] = integral * 4 * np.pi * fsky
         return values
 
-    def V_eff(self,mu,fsky):
-        V0 = self.v0(fsky)
+    def V_eff(self,mu,fsky,nsubsamples):
+        V0 = self.v0(fsky, nsubsamples)
         V0 = np.reshape(V0, (V0.size,1))
 
         nbar = self.ntilde()

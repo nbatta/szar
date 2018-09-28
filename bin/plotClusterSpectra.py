@@ -34,13 +34,11 @@ delta_ks = np.diff(ks)
 
 
 ps_bars = clst.ps_bar(mus, fsky)[0]
-v_effs = clst.V_eff(mus, fsky)[0]
-print(v_effs.shape)
-print(ks.shape)
-noise = np.sqrt(1/(v_effs[:-1] * (ks**2)[:-1] * delta_ks))
+v_effs = clst.V_eff(mus, fsky, 1000)[0]
+noise = np.sqrt(1/(v_effs[:-1] * (ks**2)[:-1] * delta_ks)) * ps_bars[:-1]
 
 plt.plot(ks, ps_bars, label=r"$\bar P(k, \mu = 0)$")
-plt.plot(ks[:-1], noise, label="Noise ($1/\sqrt{k^2 V_{eff}}$)")
+plt.plot(ks[:-1], noise, label=r"Noise ($ \bar P/\sqrt{k^2 V_{eff} \Delta k}$)")
 plt.plot(ks[:-1], ps_bars[:-1]/noise, label=r"$SNR$")
 plt.xscale('log')
 plt.yscale('log')
