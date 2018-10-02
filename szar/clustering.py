@@ -164,27 +164,40 @@ class Clustering(object):
 
     def ps_tilde(self,mu):
         
-        beff_arr = np.outer(np.ones(len(mu)), self.b_eff_z())
-        mu_arr = np.outer(mu, np.ones(len(self.b_eff_z())))
-        logGrowth = np.outer(np.ones(len(mu)), self.cc.fgrowth(self.HMF.zarr))
-        prefac = (beff_arr + logGrowth*mu_arr**2)**2
+        beff_arr = self.b_eff_z()[..., np.newaxis]
+        mu_arr = mu[..., np.newaxis]
+        logGrowth = self.cc.fgrowth(self.HMF.zarr)
+
+        prefac = (beff_arr.T + logGrowth*mu_arr**2)**2
+        prefac = prefac[..., np.newaxis]
+
         pklin = self.HMF.pk # not actually pklin
+        pklin = pklin.T
+        pklin = pklin[..., np.newaxis]
 
         ans = np.multiply(prefac,pklin.T).T
         return ans
 
-    def ps_bar(self,mu,fsky):
+    def ps_tilde_interpol(self, zarr_int, mu):
+        ps_tils = self.ps_tilde(mu)
+        zs = self.HMF.zarr
+        ks = self.HMF.kh
+        
+        ps_interp = interp1d(zs, ps_tils, axis=1)
+        return ps_interp(zarr_int)
 
+    def ps_bar(self,mu,fsky):
         z_arr = self.HMF.zarr
         nbar = self.ntilde()
         prefac =  self.HMF.dVdz*nbar**2*np.diff(z_arr)[2]/self.Norm_Sfunc(fsky)
+        prefac = prefac[..., np.newaxis]
         ans = np.multiply(prefac, self.ps_tilde(mu).T).T
         #for i in range(len(z_arr)): 
         #    ans[:,:,i] = self.HMF.dVdz[i]*nbar[i]**2*ps_tilde[:,:,i]*np.diff(z_arr[i])/self.Norm_Sfunc(fsky)[i]
         return ans
 
     #NOT READY FOR USE
-    def ps_bar_fine(self,mu,fsky):
+    def fine_ps_bar(self,mu,fsky):
         zs = self.HMF.zarr
         ntils = self.ntilde()
         

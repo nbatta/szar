@@ -12,7 +12,7 @@ version = '0.6'
 
 clst = Clustering(INIFILE,expName,gridName,version)
 
-mus = np.array([0])
+mus = np.linspace(0,1, 50)
 ks = clst.HMF.kh
 zs = clst.HMF.zarr
 try:
@@ -20,13 +20,10 @@ try:
 except Exception as e:
     print("Test failed at clustering.ps_tilde")
     print(e)
-    sys.exit()
 
-
-expected = np.outer(zs, ks)
+expected = np.empty((mus.size, zs.size, ks.size))
 
 if pstildes.shape != expected.shape:
     print("pstildes shape is not the expected value; test failed!")
 else:
     print("Tests passed!")
-
