@@ -183,7 +183,7 @@ class Clustering(object):
         zs = self.HMF.zarr
         ks = self.HMF.kh
         
-        ps_interp = interp1d(zs, ps_tils, axis=1)
+        ps_interp = interp1d(zs, ps_tils, axis=1, kind='slinear')
         return ps_interp(zarr_int)
 
     def ps_bar(self,mu,fsky):
