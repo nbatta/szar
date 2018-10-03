@@ -56,12 +56,12 @@ def test_fine_ps_bar(cc):
     zs = cc.HMF.zarr
     fsky = 1.
 
-    try:
-        fine_ps_bars = cc.fine_ps_bar(mus, fsky, 100)
-    except Exception as e:
-        print("Test of fine_ps_bar failed at clustering.fine_ps_bars")
-        print(e)
-        return
+    #try:
+    fine_ps_bars = cc.fine_ps_bar(mus, fsky, 100)
+    #except Exception as e:
+    #   print("Test of fine_ps_bar failed at clustering.fine_ps_bars")
+    #   print(e)
+    return
 
     expected = np.empty((ks.size, 100, mus.size))
     print(expected.shape)
