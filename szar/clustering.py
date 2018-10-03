@@ -162,8 +162,7 @@ class Clustering(object):
 
         return values
 
-    def ps_tilde(self,mu):
-        
+    def ps_tilde(self,mu):        
         beff_arr = self.b_eff_z()[..., np.newaxis]
         mu_arr = mu[..., np.newaxis]
         logGrowth = self.cc.fgrowth(self.HMF.zarr)
@@ -182,8 +181,12 @@ class Clustering(object):
         ps_tils = self.ps_tilde(mu)
         zs = self.HMF.zarr
         ks = self.HMF.kh
-        
-        ps_interp = interp1d(zs, ps_tils, axis=1, kind='slinear')
+
+        n = zs.size
+        k = 4 # 5th degree spline
+        s = 20.*(n - np.sqrt(2*n))* 1.3 # smoothing factor
+
+        ps_interp = interp1d(zs, ps_tils, axis=1, kind='cubic')
         return ps_interp(zarr_int)
 
     def ps_bar(self,mu,fsky):
@@ -196,11 +199,14 @@ class Clustering(object):
         #    ans[:,:,i] = self.HMF.dVdz[i]*nbar[i]**2*ps_tilde[:,:,i]*np.diff(z_arr[i])/self.Norm_Sfunc(fsky)[i]
         return ans
 
-    #NOT READY FOR USE
-    def fine_ps_bar(self,mu,fsky):
+#Sadly still not ready
+    def fine_ps_bar(self,mu,fsky, nsubsamples):
         zs = self.HMF.zarr
+        ks = self.HMF.kh
         ntils = self.ntilde()
+        zgridedges = self.HMF.zarr_edges
         
+        values = np.empty((ks.size, zs.size, mu.size))
         for i in range(zs.size):
             if i == 0:
                 fine_zs = np.linspace(zs[i], zgridedges[i+1], nsubsamples)
@@ -211,11 +217,14 @@ class Clustering(object):
             ntils = self.ntilde_interpol(fine_zs)
             dvdz = self.dVdz_fine(fine_zs)
             prefac = dvdz * ntils**2
-            
+            prefac = prefac[..., np.newaxis]
+            ps_tils = self.ps_tilde_interpol(fine_zs, mu)
 
-            integral = simps(dvdz * ntils**2, fine_zs)
-            values[i] = integral * 4 * np.pi * fsky
-        return values
+            integrand = prefac * ps_tils
+
+            integral = simps(integrand, fine_zs, axis=1)
+            values[:,i,:] = integral * 4 * np.pi * fsky
+        return values/self.fine_sfunc(fsky, nsubsamples)
 
     def V_eff(self,mu,fsky,nsubsamples):
         V0 = self.v0(fsky, nsubsamples)

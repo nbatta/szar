@@ -25,7 +25,7 @@ def test_ps_tilde_interpol(cc):
     try:
         ps_interps = cc.ps_tilde_interpol(fine_zs, mus)
     except Exception as e:
-        print("Test of ps_tilde_interpol failed at clustering.fine_sfunc")
+        print("Test of ps_tilde_interpol failed at clustering.tilde_interpol")
         print(e)
         return
 
@@ -57,29 +57,29 @@ def test_fine_ps_bar(cc):
     fsky = 1.
 
     try:
-        fine_sfunc_vals = cc.fine_sfunc(fsky, 1000)
+        fine_ps_bars = cc.fine_ps_bar(mus, fsky, 100)
     except Exception as e:
-        print("Test of ps_bar failed at clustering.fine_sfunc")
+        print("Test of fine_ps_bar failed at clustering.fine_ps_bars")
         print(e)
         return
 
-    if fine_sfunc_vals.shape != zs.shape:
-        print("fine_sfunc_vals shape is not the expected value; test failed!")
+    expected = np.empty((ks.size, 100, mus.size))
+    print(expected.shape)
+    print(fine_ps_bars.shape)
+    if fine_ps_bars.shape != expected.shape:
+        print("fine_ps_bar shape is not the expected value; test failed!")
         return
     else:
-        print("Tests for ps_bar passed! (Check the plots though)")
+        print("Tests of fine_ps_bar passed! (Check the plots though)")
 
-    coarse_sfunc_vals = cc.Norm_Sfunc(fsky)
+    coarse_psbar_vals = cc.ps_bar(mus, fsky)
 
-    plt.plot(zs, 10*coarse_sfunc_vals, marker='o', label="coarse")
-    plt.plot(zs, 10*fine_sfunc_vals, marker='.', label="fine")
-    plt.plot(zs, coarse_sfunc_vals/fine_sfunc_vals, marker='.', label="ratio")
-    #plt.xscale('log')
-    #plt.yscale('log')
+    plt.plot(zs, coarse_ps_bar, marker='o', label="coarse")
+    plt.plot(zs, fine_ps_bars, marker='.', label="fine")
     plt.xlabel(r'$z_\ell$')
-    plt.ylabel(r'$10 \times S(z_\ell)$')
+    plt.ylabel(r'$\bar P(z_\ell, \mu = 0, k=m_{min})$')
     plt.legend(loc='upper center')
-    plt.savefig('fine_sfunc_test.svg')
+    plt.savefig('fine_ps_bars_test.svg')
 
     plt.gcf().clear()
 
@@ -138,4 +138,5 @@ def test_ps_tilde(cc):
 if __name__ == '__main__':
     #test_fine_sfunc(clst)
     #test_ps_tilde(clst)
-    test_ps_tilde_interpol(clst)
+    #test_ps_tilde_interpol(clst)
+    test_fine_ps_bar(clst)
