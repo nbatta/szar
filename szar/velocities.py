@@ -1,3 +1,6 @@
+from __future__ import division
+from builtins import object
+from past.utils import old_div
 import numpy as np
 from scipy.special import j0
 #from orphics.cosmology import Cosmology
@@ -6,7 +9,7 @@ from configparser import SafeConfigParser
 from orphics.io import dict_from_section
 from szar.clustering import clustering
 
-class pairwise:
+class pairwise(object):
     def __init__(self,iniFile,kmin=1e-4,kmax=5.,knum=200):
 
         Config = SafeConfigParser()
@@ -68,14 +71,14 @@ class pairwise:
         bweight = np.trapz(dndm*blin**q*self.HMF.M200,dx=np.diff(self.HMF.M200),axis=0)
         bnorm = np.trapz(dndm*self.HMF.M200,dx=np.diff(self.HMF.M200),axis=0)
         
-        ans = bweight/bnorm
+        ans = old_div(bweight,bnorm)
 
         return ans
 
     def zeta(self,rad):
 
         k_arr = self.HMF.kh.copy()
-        integ = np.trapz(k_arr**2*self.massWeightedbias(2)*j0(k_arr*rad)*self.pk,dx=np.diff(k_arr),axis=0)/ (2.*np.pi**2)
+        integ = old_div(np.trapz(k_arr**2*self.massWeightedbias(2)*j0(k_arr*rad)*self.pk,dx=np.diff(k_arr),axis=0), (2.*np.pi**2))
 
         return integ
 

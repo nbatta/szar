@@ -1,3 +1,4 @@
+from __future__ import print_function
 import time
 import os
 from configparser import SafeConfigParser 
@@ -8,7 +9,7 @@ from configparser import SafeConfigParser
 #expList = ['SO-3m','SO-5m','SO-6m','SO-7m','S4-3m','S4-5m','S4-6m','S4-7m','S4-5m-noatm','S4-6m-noatm','S4-7m-noatm','SO-5m-noatm','SO-6m-noatm','SO-7m-noatm','SO-3m-noatm','S4-3m-noatm']
 #expList = ['CCATP-propv2']
 #expList = ['AdvACT_S19']
-expList = ['PlanckTest']
+expList = ['S4-1.4-0.4-v2']
 #expList = ['CMB-Probe-v3-1']
 #expList = ['CCATP-MSIP','CCATP-SO-MSIP']
 #expList = ['SO-v3-goal-20','SO-v3-base-20']
@@ -20,7 +21,9 @@ expList = ['PlanckTest']
 
 #'SO-5m-noatm','SO-6m-noatm','SO-7m-noatm',
 #expList = ['AdvAct']
-calList = ['owl1-planck']#,'owl1']#,'owl1']
+#calList = ['owl1-planck']#,'owl1']#,'owl1']
+
+calList = ['owl2']
 
 #gridList = ["grid-owl2"]
 

@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import division
+from past.utils import old_div
 from szar.counts import ClusterCosmology,Halo_MF,getNmzq
 from szar.szproperties import SZ_Cluster_Model
 import szar.fisher as sfisher
@@ -82,7 +85,7 @@ dN_dmqz = HMF.N_of_mqz_SZ(lndMDn*massMultiplier,qbin_edges,SZProf)
 
 Nup = getNmzq(dUp,mexp_edges,z_edges,qbin_edges)        
 Ndn = getNmzq(dDn,mexp_edges,z_edges,qbin_edges)
-dNdp = (Nup-Ndn)/rayStep
+dNdp = old_div((Nup-Ndn),rayStep)
 np.save(bigDataDir+"Nup_mzq_"+saveId+"_sigR",Nup)
 np.save(bigDataDir+"Ndn_mzq_"+saveId+"_sigR",Ndn)
 np.save(bigDataDir+"dNdp_mzq_"+saveId+"_sigR",dNdp)

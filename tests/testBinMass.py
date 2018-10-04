@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import division
+from past.utils import old_div
 import matplotlib
 matplotlib.use('Agg')
 import traceback
@@ -34,7 +37,7 @@ z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 
 
 M_edges = 10**mexp_edges
-Masses = (M_edges[1:]+M_edges[:-1])/2.
+Masses = old_div((M_edges[1:]+M_edges[:-1]),2.)
 
 dm = np.diff(M_edges)
 print(Masses)

@@ -1,13 +1,23 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
+from past.utils import old_div
 import numpy as np
 #from orphics.cosmology import Cosmology
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import SZ_Cluster_Model
-import tinker as tinker
+from . import tinker as tinker
 from configparser import SafeConfigParser
 from orphics.io import dict_from_section,list_from_config
-import cPickle as pickle
+import pickle as pickle
+from scipy.interpolate import interp1d
+from scipy.interpolate import UnivariateSpline
+from scipy.integrate import simps
 
-class clustering:
+class Clustering(object):
     def __init__(self,iniFile,expName,gridName,version):
         Config = SafeConfigParser()
         Config.optionxform=str
@@ -40,9 +50,33 @@ class clustering:
         self.HMF.sigN = siggrid.copy()
         #self.dndm_SZ = self.HMF.dn_dmz_SZ(self.SZProp)
 
+    def dVdz_fine(self,zarr):
+        DA_z = self.HMF.cc.results.angular_diameter_distance(zarr)
+        dV_dz = DA_z**2 * (1.+zarr)**2
+        #NOT SURE we need this for loop
+        for i in range (zarr.size):
+            dV_dz[i] /= (self.HMF.cc.results.h_of_z(zarr[i]))
+        dV_dz *= (old_div(self.HMF.cc.H0,100.))**3. # was h0
+        return dV_dz
+
     def ntilde(self):
         dndm_SZ = self.HMF.dn_dmz_SZ(self.SZProp)
         ans = np.trapz(dndm_SZ,dx=np.diff(self.HMF.M200,axis=0),axis=0)
+        return ans
+
+    def ntilde_interpol(self,zarr_int):
+        ntil = self.ntilde()
+        z_arr = self.HMF.zarr
+
+        #n = len(z_arr)
+        #k = 4 # 5th degree spline 
+        #s = 20.*(n - np.sqrt(2*n))* 1.3 # smoothing factor 
+
+        #ntilde_spline = UnivariateSpline(z_arr, np.log(ntil), k=k, s=s)
+        #ans = np.exp(ntilde_spline(zarr_int))
+        f_int = interp1d(z_arr, np.log(ntil),kind='slinear')
+        ans = np.exp(f_int(zarr_int)) 
+
         return ans
 
     def b_eff_z(self):
@@ -58,11 +92,11 @@ class clustering:
         sig = np.sqrt(tinker.sigma_sq_integral(R, self.HMF.pk, self.HMF.kh))
 
         blin = tinker.tinker_bias(sig,200.)
-        beff = np.trapz(dndm_SZ*blin,dx=np.diff(self.HMF.M200,axis=0),axis=0) / nbar
+        beff = old_div(np.trapz(dndm_SZ*blin,dx=np.diff(self.HMF.M200,axis=0),axis=0), nbar)
 
         return beff
 
-    def non_linear_scale(self,z,M200):
+    def non_linear_scale(self,z,M200): #?Who are you?
 
         zdiff = np.abs(self.HMF.zarr - z)
         use_z = np.where(zdiff == np.min(zdiff))[0]
@@ -72,19 +106,19 @@ class clustering:
         sig = np.sqrt(tinker.sigma_sq_integral(R, self.HMF.pk[use_z,:], self.HMF.kh))
 
         #print sig[:,0],sig[0,:]
-        print sig.shape
-        print self.HMF.kh.shape
+        print(sig.shape)
+        print(self.HMF.kh.shape)
         sig1 = sig[0,:]
-        print sig1
+        print(sig1)
         sigdiff = np.abs(sig1 - 1.)
         use_sig = np.where(sigdiff == np.min(sigdiff))[0]
-        print use_sig
+        print(use_sig)
         
         
 
-        return 1./(R[use_sig]),sig1[use_sig],self.HMF.zarr[use_z]
+        return old_div(1.,(R[use_sig])),sig1[use_sig],self.HMF.zarr[use_z]
 
-
+# norm is off by 4 pi from ps_bar
     def Norm_Sfunc(self,fsky):
         #z_arr = self.HMF.zarr
         #Check this
@@ -92,37 +126,95 @@ class clustering:
         ans = self.HMF.dVdz*nbar**2*np.diff(self.HMF.zarr_edges)
         return ans*4.*np.pi*fsky
 
+    def fine_sfunc(self, fsky, nsubsamples):
+        zs = self.HMF.zarr
+        zgridedges = self.HMF.zarr_edges
+
+        values = np.empty(zs.size)
+        for i in range(zs.size):
+            if i == 0:
+                fine_zs = np.linspace(zs[i], zgridedges[i+1], nsubsamples)
+            elif i == zs.size - 1:
+                fine_zs = np.linspace(zgridedges[i], zs[i])
+            else:
+                fine_zs = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
+            ntils = self.ntilde_interpol(fine_zs)
+            dvdz = self.dVdz_fine(fine_zs)
+            integral = simps(dvdz * ntils**2, fine_zs)
+            values[i] = integral * 4 * np.pi * fsky
+        return values
+
+    def v0(self, fsky, nsubsamples):
+        zs = self.HMF.zarr
+        zgridedges = self.HMF.zarr_edges
+
+        values = np.empty(zs.size)
+        for i in range(zs.size):
+            if i == 0:
+                fine_zs = np.linspace(zs[i], zgridedges[i+1], nsubsamples)
+            elif i == zs.size - 1:
+                fine_zs = np.linspace(zgridedges[i], zs[i])
+            else:
+                fine_zs = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
+            dvdz = self.dVdz_fine(fine_zs)
+            integral = simps(dvdz, fine_zs)
+            values[i] = integral * 4 * np.pi * fsky
+
+        return values
+
     def ps_tilde(self,mu):
         
-        beff_arr = np.outer(self.b_eff_z(),np.ones(len(mu)))
-        mu_arr = np.outer(len(self.b_eff_z()),mu)
-        logGrowth = 1. #FIX #np.outer()
+        beff_arr = np.outer(np.ones(len(mu)), self.b_eff_z())
+        mu_arr = np.outer(mu, np.ones(len(self.b_eff_z())))
+        logGrowth = np.outer(np.ones(len(mu)), self.cc.fgrowth(self.HMF.zarr))
         prefac = (beff_arr + logGrowth*mu_arr**2)**2
-        pklin = self.HMF.pk
-    
-        ans = np.multily(prefac,pklin)
+        pklin = self.HMF.pk # not actually pklin
 
+        ans = np.multiply(prefac,pklin.T).T
         return ans
 
     def ps_bar(self,mu,fsky):
 
         z_arr = self.HMF.zarr
         nbar = self.ntilde()
-        ans = self.ps_tilde(mu) * 0.0
         prefac =  self.HMF.dVdz*nbar**2*np.diff(z_arr)[2]/self.Norm_Sfunc(fsky)
-        ans = np.multiply(self.ps_tilde(mu),prefac)
+        ans = np.multiply(prefac, self.ps_tilde(mu).T).T
         #for i in range(len(z_arr)): 
         #    ans[:,:,i] = self.HMF.dVdz[i]*nbar[i]**2*ps_tilde[:,:,i]*np.diff(z_arr[i])/self.Norm_Sfunc(fsky)[i]
         return ans
 
-    def V_eff(self,mu,fsky):
+    #NOT READY FOR USE
+    def ps_bar_fine(self,mu,fsky):
+        zs = self.HMF.zarr
+        ntils = self.ntilde()
+        
+        for i in range(zs.size):
+            if i == 0:
+                fine_zs = np.linspace(zs[i], zgridedges[i+1], nsubsamples)
+            elif i == zs.size - 1:
+                fine_zs = np.linspace(zgridedges[i], zs[i])
+            else:
+                fine_zs = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
+            ntils = self.ntilde_interpol(fine_zs)
+            dvdz = self.dVdz_fine(fine_zs)
+            prefac = dvdz * ntils**2
+            
 
-        V0 = self.HMF.dVdz*np.diff(z_arr)*4.*np.pi*fsky #FIX
+            integral = simps(dvdz * ntils**2, fine_zs)
+            values[i] = integral * 4 * np.pi * fsky
+        return values
+
+    def V_eff(self,mu,fsky,nsubsamples):
+        V0 = self.v0(fsky, nsubsamples)
+        V0 = np.reshape(V0, (V0.size,1))
+
         nbar = self.ntilde()
-        ps = self.ps_bar(mu,fsky)
-        npfact = np.multiply(ps,nbar)
-        frac = npfact / (1. + npfact)
-        ans = np.multiply(frac,V0)
+        nbar = np.reshape(nbar, (nbar.size,1))
 
+        ps = self.ps_bar(mu,fsky)
+        npfact = np.multiply(nbar, ps)
+        frac = npfact/(1. + npfact)
+
+        ans = np.multiply(frac**2,V0)
         return ans
 

@@ -1,4 +1,9 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import zip
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import numpy as np
 from scipy import special
 from orphics.cosmology import noise_func
@@ -9,15 +14,15 @@ from orphics.stats import timeit
 from orphics import io
 
 def gnfw(xx, P0 = 8.403, xc = 1.156, gm = 0.3292, al = 1.062, bt = 5.4807):
-    ans = P0 / ((xx*xc)**gm * (1 + (xx*xc)**al)**((bt-gm)/al))
+    ans = old_div(P0, ((xx*xc)**gm * (1 + (xx*xc)**al)**(old_div((bt-gm),al))))
     return ans
 
 def bbps(cc,M,z):
-    R500 = cc.rdel_c(M,z,500.).flatten()[0] / (cc.H0/100.) # Mpc No hs
+    R500 = old_div(cc.rdel_c(M,z,500.).flatten()[0], (old_div(cc.H0,100.))) # Mpc No hs
     DA_z = cc.results.angular_diameter_distance(z) # No hs
-    M_fac = M / (3e14) * (100./cc.H0)
-    P500 = 1.65e-3 * (100./cc.H0)**2 * M_fac**(2./3.) * self.cc.E_z(z) #keV cm^3
-    intgrl = P500*np.sum(self.GNFW(rr/R500)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
+    M_fac = M / (3e14) * (old_div(100.,cc.H0))
+    P500 = 1.65e-3 * (old_div(100.,cc.H0))**2 * M_fac**(old_div(2.,3.)) * self.cc.E_z(z) #keV cm^3
+    intgrl = P500*np.sum(self.GNFW(old_div(rr,R500))*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
         
 def gaussian(xx, mu, sig,noNorm=False):
     if (noNorm==True):
@@ -29,7 +34,7 @@ def gaussian2Dnorm(sig_x,sig_y,rho):
     return sig_x*sig_y*2.0*np.pi*np.sqrt(1. - rho**2)
 
 def gaussianMat2D(diff,sig_x,sig_y,rho):
-    icov = np.matrix([[sig_y**2, -1.*sig_x*sig_y*rho],[-1.*sig_x*sig_y*rho, sig_x**2]]) / (sig_x**2* sig_y**2*(1 - rho**2) ) 
+    icov = old_div(np.matrix([[sig_y**2, -1.*sig_x*sig_y*rho],[-1.*sig_x*sig_y*rho, sig_x**2]]), (sig_x**2* sig_y**2*(1 - rho**2) )) 
     iC_diff = np.dot(icov,diff)
     expo = np.einsum('j...,j...->...',diff,iC_diff)
     ans = np.exp(-0.5 * expo)
@@ -37,13 +42,13 @@ def gaussianMat2D(diff,sig_x,sig_y,rho):
     return ans
 
 def gaussian2D(xx, mu_x, sig_x,yy,mu_y, sig_y, rho):
-    exp0 = -1./(2.*(1.-rho**2))
-    exp1 = (xx - mu_x)**2 / (sig_x**2.)
-    exp2 = (yy - mu_y)**2 / (sig_y**2.)
+    exp0 = old_div(-1.,(2.*(1.-rho**2)))
+    exp1 = old_div((xx - mu_x)**2, (sig_x**2.))
+    exp2 = old_div((yy - mu_y)**2, (sig_y**2.))
     exp3 = 2*rho *(xx - mu_x)/sig_x *(yy - mu_y)/sig_y
     return 1./(sig_x*sig_y*2.0*np.pi*np.sqrt(1. - rho**2)) * np.exp(exp0*(exp1+exp2-exp3))
 
-class SZ_Cluster_Model:
+class SZ_Cluster_Model(object):
     def __init__(self,clusterCosmology,clusterDict, \
                  fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1., \
                  dell=10,pmaxN=5,numps=1000,nMax=1, \
@@ -119,16 +124,16 @@ class SZ_Cluster_Model:
 
 
             if v3mode>-1:
-                inst_noise = N_ell_T_LA[ii]/ self.cc.c['TCMBmuK']**2.
+                inst_noise = old_div(N_ell_T_LA[ii], self.cc.c['TCMBmuK']**2.)
             else:
-                inst_noise = ( noise_func(self.evalells,fwhm,noise,lknee,alpha,dimensionless=False) / self.cc.c['TCMBmuK']**2.)
+                inst_noise = ( old_div(noise_func(self.evalells,fwhm,noise,lknee,alpha,dimensionless=False), self.cc.c['TCMBmuK']**2.))
 
             # pl.add(self.evalells,inst_noise*self.evalells**2.,color="C"+str(ii))
             # pl.add(self.evalells,N_ell_T_LA[ii]*self.evalells**2./ self.cc.c['TCMBmuK']**2.,color="C"+str(ii),ls="--")
             
             nells = self.cc.clttfunc(self.evalells)+inst_noise
-            self.nlinv_nofg += (freq_fac)/nells
-            self.nlinv_cmb_nofg += (1./inst_noise)
+            self.nlinv_nofg += old_div((freq_fac),nells)
+            self.nlinv_cmb_nofg += (old_div(1.,inst_noise))
 
             totfg = (fgs.rad_ps(self.evalells,freq,freq) + fgs.cib_p(self.evalells,freq,freq) + \
                       fgs.cib_c(self.evalells,freq,freq) + fgs.ksz_temp(self.evalells)) \
@@ -140,16 +145,16 @@ class SZ_Cluster_Model:
                          / self.cc.c['TCMBmuK']**2. / ((self.evalells+1.)*self.evalells) * 2.* np.pi
                 nells += tszcib
 
-            self.nlinv += (freq_fac)/nells
-            self.nlinv_cmb += (1./(inst_noise+totfg))
+            self.nlinv += old_div((freq_fac),nells)
+            self.nlinv_cmb += (old_div(1.,(inst_noise+totfg)))
 
 
         # pl.done(io.dout_dir+"v3comp.png")
         
-        self.nl_old = 1./self.nlinv
-        self.nl_cmb = 1./self.nlinv_cmb
-        self.nl_nofg = 1./self.nlinv_nofg
-        self.nl_cmb_nofg = 1./self.nlinv_cmb_nofg
+        self.nl_old = old_div(1.,self.nlinv)
+        self.nl_cmb = old_div(1.,self.nlinv_cmb)
+        self.nl_nofg = old_div(1.,self.nlinv_nofg)
+        self.nl_cmb_nofg = old_div(1.,self.nlinv_cmb_nofg)
 
         f_nu_tsz = f_nu(self.cc.c,np.array(freqs))
  
@@ -166,34 +171,34 @@ class SZ_Cluster_Model:
             cmb_els = fq_mat*0.0 + self.cc.clttfunc(self.evalells[ii])
 
             if v3mode<0:
-                inst_noise = ( noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,dimensionless=False) / self.cc.c['TCMBmuK']**2.)
+                inst_noise = ( old_div(noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,dimensionless=False), self.cc.c['TCMBmuK']**2.))
                 nells = np.diag(inst_noise)
             elif v3mode<=2:
                 ndiags = []
                 for ff in range(len(freqs)):
-                    inst_noise = N_ell_T_LA[ff,ii]/ self.cc.c['TCMBmuK']**2.
+                    inst_noise = old_div(N_ell_T_LA[ff,ii], self.cc.c['TCMBmuK']**2.)
                     ndiags.append(inst_noise)
                 nells = np.diag(np.array(ndiags))
                 # Adding in atmo. freq-freq correlations
-                nells[0,1] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[1,0] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[2,3] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[3,2] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[4,5] = N_ell_T_LA[8,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[5,4] = N_ell_T_LA[8,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[0,1] = old_div(N_ell_T_LA[6,ii], self.cc.c['TCMBmuK']**2.)
+                nells[1,0] = old_div(N_ell_T_LA[6,ii], self.cc.c['TCMBmuK']**2.)
+                nells[2,3] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
+                nells[3,2] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
+                nells[4,5] = old_div(N_ell_T_LA[8,ii], self.cc.c['TCMBmuK']**2.)
+                nells[5,4] = old_div(N_ell_T_LA[8,ii], self.cc.c['TCMBmuK']**2.)
             elif v3mode==3:
                 ndiags = []
                 for ff in range(len(freqs)):
-                    inst_noise = N_ell_T_LA[ff,ii]/ self.cc.c['TCMBmuK']**2.
+                    inst_noise = old_div(N_ell_T_LA[ff,ii], self.cc.c['TCMBmuK']**2.)
                     ndiags.append(inst_noise)
                 nells = np.diag(np.array(ndiags))
                 # Adding in atmo. freq-freq correlations
-                nells[0,1] = N_ell_T_LA[5,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[1,0] = N_ell_T_LA[5,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[2,3] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[3,2] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[3,4] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
-                nells[4,3] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
+                nells[0,1] = old_div(N_ell_T_LA[5,ii], self.cc.c['TCMBmuK']**2.)
+                nells[1,0] = old_div(N_ell_T_LA[5,ii], self.cc.c['TCMBmuK']**2.)
+                nells[2,3] = old_div(N_ell_T_LA[6,ii], self.cc.c['TCMBmuK']**2.)
+                nells[3,2] = old_div(N_ell_T_LA[6,ii], self.cc.c['TCMBmuK']**2.)
+                nells[3,4] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
+                nells[4,3] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
             
             totfg = (fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) 
                      + fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t)) \
@@ -207,7 +212,7 @@ class SZ_Cluster_Model:
 
             nells += totfg + cmb_els + ksz
 
-            self.nl[ii] = 1./(np.dot(np.transpose(f_nu_tsz),np.dot(np.linalg.inv(nells),f_nu_tsz)))
+            self.nl[ii] = old_div(1.,(np.dot(np.transpose(f_nu_tsz),np.dot(np.linalg.inv(nells),f_nu_tsz))))
 
         # from orphics.tools.io import Plotter
         # pl = Plotter(scaleY='log')
@@ -223,7 +228,7 @@ class SZ_Cluster_Model:
         alpha = self.al
         beta = self.bt
         gamma = self.gm
-        p = lambda x: 1./(((c*x)**gamma)*((1.+((c*x)**alpha))**((beta-gamma)/alpha)))
+        p = lambda x: old_div(1.,(((c*x)**gamma)*((1.+((c*x)**alpha))**(old_div((beta-gamma),alpha)))))
 
         pmaxN = pmaxN
         numps = numps
@@ -238,12 +243,12 @@ class SZ_Cluster_Model:
     def quickVar(self,M,z,tmaxN=5.,numts=1000):
 
         R500 = self.cc.rdel_c(M,z,500.).flatten()[0] # R500 in Mpc/h 
-        DAz = self.cc.results.angular_diameter_distance(z) * (self.cc.H0/100.)
-        th500 = R500/DAz
+        DAz = self.cc.results.angular_diameter_distance(z) * (old_div(self.cc.H0,100.))
+        th500 = old_div(R500,DAz)
 
         gnorm = 2.*np.pi*(th500**2.)*self.gnorm_pre
 
-        u = lambda th: self.g(th/th500)/gnorm
+        u = lambda th: old_div(self.g(old_div(th,th500)),gnorm)
         thetamax = tmaxN * th500
         thetas = np.linspace(0.,thetamax,numts)
         uint = np.array([u(t) for t in thetas])
@@ -258,26 +263,26 @@ class SZ_Cluster_Model:
             noise = self.nl_nofg
             
         varinv = np.trapz((integrands**2.)*ells*2.*np.pi/noise,ells,np.diff(ells))
-        var = 1./varinv
+        var = old_div(1.,varinv)
 
         return var
 
     def GNFW(self,xx):
-        ans = self.P0 / ((xx*self.xc)**self.gm * (1 + (xx*self.xc)**self.al)**((self.bt-self.gm)/self.al))
+        ans = old_div(self.P0, ((xx*self.xc)**self.gm * (1 + (xx*self.xc)**self.al)**(old_div((self.bt-self.gm),self.al))))
         return ans
 
     def GNFWvar(self,xx,P0,xc,gm,al,bt):
-        ans = P0 / ((xx*xc)**gm * (1 + (xx*xc)**al)**((bt-gm)/al))
+        ans = old_div(P0, ((xx*xc)**gm * (1 + (xx*xc)**al)**(old_div((bt-gm),al))))
         return ans
 
     def Prof_tilde(self,ell,M,z):
         dr = 0.01
-        R500 = self.cc.rdel_c(M,z,500.).flatten()[0] / (self.cc.H0/100.) # Mpc No hs
+        R500 = old_div(self.cc.rdel_c(M,z,500.).flatten()[0], (old_div(self.cc.H0,100.))) # Mpc No hs
         DA_z = self.cc.results.angular_diameter_distance(z) # No hs
         rr = np.arange(dr,R500*5.0,dr)
-        M_fac = M / (3e14) * (100./self.cc.H0)
-        P500 = 1.65e-3 * (100./self.cc.H0)**2 * M_fac**(2./3.) * self.cc.E_z(z) #keV cm^3
-        intgrl = P500*np.sum(self.GNFW(rr/R500)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
+        M_fac = M / (3e14) * (old_div(100.,self.cc.H0))
+        P500 = 1.65e-3 * (old_div(100.,self.cc.H0))**2 * M_fac**(old_div(2.,3.)) * self.cc.E_z(z) #keV cm^3
+        intgrl = P500*np.sum(self.GNFW(old_div(rr,R500))*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
         ans = 4.0*np.pi/DA_z**2 * intgrl
         ans *= self.cc.c['SIGMA_T']/(self.cc.c['ME']*self.cc.c['C']**2)*self.cc.c['MPC2CM']*self.cc.c['eV_2_erg']*1000.0
         #factor of 1000 to convert keV to eV
@@ -296,9 +301,9 @@ class SZ_Cluster_Model:
         R500 = self.cc.rdel_c(M,z,500.).flatten()[0]
         DA_z = self.cc.results.angular_diameter_distance(z)
         rr = np.arange(dr,R500*5.0,dr)
-        M_fac = M / (3e14) * (100./70.)
+        M_fac = M / (3e14) * (old_div(100.,70.))
         tau500 = 1.
-        intgrl = tau500*np.sum(self.GNFWtau(rr/R500,P0,xc,gm,al,bt)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
+        intgrl = tau500*np.sum(self.GNFWtau(old_div(rr,R500),P0,xc,gm,al,bt)*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
         ans = 4.0*np.pi/DA_z**2 * intgrl
         ans *= self.cc.c['SIGMA_T'] # CHECK Units
         #/(self.cc.c['ME']*self.cc.c['C']**2)*self.cc.c['MPC2CM']*self.cc.c['eV_2_erg']*1000.0
@@ -347,7 +352,7 @@ class SZ_Cluster_Model:
         return P_func
 
     def Y_M(self,MM,zz):
-        DA_z = self.cc.results.angular_diameter_distance(zz) * (self.cc.H0/100.)
+        DA_z = self.cc.results.angular_diameter_distance(zz) * (old_div(self.cc.H0,100.))
 
         Y_star = self.scaling['Y_star'] #= 2.42e-10 #sterads
         #dropped h70 factor
@@ -355,36 +360,36 @@ class SZ_Cluster_Model:
         b_ym = self.scaling['b_ym']
         beta_ym = self.scaling['beta_ym']
         gamma_ym = self.scaling['gamma_ym']
-        beta_fac = np.exp(beta_ym*(np.log(MM/1e14))**2)
+        beta_fac = np.exp(beta_ym*(np.log(old_div(MM,1e14)))**2)
 
-        ans = Y_star*((b_ym)*MM/ 1e14)**alpha_ym *(DA_z/100.)**(-2.) * beta_fac * self.cc.E_z(zz) ** (2./3.) * (1. + zz)**gamma_ym
+        ans = Y_star*((b_ym)*MM/ 1e14)**alpha_ym *(old_div(DA_z,100.))**(-2.) * beta_fac * self.cc.E_z(zz) ** (old_div(2.,3.)) * (1. + zz)**gamma_ym
         return ans
 
     def Y_erf(self,Y_true,sigma_N):
         q = self.qmin
         sigma_Na = np.outer(sigma_N,np.ones(len(Y_true[0,:])))
          
-        ans = 0.5 * (1. + special.erf((Y_true - q*sigma_Na)/(np.sqrt(2.)*sigma_Na)))
+        ans = 0.5 * (1. + special.erf(old_div((Y_true - q*sigma_Na),(np.sqrt(2.)*sigma_Na))))
         return ans
     
     def P_of_Y (self,lnY,MM,zz):
  
         Y = np.exp(lnY)
         Ma = np.outer(MM,np.ones(len(Y[0,:])))
-        Ysig = self.scaling['Ysig'] * (1. + zz)**self.scaling['gammaYsig'] * (Ma/1e14)**self.scaling['betaYsig']
-        numer = -1.*(np.log(Y/self.Y_M(Ma,zz)))**2
-        ans = 1./(Ysig * np.sqrt(2*np.pi)) * np.exp(numer/(2.*Ysig**2))
+        Ysig = self.scaling['Ysig'] * (1. + zz)**self.scaling['gammaYsig'] * (old_div(Ma,1e14))**self.scaling['betaYsig']
+        numer = -1.*(np.log(old_div(Y,self.Y_M(Ma,zz))))**2
+        ans = 1./(Ysig * np.sqrt(2*np.pi)) * np.exp(old_div(numer,(2.*Ysig**2)))
         return ans
 
     def P_of_Y_corr (self,lnY,MM,zz,Mwl):
  
         Y = np.exp(lnY)
         Ma = np.outer(MM,np.ones(len(Y[0,:])))
-        Ysig = self.scaling['Ysig'] * (1. + zz)**self.scaling['gammaYsig'] * (MM/1e14)**self.scaling['betaYsig']
+        Ysig = self.scaling['Ysig'] * (1. + zz)**self.scaling['gammaYsig'] * (old_div(MM,1e14))**self.scaling['betaYsig']
         #Ysig = self.scaling['Ysig'] * (1. + zz)**self.scaling['gammaYsig'] * (Ma/1e14)**self.scaling['betaYsig']
-        Msig = self.scaling['Msig'] * (1. + zz)**self.scaling['gammaMsig'] * (MM/1e14)**self.scaling['betaMsig']
-        rho = self.scaling['rho_corr'] * (1. + zz)**self.scaling['gammarho'] * (MM/1e14)**self.scaling['betarho']
-        diff_Y = np.log(Y/self.Y_M(Ma,zz))
+        Msig = self.scaling['Msig'] * (1. + zz)**self.scaling['gammaMsig'] * (old_div(MM,1e14))**self.scaling['betaMsig']
+        rho = self.scaling['rho_corr'] * (1. + zz)**self.scaling['gammarho'] * (old_div(MM,1e14))**self.scaling['betarho']
+        diff_Y = np.log(old_div(Y,self.Y_M(Ma,zz)))
         diff_M = np.outer(np.log(Mwl*self.scaling['b_wl']/MM),np.ones(len(lnY[0,:])))
         diff_arr = np.array([diff_Y,diff_M])
         #Merr_arr = MM*0.0+Msig
@@ -429,7 +434,7 @@ class SZ_Cluster_Model:
         #Gaussian error probablity for SZ S/N 
         sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))
         Y = np.exp(lnY)
-        ans = gaussian(q_arr,Y/sigma_Na,1.)
+        ans = gaussian(q_arr,old_div(Y,sigma_Na),1.)
         return ans
 
     def q_prob_corr (self,q_arr,lnY,sigma_N,Mwl,MM,Merr):
@@ -437,7 +442,7 @@ class SZ_Cluster_Model:
         rho = self.scaling['rho_corr']
         Y = np.exp(lnY)
         sigma_Na = np.outer(sigma_N,np.ones(len(lnY[0,:])))        
-        diff_Y = (q_arr - Y/sigma_Na)
+        diff_Y = (q_arr - old_div(Y,sigma_Na))
         diff_M = np.outer(Mwl*self.scaling['b_wl'] - MM,np.ones(len(lnY[0,:])))
         diff_arr = np.array([diff_Y,diff_M])
         Merr_arr = MM*Merr

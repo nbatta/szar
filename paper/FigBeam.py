@@ -1,3 +1,7 @@
+from __future__ import print_function
+from __future__ import division
+from builtins import zip
+from past.utils import old_div
 from orphics.tools.io import Plotter
 import flipper.liteMap as lm
 from szar.counts import ClusterCosmology
@@ -181,7 +185,7 @@ for miscenter in [False,True]:
 
 
                 if miscenter:
-                    ray = beamNow/2.
+                    ray = old_div(beamNow,2.)
                 else:
                     ray = None
 
@@ -189,7 +193,7 @@ for miscenter in [False,True]:
                 sn,k,std = NFWMatchedFilterSN(cc,Mexp,c,z,ells=ls,Nls=Nls,kellmax=kellmax,overdensity=overdensity,critical=critical,atClusterZ=atClusterZ,rayleighSigmaArcmin=ray)
 
                 print((sn*np.sqrt(1000.)))
-                sns.append(1./(sn*np.sqrt(1000.)))
+                sns.append(old_div(1.,(sn*np.sqrt(1000.))))
 
 
 

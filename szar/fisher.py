@@ -1,3 +1,8 @@
+from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import itertools
 from szar.counts import rebinN
 import numpy as np
@@ -124,8 +129,6 @@ def priors_from_config(Config,expName,calName,fishName,paramList,tauOverride=Non
             priorNameList.append("tau")
             priorValueList.append(tauOverride)
 
-    
-
     # if "CMB" in calName:
     #     assert "sigR" not in paramList
     #     paramList.append("sigR")
@@ -136,11 +139,11 @@ def priors_from_config(Config,expName,calName,fishName,paramList,tauOverride=Non
     #         freq_to_use = Config.getfloat(calName,'freq')
     #         ind = np.where(np.isclose(freq,freq_to_use))
     #         beamFind = np.array(beam)[ind]
-    #         priorValueList.append(beamFind/2.)
-    #         print "Added sigR prior ", priorValueList[-1]
+    #         priorValueList.append(old_div(beamFind,2.))
+    #         print("Added sigR prior ", priorValueList[-1])
     #     except:
     #         traceback.print_exc()
-    #         print "Couldn't add sigR prior. Is this CMB lensing? Exiting."
+    #         print("Couldn't add sigR prior. Is this CMB lensing? Exiting.")
     #         sys.exit(1)
 
 
@@ -230,7 +233,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     paramList, priorNameList, priorValueList = priors_from_config(Config,expName,calName,fishName,paramList,tauOverride)
 
     if s8:
-        zrange = (z_edges[1:]+z_edges[:-1])/2.
+        zrange = old_div((z_edges[1:]+z_edges[:-1]),2.)
         zlist = ["S8Z"+str(i) for i in range(len(zrange))]
         paramList = paramList+zlist
 
@@ -380,7 +383,7 @@ def getFisher(N_fid,paramList,priorNameList,priorValueList,derivRoot,pzcutoff,z_
 
 
             with np.errstate(divide='ignore'):
-                FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid))#+(N_fid*N_fid*sovernsquare)))
+                FellBlock = dN1*dN2*np.nan_to_num(old_div(1.,(N_fid)))#+(N_fid*N_fid*sovernsquare)))
             #Ncollapsed = N_fid.sum(axis=0).sum(axis=-1)
             #print N_fid[np.where(Ncollapsed<1.)].sum() ," clusters fall in bins where N<1"
             #FellBlock[np.where(Ncollapsed<1.)] = 0.
@@ -390,7 +393,7 @@ def getFisher(N_fid,paramList,priorNameList,priorValueList,derivRoot,pzcutoff,z_
 
         if i==j and (param1 in priorNameList):
             priorIndex = priorNameList.index(param1)
-            priorVal = 1./priorValueList[priorIndex]**2.
+            priorVal = old_div(1.,priorValueList[priorIndex]**2.)
         else:
             priorVal = 0.
 

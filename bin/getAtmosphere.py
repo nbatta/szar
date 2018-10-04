@@ -1,3 +1,4 @@
+from __future__ import print_function
 from orphics.cosmology import getAtmosphere
 import numpy as np
 beamList = np.arange(1.0,3.5,0.5)
@@ -9,5 +10,5 @@ def s(num):
 for beamFWHMArcmin in beamList:
     ttl,tta,ppl,ppa= getAtmosphere(beamFWHMArcmin,returnFunctions=False)
     print(beamFWHMArcmin)
-    print((s(ttl)+","+s(ppl)))
-    print((s(tta)+","+s(ppa)))
+    print(s(ttl)+","+s(ppl))
+    print(s(tta)+","+s(ppa))

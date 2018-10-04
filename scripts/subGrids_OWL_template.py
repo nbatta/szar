@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import str
 import time
 import os
 
@@ -5,9 +7,9 @@ import os
 #expList = ['SO-3m','SO-5m','SO-6m','SO-7m','S4-3m','S4-5m','S4-6m','S4-7m','S4-5m-noatm','S4-6m-noatm','S4-7m-noatm','SO-5m-noatm','SO-6m-noatm','SO-7m-noatm','SO-3m-noatm','S4-3m-noatm']
 #expList = ['S4-7m']
 #expList = ['PlanckTest']
-expList = ['SO-v2-6m','SO-v2']
+expList = ['S4-1.0-CDT']
 
-numCores = 50
+numCores = 2
 
 #gridName = "grid-owl1"
 #grids = "grid-owl2"
@@ -23,6 +25,7 @@ for exp in expList:
 
         # do only sz
         cmd = "nohup mpirun -np "+str(numCores)+" python bin/makeGrid.py "+exp+" "+gridName+" --skip-lensing > output"+str(time.time())+"_szgrid_"+exp+".log  &"
+
         #cmd = "nohup mpirun python bin/makeGrid.py "+exp+" "+gridName+" --skip-lensing \" > output"+str(time.time())+"_szgrid_"+exp+".log  &"
 
         print(cmd)
