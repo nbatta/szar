@@ -123,24 +123,25 @@ def priors_from_config(Config,expName,calName,fishName,paramList,tauOverride=Non
         except ValueError:
             priorNameList.append("tau")
             priorValueList.append(tauOverride)
-            
 
-    if "CMB" in calName:
-        assert "sigR" not in paramList
-        paramList.append("sigR")
-        try:
-            priorNameList.append("sigR")
-            beam = list_from_config(Config,expName,'beams')
-            freq = list_from_config(Config,expName,'freqs')
-            freq_to_use = Config.getfloat(calName,'freq')
-            ind = np.where(np.isclose(freq,freq_to_use))
-            beamFind = np.array(beam)[ind]
-            priorValueList.append(beamFind/2.)
-            print "Added sigR prior ", priorValueList[-1]
-        except:
-            traceback.print_exc()
-            print "Couldn't add sigR prior. Is this CMB lensing? Exiting."
-            sys.exit(1)
+    
+
+    # if "CMB" in calName:
+    #     assert "sigR" not in paramList
+    #     paramList.append("sigR")
+    #     try:
+    #         priorNameList.append("sigR")
+    #         beam = list_from_config(Config,expName,'beams')
+    #         freq = list_from_config(Config,expName,'freqs')
+    #         freq_to_use = Config.getfloat(calName,'freq')
+    #         ind = np.where(np.isclose(freq,freq_to_use))
+    #         beamFind = np.array(beam)[ind]
+    #         priorValueList.append(beamFind/2.)
+    #         print "Added sigR prior ", priorValueList[-1]
+    #     except:
+    #         traceback.print_exc()
+    #         print "Couldn't add sigR prior. Is this CMB lensing? Exiting."
+    #         sys.exit(1)
 
 
     # if not("b_wl" in paramList):
@@ -155,7 +156,8 @@ def priors_from_config(Config,expName,calName,fishName,paramList,tauOverride=Non
     #         paramList.append("b_wl")
     #         priorNameList.append("b_wl")
     #         priorValueList.append(0.01)
-            
+
+    print (paramList, priorNameList, priorValueList)
     return paramList, priorNameList, priorValueList
     
 
@@ -295,12 +297,18 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
                 pickle.dump(cmb_fisher,open(pkl_file,'wb'))
 
         numLeft = len(paramList) - cmb_fisher.shape[0]
+        print("numLeft , " ,numLeft)
         cmb_fisher = pad_fisher(cmb_fisher,numLeft)
     else:
         cmb_fisher = 0.    
 
+    print(len(paramList))
+    print(Fisher.shape)
 
-    np.savetxt("tsz.txt",Fisher)
+    from orphics import stats
+    tszFish = stats.FisherMatrix(Fisher+cmb_fisher,param_list=paramList)
+    stats.write_fisher("tsz_fish.txt",tszFish)
+    #np.savetxt("tsz.txt",Fisher)
 
     try:
         otherFishers = Config.get(fishSection,'otherFishers').split(',')
@@ -308,33 +316,44 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
         traceback.print_exc()
         print("No other fishers found.")
         otherFishers = []
-    all_others = 0.
+
+    try:
+        external_param_list = Config.get(fishSection,'external_param_list').split(',')
+    except:
+        traceback.print_exc()
+        external_param_list = "H0,ombh2,omch2,tau,As,ns,mnu,w0,wa".split(',')
+        print("No external param list found in fisher section. Assuming ", external_param_list)
+
+    nex = len(external_param_list)
+    all_others = np.zeros((nex,nex))
     for otherFisherFile in otherFishers:
         do_other = True
         try:
             other_fisher = np.loadtxt(otherFisherFile)
         except:
             try:
-                other_fisher = np.loadtxt(otherFisherFile,delimiter=',')[:numCosmo,:numCosmo]
+                other_fisher = np.loadtxt(otherFisherFile,delimiter=',') #[:numCosmo,:numCosmo]
             except:
                 print("WARNING: Skipped ",otherFisherFile, " either because it was not found or doesn't have enough elements. This means no external fishers have been added!!!")
                 do_other = False
                 pass
         if do_other:
-            numLeft = len(paramList) - other_fisher.shape[0]
-            other_fisher = pad_fisher(other_fisher,numLeft)
+            #numLeft = len(paramList) - other_fisher.shape[0]
+            #other_fisher = pad_fisher(other_fisher,numLeft)
             all_others += other_fisher
-            
-        
-    np.savetxt("other.txt",all_others)
-    np.savetxt("cmb.txt",cmb_fisher)
-    # print(paramList)
 
+    otherFish = stats.FisherMatrix(all_others,param_list=external_param_list,skip_inv=True)
+    for p in otherFish.params:
+        if p not in paramList:
+            otherFish.delete(p)
+            print("Deleted ", p , " from external fishers.")
+    print("External params : ",otherFish.params)
 
-
-    retfish = Fisher + cmb_fisher + all_others
+    #print(otherFish.sigmas()['mnu']*1000.)
     
-    return retfish, paramList
+    retfish = (tszFish + otherFish).ix[paramList,paramList]
+    print(stats.FisherMatrix(retfish.as_matrix(),paramList).marge_var_2param('mnu','w0'))
+    return retfish.as_matrix(), paramList
 
 
 

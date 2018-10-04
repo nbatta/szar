@@ -53,6 +53,7 @@ print(("Actual number of clusters: ", actualN))
 FisherTot, paramList = sfisher.cluster_fisher_from_config(Config,expName,gridName,calName,fishName)
 ##########################
 
+
 print FisherTot[6:8,6:8], paramList[6:8]
 
 if (YWLcorrflag == 0 and FisherTot[-1,-1] == 0):
