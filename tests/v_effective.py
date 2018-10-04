@@ -6,6 +6,7 @@ from scipy.integrate import simps
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set()
+import sys
 
 def w_v(cc, mu, fsky):
     nbar = cc.ntilde()
@@ -30,6 +31,7 @@ zs = clst.HMF.zarr
 mus = np.array([0, 0.5, 1])
 
 v0s = clst.v0(fsky, 1000)
+
 v_effs = clst.V_eff(mus, fsky, 1000)
 
 plt.plot(zs, v0s, label=r"$V_0$")

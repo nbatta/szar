@@ -49,37 +49,46 @@ def test_ps_tilde_interpol(cc):
 
     plt.gcf().clear()
 
-#WIP
 def test_fine_ps_bar(cc):
     mus = np.array([0])
     ks = cc.HMF.kh
     zs = cc.HMF.zarr
     fsky = 1.
+    nsamps = 1000
 
-    #try:
-    fine_ps_bars = cc.fine_ps_bar(mus, fsky, 100)
-    #except Exception as e:
-    #   print("Test of fine_ps_bar failed at clustering.fine_ps_bars")
-    #   print(e)
-    return
+    try:
+        fine_ps_bars = cc.fine_ps_bar(mus, fsky, nsamps)
+    except Exception as e:
+        print("Test of fine_ps_bar failed at clustering.fine_ps_bars")
+        print(e)
+        return
 
-    expected = np.empty((ks.size, 100, mus.size))
-    print(expected.shape)
-    print(fine_ps_bars.shape)
+    expected = np.empty((ks.size, zs.size - 2, mus.size))
     if fine_ps_bars.shape != expected.shape:
         print("fine_ps_bar shape is not the expected value; test failed!")
         return
     else:
         print("Tests of fine_ps_bar passed! (Check the plots though)")
 
-    coarse_psbar_vals = cc.ps_bar(mus, fsky)
+    coarse_ps_bar = cc.ps_bar(mus, fsky)
 
-    plt.plot(zs, coarse_ps_bar, marker='o', label="coarse")
-    plt.plot(zs, fine_ps_bars, marker='.', label="fine")
+    plt.plot(zs, coarse_ps_bar[0,:,0], marker='o', label="coarse")
+    plt.plot(zs[1:-1], fine_ps_bars[0,:,0], marker='.', label="fine")
     plt.xlabel(r'$z_\ell$')
     plt.ylabel(r'$\bar P(z_\ell, \mu = 0, k=m_{min})$')
-    plt.legend(loc='upper center')
+    plt.legend(loc='best')
     plt.savefig('fine_ps_bars_test.svg')
+
+    plt.gcf().clear()
+
+    plt.plot(ks, coarse_ps_bar[:,1,0], label="coarse")
+    plt.plot(ks, fine_ps_bars[:,0,0], label="fine")
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlabel(r'$k$')
+    plt.ylabel(r'$\bar P(z = z_{min+1}, \mu = 0, k)$')
+    plt.legend(loc='best')
+    plt.savefig('fine_ps_bars_kspace.svg')
 
     plt.gcf().clear()
 
@@ -87,6 +96,7 @@ def test_fine_sfunc(cc):
     mus = np.array([0])
     ks = cc.HMF.kh
     zs = cc.HMF.zarr
+    zs_noends = zs[1:-1]
     fsky = 1.
 
     try:
@@ -96,7 +106,8 @@ def test_fine_sfunc(cc):
         print(e)
         sys.exit()
 
-    if fine_sfunc_vals.shape != zs.shape:
+    expected = zs_noends
+    if fine_sfunc_vals.shape != expected.shape:
         print("fine_sfunc_vals shape is not the expected value; test failed!")
         sys.exit()
     else:
@@ -105,14 +116,14 @@ def test_fine_sfunc(cc):
     coarse_sfunc_vals = cc.Norm_Sfunc(fsky)
 
     plt.plot(zs, 10*coarse_sfunc_vals, marker='o', label="coarse")
-    plt.plot(zs, 10*fine_sfunc_vals, marker='.', label="fine")
-    plt.plot(zs, coarse_sfunc_vals/fine_sfunc_vals, marker='.', label="ratio")
+    plt.plot(zs_noends, 10*fine_sfunc_vals, marker='.', label="fine")
+    plt.plot(zs_noends, coarse_sfunc_vals[1:-1]/fine_sfunc_vals, marker='.', label="ratio")
     #plt.xscale('log')
     #plt.yscale('log')
     plt.xlabel(r'$z_\ell$')
     plt.ylabel(r'$10 \times S(z_\ell)$')
     plt.legend(loc='upper center')
-    plt.savefig('fine_sfunc_test.png')
+    plt.savefig('fine_sfunc_test.svg')
 
     plt.gcf().clear()
 
@@ -136,7 +147,7 @@ def test_ps_tilde(cc):
         print("Tests of ps_tilde passed!")
 
 if __name__ == '__main__':
-    #test_fine_sfunc(clst)
-    #test_ps_tilde(clst)
-    #test_ps_tilde_interpol(clst)
+    test_fine_sfunc(clst)
+    test_ps_tilde(clst)
+    test_ps_tilde_interpol(clst)
     test_fine_ps_bar(clst)

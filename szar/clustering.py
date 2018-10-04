@@ -130,37 +130,41 @@ class Clustering(object):
         zs = self.HMF.zarr
         zgridedges = self.HMF.zarr_edges
 
-        values = np.empty(zs.size)
+        fine_zgrid = np.empty((zs.size, nsubsamples))
         for i in range(zs.size):
-            if i == 0:
-                fine_zs = np.linspace(zs[i], zgridedges[i+1], nsubsamples)
-            elif i == zs.size - 1:
-                fine_zs = np.linspace(zgridedges[i], zs[i])
-            else:
-                fine_zs = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
-            ntils = self.ntilde_interpol(fine_zs)
-            dvdz = self.dVdz_fine(fine_zs)
-            integral = simps(dvdz * ntils**2, fine_zs)
-            values[i] = integral * 4 * np.pi * fsky
-        return values
+            fine_zgrid[i,:] = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
+
+        fine_zgrid = fine_zgrid[1:-1]
+
+        ntils = self.ntilde_interpol(fine_zgrid)
+        dvdz = np.array([self.dVdz_fine(zs) for zs in fine_zgrid])
+
+        dz = fine_zgrid[0,1] - fine_zgrid[0,0]
+
+        assert np.allclose(dz * np.ones(tuple(np.subtract(fine_zgrid.shape, (0,1)))),  np.diff(fine_zgrid,axis=1), rtol=1e-3)
+
+        integral = simps(dvdz * ntils**2, dx=dz)
+        integral *= 4 * np.pi * fsky
+
+        return integral
 
     def v0(self, fsky, nsubsamples):
         zs = self.HMF.zarr
         zgridedges = self.HMF.zarr_edges
 
-        values = np.empty(zs.size)
+        fine_zgrid = np.empty((zs.size, nsubsamples))
         for i in range(zs.size):
-            if i == 0:
-                fine_zs = np.linspace(zs[i], zgridedges[i+1], nsubsamples)
-            elif i == zs.size - 1:
-                fine_zs = np.linspace(zgridedges[i], zs[i])
-            else:
-                fine_zs = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
-            dvdz = self.dVdz_fine(fine_zs)
-            integral = simps(dvdz, fine_zs)
-            values[i] = integral * 4 * np.pi * fsky
+            fine_zgrid[i,:] = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
 
-        return values
+        fine_zgrid = fine_zgrid[1:-1]
+        dvdz = np.array([self.dVdz_fine(zs) for zs in fine_zgrid])
+        dz = fine_zgrid[0,1] - fine_zgrid[0,0]
+
+        assert np.allclose(dz * np.ones(tuple(np.subtract(fine_zgrid.shape, (0,1)))),  np.diff(fine_zgrid,axis=1), rtol=1e-3)
+        
+        integral = simps(dvdz, dx=dz)
+        integral *= 4 * np.pi * fsky 
+        return integral
 
     def ps_tilde(self,mu):        
         beff_arr = self.b_eff_z()[..., np.newaxis]
@@ -199,38 +203,33 @@ class Clustering(object):
         #    ans[:,:,i] = self.HMF.dVdz[i]*nbar[i]**2*ps_tilde[:,:,i]*np.diff(z_arr[i])/self.Norm_Sfunc(fsky)[i]
         return ans
 
-#Sadly still not ready
     def fine_ps_bar(self,mu,fsky, nsubsamples):
         zs = self.HMF.zarr
         ks = self.HMF.kh
-        ntils = self.ntilde()
         zgridedges = self.HMF.zarr_edges
         
         values = np.empty((ks.size, zs.size, mu.size))
 
         fine_zgrid = np.empty((zs.size, nsubsamples))
-        print(fine_zgrid.shape)
         for i in range(zs.size):
-                fine_zgrid[i,:] = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
+            fine_zgrid[i,:] = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
 
-        #for i in range(zs.size):
-        #    if i == 0:
-        #        fine_zs = np.linspace(zs[i], zgridedges[i+1], nsubsamples)
-        #    elif i == zs.size - 1:
-        #        fine_zs = np.linspace(zgridedges[i], zs[i])
-        #    else:
-        #        fine_zs = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
-        #    ntils = self.ntilde_interpol(fine_zs)
-        #    dvdz = self.dVdz_fine(fine_zs)
-        #    prefac = dvdz * ntils**2
-        #    prefac = prefac[..., np.newaxis]
-        #    ps_tils = self.ps_tilde_interpol(fine_zs, mu)
+        fine_zgrid = fine_zgrid[1:-1]
+        ntils = self.ntilde_interpol(fine_zgrid)
+        dvdz = np.array([self.dVdz_fine(zs) for zs in fine_zgrid])
+        prefac = dvdz * ntils**2
+        prefac = prefac[..., np.newaxis]
+        ps_tils = self.ps_tilde_interpol(fine_zgrid, mu)
+        
+        integrand = prefac * ps_tils
+        dz = fine_zgrid[0,1] - fine_zgrid[0,0]
 
-        #    integrand = prefac * ps_tils
+        assert np.allclose(dz * np.ones(tuple(np.subtract(fine_zgrid.shape, (0,1)))),  np.diff(fine_zgrid,axis=1), rtol=1e-3)
 
-        #    integral = simps(integrand, fine_zs, axis=1)
-        #    values[:,i,:] = integral * 4 * np.pi * fsky
-        return #values/self.fine_sfunc(fsky, nsubsamples)
+        integral = simps(integrand, dx=dz, axis=2)
+        s_norm = self.fine_sfunc(fsky, nsubsamples)[..., np.newaxis]
+        values = (integral * 4 * np.pi * fsky)/s_norm
+        return values
 
     def V_eff(self,mu,fsky,nsubsamples):
         V0 = self.v0(fsky, nsubsamples)
