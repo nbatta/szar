@@ -162,7 +162,7 @@ class Clustering(object):
 
         assert np.allclose(dz * np.ones(tuple(np.subtract(fine_zgrid.shape, (0,1)))),  np.diff(fine_zgrid,axis=1), rtol=1e-3)
         
-        integral = simps(dvdz, dx=dz)
+        integral = np.trapz(dvdz, dx=dz)
         integral *= 4 * np.pi * fsky 
         return integral
 
