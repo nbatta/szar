@@ -235,10 +235,10 @@ class Clustering(object):
         V0 = self.v0(fsky, nsubsamples)
         V0 = np.reshape(V0, (V0.size,1))
 
-        nbar = self.ntilde()
+        nbar = self.ntilde()[1:-1]
         nbar = np.reshape(nbar, (nbar.size,1))
 
-        ps = self.ps_bar(mu,fsky)
+        ps = self.fine_ps_bar(mu,fsky, nsubsamples)
         npfact = np.multiply(nbar, ps)
         frac = npfact/(1. + npfact)
 

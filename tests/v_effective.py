@@ -27,8 +27,8 @@ clst = Clustering(INIFILE,expName,gridName,version)
 fsky = 1.
 
 ks = clst.HMF.kh
-zs = clst.HMF.zarr
-mus = np.array([0, 0.5, 1])
+zs = clst.HMF.zarr[1:-1]
+mus = np.array([0])
 
 v0s = clst.v0(fsky, 1000)
 

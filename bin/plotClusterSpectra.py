@@ -9,11 +9,11 @@ sns.set()
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("inifile")
-parser.add_argument("expname")
-parser.add_argument("gridname")
-parser.add_argument("version")
-parser.add_argument("figname")
+parser.add_argument("inifile", help="location of inifile")
+parser.add_argument("expname", help="name of experiment")
+parser.add_argument("gridname", help="name of grid")
+parser.add_argument("version", help="version number")
+parser.add_argument("figname", help="desired figure output filename")
 parser.add_argument("--legendloc", help="location of legend on figure", default="best")
 args = parser.parse_args()
 
@@ -31,9 +31,9 @@ mus = np.array([0.5])
 fsky = 1.
 ks = clst.HMF.kh
 delta_ks = np.diff(ks)
+nsamples = 1000
 
-
-ps_bars = clst.ps_bar(mus, fsky)[:,0,0]
+ps_bars = clst.fine_ps_bar(mus, fsky, nsamples)[:,0,0]
 v_effs = clst.V_eff(mus, fsky, 1000)[:,0,0]
 noise = np.sqrt(1/(v_effs[:-1] * (ks**2)[:-1] * delta_ks)) * ps_bars[:-1]
 
