@@ -36,5 +36,5 @@ python tests/testCounts.py
 
 To run all unit tests, use
 ```
-python unit_tests.py
+python tests/unit_tests.py
 ```

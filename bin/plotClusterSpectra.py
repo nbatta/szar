@@ -45,6 +45,7 @@ plt.yscale('log')
 
 plt.xlabel(r'$k$')
 #plt.ylabel(r'$ P_{lin}$')
+
 plt.legend(loc=legendloc)
 
 plt.savefig(figname)
