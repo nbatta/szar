@@ -3,7 +3,7 @@ from __future__ import division
 from past.utils import old_div
 import numpy as np
 from orphics.io import dict_from_section, list_from_config, Plotter
-from orphics.flatMaps import interpolateGrid
+from orphics.maps import interpolate_grid as interpolateGrid
 import sys, os
 from configparser import SafeConfigParser 
 import pickle as pickle
@@ -41,7 +41,7 @@ hscgrid = np.loadtxt("data/HSC_DeltalnM_z0_z2_17_04_04.txt")
 
 sngrid = old_div(1.,hscgrid)    
 pgrid = np.rot90(sngrid)
-pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
+pl = Plotter(xlabel="$\\mathrm{log}_{10}(M)$",ylabel="$z$",ftsize=14)
 pl.plot2d(pgrid,extent=[MMexp.min(),MMexp.max(),zz.min(),zz.max()],levels=[3.0,5.0],labsize=14,aspect="auto")
 pl.done(outDir+"origHSCgrid.png")
 
@@ -55,7 +55,7 @@ outmerr = interpolateGrid(hscgrid,MM,zz,M,zgrid,regular=False,kind="cubic",bound
 
 sngrid = old_div(1.,outmerr)
 pgrid = np.rot90(sngrid)
-pl = Plotter(labelX="$\\mathrm{log}_{10}(M)$",labelY="$z$",ftsize=14)
+pl = Plotter(xlabel="$\\mathrm{log}_{10}(M)$",ylabel="$z$",ftsize=14)
 pl.plot2d(pgrid,extent=[mgrid.min(),mgrid.max(),zgrid.min(),zgrid.max()],levels=[3.0,5.0],labsize=14,aspect="auto")
 pl.done(outDir+"interpHSCgrid.png")
 

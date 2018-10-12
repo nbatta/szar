@@ -215,6 +215,7 @@ class ClusterCosmology(Cosmology):
                  clTTFixFile=None,skipCls=False,pickling=False,fill_zero=True,dimensionless=True,
                  verbose=True,skipPower=True,skip_growth=True,low_acc=False):
         Cosmology.__init__(self,paramDict,constDict,lmax,clTTFixFile,skipCls,pickling,fill_zero,dimensionless=dimensionless,verbose=verbose,skipPower=skipPower,skip_growth=skip_growth,low_acc=low_acc)
+        self.om = (self.omch2+self.ombh2)/self.h**2.
         self.rhoc0om = self.rho_crit0H100*self.om
         
     def E_z(self,z):
