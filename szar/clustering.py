@@ -15,7 +15,7 @@ from orphics.io import dict_from_section,list_from_config
 import pickle as pickle
 from scipy.interpolate import interp1d
 from scipy.interpolate import UnivariateSpline
-from scipy.integrate import simps
+#from scipy.integrate import simps
 
 class Clustering(object):
     def __init__(self,iniFile,expName,gridName,version):
@@ -143,7 +143,7 @@ class Clustering(object):
 
         assert np.allclose(dz * np.ones(tuple(np.subtract(fine_zgrid.shape, (0,1)))),  np.diff(fine_zgrid,axis=1), rtol=1e-3)
 
-        integral = simps(dvdz * ntils**2, dx=dz)
+        integral = np.trapz(dvdz * ntils**2, dx=dz)
         integral *= 4 * np.pi * fsky
 
         return integral
@@ -226,7 +226,7 @@ class Clustering(object):
 
         assert np.allclose(dz * np.ones(tuple(np.subtract(fine_zgrid.shape, (0,1)))),  np.diff(fine_zgrid,axis=1), rtol=1e-3)
 
-        integral = simps(integrand, dx=dz, axis=2)
+        integral = np.trapz(integrand, dx=dz, axis=2)
         s_norm = self.fine_sfunc(fsky, nsubsamples)[..., np.newaxis]
         values = (integral * 4 * np.pi * fsky)/s_norm
         return values
