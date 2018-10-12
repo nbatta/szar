@@ -49,12 +49,11 @@ def test_ps_tilde_interpol(cc):
 
     plt.gcf().clear()
 
-def test_fine_ps_bar(cc):
+def test_fine_ps_bar(cc, nsamps):
     mus = np.array([0])
     ks = cc.HMF.kh
     zs = cc.HMF.zarr
     fsky = 1.
-    nsamps = 1000
 
     try:
         fine_ps_bars = cc.fine_ps_bar(mus, fsky, nsamps)
@@ -72,12 +71,20 @@ def test_fine_ps_bar(cc):
 
     coarse_ps_bar = cc.ps_bar(mus, fsky)
 
+    def _ps_bar_integrand(finer_zs, mus):
+        dvdz = cc.dVdz_fine(finer_zs)
+        ntils = cc.ntilde_interpol(finer_zs)
+        ps_tils = cc.ps_tilde_interpol(finer_zs, mus)
+        prefac = dvdz * ntils**2
+        prefac = prefac[..., np.newaxis]
+        return prefac * ps_tils
+
     plt.plot(zs, coarse_ps_bar[0,:,0], marker='o', label="coarse")
     plt.plot(zs[1:-1], fine_ps_bars[0,:,0], marker='.', label="fine")
     plt.xlabel(r'$z_\ell$')
     plt.ylabel(r'$\bar P(z_\ell, \mu = 0, k=m_{min})$')
     plt.legend(loc='best')
-    plt.savefig('fine_ps_bars_test.svg')
+    plt.savefig('fine_ps_bars_test_nsamps{}.svg'.format(nsamps))
 
     plt.gcf().clear()
 
@@ -88,7 +95,17 @@ def test_fine_ps_bar(cc):
     plt.xlabel(r'$k$')
     plt.ylabel(r'$\bar P(z = z_{min+1}, \mu = 0, k)$')
     plt.legend(loc='best')
-    plt.savefig('fine_ps_bars_kspace.svg')
+    plt.savefig('fine_ps_bars_kspace_nsamps{}.svg'.format(nsamps))
+
+    plt.gcf().clear()
+
+    finer_zs = np.linspace(zs[1], zs[-1], 10*nsamps)
+    integrand = _ps_bar_integrand(finer_zs, mus)
+
+    plt.plot(finer_zs, integrand[0, :, 0])
+    plt.xlabel(r'$z$')
+    plt.ylabel(r'$dV/dz \, \tilde n^2 \tilde P$')
+    plt.savefig('fine_ps_bar_integrand_test_nsamps{}.svg'.format(nsamps))
 
     plt.gcf().clear()
 
@@ -150,4 +167,5 @@ if __name__ == '__main__':
     test_fine_sfunc(clst)
     test_ps_tilde(clst)
     test_ps_tilde_interpol(clst)
-    test_fine_ps_bar(clst)
+    nsamps = 100
+    test_fine_ps_bar(clst, nsamps)

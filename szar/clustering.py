@@ -124,7 +124,7 @@ class Clustering(object):
         #Check this
         nbar = self.ntilde()
         ans = self.HMF.dVdz*nbar**2*np.diff(self.HMF.zarr_edges)
-        return ans*4.*np.pi*fsky
+        return ans
 
     def fine_sfunc(self, fsky, nsubsamples):
         zs = self.HMF.zarr
@@ -144,8 +144,6 @@ class Clustering(object):
         assert np.allclose(dz * np.ones(tuple(np.subtract(fine_zgrid.shape, (0,1)))),  np.diff(fine_zgrid,axis=1), rtol=1e-3)
 
         integral = np.trapz(dvdz * ntils**2, dx=dz)
-        integral *= 4 * np.pi * fsky
-
         return integral
 
     def v0(self, fsky, nsubsamples):
@@ -228,7 +226,7 @@ class Clustering(object):
 
         integral = np.trapz(integrand, dx=dz, axis=2)
         s_norm = self.fine_sfunc(fsky, nsubsamples)[..., np.newaxis]
-        values = (integral * 4 * np.pi * fsky)/s_norm
+        values = integral/s_norm
         return values
 
     def V_eff(self,mu,fsky,nsubsamples):
