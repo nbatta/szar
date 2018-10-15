@@ -27,7 +27,7 @@ legendloc = args.legendloc
 #Do plotting - turn this into a function later
 clst = Clustering(inifile,expName,gridName,version)
 
-mus = np.array([0.5])
+mus = np.array([0])
 fsky = 1.
 ks = clst.HMF.kh
 delta_ks = np.diff(ks)
@@ -35,9 +35,9 @@ nsamples = 1000
 
 ps_bars = clst.fine_ps_bar(mus, fsky, nsamples)[:,0,0]
 v_effs = clst.V_eff(mus, fsky, 1000)[:,0,0]
-noise = np.sqrt(1/(v_effs[:-1] * (ks**2)[:-1] * delta_ks)) * ps_bars[:-1]
+noise = np.sqrt(8) * np.pi * np.sqrt(1/(v_effs[:-1] * (ks**2)[:-1] * delta_ks)) * ps_bars[:-1]
 
-plt.plot(ks, ps_bars, label=r"$\bar P(k, \mu = 0.5)$")
+plt.plot(ks, ps_bars, label=r"$\bar P(k, \mu = 0)$")
 plt.plot(ks[:-1], noise, label=r"Noise ($ \bar P/\sqrt{k^2 V_{eff} \Delta k}$)")
 plt.plot(ks[:-1], ps_bars[:-1]/noise, label=r"$SNR$")
 plt.xscale('log')
@@ -45,6 +45,7 @@ plt.yscale('log')
 
 plt.xlabel(r'$k$')
 #plt.ylabel(r'$ P_{lin}$')
+
 plt.legend(loc=legendloc)
 
 plt.savefig(figname)
