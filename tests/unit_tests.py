@@ -6,14 +6,31 @@ from szar.clustering import Clustering
 import sys
 import matplotlib.pyplot as plt
 import seaborn as sns
+from configparser import SafeConfigParser
 sns.set()
 
 INIFILE = "input/pipeline.ini"
 expName = 'S4-1.0-CDT'
 gridName = 'grid-owl2'
-version = '0.6'
+version = '0.7'
 
-clst = Clustering(INIFILE,expName,gridName,version)
+Config = SafeConfigParser()
+Config.optionxform=str
+Config.read(INIFILE)
+clttfile = Config.get('general','clttfile')
+constDict = dict_from_section(Config,'constants')
+
+fparams = {}
+for (key, val) in Config.items('params'):
+    if ',' in val:
+        param, step = val.split(',')
+        fparams[key] = float(param)
+    else:
+        fparams[key] = float(val)
+
+cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
+
+clst = Clustering(INIFILE,expName,gridName,version,cc)
 
 def test_ps_tilde_interpol(cc):
     mus = np.array([0])
@@ -53,10 +70,9 @@ def test_fine_ps_bar(cc, nsamps):
     mus = np.array([0])
     ks = cc.HMF.kh
     zs = cc.HMF.zarr
-    fsky = 1.
 
     try:
-        fine_ps_bars = cc.fine_ps_bar(mus, fsky, nsamps)
+        fine_ps_bars = cc.fine_ps_bar(mus, nsamps)
     except Exception as e:
         print("Test of fine_ps_bar failed at clustering.fine_ps_bars")
         print(e)
@@ -69,7 +85,7 @@ def test_fine_ps_bar(cc, nsamps):
     else:
         print("Tests of fine_ps_bar passed! (Check the plots though)")
 
-    coarse_ps_bar = cc.ps_bar(mus, fsky)
+    coarse_ps_bar = cc.ps_bar(mus)
 
     def _ps_bar_integrand(finer_zs, mus):
         dvdz = cc.dVdz_fine(finer_zs)
@@ -114,10 +130,9 @@ def test_fine_sfunc(cc):
     ks = cc.HMF.kh
     zs = cc.HMF.zarr
     zs_noends = zs[1:-1]
-    fsky = 1.
 
     try:
-        fine_sfunc_vals = cc.fine_sfunc(fsky, 1000)
+        fine_sfunc_vals = cc.fine_sfunc(1000)
     except Exception as e:
         print("Test of fine_sfunc failed at clustering.fine_sfunc")
         print(e)
@@ -130,7 +145,7 @@ def test_fine_sfunc(cc):
     else:
         print("Tests of fine_sfunc passed! (Check the plots though)")
 
-    coarse_sfunc_vals = cc.Norm_Sfunc(fsky)
+    coarse_sfunc_vals = cc.Norm_Sfunc()
 
     plt.plot(zs, 10*coarse_sfunc_vals, marker='o', label="coarse")
     plt.plot(zs_noends, 10*fine_sfunc_vals, marker='.', label="fine")

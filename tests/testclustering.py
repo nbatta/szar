@@ -22,8 +22,24 @@ iniFile = 'input/pipeline.ini'
 expName = 'S4-1.0-CDT' 
 gridName = 'grid-owl2' 
 version = '0.7' 
-clst = Clustering(iniFile,expName,gridName,version)
 
+Config = SafeConfigParser()
+Config.optionxform=str
+Config.read(iniFile)
+clttfile = Config.get('general','clttfile')
+constDict = dict_from_section(Config,'constants')
+
+fparams = {}
+for (key, val) in Config.items('params'):
+    if ',' in val:
+        param, step = val.split(',')
+        fparams[key] = float(param)
+    else:
+        fparams[key] = float(val)
+
+cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
+
+clst = Clustering(iniFile,expName,gridName,version,cc)
 M200temp = np.arange(1,1000,1) * 1e11
 
 print(clst.non_linear_scale(1.95,M200temp))
@@ -31,7 +47,7 @@ print(clst.non_linear_scale(1.95,M200temp))
 print()
 print(clst.ntilde())
 print(clst.b_eff_z())
-print(clst.Norm_Sfunc(0.4))
+print(clst.Norm_Sfunc())
 
 zarrs = np.arange(0,4,0.05)
 fg = clst.cc.fgrowth(zarrs) #?Is this a calculated growth (as in numerically)?
