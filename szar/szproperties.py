@@ -458,3 +458,192 @@ class SZ_Cluster_Model(object):
         return ans
 
 
+#### JUST FOR TESTING ####
+def rho_sim(theta, x):
+    fb = 0.0490086879038/0.314992203163
+    rhoc = 2.77525e2
+    Msol_cgs = 1.989e33
+    kpc_cgs = 3.086e21
+    a1,a2,a3 = theta
+    gamma = 0.2
+    ans = 10**a1 / ((x/0.5)**gamma * (1 + (x/0.5)**a2)**((a3 - gamma)/a2))
+    ans *=  rhoc * Msol_cgs / kpc_cgs / kpc_cgs / kpc_cgs * fb 
+    return ans
+
+def Pth_sim(theta,x):
+    P0,xc,bt = theta
+    al = 1.0
+    gm = 0.3
+    ans = P0 / ((x*xc)**gm * (1 + (x*xc)**al)**((bt-gm)/al))
+    return ans
+#### JUST FOR TESTING ####
+
+def project_prof_sim_interpol(cc,tht,Mvir,z):
+
+    theta_sim_rho = np.array([3.6337402156859753, 1.0369351928324118, 3.3290812595973063])
+    theta_sim_pth = np.array([18.1, 0.5, 4.35])
+
+    XH = 0.76 ### FIX THIS INTO CONSTANTS ###
+    disc_fac = np.sqrt(2)
+    NNR = 100
+    drint = 1e-3 * (cc.c['MPC2CM'])
+    
+    AngDist = cc.results.angular_diameter_distance(z)
+
+    print (AngDist)
+
+    rvir = cc.rdel_c(Mvir,z,200)#/cc.c['MPC2CM']
+    #rvir = 0.47857008980
+    print ("rvir",rvir)
+
+    sig = 0
+    sig2 = 0
+    sig_p = 0
+    sig2_p = 0
+    area_fac = 0
+    
+    r_ext = AngDist*np.arctan(np.radians(tht/60.))
+    r_ext2 = AngDist*np.arctan(np.radians(tht*disc_fac/60.))
+    
+    print (r_ext)
+
+    rad = (np.arange(1e4) + 1.0)/1e3 #in MPC
+    rad2 = (np.arange(1e4) + 1.0)/1e3 #in MPC
+    
+    radlim = r_ext
+    radlim2 = r_ext2
+    
+    dtht = np.arctan(radlim/AngDist)/NNR # rads
+    dtht2 = np.arctan(radlim2/AngDist)/NNR # rads
+
+    thta = (np.arange(NNR) + 1.)*dtht
+    thta2 = (np.arange(NNR) + 1.)*dtht2
+
+    for kk in xrange(NNR):
+        rint = np.sqrt((rad)**2 + thta[kk]**2*AngDist**2)
+        rint2 = np.sqrt((rad2)**2 + thta2[kk]**2*AngDist**2)
+        
+        sig += 2.0*np.pi*dtht*thta[kk]*np.sum(2.*rho_sim(theta_sim_rho,rint/rvir)*drint)
+        sig2 += 2.0*np.pi*dtht2*thta2[kk]*np.sum(2.*rho_sim(theta_sim_rho,rint2/rvir)*drint)
+
+        sig_p += 2.0*np.pi*dtht*thta[kk]*np.sum(2.*Pth_sim(theta_sim_pth,rint/rvir)*drint)
+        sig2_p += 2.0*np.pi*dtht2*thta2[kk]*np.sum(2.*Pth_sim(theta_sim_pth,rint2/rvir)*drint)
+        
+        area_fac += 2.0*np.pi*dtht*thta[kk]
+    
+    sig_all =(2*sig - sig2) * 1e-3 * cc.c['SIGMA_T'] * cc.c['TCMBmuK'] * ((2. + 2.*XH)/(3.+5.*XH)) / cc.c['MP'] / (np.pi * np.radians(tht/60.)**2) 
+    sig_all_p = (2*sig_p - sig2_p) * cc.c['SIGMA_T']/(cc.c['ME']*cc.c['C']**2) / area_fac * cc.c['TCMBmuK'] * ((2. + 2.*XH)/(3.+5.*XH))# muK
+
+    return sig_all,sig_all_p
+
+def project_prof_beam_sim_interpol(cc,tht,Mvir,z,fwhm=1.4):
+
+    theta_sim_rho = np.array([3.6337402156859753, 1.0369351928324118, 3.3290812595973063])
+    theta_sim_pth = np.array([18.1, 0.5, 4.35])
+
+    XH = 0.76 ### FIX THIS INTO CONSTANTS ###                                                                                                                        
+    drint = 1e-3 * (cc.c['MPC2CM'])
+    AngDist = cc.results.angular_diameter_distance(z)
+    disc_fac = np.sqrt(2)
+    l0 = 30000.
+    NNR = 100
+    NNR2 = 4*NNR
+    
+    fwhm *= np.pi / (180.*60.) #convert from arcmins to rads
+    sigmaBeam = fwhm / np.sqrt(8.*np.log(2.))
+    
+    rvir = cc.rdel_c(Mvir,z,200)
+    
+    sig = 0
+    sig2 = 0
+    sig_p = 0
+    sig2_p = 0
+    area_fac = 0
+    
+    r_ext = AngDist*np.arctan(np.radians(tht/60.))
+    r_ext2 = AngDist*np.arctan(np.radians(tht*disc_fac/60.))
+    
+    rad = (np.arange(1e4) + 1.0)/1e3 #in MPC
+    rad2 = (np.arange(1e4) + 1.0)/1e3 #in MPC
+    
+    radlim = r_ext
+    radlim2 = r_ext2
+    
+    dtht = np.arctan(radlim/AngDist)/NNR # rads
+    dtht2 = np.arctan(radlim2/AngDist)/NNR # rads
+
+    thta = (np.arange(NNR) + 1.)*dtht
+    thta2 = (np.arange(NNR) + 1.)*dtht2
+    
+    thta_smooth = (np.arange(NNR2) + 1.)*dtht
+    thta2_smooth = (np.arange(NNR2) + 1.)*dtht2
+    
+    rho2D = thta_smooth * 0.0
+    rho2D2 = thta_smooth * 0.0
+    Pth2D = thta_smooth * 0.0
+    Pth2D2 = thta_smooth * 0.0
+
+    rho2D_beam = thta * 0.0
+    rho2D2_beam = thta* 0.0
+    Pth2D_beam = thta* 0.0
+    Pth2D2_beam = thta* 0.0
+                 
+    for kk in xrange(NNR2):
+        rint  = np.sqrt((rad)**2  + thta_smooth[kk]**2 *AngDist**2)
+        rint2 = np.sqrt((rad2)**2 + thta2_smooth[kk]**2*AngDist**2)
+
+        rho2D[kk]  = np.sum(2.*rho_sim(theta_sim_rho,rint /rvir)*drint)
+        rho2D2[kk] = np.sum(2.*rho_sim(theta_sim_rho,rint2/rvir)*drint)
+
+        Pth2D[kk]  = np.sum(2.*Pth_sim(theta_sim_pth,rint /rvir)*drint)
+        Pth2D2[kk] = np.sum(2.*Pth_sim(theta_sim_pth,rint2/rvir)*drint)
+    
+    for kk in xrange(NNR):
+        rho2D_beam[kk]  = np.sum(thta_smooth  * rho2D  * np.exp(-0.5*thta_smooth**2 /sigmaBeam**2)  
+                                 * special.iv(0, thta_smooth *thta[kk] / sigmaBeam**2))*dtht
+        rho2D2_beam[kk] = np.sum(thta2_smooth * rho2D2 * np.exp(-0.5*thta2_smooth**2/sigmaBeam**2)
+                                 * special.iv(0, thta2_smooth*thta2[kk]/ sigmaBeam**2))*dtht2
+
+        Pth2D_beam[kk]  = np.sum(thta_smooth  * Pth2D  * np.exp(-0.5*thta_smooth**2 /sigmaBeam**2)  
+                                 * special.iv(0, thta_smooth *thta[kk] / sigmaBeam**2))*dtht
+        Pth2D2_beam[kk] = np.sum(thta2_smooth * Pth2D2 * np.exp(-0.5*thta2_smooth**2/sigmaBeam**2) 
+                                 * special.iv(0, thta2_smooth*thta2[kk]/ sigmaBeam**2))*dtht2
+
+        area_fac += 2.0*np.pi*dtht*thta[kk]
+        
+        rho2D_beam[kk]  *= np.exp(-0.5*thta[kk]**2 /sigmaBeam**2) / sigmaBeam**2
+        rho2D2_beam[kk] *= np.exp(-0.5*thta2[kk]**2/sigmaBeam**2) / sigmaBeam**2
+        Pth2D_beam[kk]  *= np.exp(-0.5*thta[kk]**2 /sigmaBeam**2) / sigmaBeam**2
+        Pth2D2_beam[kk] *= np.exp(-0.5*thta2[kk]**2/sigmaBeam**2) / sigmaBeam**2
+
+    sig  = 2.0*np.pi*dtht *np.sum(thta *rho2D_beam) 
+    sig2 = 2.0*np.pi*dtht2*np.sum(thta2*rho2D2_beam) 
+
+    sig_all_beam = (2*sig - sig2) * 1e-3 * cc.c['SIGMA_T'] * cc.c['TCMBmuK'] * ((2. + 2.*XH)/(3.+5.*XH)) / cc.c['MP'] / (np.pi * np.radians(tht/60.)**2)
+
+    sig_p  = 2.0*np.pi*dtht*np.sum(thta*Pth2D_beam)
+    sig2_p = 2.0*np.pi*dtht2*np.sum(thta2*Pth2D2_beam)
+    
+    sig_all_p_beam = (2*sig_p - sig2_p) * cc.c['SIGMA_T']/(cc.c['ME']*cc.c['C']**2) / area_fac * cc.c['TCMBmuK'] * ((2. + 2.*XH)/(3.+5.*XH))# muK
+    
+    return sig_all_beam, sig_all_p_beam
+
+
+def make_a_profile_sim(cc,thta_arc,M,z):
+    rho = np.zeros(len(thta_arc))
+    pth = np.zeros(len(thta_arc))
+    for ii in xrange(len(thta_arc)):
+        temp = project_prof_sim_interpol(cc,thta_arc[ii],M,z)
+        rho[ii] = temp[0]
+        pth[ii] = temp[1]
+    return rho,pth
+
+
+def make_a_obs_profile_sim(cc,thta_arc,M,z):
+    rho = np.zeros(len(thta_arc))
+    pth = np.zeros(len(thta_arc))
+    for ii in xrange(len(thta_arc)):
+        temp = project_prof_beam_sim_interpol(cc,thta_arc[ii],M,z)
+        rho[ii] = temp[0]
+        pth[ii] = temp[1]
+    return rho,pth
