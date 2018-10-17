@@ -69,7 +69,7 @@ class Clustering(object):
 
         #ntilde_spline = UnivariateSpline(z_arr, np.log(ntil), k=k, s=s)
         #ans = np.exp(ntilde_spline(zarr_int))
-        f_int = interp1d(z_arr, np.log(ntil),kind='slinear')
+        f_int = interp1d(z_arr, np.log(ntil),kind='cubic')
         ans = np.exp(f_int(zarr_int)) 
 
         return ans

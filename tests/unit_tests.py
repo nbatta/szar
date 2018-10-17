@@ -4,17 +4,32 @@ from configparser import ConfigParser
 from orphics.io import dict_from_section,list_from_config
 from szar.clustering import Clustering
 import sys
+import matplotlib
+matplotlib.rcParams['text.usetex'] = True
+matplotlib.rcParams['text.latex.unicode'] = True
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
+rcParams.update({'figure.autolayout': True})
 import seaborn as sns
-from configparser import SafeConfigParser
-sns.set()
+
+#Python 2 compatibility stuff
+from six.moves import configparser
+import six
+
+if six.PY2:
+  ConfigParser = configparser.SafeConfigParser
+else:
+  ConfigParser = configparser.ConfigParser
+#
+
+sns.set(style='whitegrid', font_scale=1.5, rc={"lines.linewidth": 2,'lines.markersize': 8.0,})
 
 INIFILE = "input/pipeline.ini"
 expName = 'S4-1.0-CDT'
 gridName = 'grid-owl2'
-version = '0.7'
+version = '0.6'
 
-Config = SafeConfigParser()
+Config = ConfigParser()
 Config.optionxform=str
 Config.read(INIFILE)
 clttfile = Config.get('general','clttfile')
@@ -32,12 +47,13 @@ cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
 
 clst = Clustering(INIFILE,expName,gridName,version,cc)
 
-def test_ps_tilde_interpol(cc):
-    mus = np.array([0])
+def test_ps_tilde_interpol(cc, paper_plots=False):
+    mus = np.linspace(0, 1, 3)
     ks = cc.HMF.kh
     zs = cc.HMF.zarr
 
     fine_zs = np.linspace(zs[0], zs[-1], 1000)
+    ksamp_indices = np.linspace(0, ks.size, 4, dtype=int, endpoint=False)
 
     try:
         ps_interps = cc.ps_tilde_interpol(fine_zs, mus)
@@ -55,14 +71,39 @@ def test_ps_tilde_interpol(cc):
 
     coarse_ps_tils = cc.ps_tilde(mus)
 
-    plt.plot(zs, coarse_ps_tils[0,:,:], marker='o', label="coarse")
-    plt.plot(fine_zs, ps_interps[0,:,:], label="interp\'d")
-    #plt.xscale('log')
-    #plt.yscale('log')
-    plt.xlabel(r'$z_\ell$')
-    plt.ylabel(r'$\tilde P(z_\ell, k=k_{min})$')
-    plt.legend(loc='best')
-    plt.savefig('ps_tilde_interpols_test.svg')
+    if paper_plots:
+        plt.rcParams["font.weight"] = "bold"
+        plt.rcParams["axes.labelweight"] = "bold"
+        with sns.plotting_context("paper"):
+            fig, ax = plt.subplots(mus.size, ksamp_indices.size, sharex='col')
+            fig.set_figheight(6)
+            fig.set_figwidth(10)
+            for muindex,mu in enumerate(mus):
+                for count,kindex in enumerate(ksamp_indices):
+                    ax[muindex, count].plot(zs, coarse_ps_tils[kindex,:,muindex], marker='o', linestyle='None')
+                    ax[muindex, count].plot(fine_zs, ps_interps[kindex,:,muindex])
+            
+            cols = [r'$k = {}$'.format(round(ks[kindex],3)) for kindex in ksamp_indices]
+            rows = [r'$\mu = {}$'.format(round(mu, 3)) for mu in mus]
+
+            for axis, col in zip(ax[0], cols):
+                axis.set_title(col)
+
+            for axis, row in zip(ax[:,0], rows):
+                axis.set_ylabel(row, size='large')
+
+            for axis in ax[-1]:
+                axis.set_xlabel(r'$z$')
+
+            fig.tight_layout()
+            fig.savefig('ps_tilde_interpols_test.eps')
+    else:
+        plt.plot(zs, coarse_ps_tils[0,:,:], marker='o', label="on grid")
+        plt.plot(fine_zs, ps_interps[0,:,:], label="interpolated")
+        plt.xlabel(r'$z_\ell$')
+        plt.ylabel(r'$\tilde P(z_\ell, k={})$'.format(ks[0]))
+        plt.legend(loc='best')
+        plt.savefig('ps_tilde_interpols_test.eps')
 
     plt.gcf().clear()
 
@@ -98,9 +139,9 @@ def test_fine_ps_bar(cc, nsamps):
     plt.plot(zs, coarse_ps_bar[0,:,0], marker='o', label="coarse")
     plt.plot(zs[1:-1], fine_ps_bars[0,:,0], marker='.', label="fine")
     plt.xlabel(r'$z_\ell$')
-    plt.ylabel(r'$\bar P(z_\ell, \mu = 0, k=m_{min})$')
+    plt.ylabel(r'$\bar P(z_\ell, \mu = 0, k={})$'.format(ks[0]))
     plt.legend(loc='best')
-    plt.savefig('fine_ps_bars_test_nsamps{}.svg'.format(nsamps))
+    plt.savefig('fine_ps_bars_test_nsamps{}.eps'.format(nsamps))
 
     plt.gcf().clear()
 
@@ -109,9 +150,9 @@ def test_fine_ps_bar(cc, nsamps):
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel(r'$k$')
-    plt.ylabel(r'$\bar P(z = z_{min+1}, \mu = 0, k)$')
+    plt.ylabel(r'$\bar P(z = {}, \mu = 0, k)$'.format(round(zs[1],3)))
     plt.legend(loc='best')
-    plt.savefig('fine_ps_bars_kspace_nsamps{}.svg'.format(nsamps))
+    plt.savefig('fine_ps_bars_kspace_nsamps{}.eps'.format(nsamps))
 
     plt.gcf().clear()
 
@@ -120,19 +161,21 @@ def test_fine_ps_bar(cc, nsamps):
 
     plt.plot(finer_zs, integrand[0, :, 0])
     plt.xlabel(r'$z$')
-    plt.ylabel(r'$dV/dz \, \tilde n^2 \tilde P$')
-    plt.savefig('fine_ps_bar_integrand_test_nsamps{}.svg'.format(nsamps))
+    plt.ylabel(r'$\frac{dV}{dz} \, \tilde n^2\, \tilde P$')
+    plt.savefig('fine_ps_bar_integrand_test_nsamps{}.eps'.format(nsamps))
 
     plt.gcf().clear()
 
 def test_fine_sfunc(cc):
-    mus = np.array([0])
+    mus = np.linspace(0, 1, 3)
     ks = cc.HMF.kh
     zs = cc.HMF.zarr
     zs_noends = zs[1:-1]
+    scale = 100
+    nsubsamples = 100
 
     try:
-        fine_sfunc_vals = cc.fine_sfunc(1000)
+        fine_sfunc_vals = cc.fine_sfunc(nsubsamples)
     except Exception as e:
         print("Test of fine_sfunc failed at clustering.fine_sfunc")
         print(e)
@@ -147,20 +190,20 @@ def test_fine_sfunc(cc):
 
     coarse_sfunc_vals = cc.Norm_Sfunc()
 
-    plt.plot(zs, 10*coarse_sfunc_vals, marker='o', label="coarse")
-    plt.plot(zs_noends, 10*fine_sfunc_vals, marker='.', label="fine")
-    plt.plot(zs_noends, coarse_sfunc_vals[1:-1]/fine_sfunc_vals, marker='.', label="ratio")
+    plt.plot(zs, scale*coarse_sfunc_vals, marker='o', label=r"$N = 1$")
+    plt.plot(zs_noends, scale*fine_sfunc_vals, marker='.', label=r"$N={}$".format(nsubsamples), linestyle='dashed')
+    plt.plot(zs_noends, coarse_sfunc_vals[1:-1]/fine_sfunc_vals, marker='.', label="ratio", linestyle='dashdot')
     #plt.xscale('log')
     #plt.yscale('log')
     plt.xlabel(r'$z_\ell$')
-    plt.ylabel(r'$10 \times S(z_\ell)$')
-    plt.legend(loc='upper center')
-    plt.savefig('fine_sfunc_test.svg')
+    plt.ylabel(r'${} \times S(z_\ell)$'.format(scale))
+    plt.legend(loc='best')
+    plt.savefig('fine_sfunc_test.eps')
 
     plt.gcf().clear()
 
 def test_ps_tilde(cc):
-    mus = np.linspace(0,1, 50)
+    mus = np.linspace(0,1,3)
     ks = cc.HMF.kh
     zs = cc.HMF.zarr
     try:
@@ -178,9 +221,30 @@ def test_ps_tilde(cc):
     else:
         print("Tests of ps_tilde passed!")
 
+def test_ntils(cc):
+    mus = np.linspace(0, 1, 3)
+    ks = cc.HMF.kh
+    zs = cc.HMF.zarr
+
+    fine_zs = np.linspace(zs[0], zs[-1], 1000)
+    ksamp_indices = np.linspace(0, ks.size, 4, dtype=int, endpoint=False)
+
+    ntils = cc.ntilde()
+    ntils_interp = cc.ntilde_interpol(fine_zs)
+
+    plt.plot(zs, ntils, marker='o', label="on grid")
+    plt.plot(fine_zs, ntils_interp, label="interpolated")
+    plt.xlabel(r'$z_\ell$')
+    plt.ylabel(r'$\tilde n(z_\ell)$')
+    plt.legend(loc='best')
+    plt.savefig('n_tilde_interpols_test.eps')
+    plt.gcf().clear()
+
+
 if __name__ == '__main__':
     test_fine_sfunc(clst)
     test_ps_tilde(clst)
     test_ps_tilde_interpol(clst)
+    test_ntils(clst)
     nsamps = 100
     test_fine_ps_bar(clst, nsamps)
