@@ -114,10 +114,30 @@ class SZ_Cluster_Model(object):
                 print("Using ",fsky," for fsky")
 
                 v3ell, N_ell_T_LA, N_ell_P_LA, Map_white_noise_levels = v3.AdvACT_noise(f_sky=fsky,ell_max=v3lmax+v3dell,delta_ell=v3dell)
+            elif v3mode == 4:
+                import szar.s4lat as s4
+                mode = 2
+                ncalc = s4.S4LatV1(mode, N_tels=2)
+                vfreqs = ncalc.get_bands()
+                print("S4")
+                print("Replacing ",freqs,  " with ", vfreqs)
+                freqs = vfreqs
+                vbeams = ncalc.get_beams()
+                print("Replacing ",fwhms,  " with ", vbeams)
+                fwhms = vbeams
+
+                v3lmax = self.evalells.max()
+                v3dell = np.diff(self.evalells)[0]
+                print("Using ",fsky," for fsky")
+
+                v3ell, N_ell_T_LA_full, _ = ncalc.get_noise_curves(
+                    fsky, v3lmax+v3dell, v3dell, full_covar=True, deconv_beam=True)
+                N_ell_T_LA = np.diagonal(N_ell_T_LA_full).T
+                print(N_ell_T_LA.shape)
 
             assert np.all(v3ell==self.evalells)
         
-        # pl = io.Plotter(yscale='log')
+        # pl = io.Plotter(yscale='log',xlabel='l',ylabel='D_l')
             
         for ii,(freq,fwhm,noise) in enumerate(zip(freqs,fwhms,rms_noises)):
             freq_fac = (f_nu(self.cc.c,freq))**2
@@ -148,7 +168,7 @@ class SZ_Cluster_Model(object):
             self.nlinv += old_div((freq_fac),nells)
             self.nlinv_cmb += (old_div(1.,(inst_noise+totfg)))
 
-
+        # pl.add(self.evalells,self.cc.clttfunc(self.evalells)*self.evalells**2.,color='k',lw=3)
         # pl.done(io.dout_dir+"v3comp.png")
         
         self.nl_old = old_div(1.,self.nlinv)
@@ -199,7 +219,14 @@ class SZ_Cluster_Model(object):
                 nells[3,2] = old_div(N_ell_T_LA[6,ii], self.cc.c['TCMBmuK']**2.)
                 nells[3,4] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
                 nells[4,3] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
-            
+            elif v3mode==4:
+                nells = old_div(N_ell_T_LA_full[:,:,ii], self.cc.c['TCMBmuK']**2.)
+                # ndiags = []
+                # # Adding in atmo. freq-freq correlations
+                # for ff in range(len(freqs)):
+                #     for gg in range(len(freqs)):
+                #         inst_noise = old_div(N_ell_T_LA_full[ff,gg,ii], self.cc.c['TCMBmuK']**2.)
+                        
             totfg = (fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) 
                      + fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t)) \
                      / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi
@@ -214,8 +241,8 @@ class SZ_Cluster_Model(object):
 
             self.nl[ii] = old_div(1.,(np.dot(np.transpose(f_nu_tsz),np.dot(np.linalg.inv(nells),f_nu_tsz))))
 
-        # from orphics.tools.io import Plotter
-        # pl = Plotter(scaleY='log')
+        # from orphics.io import Plotter
+        # pl = Plotter(yscale='log',xlabel='l',ylabel='D_l')
         # pl.add(self.evalells,self.nl*self.evalells**2.)
         # ells = np.arange(2,3000,1)
         # pl.add(ells,self.cc.clttfunc(ells)*ells**2.)
