@@ -15,21 +15,21 @@ from orphics.io import dict_from_section,list_from_config
 import pickle as pickle
 from scipy.interpolate import interp1d
 from scipy.interpolate import UnivariateSpline
+#from scipy.integrate import simps
+
+def getPSsum(psbar,kbins,z_edges,mubins):
+    
+
+    return ans
 
 class Clustering(object):
-    def __init__(self,iniFile,expName,gridName,version):
+    def __init__(self,iniFile,expName,gridName,version,ClusterCosmology):
         Config = SafeConfigParser()
         Config.optionxform=str
         Config.read(iniFile)
         
-        self.fparams = {}
-        for (key, val) in Config.items('params'):
-            if ',' in val:
-                param, step = val.split(',')
-                self.fparams[key] = float(param)
-            else:
-                self.fparams[key] = float(val)
-    
+        self.cc = ClusterCosmology
+
         bigDataDir = Config.get('general','bigDataDirectory')
         self.clttfile = Config.get('general','clttfile')
         self.constDict = dict_from_section(Config,'constants')
@@ -40,10 +40,11 @@ class Clustering(object):
         freq = list_from_config(Config,expName,'freqs')
         lknee = list_from_config(Config,expName,'lknee')[0]
         alpha = list_from_config(Config,expName,'alpha')[0]
+        self.fsky = Config.getfloat(expName,'fsky')
 
         self.mgrid,self.zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))  
 
-        self.cc = ClusterCosmology(self.fparams,self.constDict,clTTFixFile=self.clttfile)
+        #self.cc = ClusterCosmology(self.fparams,self.constDict,clTTFixFile=self.clttfile)
         self.SZProp = SZ_Cluster_Model(self.cc,self.clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
         self.HMF.sigN = siggrid.copy()
@@ -68,8 +69,8 @@ class Clustering(object):
         z_arr = self.HMF.zarr
 
         #n = len(z_arr)
-        #k = 5 # 5th degree spline 
-        #s = 20.#(n - np.sqrt(2*n))* 1.3 # smoothing factor 
+        #k = 4 # 5th degree spline 
+        #s = 20.*(n - np.sqrt(2*n))* 1.3 # smoothing factor 
 
         #ntilde_spline = UnivariateSpline(z_arr, np.log(ntil), k=k, s=s)
         #ans = np.exp(ntilde_spline(zarr_int))
@@ -118,42 +119,127 @@ class Clustering(object):
         return old_div(1.,(R[use_sig])),sig1[use_sig],self.HMF.zarr[use_z]
 
 # norm is off by 4 pi from ps_bar
-    def Norm_Sfunc(self,fsky):
+    def Norm_Sfunc(self):
         #z_arr = self.HMF.zarr
         #Check this
         nbar = self.ntilde()
         ans = self.HMF.dVdz*nbar**2*np.diff(self.HMF.zarr_edges)
-        return ans*4.*np.pi*fsky
+        return ans
 
-    def ps_tilde(self,mu):
+    def fine_sfunc(self, nsubsamples):
+        zs = self.HMF.zarr
+        zgridedges = self.HMF.zarr_edges
+
+        fine_zgrid = np.empty((zs.size, nsubsamples))
+        for i in range(zs.size):
+            fine_zgrid[i,:] = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
+
+        fine_zgrid = fine_zgrid[1:-1]
+
+        ntils = self.ntilde_interpol(fine_zgrid)
+        dvdz = np.array([self.dVdz_fine(zs) for zs in fine_zgrid])
+
+        dz = fine_zgrid[0,1] - fine_zgrid[0,0]
+
+        assert np.allclose(dz * np.ones(tuple(np.subtract(fine_zgrid.shape, (0,1)))),  np.diff(fine_zgrid,axis=1), rtol=1e-3)
+
+        integral = np.trapz(dvdz * ntils**2, dx=dz)
+        return integral
+
+    def v0(self, nsubsamples):
+        zs = self.HMF.zarr
+        zgridedges = self.HMF.zarr_edges
+
+        fine_zgrid = np.empty((zs.size, nsubsamples))
+        for i in range(zs.size):
+            fine_zgrid[i,:] = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
+
+        fine_zgrid = fine_zgrid[1:-1]
+        dvdz = np.array([self.dVdz_fine(zs) for zs in fine_zgrid])
+        dz = fine_zgrid[0,1] - fine_zgrid[0,0]
+
+        assert np.allclose(dz * np.ones(tuple(np.subtract(fine_zgrid.shape, (0,1)))),  np.diff(fine_zgrid,axis=1), rtol=1e-3)
         
-        beff_arr = np.outer(np.ones(len(mu)), self.b_eff_z())
-        mu_arr = np.outer(mu, np.ones(len(self.b_eff_z())))
-        logGrowth = np.outer(np.ones(len(mu)), self.cc.fgrowth(self.HMF.zarr))
-        prefac = (beff_arr + logGrowth*mu_arr**2)**2
+        integral = np.trapz(dvdz, dx=dz)
+        integral *= 4 * np.pi * self.fsky 
+        return integral
+
+    def ps_tilde(self,mu):        
+        beff_arr = self.b_eff_z()[..., np.newaxis]
+        mu_arr = mu[..., np.newaxis]
+        logGrowth = self.cc.fgrowth(self.HMF.zarr)
+
+        prefac = (beff_arr.T + logGrowth*mu_arr**2)**2
+        prefac = prefac[..., np.newaxis]
+
         pklin = self.HMF.pk # not actually pklin
+        pklin = pklin.T
+        pklin = pklin[..., np.newaxis]
 
         ans = np.multiply(prefac,pklin.T).T
         return ans
 
-    def ps_bar(self,mu,fsky):
+    def ps_tilde_interpol(self, zarr_int, mu):
+        ps_tils = self.ps_tilde(mu)
+        zs = self.HMF.zarr
+        ks = self.HMF.kh
 
+        n = zs.size
+        k = 4 # 5th degree spline
+        s = 20.*(n - np.sqrt(2*n))* 1.3 # smoothing factor
+
+        ps_interp = interp1d(zs, ps_tils, axis=1, kind='cubic')
+        return ps_interp(zarr_int)
+
+    def ps_bar(self,mu):
         z_arr = self.HMF.zarr
         nbar = self.ntilde()
-        prefac =  self.HMF.dVdz*nbar**2*np.diff(z_arr)[2]/self.Norm_Sfunc(fsky)
+        prefac =  self.HMF.dVdz*nbar**2*np.diff(z_arr)[2]/self.Norm_Sfunc()
+        prefac = prefac[..., np.newaxis]
         ans = np.multiply(prefac, self.ps_tilde(mu).T).T
         #for i in range(len(z_arr)): 
         #    ans[:,:,i] = self.HMF.dVdz[i]*nbar[i]**2*ps_tilde[:,:,i]*np.diff(z_arr[i])/self.Norm_Sfunc(fsky)[i]
         return ans
 
-    def V_eff(self,mu,fsky):
+    def fine_ps_bar(self,mu, nsubsamples):
+        zs = self.HMF.zarr
+        ks = self.HMF.kh
+        zgridedges = self.HMF.zarr_edges
+        
+        values = np.empty((ks.size, zs.size, mu.size))
 
-        V0 = self.HMF.dVdz*np.diff(z_arr)*4.*np.pi*fsky #FIX
-        nbar = self.ntilde()
-        ps = self.ps_bar(mu,fsky)
-        npfact = np.multiply(ps,nbar)
-        frac = old_div(npfact, (1. + npfact))
-        ans = np.multiply(frac,V0)
+        fine_zgrid = np.empty((zs.size, nsubsamples))
+        for i in range(zs.size):
+            fine_zgrid[i,:] = np.linspace(zgridedges[i], zgridedges[i+1], nsubsamples)
 
+        fine_zgrid = fine_zgrid[1:-1]
+        ntils = self.ntilde_interpol(fine_zgrid)
+        dvdz = np.array([self.dVdz_fine(zs) for zs in fine_zgrid])
+        prefac = dvdz * ntils**2
+        prefac = prefac[..., np.newaxis]
+        ps_tils = self.ps_tilde_interpol(fine_zgrid, mu)
+        
+        integrand = prefac * ps_tils
+        dz = fine_zgrid[0,1] - fine_zgrid[0,0]
+
+        assert np.allclose(dz * np.ones(tuple(np.subtract(fine_zgrid.shape, (0,1)))),  np.diff(fine_zgrid,axis=1), rtol=1e-3)
+
+        integral = np.trapz(integrand, dx=dz, axis=2)
+        s_norm = self.fine_sfunc(nsubsamples)[..., np.newaxis]
+        values = integral/s_norm
+        return values
+
+    def V_eff(self,mu,nsubsamples):
+        V0 = self.v0( nsubsamples)
+        V0 = np.reshape(V0, (V0.size,1))
+
+        nbar = self.ntilde()[1:-1]
+        nbar = np.reshape(nbar, (nbar.size,1))
+
+        ps = self.fine_ps_bar(mu, nsubsamples)
+        npfact = np.multiply(nbar, ps)
+        frac = npfact/(1. + npfact)
+
+        ans = np.multiply(frac**2,V0)
         return ans
 

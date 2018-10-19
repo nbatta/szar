@@ -63,10 +63,10 @@ Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
 clttfile = Config.get('general','clttfile')
 
-gridName = "grid-default"
+gridName = "grid-owl2"
 #version = "0.3_ysig_0.127"
 version = "1.0"#"0.7"
-cal = "CMB_all"
+cal = "owl2"#"CMB_all"
 #cal = "CMB_pol_miscentered"
 
 from orphics.io import dict_from_section, list_from_config
@@ -92,7 +92,9 @@ from matplotlib.patches import Rectangle
 #expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
 #expList = ['S4-2.0-0.4']#,'S4-1.5-0.4','S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1','S4-1.5-0.05']
 #expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
-expList = ['SO-v3-goal-40','SO-v3-base-40']#,'SO-v3-goal-20','SO-v3-base-20','SO-v3-goal-10','SO-v3-base-10']
+#expList = ['SO-v3-goal-40','SO-v3-base-40']#,'SO-v3-goal-20','SO-v3-base-20','SO-v3-goal-10','SO-v3-base-10']
+expList = ['CMB-Probe-v4-CBE','CMB-Probe-v4-REQ']
+
 
 pad = 0.05
 
@@ -103,8 +105,12 @@ colList = ['C0','C1','C2','C3','C4','C5']
 for expName,col in zip(expList,colList):
 
     mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
-    
-    massGridName = bigDataDir+"lensgrid_"+expName+"_"+gridName+"_"+cal+ "_v" + version+".pkl"
+
+    if (cal == 'owl2'):    
+	    massGridName = bigDataDir+"lensgrid_grid-"+cal+"_"+cal+".pkl"
+    else:
+	    massGridName = bigDataDir+"lensgrid_"+expName+"_"+gridName+"_"+cal+ "_v" + version+".pkl"
+
     mexp_edges, z_edges, lndM = pickle.load(open(massGridName,"rb"))
 
     zrange = (z_edges[1:]+z_edges[:-1])/2.
@@ -135,7 +141,7 @@ for expName,col in zip(expList,colList):
     masses = (m_edges[1:]+m_edges[:-1])/2.
     mexp_new = np.log10(np.linspace(masses[0],masses[-1],10))
     z_new = np.linspace(0.25,2.75,10)
-    print(Nmz.sum()
+    print(Nmz.sum())
     rn = resample_bin(Nmz,factors=[float(mexp_new.size)/Nmz.shape[0],float(z_new.size)/Nmz.shape[1]],axes=[-2,-1])
 
     currentAxis = plt.gca()
@@ -160,7 +166,7 @@ for expName,col in zip(expList,colList):
     
     
 
-pl.legend(labsize=9)
+pl.legend(labsize=9,loc='upper right')
 pl._ax.set_ylim(1,5.e4) # fsky
 pl._ax.set_xlim(0.,3.)
 pl.done(outDir+"clNofz.pdf")

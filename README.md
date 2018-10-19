@@ -33,3 +33,8 @@ Use the command
 ```
 python tests/testCounts.py
 ```
+
+To run all unit tests, use
+```
+python tests/unit_tests.py
+```
