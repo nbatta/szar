@@ -467,6 +467,10 @@ class Profiles(object):
         self.l0 = 30000.
         self.fwhm = fwhm #### ARCMINS
 
+        ### extrapolation variables
+        self.inter_max = 5.
+        self.inter_fine_fac = 4.
+
     #### JUST FOR TESTING ####
     def rho_sim_test(self,theta, x):
         fb = 0.0490086879038/0.314992203163
@@ -675,6 +679,17 @@ class Profiles(object):
             pth[ii] = temp[1]
         return rho,pth
 
-    def interpol_sim_profile(self,x,prof,fill_value=0):
-        ans = interp1d(x,prof,kind='slinear',bounds_error=False,fill_value=0)
+    def interpol_sim_profile(self,x,prof):
+        #Including extrapolation
+        if (np.max(x) < self.inter_max):
+            fine_fac = self.inter_fine_fac
+            xtr_inds = np.ceil(self.inter_max - np.max(x))
+            xtr_inds = np.floor(self.inter_max - np.max(x))*fine_fac
+            str_xtr = np.ceil(np.max(x)) + 1./fine_fac
+            xtr = np.arange(xtr_inds)/fine_fac + str_xtr
+            extend = np.poly1d(np.polyfit(x, np.log(prof), 3))
+
+            ans = interp1d(np.append(x,xtr),np.append(prof,np.exp(extend(xtr))),kind='slinear',bounds_error=False,fill_value=0)
+        else: 
+            ans = interp1d(x,prof,kind='slinear',bounds_error=False,fill_value=0)
         return ans
