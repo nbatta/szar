@@ -71,7 +71,6 @@ class SZ_Cluster_Model(object):
         lnYmin = np.log(ymin)
         lnYmax = np.log(ymax)
         self.lnY = np.arange(lnYmin,lnYmax,dlnY)
-
         fgs = fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv=tsz_battaglia_template_csv)
 
         self.dell = dell
