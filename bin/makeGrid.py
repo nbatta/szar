@@ -402,7 +402,7 @@ mySplitIndex = rank
 mySplit = splits[mySplitIndex]
 
 if doLens: 
-    import enlib.fft as fftfast
+    import pixell.fft as fftfast
     arcStamp = 100.
     pxStamp = 0.05
     Npix = int(old_div(arcStamp,pxStamp))
