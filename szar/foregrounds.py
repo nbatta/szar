@@ -24,7 +24,8 @@ default_constants = {'A_tsz': 5.6,
                      'n_cib': 1.2,
                      'ell0sec': 3000.,
                      'A_ps': 3.1,
-                     'al_ps': -0.5}
+                     'al_ps': -0.5,
+                     'zeta': 0.1}
 H_CGS = 6.62608e-27
 K_CGS = 1.3806488e-16
 C_light = 2.99792e+10
@@ -58,8 +59,16 @@ def power_tsz(ells,nu1,nu2=None,A_tsz=None,fill_type="extrapolate",tcmb=None):
     if nu2 is None: nu2 = nu1
     return yy * ffunc(nu1) * ffunc(nu2) * tcmb**2.
 
-def power_tsz_cib(ells,nu1,nu2=None):
-    pass
+def power_tsz_cib(ells,nu1,nu2=None,fill_type="extrapolate",al_cib=None,Td=None,A_tsz=None,A_cibc=None,zeta=None):
+    if nu2 is None: nu2 = nu1
+    ells = np.asarray(ells)
+    assert np.all(ells>=0)
+    path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+    tsz_cib_file=path+'/../input/sz_x_cib_template.txt'    
+    ls,icls = np.loadtxt(tsz_cib_file,unpack=True)
+    dls = dl_filler(ells,ls,icls,fill_type=fill_type)
+    cls = dls*2.*np.pi*np.nan_to_num(1./ells/(ells+1.)) 
+    return cls * tSZ_CIB_nu(nu1,nu2,al_cib=al_cib,Td=Td,A_tsz=A_tsz,A_cibc=A_cibc,zeta=zeta)
 
 def power_cibp(ells,nu1,nu2=None,A_cibp=None,al_cib=None,Td=None):
     if A_cibp is None: A_cibp = default_constants['A_cibp']
@@ -170,6 +179,24 @@ def JyPerSter_to_dimensionless(nu,Tcmb = 2.726):
     cNu = 2*(kB*Tcmb)**3/(h**2*c**2)*x**4/(4*(np.sinh(x/2.))**2)
     cNu *= 1e23
     return cNu
+
+
+def tSZ_CIB_nu(nu1,nu2,al_cib=None,Td=None,A_tsz=None,A_cibc=None,zeta=None):
+    if zeta is None: zeta = default_constants['zeta']
+    if al_cib is None: al_cib = default_constants['al_cib']
+    if A_tsz is None: A_tsz = default_constants['A_tsz']
+    if A_cibc is None: A_cibc = default_constants['A_cibc']
+    if Td is None: Td = default_constants['Td']
+    nu0 = default_constants['nu0']
+    mu1 = nu1**al_cib*B_nu(Td,nu1) * gfunc(nu1)
+    mu2 = nu2**al_cib*B_nu(Td,nu2) * gfunc(nu2)
+    mu0 = nu0**al_cib*B_nu(Td,nu0) \
+        * gfunc(nu0)
+    fp12 = ffunc(nu1)*mu1 + ffunc(nu2)*mu2
+    fp0  = 2.* ffunc(nu0)*mu0
+    ans = -zeta*np.sqrt(A_tsz*A_cibc) * 2.*fp12 / fp0 
+    return ans
+
 ######
 
 
@@ -321,7 +348,7 @@ class fgNoises(object):
 
         fp12 = f_nu(self.c,nu1)*mu1 + f_nu(self.c,nu2)*mu2
         fp0  = 2.* f_nu(self.c,self.c['nu0'])*mu0
-        ans = self.c['zeta']*np.sqrt(self.c['A_tsz']*self.c['A_cibc']) * 2.*fp12 / fp0 
+        ans = -self.c['zeta']*np.sqrt(self.c['A_tsz']*self.c['A_cibc']) * 2.*fp12 / fp0 
         return ans
 
     def tSZ_CIB(self,ell,nu1,nu2):
