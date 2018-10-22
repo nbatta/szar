@@ -3,6 +3,175 @@ from builtins import object
 from past.utils import old_div
 import numpy as np
 from scipy.interpolate import interp1d
+import os,sys,inspect
+
+######
+"""
+A better set of foreground functions
+
+All return in muK**2, except power_y which is dimensionless.
+No factors of ell or 2pi.
+"""
+
+default_constants = {'A_tsz': 5.6,
+                     'TCMB': 2.726,
+                     'nu0': 150.,
+                     'TCMBmuk':2.726e6,
+                     'Td': 9.7,
+                     'al_cib': 2.2,
+                     'A_cibp': 6.9,
+                     'A_cibc': 4.9,
+                     'n_cib': 1.2,
+                     'ell0sec': 3000.,
+                     'A_ps': 3.1,
+                     'al_ps': -0.5}
+H_CGS = 6.62608e-27
+K_CGS = 1.3806488e-16
+C_light = 2.99792e+10
+
+
+def power_y(ells,A_tsz=None,fill_type="extrapolate"):
+    """
+    fill_type can be "zeros" , "extrapolate" or "constant_dl"
+
+    ptsz = Tcmb^2 gnu^2 * yy
+    ptsz = Atsz * battaglia * gnu^2 / gnu150^2
+    yy = Atsz * battaglia / gnu150^2 / Tcmb^2
+
+    """
+    if A_tsz is None: A_tsz = default_constants['A_tsz']
+    ells = np.asarray(ells)
+    assert np.all(ells>=0)
+    path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+    ls,icls = np.loadtxt(path+"/../input/sz_template_battaglia.csv",unpack=True,delimiter=',')
+    dls = dl_filler(ells,ls,icls,fill_type=fill_type)
+    nu0 = default_constants['nu0'] ; tcmb = default_constants['TCMBmuk']
+    cls = A_tsz * dls*2.*np.pi*np.nan_to_num(1./ells/(ells+1.)) / ffunc(nu0)**2./tcmb**2.
+    return cls
+
+def power_tsz(ells,nu1,nu2=None,A_tsz=None,fill_type="extrapolate",tcmb=None):
+    """
+    tcmb in muK
+    """
+    yy = power_y(ells,A_tsz=A_tsz,fill_type=fill_type)
+    if tcmb is None: tcmb = default_constants['TCMBmuk']
+    if nu2 is None: nu2 = nu1
+    return yy * ffunc(nu1) * ffunc(nu2) * tcmb**2.
+
+def power_tsz_cib(ells,nu1,nu2=None):
+    pass
+
+def power_cibp(ells,nu1,nu2=None,A_cibp=None,al_cib=None,Td=None):
+    if A_cibp is None: A_cibp = default_constants['A_cibp']
+    if nu2 is None: nu2 = nu1
+    ell0sec = default_constants['ell0sec']
+    ans = A_cibp * (ells/ell0sec) ** 2.0 * cib_nu(nu1,al_cib,Td)*cib_nu(nu2,al_cib,Td) *2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
+    return ans
+
+def power_cibc(ells,nu1,nu2=None,A_cibc=None,n_cib=None,al_cib=None,Td=None):
+    if A_cibc is None: A_cibc = default_constants['A_cibc']
+    if n_cib is None: n_cib = default_constants['n_cib']
+    if nu2 is None: nu2 = nu1
+    ell0sec = default_constants['ell0sec']
+    ans = A_cibc * (ells/ell0sec) ** (2.-n_cib) * cib_nu(nu1,al_cib,Td)*cib_nu(nu2,al_cib,Td) *2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
+    return ans
+
+def power_radps(ells,nu1,nu2=None,A_ps=None,al_ps=None):
+    if A_ps is None: A_ps = default_constants['A_ps']
+    if nu2 is None: nu2 = nu1
+    ell0sec = default_constants['ell0sec']
+    return A_ps * (ells/ell0sec)**2 * rad_ps_nu(nu1,al_ps)*rad_ps_nu(nu2,al_ps) *2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
+
+def power_ksz_reion(ells,A_rksz=1,fill_type="extrapolate"):
+    path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+    ls,icls = np.loadtxt(path+"/../input/early_ksz.txt",unpack=True)
+    dls = dl_filler(ells,ls,icls,fill_type=fill_type)
+    cls = A_rksz * dls*2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
+    return cls
+
+def power_ksz_late(ells,A_lksz=1,fill_type="extrapolate"):
+    path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+    ls,icls = np.loadtxt(path+"/../input/late_ksz.txt",unpack=True)
+    dls = dl_filler(ells,ls,icls,fill_type=fill_type)
+    cls = A_lksz * dls*2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
+    return cls
+
+
+def ffunc(nu,tcmb=None):
+    """
+    nu in GHz
+    tcmb in Kelvin
+    """
+    if tcmb is None: tcmb = default_constants['TCMB']
+    nu = np.asarray(nu)
+    mu = H_CGS*(1e9*nu)/(K_CGS*tcmb)
+    ans = mu/np.tanh(old_div(mu,2.0)) - 4.0
+    return ans
+
+def B_nu(Td,nu):
+    beta = (nu*1e9) * H_CGS / (K_CGS*Td)
+    ans = 2.* H_CGS * nu**3 / (C_light)**2 / (np.exp(beta) - 1.)
+    return ans
+
+def gfunc(nu,tcmb=None):
+    nu = np.asarray(nu)
+    if tcmb is None: tcmb = default_constants['TCMB']
+    beta = (nu*1e9) * H_CGS / (K_CGS*tcmb)
+    ans = 2.* H_CGS**2 * (nu*1e9)**4 / (C_light**2 *K_CGS * tcmb**2) \
+        * np.exp(beta) * 1. / (np.exp(beta) - 1.)**2
+    return ans
+
+def cib_nu(nu,al_cib=None,Td=None):
+    if Td is None: Td = default_constants['Td']
+    if al_cib is None: al_cib = default_constants['al_cib']
+    nu0 = default_constants['nu0']
+    mu = nu**al_cib*B_nu(Td,nu) * gfunc(nu)
+    mu0 = nu0**al_cib*B_nu(Td,nu0) \
+        * gfunc(nu0)
+    return mu / mu0
+
+def rad_ps_nu(nu,al_ps=None):
+    if al_ps is None: al_ps = default_constants['al_ps']
+    nu0 = default_constants['nu0']
+    return (nu/nu0)**al_ps \
+        * gfunc(nu)  / (gfunc(nu0))
+
+
+def dl_filler(ells,ls,cls,fill_type="extrapolate"):
+    ells = np.asarray(ells)
+    if ells.max()>ls.max() and fill_type=="extrapolate":
+        print("Warning: Requested ells go higher than available." + \
+              " Extrapolating above highest ell.")
+    elif ells.max()>ls.max() and fill_type=="constant_dl":
+        print("Warning: Requested ells go higher than available." + \
+              " Filling with constant ell^2C_ell above highest ell.")
+    if fill_type=="constant_dl":
+        fill_value = (0,cls[-1])
+    elif fill_type=="extrapolate":
+        fill_value = "extrapolate"
+    elif fill_type=="zeros":
+        fill_value = 0
+    else:
+        raise ValueError
+    dls = interp1d(ls,cls,bounds_error=False,fill_value=fill_value)(ells)
+    return dls
+    
+def JyPerSter_to_dimensionless(nu,Tcmb = 2.726):
+    """
+    nu in GHz
+    Tcmb in Kelvin
+    Divide by this number to convert JyPerSter to deltaT/T
+    """
+    kB = 1.380658e-16
+    h = 6.6260755e-27
+    c = 29979245800.
+    nu = nu*1.e9
+    x = h*nu/(kB*Tcmb)
+    cNu = 2*(kB*Tcmb)**3/(h**2*c**2)*x**4/(4*(np.sinh(x/2.))**2)
+    cNu *= 1e23
+    return cNu
+######
+
 
 def f_nu(constDict,nu):
     nu = np.asarray(nu)
