@@ -478,6 +478,22 @@ class Halo_MF(object):
         if not np.isfinite(lp):
             return -np.inf
         return lp + self.inter_mf_func(theta,inter)
+
+    def cpsample_mf(self,delta,nsamps):
+        N_mz_inter = self.inter_mf_logM(delta)
+        N_Mz = self.N_of_Mz(self.M200,delta)
+
+        conprobx = np.cumsum(np.sum(N_mz,axis=0)/np.sum(N_mz))
+        rand1 = np.random.uniform(np.min(conprobx),1,size=nsamps)
+        xcond = np.interp(rand1,conprobx,self.zarr)
+
+        ycond = []
+        for i in xrange(len(rand1)):
+            conproby = np.cumsum(N_mz_inter(xcond[i],np.log10(self.M))/np.sum(N_mz_inter(xcond[i],np.log10(self.M))))
+            rand2 = np.random.uniform(np.min(conproby),1,1)
+            ycond = np.append(ycond,np.interp(rand2,conproby,self.M))
+
+        return xcond,ycond
     
     def mcsample_mf(self,delta,nsamp100,nwalkers=100,nburnin=50,Ndim=2,mthresh=[14.6,15.6],zthresh=[0.2,1.95]):
         import emcee
