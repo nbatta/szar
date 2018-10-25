@@ -402,7 +402,7 @@ class MockCatalog(object):
         
         self.wcs=astWCS.WCS(FilterNoiseMapFile)
 
-        self.fsky = old_div(987.5,41252.9612) # in rads ACTPol D56-equ specific
+        self.fsky = 987.5/41252.9612 # in rads ACTPol D56-equ specific
         self.scat_val = 0.2
         self.seedval = np.int(np.round(time.time())) #1
 
@@ -415,17 +415,22 @@ class MockCatalog(object):
         '''
         Create simple mock catalog of Mass and Redshift by sampling the mass function
         '''
-        if (self.rand):
-            Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky))*4.) ## Note for randoms increasing the number density by factor of 100
-        else:
-            Ntot100 = np.int32(np.ceil(old_div(self.Total_clusters(fsky), 100.))) ## Note the default number of walkers in mcsample_mf is 100 
+        #if (self.rand):
+        #    Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky))*4.) ## Note for randoms increasing the number density by factor of 100
+        #else:
+        #    Ntot100 = np.int32(np.ceil(old_div(self.Total_clusters(fsky), 100.))) ## Note the default number of walkers in mcsample_mf is 100 
 
-        mlim = [np.min(self.mgrid),np.max(self.mgrid)]
-        zlim = [np.min(self.zgrid),np.max(self.zgrid)]
+        #mlim = [np.min(self.mgrid),np.max(self.mgrid)]
+        #zlim = [np.min(self.zgrid),np.max(self.zgrid)]
 
-        samples = self.HMF.mcsample_mf(200.,Ntot100,mthresh = mlim,zthresh = zlim)
+        #samples = self.HMF.mcsample_mf(200.,Ntot100,mthresh = mlim,zthresh = zlim)
+        #return samples[:,0],samples[:,1]
 
-        return samples[:,0],samples[:,1]
+        Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky))) 
+        zsamps, msamps = self.HMF.cpsample_mf(200.,Ntot100) 
+        #print (zsamps, msamps) 
+
+        return zsamps, msamps
 
     def plot_basic_sample(self,fname='default_mockcat.png',):
         fsky = self.fsky
@@ -440,6 +445,7 @@ class MockCatalog(object):
         #include observational effects like scatter and noise into the detection of clusters
         sampZ,sampM = self.create_basic_sample(fsky)
         nsamps = len(sampM)
+
         Ytilde = sampM * 0.0
         
         Om = old_div((self.param_vals['omch2'] + self.param_vals['ombh2']), (old_div(self.param_vals['H0'],100.))**2)

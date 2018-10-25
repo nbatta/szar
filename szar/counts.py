@@ -483,7 +483,7 @@ class Halo_MF(object):
         N_mz_inter = self.inter_mf_logM(delta)
         N_Mz = self.N_of_Mz(self.M200,delta)
 
-        conprobx = np.cumsum(np.sum(N_mz,axis=0)/np.sum(N_mz))
+        conprobx = np.cumsum(np.sum(N_Mz,axis=0)/np.sum(N_Mz))
         rand1 = np.random.uniform(np.min(conprobx),1,size=nsamps)
         xcond = np.interp(rand1,conprobx,self.zarr)
 
@@ -491,7 +491,7 @@ class Halo_MF(object):
         for i in xrange(len(rand1)):
             conproby = np.cumsum(N_mz_inter(xcond[i],np.log10(self.M))/np.sum(N_mz_inter(xcond[i],np.log10(self.M))))
             rand2 = np.random.uniform(np.min(conproby),1,1)
-            ycond = np.append(ycond,np.interp(rand2,conproby,self.M))
+            ycond = np.append(ycond,np.interp(rand2,conproby,np.log10(self.M)))
 
         return xcond,ycond
     
