@@ -142,14 +142,10 @@ if rank==0:
     clttfile = Config.get('general','clttfile')
 
     # get s/n q-bins
-    qs = list_from_config(Config,'general','qbins')
-    qspacing = Config.get('general','qbins_spacing')
-    if qspacing=="log":
-        qbin_edges = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2])+1)
-    elif qspacing=="linear":
-        qbin_edges = np.linspace(qs[0],qs[1],int(qs[2])+1)
-    else:
-        raise ValueError
+    mus = list_from_config(Config,'general','mubins')
+    mubin_edges = np.linspace(mus[0],mus[1],int(mus[2])+1)
+
+    print (mubin_edges)
 
     massMultiplier = Config.getfloat('general','mass_calib_factor')
     YWLcorrflag = Config.getfloat('general','ywl_corr_flag')
@@ -166,7 +162,7 @@ else:
     saveId = None
     constDict = None
     clttfile = None
-    qbin_edges = None
+    mubin_edges = None
     clusterDict = None
     beam = None
     noise = None
@@ -189,7 +185,7 @@ lndM = comm.bcast(lndM, root = 0)
 saveId = comm.bcast(saveId, root = 0)
 constDict = comm.bcast(constDict, root = 0)
 clttfile = comm.bcast(clttfile, root = 0)
-qbin_edges = comm.bcast(qbin_edges, root = 0)
+mubin_edges = comm.bcast(mubin_edges, root = 0)
 clusterDict = comm.bcast(clusterDict, root = 0)
 beam = comm.bcast(beam, root = 0)
 noise = comm.bcast(noise, root = 0)
@@ -225,8 +221,8 @@ if rank!=0: print(rank,myParam,fparams[myParam],passParams[myParam])
 cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
 clst = Clustering(expName,gridName,version,cc)
 
-pbar = clst.fine_ps_bar(mu_grid)
-veff = clst.V_eff(mu_grid)
+pbar = clst.fine_ps_bar(mubin_edges)
+veff = clst.V_eff(mubin_edges)
 
 fish_fac_err = veff * clst.HMF.kh**2 / pbar**2 # Tegmark 1997
 
