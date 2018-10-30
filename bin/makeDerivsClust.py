@@ -34,6 +34,7 @@ if debug: print("Starting common module imports...")
 
 from mpi4py import MPI
 from szar.clustering import Clustering
+from szar.counts import ClusterCosmology
 from szar.szproperties import SZ_Cluster_Model
 import szar.fisher as sfisher
 import numpy as np
