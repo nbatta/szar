@@ -221,27 +221,35 @@ elif rank%2==0:
 if rank!=0: print(rank,myParam,fparams[myParam],passParams[myParam])
 
 ####FIX THIS
-clst = Clustering(expName,gridName,version)
-
 
 cc = ClusterCosmology(passParams,constDict,clTTFixFile=clttfile)
-HMF = Halo_MF(cc,mexp_edges,z_edges)
-HMF.sigN = siggrid.copy()
-SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha,v3mode=v3mode,fsky=fsky)
-if (YWLcorrflag == 1):
-    dN_dmqz = HMF.N_of_mqz_SZ_corr(lndM*massMultiplier,qbin_edges,SZProf)
-else:
-    dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbin_edges,SZProf)
+clst = Clustering(expName,gridName,version,cc)
+
+pbar = clst.fine_ps_bar(mu_grid)
+veff = clst.V_eff(mu_grid)
+
+fish_fac_err = veff * clst.HMF.kh**2 / pbar**2 # Tegmark 1997
+
+#HMF = Halo_MF(cc,mexp_edges,z_edges)
+#HMF.sigN = siggrid.copy()
+#SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha,v3mode=v3mode,fsky=fsky)
+
+#if (YWLcorrflag == 1):
+#    dN_dmqz = HMF.N_of_mqz_SZ_corr(lndM*massMultiplier,qbin_edges,SZProf)
+#else:
+#dN_dmqz = HMF.N_of_mqz_SZ(lndM*massMultiplier,qbin_edges,SZProf)
+
+
 
 if rank==0: 
     #np.save(bigDataDir+"N_dzmq_"+saveId+"_fid",dN_dmqz)
-    np.save(sfisher.fid_file(bigDataDir,saveId),getNmzq(dN_dmqz,mexp_edges,z_edges,qbin_edges))
+    np.save(sfisher.fid_file(bigDataDir,saveId),fish_fac_err)
     dUps = {}
     dDns = {}
 
     print("Waiting for ups and downs...")
     for i in range(1,numcores):
-        data = np.empty(dN_dmqz.shape, dtype=np.float64)
+        data = np.empty(pbar.shape, dtype=np.float64)
         comm.Recv(data, source=i, tag=77)
         myParamIndex = old_div((i+1),2)-1
         if i%2==1:
@@ -255,15 +263,15 @@ if rank==0:
         # np.save(bigDataDir+"dNdn_dzmq_"+saveId+"_"+param,dDns[param])
         # np.save(bigDataDir+"dN_dzmq_"+saveId+"_"+param,dN)
         
-        Nup = getNmzq(dUps[param],mexp_edges,z_edges,qbin_edges)        
-        Ndn = getNmzq(dDns[param],mexp_edges,z_edges,qbin_edges)
-        dNdp = old_div((Nup-Ndn),stepSizes[param])
-        np.save(bigDataDir+"Nup_mzq_"+saveId+"_"+param,Nup)
-        np.save(bigDataDir+"Ndn_mzq_"+saveId+"_"+param,Ndn)
-        np.save(sfisher.deriv_root(bigDataDir,saveId)+param,dNdp)
+        psbarup = dUps[param]
+        psbardn = dDns[param]
+        dpsbardp = (psbarup-psbardn)/stepSizes[param]
+        np.save(bigDataDir+"Nup_mzq_"+saveId+"_"+param,psbarup)
+        np.save(bigDataDir+"Ndn_mzq_"+saveId+"_"+param,psbardn)
+        np.save(sfisher.deriv_root(bigDataDir,saveId)+param,dpsbardp)
         
 else:
-    data = dN_dmqz.astype(np.float64)
+    data = psbar.astype(np.float64)
     comm.Send(data, dest=0, tag=77)
 
 
