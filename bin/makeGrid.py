@@ -391,7 +391,8 @@ if rank==0:
     print("I have ",numcores, " cores to work with.")
     print("And I have ", numes, " tasks to do.")
     print("Each worker gets at least ", mintasks, " tasks and at most ", maxtasks, " tasks.")
-    zfrac = old_div(float(len(z_edges[np.where( check_pzcut_less(z_edges, pzcut) )])),len(z_edges))
+    zfrac = float(len(z_edges[np.where(z_edges>pzcut)]))/len(z_edges)
+    #zfrac = old_div(float(len(z_edges[np.where( check_pzcut_less(z_edges, pzcut) )])),len(z_edges))
     buestguess = (0.5*int(doSZ)+((1.+(2.*zfrac))*5.0*int(doLens)))*maxtasks
     print("My best guess is that this will take ", buestguess, " seconds.")
     print("Starting the slow part...")
@@ -402,7 +403,8 @@ mySplitIndex = rank
 mySplit = splits[mySplitIndex]
 
 if doLens: 
-    import pixell.fft as fftfast
+    #import pixell.fft as fftfast
+    import enlib.fft as fftfast
     arcStamp = 100.
     pxStamp = 0.05
     Npix = int(old_div(arcStamp,pxStamp))
