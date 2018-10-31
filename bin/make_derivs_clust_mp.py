@@ -25,30 +25,42 @@ from multiprocessing.dummy import Pool as ThreadPool
 
 class Derivs_Clustering(object):
     def __init__(self):
-        self.params = np.array([])
+        self.params = None
         self.step = 1
         self.poolsize = 2
 
-    def instantiate_params(self):
-        pass
+    def instantiate_params(self, config):
+        manualParamList = config.get('general','manualParams').split(',')
+
+        paramList = []
+        fparams = {}
+        stepSizes = {}
+        for (key, val) in config.items('params'):
+            if key in manualParamList: continue
+            if ',' in val:
+                param, step = val.split(',')
+                paramList.append(key)
+                fparams[key] = float(param)
+                stepSizes[key] = float(step)
+            else:
+                fparams[key] = float(val)
+        self.params = []
     
-    def pspec(self, parameters):
+    def pspec(self, params):
         pass
 
-    def veffective(self):
+    def veffective(self, params):
         pass
 
     def make_derivs(self):
         pool = ThreadPool(self.poolsize)
 
-        ps = pool.map(self.pspec, self.params)
-        veffs = pool.map(self.veffective, self.params)
+        ps_list = pool.map(self.pspec, self.param_gradients)
 
         pool.close()
         pool.join()
 
-        ps_ups = self.pspec(self.params + self.step)
-        ps_downs = self.pspec(self.params - self.step)
+        veffs = self.veffective(self.params)
 
         fisher_factors = (ps**2 * self.ks**2 * self.deltaks * self.deltamus) / (8 * np.pi) 
 
@@ -58,7 +70,12 @@ class Derivs_Clustering(object):
 
 
 if __name__ == '__main__':
-    deriv = Derivs_Clustering()
-    deriv.instantiate_params()
+    INIFILE = "input/pipeline.ini"
+    config = ConfigParser()
+    config.optionxform=str
+    config.read(INIFILE)
 
-    fish_derivs, fish_facs = deriv.make_derivs()
+    deriv = Derivs_Clustering()
+    deriv.instantiate_params(config)
+
+    #fish_derivs, fish_facs = deriv.make_derivs()
