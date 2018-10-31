@@ -574,7 +574,10 @@ class Profiles(object):
             ((2. + 2.*self.XH)/(3.+5.*self.XH)) / self.cc.c['MP'] / (np.pi * np.radians(tht/60.)**2) 
         sig_all_p = (2*sig_p - sig2_p) * self.cc.c['SIGMA_T']/(self.cc.c['ME']*self.cc.c['C']**2) / area_fac * \
             self.cc.c['TCMBmuK'] * ((2. + 2.*self.XH)/(3.+5.*self.XH))# muK
-            
+        
+        sig_all /=(self.cc.H0/100.)
+        sig_all_p /= (self.cc.H0/100.)
+
         return sig_all,sig_all_p
 
     def project_prof_beam_sim_interpol(self,tht,Mvir,z,rho_sim,Pth_sim,test=False):
@@ -605,8 +608,8 @@ class Profiles(object):
         r_ext = AngDist*np.arctan(np.radians(tht/60.))
         r_ext2 = AngDist*np.arctan(np.radians(tht*disc_fac/60.))
         
-        rad = (np.arange(1e4) + 1.0)/1e3 #in MPC
-        rad2 = (np.arange(1e4) + 1.0)/1e3 #in MPC
+        rad = (np.arange(1e4) + 1.0)/1e3 #in MPC/h
+        rad2 = (np.arange(1e4) + 1.0)/1e3 #in MPC/h
         
         radlim = r_ext
         radlim2 = r_ext2
@@ -676,6 +679,9 @@ class Profiles(object):
         sig_all_p_beam = (2*sig_p - sig2_p) * self.cc.c['SIGMA_T']/(self.cc.c['ME']*self.cc.c['C']**2) / area_fac * \
             self.cc.c['TCMBmuK'] * ((2. + 2.*self.XH)/(3.+5.*self.XH))# muK
     
+        sig_all_beam /= (self.cc.H0/100.)
+        sig_all_p_beam /= (self.cc.H0/100.) 
+
         return sig_all_beam, sig_all_p_beam
 
     def make_a_profile_test(self,thta_arc,M,z):
