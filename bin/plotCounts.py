@@ -111,8 +111,8 @@ for expName,col in zip(expList,colList):
     if (cal == 'owl2'):    
 	    massGridName = bigDataDir+"lensgrid_grid-"+cal+"_"+cal+".pkl"
     else:
-	    #massGridName = bigDataDir+"lensgrid_"+expName+"_"+gridName+"_"+cal+ "_v" + version+".pkl"
-	    massGridName = bigDataDir+"lensgrid_SO-v3-base-40_grid-default_CMB_all_v1.0.pkl"
+	    massGridName = bigDataDir+"lensgrid_"+expName+"_"+gridName+"_"+cal+ "_v" + version+".pkl"
+	    
 
     mexp_edges, z_edges, lndM = pickle.load(open(massGridName,"rb"))
 

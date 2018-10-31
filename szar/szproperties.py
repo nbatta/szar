@@ -570,8 +570,7 @@ class Profiles(object):
 
             area_fac += 2.0*np.pi*dtht*thta[kk]
             
-        sig_all =(2*sig - sig2) * 1e-3 * self.cc.c['SIGMA_T'] * self.cc.c['TCMBmuK'] * \
-            / self.cc.c['MP'] / (np.pi * np.radians(tht/60.)**2) # ((2. + 2.*self.XH)/(3.+5.*self.XH)) 
+        sig_all =(2*sig - sig2) * 1e-3 * self.cc.c['SIGMA_T'] * self.cc.c['TCMBmuK'] / self.cc.c['MP'] / (np.pi * np.radians(tht/60.)**2) # ((2. + 2.*self.XH)/(3.+5.*self.XH)) 
         sig_all_p = (2*sig_p - sig2_p) * self.cc.c['SIGMA_T']/(self.cc.c['ME']*self.cc.c['C']**2) / area_fac * \
             self.cc.c['TCMBmuK'] # muK # * ((2. + 2.*self.XH)/(3.+5.*self.XH))# muK
         
