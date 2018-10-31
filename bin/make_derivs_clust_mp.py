@@ -15,6 +15,7 @@ from szar.clustering import Clustering
 from szar.counts import ClusterCosmology
 from szar.szproperties import SZ_Cluster_Model
 import szar.fisher as sfisher
+from orphics.io import dict_from_section, list_from_config
 import numpy as np
 
 import sys
@@ -24,45 +25,74 @@ from multiprocessing import Pool
 from multiprocessing.dummy import Pool as ThreadPool 
 
 class Derivs_Clustering(object):
-    def __init__(self):
+    def __init__(self, config):
         self.params = None
-        self.step = 1
         self.poolsize = 2
+        self.config = config
 
-    def instantiate_params(self, config):
-        manualParamList = config.get('general','manualParams').split(',')
+    def instantiate_params(self):
+        manual_param_list = self.config.get('general','manualParams').split(',')
 
-        paramList = []
-        fparams = {}
-        stepSizes = {}
-        for (key, val) in config.items('params'):
-            if key in manualParamList: continue
+        paramlist = []
+        paramdict = {}
+        stepsizes = {}
+        for (key, val) in self.config.items('params'):
+            if key in manual_param_list:
+                continue
             if ',' in val:
                 param, step = val.split(',')
-                paramList.append(key)
-                fparams[key] = float(param)
-                stepSizes[key] = float(step)
+                paramlist.append(key)
+                paramdict[key] = float(param)
+                stepsizes[key] = float(step)/2
             else:
-                fparams[key] = float(val)
-        self.params = []
-    
-    def pspec(self, params):
-        pass
+                paramdict[key] = float(val)
+                stepsizes[key] = 0
+        
+        param_ups = []
+        param_downs = []
+        for key,val in paramdict.items():
+            param_up = paramdict.copy()
+            param_down = paramdict.copy()
 
-    def veffective(self, params):
-        pass
+            param_up[key] = val + stepsizes[key]
+            param_down[key] = val - stepsizes[key]
+
+            param_ups.append(param_up)
+            param_downs.append(param_down)
+
+        self.params = paramdict
+        self.param_ups = param_ups
+        self.param_downs = param_downs
+
+    def instantiate_grids(self):
+        mubins = list_from_config(self.config,'general','mubins')
+        self.mus = np.linspace(mubins[0],mubins[1],int(mubins[2])+1)
+
+        clst = Clustering()
+        self.ks = clst.HMF.kh
+        self.ps_fid = clst.fine_ps_bar(self.mus)
+        self.veff_fid = clst.V_eff(self.mus)
+
+        self.deltaks = np.gradient(ks)
+        self.deltamus =np.gradient(mus)
+
+    def _pspec(self, params):
+        constdict = dict_from_section(self.config,'constants')
+        clttfile = self.config.get('general','clttfile')
+        cc = ClusterCosmology(paramDict=params, constDict=constdict, clTTFixFix=clttfile)
+        clst = Clustering(self.exp_name, self.grid_name, self.version, cc)
+        return clst.fine_ps_bar(self.mus)
 
     def make_derivs(self):
-        pool = ThreadPool(self.poolsize)
+        pool = Pool(self.poolsize) #Can also make a ThreadPool
 
-        ps_list = pool.map(self.pspec, self.param_gradients)
+        ps_ups = pool.map(self._pspec, self.param_ups)
+        ps_downs = pool.map(self._pspec, self.param_downs)
 
         pool.close()
         pool.join()
 
-        veffs = self.veffective(self.params)
-
-        fisher_factors = (ps**2 * self.ks**2 * self.deltaks * self.deltamus) / (8 * np.pi) 
+        fisher_factors = (self.ps_fid**2 * self.veff_fid * self.ks**2 * self.deltaks * self.deltamus) / (8 * np.pi) 
 
         derivatives = (ps_ups - ps_downs) / (2 * self.step)
 
@@ -75,7 +105,8 @@ if __name__ == '__main__':
     config.optionxform=str
     config.read(INIFILE)
 
-    deriv = Derivs_Clustering()
-    deriv.instantiate_params(config)
+    deriv = Derivs_Clustering(config)
+    deriv.instantiate_params()
+    deriv.instantiate_grids()
 
     #fish_derivs, fish_facs = deriv.make_derivs()
