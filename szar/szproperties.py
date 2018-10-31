@@ -571,9 +571,9 @@ class Profiles(object):
             area_fac += 2.0*np.pi*dtht*thta[kk]
             
         sig_all =(2*sig - sig2) * 1e-3 * self.cc.c['SIGMA_T'] * self.cc.c['TCMBmuK'] * \
-            ((2. + 2.*self.XH)/(3.+5.*self.XH)) / self.cc.c['MP'] / (np.pi * np.radians(tht/60.)**2) 
+            / self.cc.c['MP'] / (np.pi * np.radians(tht/60.)**2) # ((2. + 2.*self.XH)/(3.+5.*self.XH)) 
         sig_all_p = (2*sig_p - sig2_p) * self.cc.c['SIGMA_T']/(self.cc.c['ME']*self.cc.c['C']**2) / area_fac * \
-            self.cc.c['TCMBmuK'] * ((2. + 2.*self.XH)/(3.+5.*self.XH))# muK
+            self.cc.c['TCMBmuK'] # muK # * ((2. + 2.*self.XH)/(3.+5.*self.XH))# muK
         
         sig_all /=(self.cc.H0/100.)
         sig_all_p /= (self.cc.H0/100.)
@@ -671,13 +671,13 @@ class Profiles(object):
         sig  = 2.0*np.pi*dtht *np.sum(thta *rho2D_beam) 
         sig2 = 2.0*np.pi*dtht2*np.sum(thta2*rho2D2_beam) 
 
-        sig_all_beam = (2*sig - sig2) * 1e-3 * self.cc.c['SIGMA_T'] * self.cc.c['TCMBmuK'] * ((2. + 2.*self.XH)/(3.+5.*self.XH)) / self.cc.c['MP'] / (np.pi * np.radians(tht/60.)**2)
+        sig_all_beam = (2*sig - sig2) * 1e-3 * self.cc.c['SIGMA_T'] * self.cc.c['TCMBmuK'] / self.cc.c['MP'] / (np.pi * np.radians(tht/60.)**2) # * ((2. + 2.*self.XH)/(3.+5.*self.XH)) 
         
         sig_p  = 2.0*np.pi*dtht*np.sum(thta*Pth2D_beam)
         sig2_p = 2.0*np.pi*dtht2*np.sum(thta2*Pth2D2_beam)
         
         sig_all_p_beam = (2*sig_p - sig2_p) * self.cc.c['SIGMA_T']/(self.cc.c['ME']*self.cc.c['C']**2) / area_fac * \
-            self.cc.c['TCMBmuK'] * ((2. + 2.*self.XH)/(3.+5.*self.XH))# muK
+            self.cc.c['TCMBmuK'] # muK #* ((2. + 2.*self.XH)/(3.+5.*self.XH))# muK
     
         sig_all_beam /= (self.cc.H0/100.)
         sig_all_p_beam /= (self.cc.H0/100.) 
