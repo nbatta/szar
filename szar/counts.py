@@ -407,7 +407,7 @@ class Halo_MF(object):
         dV_dz = DA_z**2 * (1.+z_arr)**2
         for i in range (z_arr.size):
             dV_dz[i] /= (self.cc.results.h_of_z(z_arr[i]))
-        dV_dz *= (old_div(self.cc.H0,100.))**3. # was h0
+        dV_dz *= (self.cc.H0/100.)**3. # was h0
         self.dVdz = dV_dz
         #return dV_dz
 
