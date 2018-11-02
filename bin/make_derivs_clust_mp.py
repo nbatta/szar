@@ -19,9 +19,9 @@ from orphics.io import dict_from_section, list_from_config
 import numpy as np
 
 # etc
-import sys
 import pickle as pickle
 import argparse
+import time
 
 class Derivs_Clustering(object):
     def __init__(self, inifile):
@@ -62,24 +62,26 @@ class Derivs_Clustering(object):
                 stepsizes[key] = float(step)/2
             else:
                 paramdict[key] = float(val)
-                stepsizes[key] = 0
+                stepsizes[key] = None
         
         param_ups = []
         param_downs = []
         for key,val in paramdict.items():
-            param_up = paramdict.copy()
-            param_down = paramdict.copy()
+            if stepsizes[key] is not None:
+                param_up = paramdict.copy()
+                param_down = paramdict.copy()
 
-            param_up[key] = val + stepsizes[key]
-            param_down[key] = val - stepsizes[key]
+                param_up[key] = val + stepsizes[key]
+                param_down[key] = val - stepsizes[key]
 
-            param_ups.append(param_up)
-            param_downs.append(param_down)
+                param_ups.append(param_up)
+                param_downs.append(param_down)
 
         self.params = paramdict
         self.param_ups = param_ups
         self.param_downs = param_downs
-        self.steps = np.fromiter(stepsizes.values(), dtype=float)
+        stepdict = {key:value for key,value in stepsizes.items() if value is not None}
+        self.steps = np.fromiter(stepdict.values(), dtype=float)
 
     def instantiate_grids(self):
         mubins = list_from_config(self.config,'general','mubins')
@@ -110,11 +112,12 @@ class Derivs_Clustering(object):
         deltamus = self.deltamus[np.newaxis, np.newaxis, ...]
 
         print(f"ks: {ks.shape} \ndeltaks: {deltaks.shape} \ndeltamus: {deltamus.shape}")
-        fisher_factors = (self.ps_fid**2 * self.veff_fid * ks**2 * deltaks * deltamus) / (8 * np.pi) 
+        fisher_factors = (self.ps_fid**2 * self.veff_fid * ks**2 * deltaks * deltamus) / (8 * np.pi**2) 
 
         steps = self.steps[..., np.newaxis, np.newaxis, np.newaxis]
 
         derivatives = (ps_ups - ps_downs) / (2 * steps)
+        derivatives = np.nan_to_num(derivatives)
 
         return derivatives, fisher_factors
 
@@ -123,6 +126,7 @@ if __name__ == '__main__':
     DIR = "datatest/"
     FISH_FAC_NAME = "fish_factor.npy"
     FISH_DERIV_NAME = "fish_derivs.npy" 
+    currenttime = time.strftime("%Y-%m-%d-%H-%M-%S-%Z", time.localtime())
 
     deriv = Derivs_Clustering(INIFILE)
     deriv.instantiate_params()
@@ -130,6 +134,6 @@ if __name__ == '__main__':
 
     fish_derivs, fish_facs = deriv.make_derivs()
 
-    np.save(DIR + deriv.saveid + FISH_FAC_NAME, fish_facs)
-    np.save(DIR + deriv.saveid + FISH_DERIV_NAME, fish_derivs)
+    np.save(DIR + deriv.saveid + '_' + FISH_FAC_NAME + '_' + currenttime, fish_facs)
+    np.save(DIR + deriv.saveid + '_' + FISH_DERIV_NAME + '_' + currenttime, fish_derivs)
 
