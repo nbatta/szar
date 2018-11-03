@@ -270,7 +270,7 @@ class SZ_Cluster_Model(object):
     def quickVar(self,M,z,tmaxN=5.,numts=1000):
 
         R500 = self.cc.rdel_c(M,z,500.).flatten()[0] # R500 in Mpc/h 
-        DAz = self.cc.results.angular_diameter_distance(z) * (old_div(self.cc.H0,100.))
+        DAz = self.cc.results.angular_diameter_distance(z) * (self.cc.H0/100.)
         th500 = old_div(R500,DAz)
 
         gnorm = 2.*np.pi*(th500**2.)*self.gnorm_pre
@@ -304,11 +304,11 @@ class SZ_Cluster_Model(object):
 
     def Prof_tilde(self,ell,M,z):
         dr = 0.01
-        R500 = old_div(self.cc.rdel_c(M,z,500.).flatten()[0], (old_div(self.cc.H0,100.))) # Mpc No hs
+        R500 = self.cc.rdel_c(M,z,500.).flatten()[0] / (self.cc.H0/100.) # Mpc No hs
         DA_z = self.cc.results.angular_diameter_distance(z) # No hs
         rr = np.arange(dr,R500*5.0,dr)
-        M_fac = M / (3e14) * (old_div(100.,self.cc.H0))
-        P500 = 1.65e-3 * (old_div(100.,self.cc.H0))**2 * M_fac**(old_div(2.,3.)) * self.cc.E_z(z) #keV cm^3
+        M_fac = M / (3e14) * (100./self.cc.H0)
+        P500 = 1.65e-3 * (100./self.cc.H0)**2 * M_fac**(old_div(2.,3.)) * self.cc.E_z(z) #keV cm^3
         intgrl = P500*np.sum(self.GNFW(old_div(rr,R500))*rr**2*np.sin(ell*rr/DA_z) / (ell*rr/DA_z) ) * dr
         ans = 4.0*np.pi/DA_z**2 * intgrl
         ans *= self.cc.c['SIGMA_T']/(self.cc.c['ME']*self.cc.c['C']**2)*self.cc.c['MPC2CM']*self.cc.c['eV_2_erg']*1000.0
@@ -379,7 +379,7 @@ class SZ_Cluster_Model(object):
         return P_func
 
     def Y_M(self,MM,zz):
-        DA_z = self.cc.results.angular_diameter_distance(zz) * (old_div(self.cc.H0,100.))
+        DA_z = self.cc.results.angular_diameter_distance(zz) * (self.cc.H0/100.)
 
         Y_star = self.scaling['Y_star'] #= 2.42e-10 #sterads
         #dropped h70 factor
@@ -526,7 +526,7 @@ class Profiles(object):
         NNR = self.NNR
         drint = 1e-3 * (self.cc.c['MPC2CM'])
     
-        AngDist = self.cc.results.angular_diameter_distance(z)
+        AngDist = self.cc.results.angular_diameter_distance(z) * self.cc.H0/100.
 
         rvir = self.cc.rdel_c(Mvir,z,200)#/cc.c['MPC2CM']
         
@@ -570,11 +570,13 @@ class Profiles(object):
 
             area_fac += 2.0*np.pi*dtht*thta[kk]
             
-        sig_all =(2*sig - sig2) * 1e-3 * self.cc.c['SIGMA_T'] * self.cc.c['TCMBmuK'] * \
-            ((2. + 2.*self.XH)/(3.+5.*self.XH)) / self.cc.c['MP'] / (np.pi * np.radians(tht/60.)**2) 
+        sig_all =(2*sig - sig2) * 1e-3 * self.cc.c['SIGMA_T'] * self.cc.c['TCMBmuK'] / self.cc.c['MP'] / (np.pi * np.radians(tht/60.)**2) # ((2. + 2.*self.XH)/(3.+5.*self.XH)) 
         sig_all_p = (2*sig_p - sig2_p) * self.cc.c['SIGMA_T']/(self.cc.c['ME']*self.cc.c['C']**2) / area_fac * \
-            self.cc.c['TCMBmuK'] * ((2. + 2.*self.XH)/(3.+5.*self.XH))# muK
-            
+            self.cc.c['TCMBmuK'] # muK # * ((2. + 2.*self.XH)/(3.+5.*self.XH))# muK
+        
+        sig_all /=(self.cc.H0/100.)
+        sig_all_p /= (self.cc.H0/100.)
+
         return sig_all,sig_all_p
 
     def project_prof_beam_sim_interpol(self,tht,Mvir,z,rho_sim,Pth_sim,test=False):
@@ -585,7 +587,7 @@ class Profiles(object):
         fwhm = self.fwhm
 
         drint = 1e-3 * (self.cc.c['MPC2CM'])
-        AngDist = self.cc.results.angular_diameter_distance(z)
+        AngDist = self.cc.results.angular_diameter_distance(z) * self.cc.H0/100.
         disc_fac = self.disc_fac
         l0 = self.l0 
         NNR = self.NNR 
@@ -605,8 +607,8 @@ class Profiles(object):
         r_ext = AngDist*np.arctan(np.radians(tht/60.))
         r_ext2 = AngDist*np.arctan(np.radians(tht*disc_fac/60.))
         
-        rad = (np.arange(1e4) + 1.0)/1e3 #in MPC
-        rad2 = (np.arange(1e4) + 1.0)/1e3 #in MPC
+        rad = (np.arange(1e4) + 1.0)/1e3 #in MPC/h
+        rad2 = (np.arange(1e4) + 1.0)/1e3 #in MPC/h
         
         radlim = r_ext
         radlim2 = r_ext2
@@ -668,14 +670,17 @@ class Profiles(object):
         sig  = 2.0*np.pi*dtht *np.sum(thta *rho2D_beam) 
         sig2 = 2.0*np.pi*dtht2*np.sum(thta2*rho2D2_beam) 
 
-        sig_all_beam = (2*sig - sig2) * 1e-3 * self.cc.c['SIGMA_T'] * self.cc.c['TCMBmuK'] * ((2. + 2.*self.XH)/(3.+5.*self.XH)) / self.cc.c['MP'] / (np.pi * np.radians(tht/60.)**2)
+        sig_all_beam = (2*sig - sig2) * 1e-3 * self.cc.c['SIGMA_T'] * self.cc.c['TCMBmuK'] / self.cc.c['MP'] / (np.pi * np.radians(tht/60.)**2) # * ((2. + 2.*self.XH)/(3.+5.*self.XH)) 
         
         sig_p  = 2.0*np.pi*dtht*np.sum(thta*Pth2D_beam)
         sig2_p = 2.0*np.pi*dtht2*np.sum(thta2*Pth2D2_beam)
         
         sig_all_p_beam = (2*sig_p - sig2_p) * self.cc.c['SIGMA_T']/(self.cc.c['ME']*self.cc.c['C']**2) / area_fac * \
-            self.cc.c['TCMBmuK'] * ((2. + 2.*self.XH)/(3.+5.*self.XH))# muK
+            self.cc.c['TCMBmuK'] # muK #* ((2. + 2.*self.XH)/(3.+5.*self.XH))# muK
     
+        sig_all_beam /= (self.cc.H0/100.)
+        sig_all_p_beam /= (self.cc.H0/100.) 
+
         return sig_all_beam, sig_all_p_beam
 
     def make_a_profile_test(self,thta_arc,M,z):

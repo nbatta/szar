@@ -17,11 +17,6 @@ from scipy.interpolate import interp1d
 from scipy.interpolate import UnivariateSpline
 #from scipy.integrate import simps
 
-def getPSsum(psbar,kbins,z_edges,mubins):
-    
-
-    return ans
-
 class Clustering(object):
     def __init__(self,iniFile,expName,gridName,version,ClusterCosmology):
         Config = SafeConfigParser()
@@ -201,7 +196,7 @@ class Clustering(object):
         #    ans[:,:,i] = self.HMF.dVdz[i]*nbar[i]**2*ps_tilde[:,:,i]*np.diff(z_arr[i])/self.Norm_Sfunc(fsky)[i]
         return ans
 
-    def fine_ps_bar(self,mu, nsubsamples):
+    def fine_ps_bar(self,mu, nsubsamples=100):
         zs = self.HMF.zarr
         ks = self.HMF.kh
         zgridedges = self.HMF.zarr_edges
@@ -229,7 +224,7 @@ class Clustering(object):
         values = integral/s_norm
         return values
 
-    def V_eff(self,mu,nsubsamples):
+    def V_eff(self,mu,nsubsamples=100):
         V0 = self.v0( nsubsamples)
         V0 = np.reshape(V0, (V0.size,1))
 

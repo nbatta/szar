@@ -63,10 +63,12 @@ Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
 clttfile = Config.get('general','clttfile')
 
-gridName = "grid-owl2"
+#gridName = "grid-owl2"
+gridName = "grid-default"
 #version = "0.3_ysig_0.127"
 version = "1.0"#"0.7"
-cal = "owl2"#"CMB_all"
+#cal = "owl2"#"CMB_all"
+cal = "CMB_all_PICO"
 #cal = "CMB_pol_miscentered"
 
 from orphics.io import dict_from_section, list_from_config
@@ -110,6 +112,7 @@ for expName,col in zip(expList,colList):
 	    massGridName = bigDataDir+"lensgrid_grid-"+cal+"_"+cal+".pkl"
     else:
 	    massGridName = bigDataDir+"lensgrid_"+expName+"_"+gridName+"_"+cal+ "_v" + version+".pkl"
+	    
 
     mexp_edges, z_edges, lndM = pickle.load(open(massGridName,"rb"))
 
