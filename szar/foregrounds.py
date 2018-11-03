@@ -71,18 +71,26 @@ def power_tsz_cib(ells,nu1,nu2=None,fill_type="extrapolate",al_cib=None,Td=None,
     return cls * tSZ_CIB_nu(nu1,nu2,al_cib=al_cib,Td=Td,A_tsz=A_tsz,A_cibc=A_cibc,zeta=zeta)
 
 def power_cibp(ells,nu1,nu2=None,A_cibp=None,al_cib=None,Td=None):
-    if A_cibp is None: A_cibp = default_constants['A_cibp']
     if nu2 is None: nu2 = nu1
+    ans = power_cibp_raw(ells,A_cibp,al_cib,Td) * cib_nu(nu1,al_cib,Td)*cib_nu(nu2,al_cib,Td)
+    return ans
+
+def power_cibp_raw(ells,A_cibp=None,al_cib=None,Td=None):
+    if A_cibp is None: A_cibp = default_constants['A_cibp']
     ell0sec = default_constants['ell0sec']
-    ans = A_cibp * (ells/ell0sec) ** 2.0 * cib_nu(nu1,al_cib,Td)*cib_nu(nu2,al_cib,Td) *2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
+    ans = A_cibp * (ells/ell0sec) ** 2.0  *2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
+    return ans
+
+def power_cibc_raw(ells,A_cibc=None,n_cib=None,al_cib=None,Td=None):
+    if A_cibc is None: A_cibc = default_constants['A_cibc']
+    if n_cib is None: n_cib = default_constants['n_cib']
+    ell0sec = default_constants['ell0sec']
+    ans = A_cibc * (ells/ell0sec) ** (2.-n_cib)  *2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
     return ans
 
 def power_cibc(ells,nu1,nu2=None,A_cibc=None,n_cib=None,al_cib=None,Td=None):
-    if A_cibc is None: A_cibc = default_constants['A_cibc']
-    if n_cib is None: n_cib = default_constants['n_cib']
     if nu2 is None: nu2 = nu1
-    ell0sec = default_constants['ell0sec']
-    ans = A_cibc * (ells/ell0sec) ** (2.-n_cib) * cib_nu(nu1,al_cib,Td)*cib_nu(nu2,al_cib,Td) *2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
+    ans =  power_cibc_raw(ells,A_cibc,n_cib,al_cib,Td) * cib_nu(nu1,al_cib,Td)*cib_nu(nu2,al_cib,Td) 
     return ans
 
 def power_radps(ells,nu1,nu2=None,A_ps=None,al_ps=None):
