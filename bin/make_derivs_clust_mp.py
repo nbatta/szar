@@ -111,29 +111,32 @@ class Derivs_Clustering(object):
         deltaks = self.deltaks[..., np.newaxis, np.newaxis]
         deltamus = self.deltamus[np.newaxis, np.newaxis, ...]
 
-        print(f"ks: {ks.shape} \ndeltaks: {deltaks.shape} \ndeltamus: {deltamus.shape}")
         fisher_factors = (self.ps_fid**2 * self.veff_fid * ks**2 * deltaks * deltamus) / (8 * np.pi**2) 
 
         steps = self.steps[..., np.newaxis, np.newaxis, np.newaxis]
 
         derivatives = (ps_ups - ps_downs) / (2 * steps)
-        derivatives = np.nan_to_num(derivatives)
 
-        return derivatives, fisher_factors
+        return derivatives, fisher_factors, ps_ups, ps_downs
 
 if __name__ == '__main__':
     INIFILE = "input/pipeline.ini"
     DIR = "datatest/"
-    FISH_FAC_NAME = "fish_factor.npy"
-    FISH_DERIV_NAME = "fish_derivs.npy" 
+    FISH_FAC_NAME = "fish_factor"
+    FISH_DERIV_NAME = "fish_derivs" 
+    UPNAME = "psups"
+    DOWNNAME = "psdowns"
+    STEPNAME = "steps"
     currenttime = time.strftime("%Y-%m-%d-%H-%M-%S-%Z", time.localtime())
 
     deriv = Derivs_Clustering(INIFILE)
     deriv.instantiate_params()
     deriv.instantiate_grids()
 
-    fish_derivs, fish_facs = deriv.make_derivs()
+    fish_derivs, fish_facs, ups, downs = deriv.make_derivs()
 
     np.save(DIR + deriv.saveid + '_' + FISH_FAC_NAME + '_' + currenttime, fish_facs)
     np.save(DIR + deriv.saveid + '_' + FISH_DERIV_NAME + '_' + currenttime, fish_derivs)
-
+    np.save(DIR + deriv.saveid + '_' + UPNAME + '_' + currenttime, ups)
+    np.save(DIR + deriv.saveid + '_' + DOWNNAME + '_' + currenttime, downs)
+    np.save(DIR + deriv.saveid + '_' + STEPNAME + '_' + currenttime, deriv.steps)

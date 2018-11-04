@@ -1,6 +1,7 @@
 import numpy as np
 from configparser import ConfigParser
 from orphics.io import dict_from_section, list_from_config
+from szar.counts import ClusterCosmology
 from szar.clustering import Clustering
 from scipy.integrate import simps
 import matplotlib.pyplot as plt
@@ -25,37 +26,47 @@ def _test_veff(cc, mu, fsky, nsubsamples):
     return ans
 
 INIFILE = "input/pipeline.ini"
+expName = 'S4-1.0-CDT'
+gridName = 'grid-owl2'
+version = '0.6'
+
+Config = ConfigParser()
+Config.optionxform=str
+Config.read(INIFILE)
+clttfile = Config.get('general','clttfile')
+constDict = dict_from_section(Config,'constants')
+
+fparams = {}
+for (key, val) in Config.items('params'):
+    if ',' in val:
+        param, step = val.split(',')
+        fparams[key] = float(param)
+    else:
+        fparams[key] = float(val)
 
 expName = 'S4-1.0-CDT'
 gridName = 'grid-owl2'
 version = '0.6'
-clst = Clustering(INIFILE,expName,gridName,version)
+cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
+clst = Clustering(INIFILE,expName,gridName,version,cc)
 
 fsky = 1.
 
 ks = clst.HMF.kh
-delta_ks = np.diff(ks)
+delta_ks = np.gradient(ks)
 zs = clst.HMF.zarr[1:-1]
-mus = np.array([0])
+mus = np.linspace(-1, 1, 9)
+deltamu = np.gradient(mus)
 
-ps_bars = clst.fine_ps_bar(mus, fsky, 100)[:,0,0]
-test_ps_bars = ps_bars/(4 * np.pi) #Again replicates errant 4 pis
+ps_bars = clst.fine_ps_bar(mus)
 
-v_effs = clst.V_eff(mus, fsky, 100)[:,0,0]
-test_veffs = _test_veff(clst, mus, fsky, 100)[:,0,0]
+v_effs = clst.V_eff(mus)
 
-noise = np.sqrt(8) * np.pi * np.sqrt(1/(v_effs[:-1] * (ks**2)[:-1] * delta_ks)) * ps_bars[:-1]
-test_noise = np.sqrt(1/(test_veffs[:-1] * (ks**2)[:-1] * delta_ks)) * test_ps_bars[:-1] # Noise with the incorrect factors of 4 pi
+noise = np.sqrt(8) * np.pi * np.sqrt(1/(deltamu * v_effs * (ks**2)[..., np.newaxis, np.newaxis] * delta_ks[..., np.newaxis, np.newaxis])) * ps_bars
 
-plt.plot(ks, ps_bars, label=r"$\bar P(k, \mu = 0)$")
-plt.plot(ks[:-1], noise, label=r"noise")
-plt.plot(ks[:-1], ps_bars[:-1]/noise, label=r"$SNR$")
-plt.plot(ks[:-1], test_noise, label=r"$4\pi$ scaled noise")
-plt.xscale('log')
-plt.yscale('log')
+snr = ps_bars/noise
 
-plt.xlabel(r'$k$')
-#plt.ylabel(r'$ P_{lin}$')
-plt.legend(loc='best')
+print(noise.shape)
+print(np.einsum('ijk,ijk', noise, noise))
 
-plt.savefig('noise_test.svg')
+print(np.sum(snr**2))
