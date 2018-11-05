@@ -14,11 +14,7 @@ import numpy as np
 import argparse
 
 from orphics.io import FisherPlots
-
-def make_fisher(derivs, prefactors):
-    fisher_terms = prefactors[np.newaxis, ...] * derivs
-    fisher_mat = np.einsum('aijk,bijk->ab', derivs, fisher_terms)
-    return fisher_mat
+from szar.derivatives import Derivs_Clustering, make_fisher
 
 def fisher_validation_tests(ups, downs, steps, derivs, prefacs):
     print("Running some checks on the fisher matrix...")
@@ -49,22 +45,21 @@ def fisher_validation_tests(ups, downs, steps, derivs, prefacs):
     print(f"the max value of the test fisher SHOULD be {theoryval}")
     print(f"the actual max value of the test fisher is {testfisher.max()}")
 
-def make_constraint_curves(config, fishmat):
+def make_constraint_curves_orphics(config, fishmat, expname, gridname, version):
     fishSection = "lcdm"
     paramList = config.get('fisher-'+fishSection,'paramList').split(',')
     paramLatexList = config.get('fisher-'+fishSection,'paramLatexList').split(',')
 
-    fparams = {}
-    for (key, val) in config.items('params'):
-        param = val.split(',')[0]
-        fparams[key] = float(param)
+    deriv = Derivs_Clustering(INIFILE, expname, gridname, version)
+    deriv.instantiate_params()
+    fparams = deriv.params
 
     fplots = FisherPlots()
     fplots.startFig()
-
     fplots.addSection(fishSection,paramList,paramLatexList,fparams)
-    fplots.addFisher(fishSection,'test', fishmat)
-    fplots.plotTri(fishSection,paramList,['test'],labels=['SO-v2'],saveFile="figs/constraints_test.png",loc='best')
+    fplots.addFisher(fishSection,'AAAAAAB', fishmat)
+
+    fplots.plotTri(fishSection,paramList,['AAAAAAB'],labels=['S4'],saveFile="figs/ellipses_test.png",loc='best')
 
 if __name__ == '__main__':
     #Reads in experimental and grid parameters for obtaining derivatives files
@@ -98,4 +93,4 @@ if __name__ == '__main__':
     fisher = fisher[:-1]
     fisher = fisher.T[:-1].T
     
-    make_constraint_curves(config, fisher) 
+    make_constraint_curves(config, fisher, args.expname, args.gridname, args.version) 
