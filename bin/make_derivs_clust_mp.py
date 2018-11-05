@@ -111,7 +111,7 @@ class Derivs_Clustering(object):
         deltaks = self.deltaks[..., np.newaxis, np.newaxis]
         deltamus = self.deltamus[np.newaxis, np.newaxis, ...]
 
-        fisher_factors = (self.ps_fid**2 * self.veff_fid * ks**2 * deltaks * deltamus) / (8 * np.pi**2) 
+        fisher_factors = (self.veff_fid * ks**2 * deltaks * deltamus) / (8 * np.pi**2 * self.ps_fid**2) 
 
         steps = self.steps[..., np.newaxis, np.newaxis, np.newaxis]
 
