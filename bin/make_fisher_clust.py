@@ -11,6 +11,9 @@ else:
   ConfigParser = configparser.ConfigParser
 
 import numpy as np
+import argparse
+
+from orphics.io import FisherPlots
 
 def make_fisher(derivs, prefactors):
     fisher_terms = prefactors[np.newaxis, ...] * derivs
@@ -18,6 +21,9 @@ def make_fisher(derivs, prefactors):
     return fisher_mat
 
 def fisher_validation_tests(ups, downs, steps, derivs, prefacs):
+    print("Running some checks on the fisher matrix...")
+    print("\n")
+
     assert np.array_equal((ups - downs)/(2 * steps[..., np.newaxis, np.newaxis, np.newaxis]), derivs)
     derivmax = np.abs(derivs).max()
     derivmin = np.abs(derivs).min()
@@ -33,14 +39,49 @@ def fisher_validation_tests(ups, downs, steps, derivs, prefacs):
     fishermat = make_fisher(derivs, prefacs)
     print(f"the actual max value of the fisher is {np.abs(fishermat).max()}")
 
-if __name__ == '__main__':
-    DIR = "datatest/"
-    DERIVSFILE = "S4-1.0-CDT_grid-owl2_v0.6_fish_derivs_2018-11-02-14-56-36-EDT.npy"
-    FACTORFILE = "S4-1.0-CDT_grid-owl2_v0.6_fish_factor_2018-11-02-14-56-36-EDT.npy"
-    UPFILE = "S4-1.0-CDT_grid-owl2_v0.6_psups_2018-11-02-14-56-36-EDT.npy"
-    DOWNFILE = "S4-1.0-CDT_grid-owl2_v0.6_psdowns_2018-11-02-14-56-36-EDT.npy"
-    STEPFILE = "S4-1.0-CDT_grid-owl2_v0.6_steps_2018-11-02-14-56-36-EDT.npy"
+    print("\n")
 
+    print("creating a test fisher to see if sum is being done right...")
+    a = np.ones((nparams, nks, nzs, nmus))
+    b = np.ones((nks, nzs, nmus))
+    testfisher = make_fisher(a, b)
+    theoryval = nks * nzs * nmus
+    print(f"the max value of the test fisher SHOULD be {theoryval}")
+    print(f"the actual max value of the test fisher is {testfisher.max()}")
+
+def make_constraint_curves(config, fishmat):
+    fishSection = "lcdm"
+    paramList = config.get('fisher-'+fishSection,'paramList').split(',')
+    paramLatexList = config.get('fisher-'+fishSection,'paramLatexList').split(',')
+
+    fparams = {}
+    for (key, val) in config.items('params'):
+        param = val.split(',')[0]
+        fparams[key] = float(param)
+
+    fplots = FisherPlots()
+    fplots.startFig()
+
+    fplots.addSection(fishSection,paramList,paramLatexList,fparams)
+    fplots.addFisher(fishSection,'test', fishmat)
+    fplots.plotTri(fishSection,paramList,['test'],labels=['SO-v2'],saveFile="figs/constraints_test.png",loc='best')
+
+if __name__ == '__main__':
+    #Reads in experimental and grid parameters for obtaining derivatives files
+    parser = argparse.ArgumentParser()
+    parser.add_argument("expname", help="name of experiment")
+    parser.add_argument("gridname", help="name of grid")
+    parser.add_argument("version", help="version number")
+    args = parser.parse_args()
+    saveid = args.expname + "_" + args.gridname + "_v" + args.version + '_'
+
+    DIR = "datatest/"
+    TIMESTAMP = "_2018-11-05-10-26-09-EST"
+    DERIVSFILE = saveid + "fish_derivs" + TIMESTAMP + '.npy'
+    FACTORFILE = saveid + "fish_factor" + TIMESTAMP + '.npy'
+    UPFILE = saveid + "psups" + TIMESTAMP + '.npy'
+    DOWNFILE = saveid + "psdowns" + TIMESTAMP + '.npy'
+    STEPFILE = saveid + "steps" + TIMESTAMP + '.npy'
 
     fisher_derivs = np.load(DIR + DERIVSFILE)
     fisher_facs = np.load(DIR + FACTORFILE)
@@ -48,4 +89,13 @@ if __name__ == '__main__':
     ps_downs = np.load(DIR + DOWNFILE)
     steps = np.load(DIR + STEPFILE)
 
-    fisher_validation_tests(ps_ups, ps_downs, steps, fisher_derivs, fisher_facs)
+    config = ConfigParser()
+    config.optionxform=str
+    INIFILE = "input/pipeline.ini"
+    config.read(INIFILE)
+
+    fisher = make_fisher(fisher_derivs, fisher_facs)
+    fisher = fisher[:-1]
+    fisher = fisher.T[:-1].T
+    
+    make_constraint_curves(config, fisher) 
