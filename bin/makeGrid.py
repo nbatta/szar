@@ -278,7 +278,6 @@ if rank == 0:
         #doRayDeriv = False
         rayFid = None
         rayStep = None
-        pzcut = None
     
     clttfile = Config.get('general','clttfile')
 
