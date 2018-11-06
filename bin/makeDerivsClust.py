@@ -263,8 +263,8 @@ if rank==0:
         psbarup = dUps[param]
         psbardn = dDns[param]
         dpsbardp = (psbarup-psbardn)/stepSizes[param]
-        np.save(bigDataDir+"Nup_mzq_"+saveId+"_"+param,psbarup)
-        np.save(bigDataDir+"Ndn_mzq_"+saveId+"_"+param,psbardn)
+        np.save(bigDataDir+"psbarup_mukz_"+saveId+"_"+param,psbarup)
+        np.save(bigDataDir+"psbardn_mukz_"+saveId+"_"+param,psbardn)
         np.save(sfisher.deriv_root(bigDataDir,saveId)+param,dpsbardp)
         
 else:
