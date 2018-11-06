@@ -329,6 +329,7 @@ class Filters(object):
 
         if (theta1 == theta2):
             ans  = np.trapz(ells*Nell*beam**2*self.AP_filter(ells,theta1,self.disc_fac*theta1)**2,dx=np.diff(ells))
+            ans  /= 2*np.pi
         else:
             var1  = np.trapz(ells*Nell*beam**2*self.AP_filter(ells,theta1,self.disc_fac*theta1)**2,dx=np.diff(ells))
             var2  = np.trapz(ells*Nell*beam**2*self.AP_filter(ells,theta2,self.disc_fac*theta2)**2,dx=np.diff(ells))
