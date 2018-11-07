@@ -19,6 +19,7 @@ import numpy as np
 
 # etc
 import time
+import sys
 
 class Derivs_Clustering(object):
     def __init__(self, inifile, expname, gridname, version):
@@ -37,27 +38,35 @@ class Derivs_Clustering(object):
 
         self.saveid = self.expname + "_" + self.gridname + "_v" + self.version
 
-    def instantiate_params(self):
+    def instantiate_params(self, selected_params=None):
         manual_param_list = self.config.get('general','manualParams').split(',')
 
-        paramlist = []
         paramdict = {}
         stepsizes = {}
         for (key, val) in self.config.items('params'):
             if key in manual_param_list:
                 continue
+
             if ',' in val:
                 param, step = val.split(',')
-                paramlist.append(key)
                 paramdict[key] = float(param)
                 stepsizes[key] = float(step)/2
             else:
                 paramdict[key] = float(val)
                 stepsizes[key] = None
+
+        if selected_params is None:
+            selected_params = paramdict
+        else:
+            selected_params = {key:paramdict[key] for key in selected_params}
+            for key in selected_params.keys():
+                if stepsizes[key] is None:
+                    print("You selected a param that has no defined stepsize!")
+                    sys.exit()
         
         param_ups = []
         param_downs = []
-        for key,val in paramdict.items():
+        for key,val in selected_params.items():
             if stepsizes[key] is not None:
                 param_up = paramdict.copy()
                 param_down = paramdict.copy()
@@ -71,7 +80,7 @@ class Derivs_Clustering(object):
         self.params = paramdict
         self.param_ups = param_ups
         self.param_downs = param_downs
-        self.fisher_params = {key:value for key,value in paramdict.items() if stepsizes[key] is not None}
+        self.fisher_params = {key:value for key,value in selected_params.items() if stepsizes[key] is not None}
         stepdict = {key:value for key,value in stepsizes.items() if value is not None}
         self.steps = np.fromiter(stepdict.values(), dtype=float)
 
