@@ -25,6 +25,9 @@ def fisher_validation_tests(ups, downs, steps, derivs, prefacs):
     derivmin = np.abs(derivs).min()
     print(f"the max derivative abval is {np.format_float_scientific(derivmax)}")
     print(f"the min derivative abval is {derivmin}")
+    print("\n")
+
+    print(f"{derivs}")
 
     nparams,nks,nzs,nmus = derivs.shape
     prefacmax = np.abs(prefacs).max()
@@ -93,4 +96,5 @@ if __name__ == '__main__':
     fisher = fisher[:-1]
     fisher = fisher.T[:-1].T
     
-    make_constraint_curves(config, fisher, args.expname, args.gridname, args.version) 
+    #make_constraint_curves(config, fisher, args.expname, args.gridname, args.version) 
+    fisher_validation_tests(ps_ups, ps_downs, steps, fisher_derivs, fisher_facs)

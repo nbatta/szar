@@ -17,6 +17,7 @@ from szar.derivatives import Derivs_Clustering
 
 # etc
 import argparse
+import time
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -32,6 +33,7 @@ if __name__ == '__main__':
     UPNAME = "psups"
     DOWNNAME = "psdowns"
     STEPNAME = "steps"
+    PARAMSNAME = "params"
     currenttime = time.strftime("%Y-%m-%d-%H-%M-%S-%Z", time.localtime())
 
     deriv = Derivs_Clustering(INIFILE, args.expname, args.gridname, args.version)
@@ -45,3 +47,4 @@ if __name__ == '__main__':
     np.save(DIR + deriv.saveid + '_' + UPNAME + '_' + currenttime, ups)
     np.save(DIR + deriv.saveid + '_' + DOWNNAME + '_' + currenttime, downs)
     np.save(DIR + deriv.saveid + '_' + STEPNAME + '_' + currenttime, deriv.steps)
+    np.save(DIR + deriv.saveid + '_' + PARAMNAME + '_' + currenttime, deriv.fisher_params)
