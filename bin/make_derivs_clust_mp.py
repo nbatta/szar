@@ -22,9 +22,9 @@ import sys
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("expname", help="name of experiment")
-    parser.add_argument("gridname", help="name of grid")
-    parser.add_argument("version", help="version number")
+    parser.add_argument("-e", "--expname", help="name of experiment", default='S4-1.0-CDT')
+    parser.add_argument("-g", "--gridname", help="name of grid", default='grid-owl2')
+    parser.add_argument("-v", "--version", help="version number", default='0.6')
     parser.add_argument('-p', '--params', help='parameters to include in the derivative calculation', type=str, default='allParams')
     args = parser.parse_args()
     
@@ -51,16 +51,13 @@ if __name__ == '__main__':
     else:
         deriv.instantiate_params(selected_params)
 
-    print(deriv.params)
-    print(deriv.fisher_params)
+    deriv.instantiate_grids()
 
-    #deriv.instantiate_grids()
+    fish_derivs, fish_facs, ups, downs = deriv.make_derivs()
 
-    #fish_derivs, fish_facs, ups, downs = deriv.make_derivs()
-
-    #np.save(DIR + deriv.saveid + '_' + FISH_FAC_NAME + '_' + currenttime, fish_facs)
-    #np.save(DIR + deriv.saveid + '_' + FISH_DERIV_NAME + '_' + currenttime, fish_derivs)
-    #np.save(DIR + deriv.saveid + '_' + UPNAME + '_' + currenttime, ups)
-    #np.save(DIR + deriv.saveid + '_' + DOWNNAME + '_' + currenttime, downs)
-    #np.save(DIR + deriv.saveid + '_' + STEPNAME + '_' + currenttime, deriv.steps)
-    #np.save(DIR + deriv.saveid + '_' + PARAMNAME + '_' + currenttime, deriv.fisher_params)
+    np.save(DIR + deriv.saveid + '_' + FISH_FAC_NAME + '_' + currenttime, fish_facs)
+    np.save(DIR + deriv.saveid + '_' + FISH_DERIV_NAME + '_' + currenttime, fish_derivs)
+    np.save(DIR + deriv.saveid + '_' + UPNAME + '_' + currenttime, ups)
+    np.save(DIR + deriv.saveid + '_' + DOWNNAME + '_' + currenttime, downs)
+    np.save(DIR + deriv.saveid + '_' + STEPNAME + '_' + currenttime, deriv.steps)
+    np.save(DIR + deriv.saveid + '_' + PARAMSNAME + '_' + currenttime, deriv.fisher_params)
