@@ -70,6 +70,7 @@ def make_plots_fid(clst, figname, legendlog):
 def make_plots_upvdown(clst, ups, downs, factors, params, figname, dir_, legendloc):
     mus = np.linspace(-1,1,9)
     ks = clst.HMF.kh
+    zs = clst.HMF.zarr[1:-1]
     delta_ks = np.diff(ks)
 
     param_index = {key:index for index,key in enumerate(params.keys())}
@@ -92,8 +93,8 @@ def make_plots_upvdown(clst, ups, downs, factors, params, figname, dir_, legendl
 
     def _plot_ps(param, index):
         plt.plot(ks, ps_bars_fid[:,0,0], label=r"fid")
-        plt.plot(ks, ups[index][:,0,0], label=r"up")
-        plt.plot(ks, downs[index][:,0,0], label=r"down")
+        #plt.plot(ks, ups[index][:,0,0], label=r"up")
+        plt.plot(ks, downs[index][:,0,0], label=r"down", linestyle=":")
         plt.plot(ks, ps_bars_fid[:,0,0]/noise[:,0,0], label="SNR")
         plt.xscale('log')
         plt.yscale('log')
@@ -103,8 +104,44 @@ def make_plots_upvdown(clst, ups, downs, factors, params, figname, dir_, legendl
         plt.savefig(dir_ + f'{param}_updown.svg')
         plt.gcf().clear()
 
-    for param in params.keys():
-        _plot_ps_diff(param, param_index[param])
+    def _plot_table_ps(param, index):
+        zsamp_indices = np.linspace(0, zs.size, 4, dtype=int, endpoint=False)
+        musamp_indices = np.linspace(0, mus.size, 2, dtype=int, endpoint=False)
+
+        plt.rcParams["font.weight"] = "bold"
+        plt.rcParams["axes.labelweight"] = "bold"
+        #with sns.plotting_context("paper"):
+        fig, ax = plt.subplots(musamp_indices.size, zsamp_indices.size, sharex='col')
+        fig.set_figheight(6)
+        fig.set_figwidth(12)    
+        for mucount,muindex in enumerate(musamp_indices):
+            for zcount,zindex in enumerate(zsamp_indices):
+                ax[mucount, zcount].plot(ks, ps_bars_fid[:, zindex, muindex], label=r"fid")
+                ax[mucount, zcount].plot(ks, ups[index][:, zindex, muindex] - ps_bars_fid[:, zindex, muindex], label=f"${param}$ up diff")
+                ax[mucount, zcount].plot(ks, downs[index][:, zindex, muindex] - ps_bars_fid[:, zindex, muindex], label=f"${param}$ down diff")
+                ax[mucount, zcount].plot(ks, ps_bars_fid[:, zindex, muindex]/noise[:, zindex, muindex], label="SNR")
+                ax[mucount, zcount].set_yscale('log')
+                ax[mucount, zcount].set_xscale('log')
+
+        cols = [r'$z = {}$'.format(round(zs[zindex],3)) for zindex in zsamp_indices]
+        rows = [r'$\mu = {}$'.format(round(mus[muindex], 3)) for muindex in musamp_indices]
+
+        for axis, col in zip(ax[0], cols):
+            axis.set_title(col)
+
+        for axis, row in zip(ax[:,0], rows):
+            axis.set_ylabel(row, size='large')
+
+        #for axis in ax[-1]:
+        #    axis.set_xlabel(r'$k$')
+
+        fig.subplots_adjust(top=0.9, left=0.1, right=0.9, bottom=0.12)  # create some space below the plots by increasing the bottom-value
+        ax.flatten()[-2].legend(loc='upper center', bbox_to_anchor=(0.5, -0.12), ncol=4)
+        fig.tight_layout()
+        fig.savefig(dir_ + f'{param}_diff_table.svg')
+
+    #for param in params.keys():
+    _plot_ps('mnu', param_index['mnu'])
 
 def main():
     parser = argparse.ArgumentParser()
