@@ -26,9 +26,9 @@ if __name__ == '__main__':
     parser.add_argument("-g", "--gridname", help="name of grid", default='grid-owl2')
     parser.add_argument("-v", "--version", help="version number", default='0.6')
     parser.add_argument('-p', '--params', help='parameters to include in the derivative calculation', type=str, default='allParams')
+    parser.add_argument('-i', '--inifile', help='initialization file for pipeline parameters', type=str, default='input/pipeline.ini')
     args = parser.parse_args()
     
-    INIFILE = "input/pipeline.ini"
     DIR = "datatest/"
     FISH_FAC_NAME = "fish_factor"
     FISH_DERIV_NAME = "fish_derivs" 
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     PARAMSNAME = "params"
     currenttime = time.strftime("%Y-%m-%d-%H-%M-%S-%Z", time.localtime())
 
-    deriv = Derivs_Clustering(INIFILE, args.expname, args.gridname, args.version)
+    deriv = Derivs_Clustering(args.inifile, args.expname, args.gridname, args.version)
 
     selected_params = args.params.replace(' ', '').split(',')
     

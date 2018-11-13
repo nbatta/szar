@@ -67,46 +67,95 @@ def make_plots_fid(clst, figname, legendlog):
         plt.savefig(figname)
         plt.gcf().clear()
 
-def make_plots_upvdown(clst, ups, downs, factors, params, figname, dir_, legendloc):
+def _get_latex_params(inifile):
+    config = ConfigParser()
+    config.optionxform=str
+    config.read(inifile)
+
+    latex_param_list = config.items('fisher-clustering', 'paramLatexList')[0][1].split(',')
+    return latex_param_list
+
+def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, legendloc):
     mus = np.linspace(-1,1,9)
     ks = clst.HMF.kh
     zs = clst.HMF.zarr[1:-1]
     delta_ks = np.diff(ks)
 
     param_index = {key:index for index,key in enumerate(params.keys())}
+
+    latex_params = _get_latex_params(ini)
+    latex_paramdict = {}
+    for index,key in enumerate(params):
+        latex_paramdict[key] = latex_params[index]
+    print(latex_paramdict)
     
     ps_bars_fid = clst.fine_ps_bar(mus)
     noise = 1/np.sqrt(factors)
 
     def _plot_ps_diff(param, index):
         plt.plot(ks, ps_bars_fid[:,0,0], label=r"fid")
-        plt.plot(ks, ups[index][:,0,0] - ps_bars_fid[:,0,0], label=r"up - fid")
-        plt.plot(ks, downs[index][:,0,0] - ps_bars_fid[:,0,0], label=r"down - fid")
+        plt.plot(ks, np.abs(ups[index][:,0,0] - ps_bars_fid[:,0,0]), label=r"up - fid")
+        plt.plot(ks, np.abs(downs[index][:,0,0] - ps_bars_fid[:,0,0]), label=r"down - fid", linestyle=':')
         plt.plot(ks, ps_bars_fid[:,0,0]/noise[:,0,0], label="SNR")
-        plt.xscale('log')
-        plt.yscale('log')
+        plt.xscale('symlog')
+        plt.yscale('symlog')
         plt.legend(loc=legendloc)
         plt.title(f'param: ${param}$')
 
-        plt.savefig(dir_ + f'{param}_diff.svg')
+        plt.savefig(dir_ + figname + '_' + f'{param}_diff.svg')
         plt.gcf().clear()
 
-    def _plot_ps(param, index):
-        plt.plot(ks, ps_bars_fid[:,0,0], label=r"fid")
-        #plt.plot(ks, ups[index][:,0,0], label=r"up")
-        plt.plot(ks, downs[index][:,0,0], label=r"down", linestyle=":")
-        plt.plot(ks, ps_bars_fid[:,0,0]/noise[:,0,0], label="SNR")
-        plt.xscale('log')
-        plt.yscale('log')
+    def _plot_ps(param, index, zindex, muindex):
+        fid = ps_bars_fid[:, zindex, muindex]
+        up = ups[index][:, zindex, muindex]
+        down = downs[index][:, zindex, muindex]
+
+        #plt.plot(ks, fid, zindex, muindex], label=r"$P(p_\alpha)$")
+        plt.plot(ks, up/fid, label=r"$\bar P(p_\alpha + \epsilon_\alpha)$", linestyle='--')
+        plt.plot(ks, down/fid, label=r"$\bar P(p_\alpha - \epsilon_\alpha)$", linestyle=":")
+        #plt.plot(ks, ps_bars_fid[:, zindex, muindex]/noise[:, zindex, muindex], label=r"$\bar P(p_\alpha)/\mathrm{noise}$")
+        #plt.xscale('log')
+        #plt.yscale('log')
         plt.legend(loc=legendloc)
-        plt.title(f'param: ${param}$')
+        #plt.title(f'param: ${param}$')
 
-        plt.savefig(dir_ + f'{param}_updown.svg')
+        plt.savefig(dir_ + figname + '_' + f'{param}_updown.eps')
         plt.gcf().clear()
 
-    def _plot_table_ps(param, index):
+    def _plot_ps_with_ratio(param, index, zindex, muindex):
+        fid = ps_bars_fid[:, zindex, muindex]
+        up = ups[index][:, zindex, muindex]
+        down = downs[index][:, zindex, muindex]        
+        snr = ps_bars_fid[:, zindex, muindex]/noise[:, zindex, muindex]
+        latexp = latex_paramdict[param]
+
+        plt.rcParams["font.weight"] = "bold"
+        plt.rcParams["axes.labelweight"] = "bold"
+
+        fig, ax = plt.subplots(2, sharex=True)
+        fig.set_figheight(8)
+        fig.set_figwidth(5)
+
+        ax[0].plot(ks, fid, label=r"$\bar P({})$".format(latexp))
+        ax[0].plot(ks, snr, label=r"$\bar P({})/\mathrm{{noise}}$".format(latexp))
+        ax[0].set_xscale('log')
+        ax[0].set_yscale('log')
+        ax[0].legend(loc='best')
+
+        ax[1].plot(ks, up/fid, label=r"$\bar P({0} + \epsilon)/\bar P({0})$".format(latexp))
+        ax[1].plot(ks, down/fid, label=r"$\bar P({0} - \epsilon)/\bar P({0})$".format(latexp), linestyle=':')
+        ax[1].set_xlabel(r"$k$")
+        ax[1].set_xscale('log')
+        ax[1].legend(loc='best')
+
+
+        fig.tight_layout()
+        fig.savefig(dir_ + figname + '_' + f'{param}_psratio.svg')
+
+    def _plot_ps_table(param, index):
         zsamp_indices = np.linspace(0, zs.size, 4, dtype=int, endpoint=False)
         musamp_indices = np.linspace(0, mus.size, 2, dtype=int, endpoint=False)
+        latexp = latex_paramdict[param]
 
         plt.rcParams["font.weight"] = "bold"
         plt.rcParams["axes.labelweight"] = "bold"
@@ -116,10 +165,19 @@ def make_plots_upvdown(clst, ups, downs, factors, params, figname, dir_, legendl
         fig.set_figwidth(12)    
         for mucount,muindex in enumerate(musamp_indices):
             for zcount,zindex in enumerate(zsamp_indices):
-                ax[mucount, zcount].plot(ks, ps_bars_fid[:, zindex, muindex], label=r"fid")
-                ax[mucount, zcount].plot(ks, ups[index][:, zindex, muindex] - ps_bars_fid[:, zindex, muindex], label=f"${param}$ up diff")
-                ax[mucount, zcount].plot(ks, downs[index][:, zindex, muindex] - ps_bars_fid[:, zindex, muindex], label=f"${param}$ down diff")
-                ax[mucount, zcount].plot(ks, ps_bars_fid[:, zindex, muindex]/noise[:, zindex, muindex], label="SNR")
+                fid = ps_bars_fid[:, zindex, muindex]
+                updiff = np.abs(ups[index][:, zindex, muindex] - ps_bars_fid[:, zindex, muindex])
+                downdiff = np.abs(downs[index][:, zindex, muindex] - ps_bars_fid[:, zindex, muindex])
+                #_noise = noise[:, zindex, muindex]
+                snr = ps_bars_fid[:, zindex, muindex]/noise[:, zindex, muindex]
+
+                k_snr = ks[np.where( np.abs(snr - 1) < 0.1)]
+
+                ax[mucount, zcount].plot(ks, ps_bars_fid[:, zindex, muindex], label=r"$\bar P({par})$".format(par=latexp))
+                ax[mucount, zcount].plot(ks, updiff, label=r"$|\bar P({par} + \epsilon_{{ {par} }}) - \bar P({par})|$".format(par=latexp))
+                ax[mucount, zcount].plot(ks, downdiff, label=r"$| \bar P({par} - \epsilon_{{ {par} }}) - \bar P({par}) |$".format(par=latexp), linestyle=':')
+                ax[mucount, zcount].axvspan(k_snr[0], k_snr[-1], alpha=0.1, color='blue')
+                ax[mucount, zcount].plot(ks, snr, label=r"$\bar P({par}) / \sqrt{{\sigma_P}}$".format(par=latexp))
                 ax[mucount, zcount].set_yscale('log')
                 ax[mucount, zcount].set_xscale('log')
 
@@ -136,12 +194,13 @@ def make_plots_upvdown(clst, ups, downs, factors, params, figname, dir_, legendl
         #    axis.set_xlabel(r'$k$')
 
         fig.subplots_adjust(top=0.9, left=0.1, right=0.9, bottom=0.12)  # create some space below the plots by increasing the bottom-value
-        ax.flatten()[-2].legend(loc='upper center', bbox_to_anchor=(0.5, -0.12), ncol=4)
+        ax.flatten()[-2].legend(loc='upper center', bbox_to_anchor=(-0.2, -0.12), ncol=2)
         fig.tight_layout()
-        fig.savefig(dir_ + f'{param}_diff_table.svg')
+        fig.savefig(dir_ + figname + '_' + f'{param}_diff_table.svg')
 
-    #for param in params.keys():
-    _plot_ps('mnu', param_index['mnu'])
+    for param in params.keys():
+    #muind = np.where(mus > 0.5)[0][0]
+        _plot_ps_table(param, param_index[param])
 
 def main():
     parser = argparse.ArgumentParser()
@@ -166,7 +225,7 @@ def main():
     
     cc = get_cc(args.inifile)
     clst = Clustering(args.inifile, args.expname, args.gridname, args.version, cc)
-    make_plots_upvdown(clst, psups, psdowns, prefacs, params, args.figname, DIR, args.legendloc)
+    make_plots_upvdown(args.inifile, clst, psups, psdowns, prefacs, params, args.figname, DIR, args.legendloc)
 
 
 if __name__ == '__main__':
