@@ -84,32 +84,30 @@ def main():
                 
             extra_fishers.append(fishmat)
 
-    psh0 = ps_fisher['H0']['H0']
-    ex0 = extra_fishers[0]['H0']['H0']
-    #ex1 = extra_fishers[1]['H0']['H0']
-    testsum = psh0 + ex0 #+ ex1
-
     full_fisher = ps_fisher.copy()
+
+    old_constraints = extra_fishers[0].sigmas().copy()
 
     if extra_fishers:
         for extra in extra_fishers:
             full_fisher = full_fisher + extra
 
-    assert full_fisher['H0']['H0'] == testsum
-
+    #should replace with function to detect zeroed columns + rows
     full_fisher.delete('b_wl')
 
     currenttime = time.strftime("%Y-%m-%d-%H-%M-%S-%Z", time.localtime())
 
-    full_fisher.to_pickle(DIR + 'fisher_' + args.outfile + '_' + currenttime + '.pkl')
+    if args.outfile is not None:
+        full_fisher.to_pickle(DIR + 'fisher_' + args.outfile + '_' + currenttime + '.pkl')
 
     for key,val in full_fisher.sigmas().items():
-        print(f"{key}: {val}")
+        print(f"{key}: {val}\n % improvement over abundances + Planck: {100 * (1 - val/old_constraints[key])}")
     
     cov = np.linalg.inv(full_fisher.values)
     cov = FisherMatrix(cov, full_fisher.columns.values)
     
-    cov.to_pickle(DIR + 'covariance_' + args.outfile + currenttime '_' + '.pkl')
+    if args.outfile is not None:
+        cov.to_pickle(DIR + 'covariance_' + args.outfile + currenttime + '_' + '.pkl')
     
 if __name__ == '__main__':
     main()
