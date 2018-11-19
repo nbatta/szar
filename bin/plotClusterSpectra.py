@@ -3,49 +3,230 @@ from szar.counts import ClusterCosmology
 from configparser import ConfigParser
 from orphics.io import dict_from_section,list_from_config
 from szar.clustering import Clustering
+import matplotlib
+matplotlib.rcParams['text.usetex'] = True
+matplotlib.rcParams['text.latex.unicode'] = True
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
+rcParams.update({'figure.autolayout': True})
 import seaborn as sns
-sns.set()
+sns.set(style='whitegrid', font_scale=1.5, rc={"lines.linewidth": 2,'lines.markersize': 8.0,})
 import argparse
+#Python 2 compatibility stuff
+from six.moves import configparser
+import six
 
-parser = argparse.ArgumentParser()
-parser.add_argument("inifile", help="location of inifile")
-parser.add_argument("expname", help="name of experiment")
-parser.add_argument("gridname", help="name of grid")
-parser.add_argument("version", help="version number")
-parser.add_argument("figname", help="desired figure output filename")
-parser.add_argument("--legendloc", help="location of legend on figure", default="best")
-args = parser.parse_args()
+if six.PY2:
+  ConfigParser = configparser.SafeConfigParser
+else:
+  ConfigParser = configparser.ConfigParser
 
-inifile = args.inifile
-expName = args.expname
-gridName = args.gridname
-version = args.version
-figname = args.figname
-legendloc = args.legendloc 
+def get_cc(ini):
+    Config = ConfigParser()
+    Config.optionxform=str
+    Config.read(ini)
+    clttfile = Config.get('general','clttfile')
+    constDict = dict_from_section(Config,'constants')
 
-#Do plotting - turn this into a function later
-clst = Clustering(inifile,expName,gridName,version)
+    fparams = {}
+    for (key, val) in Config.items('params'):
+        if ',' in val:
+            param, step = val.split(',')
+            fparams[key] = float(param)
+    else:
+        fparams[key] = float(val)
 
-mus = np.array([0])
-fsky = 1.
-ks = clst.HMF.kh
-delta_ks = np.diff(ks)
-nsamples = 1000
+    cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
+    return cc
 
-ps_bars = clst.fine_ps_bar(mus, fsky, nsamples)[:,0,0]
-v_effs = clst.V_eff(mus, fsky, 1000)[:,0,0]
-noise = np.sqrt(8) * np.pi * np.sqrt(1/(v_effs[:-1] * (ks**2)[:-1] * delta_ks)) * ps_bars[:-1]
+def make_plots_fid(clst, figname, legendlog):
+    mus = np.linspace(-1,1,9)
+    fsky = 1.
+    ks = clst.HMF.kh
+    delta_ks = np.diff(ks)
+    nsamples = 1000
 
-plt.plot(ks, ps_bars, label=r"$\bar P(k, \mu = 0)$")
-plt.plot(ks[:-1], noise, label=r"Noise ($ \bar P/\sqrt{k^2 V_{eff} \Delta k}$)")
-plt.plot(ks[:-1], ps_bars[:-1]/noise, label=r"$SNR$")
-plt.xscale('log')
-plt.yscale('log')
+    ps_bars = clst.fine_ps_bar(mus)[:,0,0]
+    v_effs = clst.V_eff(mus)[:,0,0]
+    noise = np.sqrt(8) * np.pi * np.sqrt(1/(v_effs[:-1] * (ks**2)[:-1] * delta_ks)) * ps_bars[:-1]
 
-plt.xlabel(r'$k$')
-#plt.ylabel(r'$ P_{lin}$')
+    plt.rcParams["font.weight"] = "bold"
+    plt.rcParams["axes.labelweight"] = "bold"
+    with sns.plotting_context("paper"):
+        plt.plot(ks, ps_bars, label=r"$\bar P(k, \mu = 0)$")
+        plt.plot(ks[:-1], noise, label=r"Noise ($ \bar P/\sqrt{k^2 V_{eff} \Delta k}$)")
+        plt.plot(ks[:-1], ps_bars[:-1]/noise, label=r"$SNR$")
+        plt.xscale('log')
+        plt.yscale('log')
 
-plt.legend(loc=legendloc)
+        plt.xlabel(r'$k$')
+        #plt.ylabel(r'$ P_{lin}$')
 
-plt.savefig(figname)
+        plt.legend(loc=legendloc)
+
+        plt.savefig(figname)
+        plt.gcf().clear()
+
+def _get_latex_params(inifile):
+    config = ConfigParser()
+    config.optionxform=str
+    config.read(inifile)
+
+    latex_param_list = config.items('fisher-clustering', 'paramLatexList')[0][1].split(',')
+    return latex_param_list
+
+def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, legendloc):
+    mus = np.linspace(-1,1,9)
+    ks = clst.HMF.kh
+    zs = clst.HMF.zarr[1:-1]
+    delta_ks = np.diff(ks)
+
+    param_index = {key:index for index,key in enumerate(params.keys())}
+
+    latex_params = _get_latex_params(ini)
+    latex_paramdict = {}
+    for index,key in enumerate(params):
+        latex_paramdict[key] = latex_params[index]
+    print(latex_paramdict)
+    
+    ps_bars_fid = clst.fine_ps_bar(mus)
+    noise = 1/np.sqrt(factors)
+
+    def _plot_ps_diff(param, index):
+        plt.plot(ks, ps_bars_fid[:,0,0], label=r"fid")
+        plt.plot(ks, np.abs(ups[index][:,0,0] - ps_bars_fid[:,0,0]), label=r"up - fid")
+        plt.plot(ks, np.abs(downs[index][:,0,0] - ps_bars_fid[:,0,0]), label=r"down - fid", linestyle=':')
+        plt.plot(ks, ps_bars_fid[:,0,0]/noise[:,0,0], label="SNR")
+        plt.xscale('symlog')
+        plt.yscale('symlog')
+        plt.legend(loc=legendloc)
+        plt.title(f'param: ${param}$')
+
+        plt.savefig(dir_ + figname + '_' + f'{param}_diff.svg')
+        plt.gcf().clear()
+
+    def _plot_ps(param, index, zindex, muindex):
+        fid = ps_bars_fid[:, zindex, muindex]
+        up = ups[index][:, zindex, muindex]
+        down = downs[index][:, zindex, muindex]
+
+        #plt.plot(ks, fid, zindex, muindex], label=r"$P(p_\alpha)$")
+        plt.plot(ks, up/fid, label=r"$\bar P(p_\alpha + \epsilon_\alpha)$", linestyle='--')
+        plt.plot(ks, down/fid, label=r"$\bar P(p_\alpha - \epsilon_\alpha)$", linestyle=":")
+        #plt.plot(ks, ps_bars_fid[:, zindex, muindex]/noise[:, zindex, muindex], label=r"$\bar P(p_\alpha)/\mathrm{noise}$")
+        #plt.xscale('log')
+        #plt.yscale('log')
+        plt.legend(loc=legendloc)
+        #plt.title(f'param: ${param}$')
+
+        plt.savefig(dir_ + figname + '_' + f'{param}_updown.eps')
+        plt.gcf().clear()
+
+    def _plot_ps_with_ratio(param, index, zindex, muindex):
+        fid = ps_bars_fid[:, zindex, muindex]
+        up = ups[index][:, zindex, muindex]
+        down = downs[index][:, zindex, muindex]        
+        snr = ps_bars_fid[:, zindex, muindex]/noise[:, zindex, muindex]
+        latexp = latex_paramdict[param]
+
+        plt.rcParams["font.weight"] = "bold"
+        plt.rcParams["axes.labelweight"] = "bold"
+
+        fig, ax = plt.subplots(2, sharex=True)
+        fig.set_figheight(8)
+        fig.set_figwidth(5)
+
+        ax[0].plot(ks, fid, label=r"$\bar P({})$".format(latexp))
+        ax[0].plot(ks, snr, label=r"$\bar P({})/\mathrm{{noise}}$".format(latexp))
+        ax[0].set_xscale('log')
+        ax[0].set_yscale('log')
+        ax[0].legend(loc='best')
+
+        ax[1].plot(ks, up/fid, label=r"$\bar P({0} + \epsilon)/\bar P({0})$".format(latexp))
+        ax[1].plot(ks, down/fid, label=r"$\bar P({0} - \epsilon)/\bar P({0})$".format(latexp), linestyle=':')
+        ax[1].set_xlabel(r"$k$")
+        ax[1].set_xscale('log')
+        ax[1].legend(loc='best')
+
+
+        fig.tight_layout()
+        fig.savefig(dir_ + figname + '_' + f'{param}_psratio.svg')
+
+    def _plot_ps_table(param, index):
+        zsamp_indices = np.linspace(0, zs.size, 4, dtype=int, endpoint=False)
+        musamp_indices = np.linspace(0, mus.size, 2, dtype=int, endpoint=False)
+        latexp = latex_paramdict[param]
+
+        plt.rcParams["font.weight"] = "bold"
+        plt.rcParams["axes.labelweight"] = "bold"
+        #with sns.plotting_context("paper"):
+        fig, ax = plt.subplots(musamp_indices.size, zsamp_indices.size, sharex='col')
+        fig.set_figheight(6)
+        fig.set_figwidth(12)    
+        for mucount,muindex in enumerate(musamp_indices):
+            for zcount,zindex in enumerate(zsamp_indices):
+                fid = ps_bars_fid[:, zindex, muindex]
+                updiff = np.abs(ups[index][:, zindex, muindex] - ps_bars_fid[:, zindex, muindex])
+                downdiff = np.abs(downs[index][:, zindex, muindex] - ps_bars_fid[:, zindex, muindex])
+                #_noise = noise[:, zindex, muindex]
+                snr = ps_bars_fid[:, zindex, muindex]/noise[:, zindex, muindex]
+
+                k_snr = ks[np.where( np.abs(snr - 1) < 0.1)]
+
+                ax[mucount, zcount].plot(ks, ps_bars_fid[:, zindex, muindex], label=r"$\bar P({par})$".format(par=latexp))
+                ax[mucount, zcount].plot(ks, updiff, label=r"$|\bar P({par} + \epsilon_{{ {par} }}) - \bar P({par})|$".format(par=latexp))
+                ax[mucount, zcount].plot(ks, downdiff, label=r"$| \bar P({par} - \epsilon_{{ {par} }}) - \bar P({par}) |$".format(par=latexp), linestyle=':')
+                ax[mucount, zcount].axvspan(k_snr[0], k_snr[-1], alpha=0.1, color='blue')
+                ax[mucount, zcount].plot(ks, snr, label=r"$\bar P({par}) / \sqrt{{\sigma_P}}$".format(par=latexp))
+                ax[mucount, zcount].set_yscale('log')
+                ax[mucount, zcount].set_xscale('log')
+
+        cols = [r'$z = {}$'.format(round(zs[zindex],3)) for zindex in zsamp_indices]
+        rows = [r'$\mu = {}$'.format(round(mus[muindex], 3)) for muindex in musamp_indices]
+
+        for axis, col in zip(ax[0], cols):
+            axis.set_title(col)
+
+        for axis, row in zip(ax[:,0], rows):
+            axis.set_ylabel(row, size='large')
+
+        #for axis in ax[-1]:
+        #    axis.set_xlabel(r'$k$')
+
+        fig.subplots_adjust(top=0.9, left=0.1, right=0.9, bottom=0.12)  # create some space below the plots by increasing the bottom-value
+        ax.flatten()[-2].legend(loc='upper center', bbox_to_anchor=(-0.2, -0.12), ncol=2)
+        fig.tight_layout()
+        fig.savefig(dir_ + figname + '_' + f'{param}_diff_table.svg')
+
+    for param in params.keys():
+    #muind = np.where(mus > 0.5)[0][0]
+        _plot_ps_table(param, param_index[param])
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--inifile", help="location of inifile", default="input/pipeline.ini")
+    parser.add_argument("-e", "--expname", help="name of experiment", default='S4-1.0-CDT')
+    parser.add_argument("-g", "--gridname", help="name of grid", default='grid-owl2')
+    parser.add_argument("-v", "--version", help="version number", default='0.6')
+    parser.add_argument("figname", help="desired figure output filename")
+    parser.add_argument("--legendloc", help="location of legend on figure", default="best")
+    parser.add_argument("-u", "--upfile", help="up-varied power spectra file")
+    parser.add_argument("-d", "--downfile", help="down-varied power spectra file")
+    parser.add_argument("-p", "--prefacfile", help="fisher prefactor file")
+    parser.add_argument("-par", "--params", help="fisher parameters")
+    args = parser.parse_args()
+
+    DIR = 'figs/'
+
+    params = np.load(args.params).item()
+    psups = np.load(args.upfile)
+    psdowns = np.load(args.downfile)
+    prefacs = np.load(args.prefacfile)
+    
+    cc = get_cc(args.inifile)
+    clst = Clustering(args.inifile, args.expname, args.gridname, args.version, cc)
+    make_plots_upvdown(args.inifile, clst, psups, psdowns, prefacs, params, args.figname, DIR, args.legendloc)
+
+
+if __name__ == '__main__':
+    main()
