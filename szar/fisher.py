@@ -84,7 +84,7 @@ def counts_from_config(Config,bigDataDir,version,expName,gridName,mexp_edges,z_e
         suffix += "_"+str(lkneeTOverride)
     if alphaTOverride is not None:
         suffix += "_"+str(alphaTOverride)
-    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+suffix+".pkl",'rb'))
+    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+suffix+".pkl",'rb'),encoding='latin1')
     experimentName = expName
     cosmoDict = dict_from_section(Config,"params")
     constDict = dict_from_section(Config,'constants')
@@ -100,14 +100,77 @@ def counts_from_config(Config,bigDataDir,version,expName,gridName,mexp_edges,z_e
     alpha = float(Config.get(experimentName,'alpha').split(',')[0])
     fsky = Config.getfloat(experimentName,'fsky')
     SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
+
     hmf = Halo_MF(cc,mexp_edges,z_edges)
-
-
-    
 
     hmf.sigN = siggrid.copy()
     Ns = np.multiply(hmf.N_of_z_SZ(fsky,SZProf),np.diff(z_edges).reshape(1,z_edges.size-1))
     return Ns.ravel().sum()
+
+
+def sel_counts_from_config(Config,bigDataDir,version,expName,gridName,calName,mexp_edges,z_edges,lkneeTOverride=None,alphaTOverride=None,zmin=-np.inf,zmax=np.inf,mmin=-np.inf,mmax=np.inf,recalculate=False,override_params=None):
+    suffix = ""
+    if lkneeTOverride is not None:
+        suffix += "_"+str(lkneeTOverride)
+    if alphaTOverride is not None:
+        suffix += "_"+str(alphaTOverride)
+    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+suffix+".pkl",'rb'),encoding='latin1')
+    experimentName = expName
+    cosmoDict = dict_from_section(Config,"params")
+    constDict = dict_from_section(Config,'constants')
+    clusterDict = dict_from_section(Config,'cluster_params')
+    clttfile = Config.get("general","clttfile")
+    if override_params is not None:
+        for key in override_params.keys():
+            cosmoDict[key] = override_params[key]
+    # print(cosmoDict)
+    cc = ClusterCosmology(cosmoDict,constDict,clTTFixFile = clttfile)
+
+    beam = list_from_config(Config,experimentName,'beams')
+    noise = list_from_config(Config,experimentName,'noises')
+    freq = list_from_config(Config,experimentName,'freqs')
+    lmax = int(Config.getfloat(experimentName,'lmax'))
+    lknee = float(Config.get(experimentName,'lknee').split(',')[0])
+    alpha = float(Config.get(experimentName,'alpha').split(',')[0])
+    fsky = Config.getfloat(experimentName,'fsky')
+    SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
+
+    hmf = Halo_MF(cc,mexp_edges,z_edges)
+
+    hmf.sigN = siggrid.copy()
+
+    saveId = save_id(expName,gridName,calName,version)
+    # Fiducial number counts
+
+    if recalculate:
+        from . import counts
+        # get s/n q-bins
+        qs = list_from_config(Config,'general','qbins')
+        qspacing = Config.get('general','qbins_spacing')
+        if qspacing=="log":
+            qbin_edges = np.logspace(np.log10(qs[0]),np.log10(qs[1]),int(qs[2])+1)
+        elif qspacing=="linear":
+            qbin_edges = np.linspace(qs[0],qs[1],int(qs[2])+1)
+        else:
+            raise ValueError
+        calFile = mass_grid_name_owl(bigDataDir,calName)        
+        mexp_edges, z_edges, lndM = pickle.load(open(calFile,"rb"))
+        dN_dmqz = hmf.N_of_mqz_SZ(lndM,qbin_edges,SZProf)
+        nmzq = counts.getNmzq(dN_dmqz,mexp_edges,z_edges,qbin_edges)
+    else:
+        nmzq = np.load(fid_file(bigDataDir,saveId))
+    nmzq = nmzq*fsky
+
+    zs = (z_edges[1:]+z_edges[:-1])/2.
+    zsel = np.logical_and(zs>zmin,zs<=zmax)
+
+    M_edges = 10**mexp_edges
+    M = (M_edges[1:]+M_edges[:-1])/2.
+    Mexp = np.log10(M)
+    msel = np.logical_and(Mexp>mmin,Mexp<=mmax)
+    
+    Ns = nmzq.sum(axis=-1)[msel,:][:,zsel]
+    return Ns #.ravel().sum()
 
 
 def priors_from_config(Config,expName,calName,fishName,paramList,tauOverride=None):
@@ -345,7 +408,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
             #other_fisher = pad_fisher(other_fisher,numLeft)
             all_others += other_fisher
 
-    otherFish = stats.FisherMatrix(all_others,param_list=external_param_list,skip_inv=True)
+    otherFish = stats.FisherMatrix(all_others,param_list=external_param_list)
     for p in otherFish.params:
         if p not in paramList:
             otherFish.delete(p)
@@ -355,7 +418,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     #print(otherFish.sigmas()['mnu']*1000.)
     
     retfish = (tszFish + otherFish).ix[paramList,paramList]
-    print(stats.FisherMatrix(retfish.as_matrix(),paramList).marge_var_2param('mnu','w0'))
+    # print(stats.FisherMatrix(retfish.as_matrix(),paramList).marge_var_2param('mnu','w0'))
     return retfish.as_matrix(), paramList
 
 
