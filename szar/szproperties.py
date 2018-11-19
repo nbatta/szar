@@ -182,8 +182,8 @@ class SZ_Cluster_Model(object):
             fq_mat   = np.matlib.repmat(freqs,len(freqs),1)
             fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
         else:
-            fq_mat   = freqs
-            fq_mat_t = freqs
+            fq_mat   = np.array(freqs)
+            fq_mat_t = np.array(freqs)
 
         self.nl = self.evalells*0.0
 
