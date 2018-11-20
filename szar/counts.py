@@ -595,6 +595,7 @@ class Halo_MF(object):
 
         dn_dzdm = self.dn_dM(self.M200,200.)
         N_z = np.zeros(z_arr.size)
+
         for i in range (z_arr.size):
             N_z[i] = np.dot(dn_dzdm[:,i]*P_func[:,i],np.diff(self.M200_edges[:,i]))
 
