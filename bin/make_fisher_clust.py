@@ -16,6 +16,14 @@ import os
 import sys
 import pickle
 import time
+import matplotlib
+matplotlib.rcParams['text.usetex'] = True
+matplotlib.rcParams['text.latex.unicode'] = True
+import matplotlib.pyplot as plt
+from matplotlib import rcParams
+rcParams.update({'figure.autolayout': True})
+import seaborn as sns
+sns.set(style='whitegrid', font_scale=1.5, rc={"lines.linewidth": 2,'lines.markersize': 8.0,})
 
 from orphics.io import FisherPlots
 from szar.derivatives import Derivs_Clustering, make_fisher
@@ -49,7 +57,7 @@ def _get_params(fisherfile):
     else:
         print(f"Sorry, the parameters for {fisherfile} are not known")
         sys.exit()
-    
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--outfile", help="name for output fisher file")
@@ -60,6 +68,7 @@ def main():
     args = parser.parse_args()
 
     DIR = 'datatest/'
+    INIFILE = 'input/pipeline.ini'
 
     ps_derivs = np.load(args.derivs)
     ps_factors = np.load(args.factors)
@@ -108,6 +117,6 @@ def main():
     
     if args.outfile is not None:
         cov.to_pickle(DIR + 'covariance_' + args.outfile + currenttime + '_' + '.pkl')
-    
+
 if __name__ == '__main__':
     main()
