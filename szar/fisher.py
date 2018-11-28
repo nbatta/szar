@@ -418,7 +418,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     #print(otherFish.sigmas()['mnu']*1000.)
     
     retfish = (tszFish + otherFish).ix[paramList,paramList]
-    # print(stats.FisherMatrix(retfish.as_matrix(),paramList).marge_var_2param('mnu','w0'))
+    #print(stats.FisherMatrix(retfish.as_matrix(),paramList).marge_var_2param('mnu','w0'))
     return retfish.as_matrix(), paramList
 
 
