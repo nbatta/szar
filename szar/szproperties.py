@@ -13,6 +13,14 @@ from scipy.special import j0
 from orphics.stats import timeit
 from orphics import io
 from scipy.interpolate import interp1d
+import os
+
+default_profile_params = {
+    'P0': 8.403,
+    'xc': 1.156,
+    'al': 1.062,
+    'bt': 5.4807,
+    'gm': 0.3292}
 
 def gnfw(xx, P0 = 8.403, xc = 1.156, gm = 0.3292, al = 1.062, bt = 5.4807):
     ans = old_div(P0, ((xx*xc)**gm * (1 + (xx*xc)**al)**(old_div((bt-gm),al))))
@@ -49,14 +57,16 @@ def gaussian2D(xx, mu_x, sig_x,yy,mu_y, sig_y, rho):
     exp3 = 2*rho *(xx - mu_x)/sig_x *(yy - mu_y)/sig_y
     return 1./(sig_x*sig_y*2.0*np.pi*np.sqrt(1. - rho**2)) * np.exp(exp0*(exp1+exp2-exp3))
 
+root_dir = os.path.dirname(os.path.realpath(__file__))+"/../"
+
 class SZ_Cluster_Model(object):
     def __init__(self,clusterCosmology,clusterDict, \
                  fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1., \
                  dell=10,pmaxN=5,numps=1000,nMax=1, \
                  ymin=1.e-14,ymax=4.42e-9,dlnY = 0.1, qmin=5., \
-                 ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt', \
-                 tsz_cib_file='input/sz_x_cib_template.txt',fg=True,tsz_cib=False,
-                 tsz_battaglia_template_csv="input/sz_template_battaglia.csv",v3mode=-1,fsky=None):
+                 ksz_file=root_dir+'input/ksz_BBPS.txt',ksz_p_file=root_dir+'input/ksz_p_BBPS.txt', \
+                 tsz_cib_file=root_dir+'input/sz_x_cib_template.txt',fg=True,tsz_cib=False,
+                 tsz_battaglia_template_csv=root_dir+"input/sz_template_battaglia.csv",v3mode=-1,fsky=None):
 
         self.cc = clusterCosmology
         self.P0 = clusterDict['P0']
@@ -182,8 +192,8 @@ class SZ_Cluster_Model(object):
             fq_mat   = np.matlib.repmat(freqs,len(freqs),1)
             fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
         else:
-            fq_mat   = freqs
-            fq_mat_t = freqs
+            fq_mat   = np.array(freqs)
+            fq_mat_t = np.array(freqs)
 
         self.nl = self.evalells*0.0
 
