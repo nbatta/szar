@@ -63,7 +63,7 @@ def _get_latex_dict(inifile, fisherSection):
     config.optionxform=str
     config.read(inifile)
 
-    params = config.items(fisherSection, 'paramList')[0][1].split(',')
+    params = config.items(fisherSection, 'paramList')[1][1].split(',')
     latex_param_list = config.items(fisherSection, 'paramLatexList')[1][1].split(',')
     latex_paramdict = {}
     for index,key in enumerate(params):
