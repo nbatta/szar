@@ -16,6 +16,14 @@ import os
 import sys
 import pickle
 import time
+import matplotlib
+matplotlib.rcParams['text.usetex'] = True
+matplotlib.rcParams['text.latex.unicode'] = True
+import matplotlib.pyplot as plt
+from matplotlib import rcParams
+rcParams.update({'figure.autolayout': True})
+import seaborn as sns
+sns.set(style='whitegrid', font_scale=1.5, rc={"lines.linewidth": 2,'lines.markersize': 8.0,})
 
 from orphics.io import FisherPlots
 from szar.derivatives import Derivs_Clustering, make_fisher
@@ -49,7 +57,42 @@ def _get_params(fisherfile):
     else:
         print(f"Sorry, the parameters for {fisherfile} are not known")
         sys.exit()
-    
+
+def _get_latex_dict(inifile, fisherSection):
+    config = ConfigParser()
+    config.optionxform=str
+    config.read(inifile)
+
+    params = config.items(fisherSection, 'paramList')[0][1].split(',')
+    latex_param_list = config.items(fisherSection, 'paramLatexList')[1][1].split(',')
+    latex_paramdict = {}
+    for index,key in enumerate(params):
+        latex_paramdict[key] = latex_param_list[index]
+    return latex_paramdict
+
+def make_constraint_curves(fisher):
+    config = ConfigParser()
+    config.optionxform=str
+    INIFILE = "input/pipeline.ini"
+    config.read(INIFILE)
+    fisher.delete('tau')
+
+    fishSection = "clustering_noabias"
+    #paramList = config.get('fisher-'+fishSection,'paramList').split(',')
+    paramList = fisher.columns.values.tolist()
+    #paramLatexList = config.get('fisher-'+fishSection,'paramLatexList').split(',')
+    paramLatexDict = _get_latex_dict(INIFILE, 'fisher-' + fishSection)
+    paramLatexList = [paramLatexDict[p] for p in paramList]
+    fparams = {}
+    for (key, val) in config.items('params'):
+        param = val.split(',')[0]
+        fparams[key] = float(param)
+    fplots = FisherPlots()
+    fplots.startFig()
+    fplots.addSection(fishSection,paramList,paramLatexList,fparams)
+    fplots.addFisher(fishSection,'test', fisher)
+    fplots.plotTri(fishSection,paramList,['test'],labels=['S4-v6'],saveFile="figs/triplot_test.png",loc='best', fmt='png')
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--outfile", help="name for output fisher file")
@@ -57,9 +100,11 @@ def main():
     parser.add_argument("-f", "--factors", help="prefactor file for the fisher matrix")
     parser.add_argument("-p", "--params", help="parameters file for the fisher matrix")
     parser.add_argument("--extra-fishers", help="extra fisher matrix files to be added to clustering", nargs='*')
+    parser.add_argument("--make-tri", help="make triplot from fisher matrix", action='store_true')
     args = parser.parse_args()
 
     DIR = 'datatest/'
+    INIFILE = 'input/pipeline.ini'
 
     ps_derivs = np.load(args.derivs)
     ps_factors = np.load(args.factors)
@@ -101,13 +146,19 @@ def main():
         full_fisher.to_pickle(DIR + 'fisher_' + args.outfile + '_' + currenttime + '.pkl')
 
     for key,val in full_fisher.sigmas().items():
-        print(f"{key}: {val}\n % improvement over abundances + Planck: {100 * (1 - val/old_constraints[key])}")
+        try:
+            print(f"{key}: {val}\n % improvement over abundances + Planck: {100 * (1 - val/old_constraints[key])}")
+        except KeyError:
+            print("Ergh! That param wasn't done before!")
     
     cov = np.linalg.inv(full_fisher.values)
     cov = FisherMatrix(cov, full_fisher.columns.values)
     
     if args.outfile is not None:
         cov.to_pickle(DIR + 'covariance_' + args.outfile + currenttime + '_' + '.pkl')
-    
+
+    if args.make_tri:
+        make_constraint_curves(full_fisher)
+
 if __name__ == '__main__':
     main()
