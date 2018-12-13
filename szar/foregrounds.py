@@ -30,6 +30,18 @@ H_CGS = 6.62608e-27
 K_CGS = 1.3806488e-16
 C_light = 2.99792e+10
 
+def y_kappa_corrcoeff(ells,fill_type="extrapolate"):
+    path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+    ls,icls = np.loadtxt(path+"/../input/y-phi_theory_cross-correlation_coefficient.txt",unpack=True,delimiter=' ')
+    dls = dl_filler(ells,ls,icls,fill_type=fill_type)
+    return dls
+
+def kappa_cib_corrcoeff(ells,fill_type="extrapolate"):
+    path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+    ls,icls = np.loadtxt(path+"/../input/kappa_cib_corr.txt",unpack=True,delimiter=' ')
+    dls = dl_filler(ells,ls,icls,fill_type=fill_type)
+    return dls
+    
 
 def power_y(ells,A_tsz=None,fill_type="extrapolate"):
     """
@@ -224,7 +236,7 @@ def g_nu(constDict,nu):
     return ans
 
 
-def totTTNoise(ells,constDict,beamFWHM,noiseT,freq,lknee,alpha,tsz_battaglia_template_csv="input/sz_template_battaglia.csv",TCMB=2.7255e6):
+def totTTNoise(ells,constDict,beamFWHM,noiseT,freq,lknee,alpha,tsz_battaglia_template_csv="input/sz_template_battaglia.csv",TCMB=2.726e6):
     ls = ells
     instrument = old_div(noise_func(ls,beamFWHM,noiseT,lknee,alpha,dimensionless=False), cc.c['TCMBmuK']**2.)
     fgs = fgNoises(constDict,tsz_battaglia_template_csv)
