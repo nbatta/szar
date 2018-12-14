@@ -155,7 +155,7 @@ def main():
     cov = FisherMatrix(cov, full_fisher.columns.values)
     
     if args.outfile is not None:
-        cov.to_pickle(DIR + 'covariance_' + args.outfile + currenttime + '_' + '.pkl')
+        cov.to_pickle(DIR + 'covariance_' + args.outfile + '_' + currenttime  + '.pkl')
 
     if args.make_tri:
         make_constraint_curves(full_fisher)
