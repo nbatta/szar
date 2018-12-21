@@ -33,8 +33,8 @@ def get_cc(ini):
         if ',' in val:
             param, step = val.split(',')
             fparams[key] = float(param)
-    else:
-        fparams[key] = float(val)
+        else:
+            fparams[key] = float(val)
 
     cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
     return cc
@@ -93,12 +93,12 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
     noise = 1/np.sqrt(factors)
 
     def _plot_ps_diff(param, index):
-        plt.plot(ks, ps_bars_fid[:,0,0], label=r"fid")
-        plt.plot(ks, np.abs(ups[index][:,0,0] - ps_bars_fid[:,0,0]), label=r"up - fid")
-        plt.plot(ks, np.abs(downs[index][:,0,0] - ps_bars_fid[:,0,0]), label=r"down - fid", linestyle=':')
-        plt.plot(ks, ps_bars_fid[:,0,0]/noise[:,0,0], label="SNR")
+        #plt.plot(ks, ps_bars_fid[:,0,0], label=r"fid")
+        plt.plot(ks, ups[index][:,0,0] - ps_bars_fid[:,0,0], label=r"up - fid")
+        plt.plot(ks, downs[index][:,0,0] - ps_bars_fid[:,0,0], label=r"down - fid", linestyle=':')
+        #plt.plot(ks, ps_bars_fid[:,0,0]/noise[:,0,0], label="SNR")
         plt.xscale('symlog')
-        plt.yscale('symlog')
+        #plt.yscale('symlog')
         plt.legend(loc=legendloc)
         plt.title(f'param: ${param}$')
 
@@ -119,7 +119,7 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
         plt.legend(loc=legendloc)
         #plt.title(f'param: ${param}$')
 
-        plt.savefig(dir_ + figname + '_' + f'{param}_updown.eps')
+        plt.savefig(dir_ + figname + '_' + f'{param}_updown.svg')
         plt.gcf().clear()
 
     def _plot_ps_with_ratio(param, index, zindex, muindex):
@@ -128,12 +128,16 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
         down = downs[index][:, zindex, muindex]        
         snr = ps_bars_fid[:, zindex, muindex]/noise[:, zindex, muindex]
         latexp = latex_paramdict[param]
+        z = zs[zindex]
+        musqr = mus[muindex]**2
+
+        k_snr = ks[np.where( np.abs(snr - 1) < 0.1)]
 
         plt.rcParams["font.weight"] = "bold"
         plt.rcParams["axes.labelweight"] = "bold"
 
         fig, ax = plt.subplots(2, sharex=True)
-        fig.set_figheight(8)
+        fig.set_figheight(9)
         fig.set_figwidth(5)
 
         ax[0].plot(ks, fid, label=r"$\bar P({})$".format(latexp))
@@ -141,16 +145,21 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
         ax[0].set_xscale('log')
         ax[0].set_yscale('log')
         ax[0].legend(loc='best')
+        ax[0].axvspan(k_snr[0], k_snr[-1], alpha=0.1, color='blue')
+        ax[0].set_title(f'$z = {round(z,3)}, \quad \mu^2 = {round(musqr,3)}$')
 
-        ax[1].plot(ks, up/fid, label=r"$\bar P({0} + \epsilon)/\bar P({0})$".format(latexp))
-        ax[1].plot(ks, down/fid, label=r"$\bar P({0} - \epsilon)/\bar P({0})$".format(latexp), linestyle=':')
+        ax[1].plot(ks, up - fid, label=r"$\bar P({0} + \epsilon) - \bar P({0})$".format(latexp), color=sns.xkcd_palette(['green'])[0])
+        ax[1].plot(ks, down - fid, label=r"$\bar P({0} - \epsilon) - \bar P({0})$".format(latexp), linestyle='--', color=sns.xkcd_palette(['pinkish red'])[0])
+        ax[1].axvspan(k_snr[0], k_snr[-1], alpha=0.1, color='blue')
         ax[1].set_xlabel(r"$k$")
+        #ax[2].set_yscale('log')
         ax[1].set_xscale('log')
         ax[1].legend(loc='best')
 
-
         fig.tight_layout()
-        fig.savefig(dir_ + figname + '_' + f'{param}_psratio.svg')
+        fig.savefig(dir_ + figname + '_' + f'{param}_psdiffs.pdf')
+
+        plt.gcf().clear()
 
     def _plot_ps_table(param, index):
         zsamp_indices = np.linspace(0, zs.size, 4, dtype=int, endpoint=False)
@@ -198,9 +207,9 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
         fig.tight_layout()
         fig.savefig(dir_ + figname + '_' + f'{param}_diff_table.svg')
 
-    for param in params.keys():
-    #muind = np.where(mus > 0.5)[0][0]
-        _plot_ps_table(param, param_index[param])
+#    for param in params.keys():
+    muind = np.where(mus > 0.1)[0][0]
+    _plot_ps_with_ratio('wa', param_index['wa'], 0, 0)
 
 def main():
     parser = argparse.ArgumentParser()

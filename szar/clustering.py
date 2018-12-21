@@ -88,8 +88,14 @@ class Clustering(object):
 
         blin = tinker.tinker_bias(sig,200.)
         beff = old_div(np.trapz(dndm_SZ*blin,dx=np.diff(self.HMF.M200,axis=0),axis=0), nbar)
+        
+        try:
+            a_bias = self.cc.paramDict['abias']
+        except KeyError:
+            print("Using implicit a_bias value")
+            a_bias = 1.
 
-        return beff
+        return a_bias * beff
 
     def non_linear_scale(self,z,M200): #?Who are you?
 
