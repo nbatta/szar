@@ -27,7 +27,7 @@ class NmzEmulator(object):
         np.random.seed(seed)
         nclusters = int(np.random.poisson(self.ntot)) if poisson else int(self.ntot)
         mzs = np.zeros((nclusters,2),dtype=np.float32)
-        print("Generating Nmz catalog...")
+        print("Generating Nmz catalog...",nclusters)
         for i in range(nclusters):
             linear_idx = np.random.choice(self.Nmz.size, p=self.Nmz.ravel()/float(self.Nmz.sum()))
             x, y = np.unravel_index(linear_idx, self.Nmz.shape)
@@ -49,6 +49,7 @@ def main():
 
     emu = NmzEmulator(Mexp_edges,z_edges)
     mzs = emu.get_catalog(poisson=True)
+    print mzs
     pdf2d,_,_ = np.histogram2d(mzs[:,0],mzs[:,1],bins=(Mexp_edges,z_edges))
     print (emu.Nmz.sum(),pdf2d.sum(),lnlike(pdf2d,emu.Nmz))
 
@@ -61,7 +62,7 @@ def main():
     true_as = emu.cc.cosmo['As']
     cparams = cosmo.defaultCosmology
     lnlikes = []
-    Ases = np.linspace(2.19e-9,2.21e-9,30)
+    Ases = np.linspace(2.19e-9,2.21e-9,10)
     for As in Ases:
         cparams['As'] = As
         temu = NmzEmulator(Mexp_edges,z_edges,cosmo_params = cparams)

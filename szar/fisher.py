@@ -306,8 +306,9 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
 
     # Number of non-SZ params (params that will be in Planck/BAO)
     numCosmo = Config.getint(fishSection,'numCosmo')
-    #numLeft = len(paramList) - numCosmo
+    numLeft = len(paramList) - numCosmo
 
+    print("param numbers",numCosmo,numLeft)
 
     try:
         do_cmb_fisher = Config.getboolean(fishSection,"do_cmb_fisher")
@@ -388,7 +389,8 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
         external_param_list = Config.get(fishSection,'external_param_list').split(',')
     except:
         traceback.print_exc()
-        external_param_list = "H0,ombh2,omch2,tau,As,ns,mnu,w0,wa".split(',')
+        #external_param_list = "H0,ombh2,omch2,tau,As,ns,mnu,w0,wa".split(',')
+        external_param_list = "H0,ombh2,omch2,tau,As,ns".split(',')
         print("No external param list found in fisher section. Assuming ", external_param_list)
 
     nex = len(external_param_list)

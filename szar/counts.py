@@ -458,6 +458,13 @@ class Halo_MF(object):
         ans = interp2d(self.zarr,np.log10(self.M),N_Mz,kind='linear',fill_value=0)
         return ans
 
+    def inter_mf_logMgtr(self,delta):
+        #interpolating over M500c becasue that's a constant vector at every redshift
+        N_Mz = np.cumsum(self.N_of_Mz(self.M200,delta),axis = 0)
+        ans = interp2d(self.zarr,np.log10(self.M),N_Mz,kind='linear',fill_value=0)
+        return ans
+
+
     def inter_mf_bound(self,theta,mthresh,zthresh):
         a1,a2temp = theta
         a2 = 10**a2temp
