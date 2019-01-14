@@ -389,6 +389,11 @@ class MockCatalog(object):
         self.mgrid = np.arange(logm_min,logm_max,logm_spacing)
         self.zgrid = np.arange(zmin,zmax,zdel)
 
+        self.Medges = 10.**self.mgrid
+        self.Mcents = (self.Medges[1:]+self.Medges[:-1])/2.
+        self.Mexpcents = np.log10(self.Mcents)
+        self.zcents = (self.zgrid[1:]+self.zgrid[:-1])/2.
+
         self.cc = ClusterCosmology(self.param_vals,self.constDict,clTTFixFile=self.clttfile)
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
 
@@ -423,12 +428,41 @@ class MockCatalog(object):
         #mlim = [np.min(self.mgrid),np.max(self.mgrid)]
         #zlim = [np.min(self.zgrid),np.max(self.zgrid)]
 
+        #old MCMC
         #samples = self.HMF.mcsample_mf(200.,Ntot100,mthresh = mlim,zthresh = zlim)
         #return samples[:,0],samples[:,1]
 
-        Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky))) 
-        zsamps, msamps = self.HMF.cpsample_mf(200.,Ntot100) 
+        Ntot100 = self.Total_clusters(fsky) # np.int32(np.ceil(self.Total_clusters(fsky))) 
+        Ntot = np.int32(np.random.poisson(Ntot100))
+        print ("Mock cat gen internal counts and Poisson draw",Ntot100,Ntot)
+
+        zsamps, msamps = self.HMF.cpsample_mf(200.,Ntot) 
         #print (zsamps, msamps) 
+        return zsamps, msamps
+
+    def create_basic_sample_Mat(self,fsky):
+        '''                                                                                                                                                               Create simple mock catalog of Mass and Redshift by sampling the mass function                                                                                     '''
+        nmzdensity = HMF.N_of_Mz(self.HMF.M200,200.)
+        Ndz = np.multiply(nmzdensity,np.diff(self.zgrid).reshape((1,self.zgrid.size-1)))
+        Nmz = np.multiply(Ndz,np.diff(10**self.mgrid).reshape((self.mgrid.size-1,1))) * 4.* np.pi
+        Ntot = Nmz.sum() * fsky
+
+        print ("fsky test",Ntot, np.int32(np.ceil(self.Total_clusters(fsky))))
+
+        np.random.seed(self.seedval)
+        nclusters = int(np.random.poisson(Ntot)) #if poisson else int(self.ntot)
+        mzs = np.zeros((nclusters,2),dtype=np.float32)
+
+        msamps = np.zeros((nclusters),dtype=np.float32)
+        zsamps = np.zeros((nclusters),dtype=np.float32)
+        print("Generating Nmz catalog...")
+        for i in range(nclusters):
+            linear_idx = np.random.choice(self.Nmz.size, p=self.Nmz.ravel()/float(self.Nmz.sum()))
+            x, y = np.unravel_index(linear_idx, self.Nmz.shape)
+            # mzs[i,0] = self.Mexpcents[x]                                                                                         
+            # mzs[i,1] = self.zcents[y]                                                                                            
+            msamps = np.random.uniform(self.Mexpcents[x].min(),self.Mexpcents[x].max())
+            zsamps = np.random.uniform(self.zcents[y].min(),self.zcents[y].max())
 
         return zsamps, msamps
 
@@ -739,7 +773,8 @@ class clustLikeTest(object):
         if np.nan_to_num(self.s8)<0.1 or np.nan_to_num(self.s8)>10. or not(np.isfinite(self.s8)):
             self.s8 = 0.
 
-        dndm_int = int_HMF.inter_dndmLogm(200.) # delta = 200
+        #dndm_int = int_HMF.inter_dndmLogm(200.) # delta = 200
+        dndm_int = int_HMF.inter_mf_logM(200.) # delta = 200
         cluster_prop = np.array([self.clst_z,self.clst_zerr,10**self.clst_m,self.clst_merr])
 
         Ntot = self.Ntot_survey(int_HMF,self.fsky)

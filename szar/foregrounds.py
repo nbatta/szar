@@ -4,6 +4,7 @@ from past.utils import old_div
 import numpy as np
 from scipy.interpolate import interp1d
 import os,sys,inspect
+import warnings
 
 ######
 """
@@ -57,7 +58,7 @@ def power_y(ells,A_tsz=None,fill_type="extrapolate"):
     assert np.all(ells>=0)
     path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
     ls,icls = np.loadtxt(path+"/../input/sz_template_battaglia.csv",unpack=True,delimiter=',')
-    dls = dl_filler(ells,ls,icls,fill_type=fill_type)
+    dls = dl_filler(ells,ls,icls,fill_type=fill_type,fill_positive=True)
     nu0 = default_constants['nu0'] ; tcmb = default_constants['TCMBmuk']
     cls = A_tsz * dls*2.*np.pi*np.nan_to_num(1./ells/(ells+1.)) / ffunc(nu0)**2./tcmb**2.
     return cls
@@ -114,14 +115,14 @@ def power_radps(ells,nu1,nu2=None,A_ps=None,al_ps=None):
 def power_ksz_reion(ells,A_rksz=1,fill_type="extrapolate"):
     path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
     ls,icls = np.loadtxt(path+"/../input/early_ksz.txt",unpack=True)
-    dls = dl_filler(ells,ls,icls,fill_type=fill_type)
+    dls = dl_filler(ells,ls,icls,fill_type=fill_type,fill_positive=True)
     cls = A_rksz * dls*2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
     return cls
 
 def power_ksz_late(ells,A_lksz=1,fill_type="extrapolate"):
     path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
     ls,icls = np.loadtxt(path+"/../input/late_ksz.txt",unpack=True)
-    dls = dl_filler(ells,ls,icls,fill_type=fill_type)
+    dls = dl_filler(ells,ls,icls,fill_type=fill_type,fill_positive=True)
     cls = A_lksz * dls*2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
     return cls
 
@@ -166,13 +167,13 @@ def rad_ps_nu(nu,al_ps=None):
         * gfunc(nu)  / (gfunc(nu0))
 
 
-def dl_filler(ells,ls,cls,fill_type="extrapolate"):
+def dl_filler(ells,ls,cls,fill_type="extrapolate",fill_positive=False):
     ells = np.asarray(ells)
     if ells.max()>ls.max() and fill_type=="extrapolate":
-        print("Warning: Requested ells go higher than available." + \
+        warnings.warn("Warning: Requested ells go higher than available." + \
               " Extrapolating above highest ell.")
     elif ells.max()>ls.max() and fill_type=="constant_dl":
-        print("Warning: Requested ells go higher than available." + \
+        warnings.warn("Warning: Requested ells go higher than available." + \
               " Filling with constant ell^2C_ell above highest ell.")
     if fill_type=="constant_dl":
         fill_value = (0,cls[-1])
@@ -183,6 +184,7 @@ def dl_filler(ells,ls,cls,fill_type="extrapolate"):
     else:
         raise ValueError
     dls = interp1d(ls,cls,bounds_error=False,fill_value=fill_value)(ells)
+    if fill_positive: dls[dls<0] = 0
     return dls
     
 def JyPerSter_to_dimensionless(nu,Tcmb = 2.726):
