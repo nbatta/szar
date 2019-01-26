@@ -455,7 +455,7 @@ class Halo_MF(object):
     def inter_mf_logM(self,delta):
         #interpolating over M500c becasue that's a constant vector at every redshift
         N_Mz = self.N_of_Mz(self.M200,delta)
-        ans = interp2d(self.zarr,np.log10(self.M),N_Mz,kind='linear',fill_value=0)
+        ans = interp2d(self.zarr,np.log10(self.M),N_Mz,kind='cubic',fill_value=0)
         return ans
 
     def inter_mf_logMgtr(self,delta):
@@ -490,17 +490,48 @@ class Halo_MF(object):
         N_mz_inter = self.inter_mf_logM(delta)
         N_Mz = self.N_of_Mz(self.M200,delta)
 
-        conprobx = np.cumsum(np.sum(N_Mz,axis=0)/np.sum(N_Mz))
-        rand1 = np.random.uniform(np.min(conprobx),1,size=nsamps)
-        xcond = np.interp(rand1,conprobx,self.zarr)
+#        conprobx = np.cumsum(np.sum(N_Mz,axis=0)/np.sum(N_Mz))
+#        print (N_Mz.shape)
+#        print (conprobx.shape)
+#        print (self.zarr.shape)
+
+#        rand1 = np.random.uniform(np.min(conprobx),1,size=nsamps)
+#        xcond = np.interp(rand1,conprobx,self.zarr)
+
+#        ycond = []
+#        for i in xrange(len(rand1)):
+#            conproby = np.cumsum(N_mz_inter(xcond[i],np.log10(self.M))/np.sum(N_mz_inter(xcond[i],np.log10(self.M))))
+#            rand2 = np.random.uniform(np.min(conproby),1,1)
+#            ycond = np.append(ycond,np.interp(rand2,conproby,np.log10(self.M)))
+
+#        return xcond,ycond
+        
+        
+        conprobx = ((np.sum(N_Mz,axis=1))) [::-1]
+        #print ((np.trapz(N_Mz,axis=1,x=self.M)).shape)
+        #print ((np.sum(np.trapz(N_Mz,axis=1,x=self.M))).shape)
+
+        #conprobx = np.trapz(N_Mz,axis=1,x=self.M) / np.sum(np.trapz(N_Mz,axis=1,x=self.M))
+
+        #print (np.cumsum(np.sum(N_Mz,axis=1)))
+        #print (np.sum(N_Mz))
+
+        #rand1 = np.random.uniform(np.min(conprobx),1,size=nsamps)
+        rand1 = np.random.uniform(np.min(conprobx),np.max(conprobx),size=nsamps)
+        xcond = np.interp(rand1,conprobx,np.log10(self.M)[::-1])
+
+        print (conprobx)
+        #print (xcond)
 
         ycond = []
         for i in xrange(len(rand1)):
-            conproby = np.cumsum(N_mz_inter(xcond[i],np.log10(self.M))/np.sum(N_mz_inter(xcond[i],np.log10(self.M))))
+            conproby = np.cumsum(N_mz_inter(self.zarr,xcond[i])/np.sum(N_mz_inter(self.zarr,xcond[i])))
+            #print (conproby)
             rand2 = np.random.uniform(np.min(conproby),1,1)
-            ycond = np.append(ycond,np.interp(rand2,conproby,np.log10(self.M)))
+            ycond = np.append(ycond,np.interp(rand2,conproby,self.zarr))
+        #print (ycond)
 
-        return xcond,ycond
+        return ycond,xcond
     
     def mcsample_mf(self,delta,nsamp100,nwalkers=100,nburnin=50,Ndim=2,mthresh=[14.6,15.6],zthresh=[0.2,1.95]):
         import emcee
@@ -526,6 +557,21 @@ class Halo_MF(object):
         for i in range(z_arr.size):
             N_z[i] = np.dot(dn_dzdm[:,i],np.diff(self.M200_edges[:,i]))
         #N_z = np.trapz(dn_dzdm,dx=np.diff(self.M200),axis=0)
+        return N_z*4.*np.pi
+
+    def N_of_z_500(self):
+        # dN/dz(z) = 4pi fsky \int dm dN/dzdmdOmega 
+        N_mz_inter = self.inter_mf_logM(200.)
+
+        #marr = np.outer(self.M,np.ones(self.zarr.size))
+        #zarr = np.outer(np.ones(self.M.size),self.zarr)
+        dn_dzdm = np.zeros([self.M.size,self.zarr.size])
+        
+        for i in range(self.zarr.size):
+            dn_dzdm[:,i]=N_mz_inter(self.zarr[i],np.log10(self.M)).flatten()
+
+        #N_z[i] = np.dot(dn_dzdm[:,i],np.diff(self.M200_edges[:,i]))
+        N_z = np.trapz(dn_dzdm,x=(self.M),axis=0)                                                                                                     
         return N_z*4.*np.pi
 
     def nz(self):

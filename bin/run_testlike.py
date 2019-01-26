@@ -57,7 +57,7 @@ fix_params = dict(list(zip(fixlist,fixvals)))
 
 parlist = ['As']
 parvals = [2.0e-09]
-mmin = 14.3
+mmin = 14.2
 print(mmin)
 
 priorlist = []
@@ -113,7 +113,7 @@ start = time.time()
 
 filename_out = chain_out+"/test_likelival_"+args.chain_name+".dat"
 
-TL = lk.clustLikeTest(iniFile,filedir+filename,fix_params,mmin=mmin)
+TL = lk.clustLikeTest(iniFile,filedir+filename,fix_params,mmin=mmin+0.1)
 
 #print TL.mgrid
 

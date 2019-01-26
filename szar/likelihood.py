@@ -413,6 +413,7 @@ class MockCatalog(object):
 
     def Total_clusters(self,fsky):
         Nz = self.HMF.N_of_z()
+        print (np.trapz(self.HMF.N_of_z_500()*fsky,dx=np.diff(self.HMF.zarr)))
         ans = np.trapz(Nz*fsky,dx=np.diff(self.HMF.zarr))
         return ans
 
@@ -554,6 +555,17 @@ class MockCatalog(object):
              fits.Column(name='Mass_err', format='E', array=sampMerr),])
 
         hdu.writeto(filedir+filename+'.fits',overwrite=True)
+
+        return 0
+
+    def test_cat_samp(self, filedir,filename, mcut):
+        '''
+        Write out the catalog
+        '''
+        f1 = filedir+filename+'_testsamp_mz'
+        sampZ,sampM = self.plot_basic_sample(f1)
+
+        print (sampM) 
 
         return 0
 
