@@ -458,6 +458,15 @@ class Halo_MF(object):
         ans = interp2d(self.zarr,np.log10(self.M),N_Mz,kind='cubic',fill_value=0)
         return ans
 
+    def inter_Nz_logM(self,delta):
+        #interpolating over M500c becasue that's a constant vector at every redshift
+        N_z = self.N_of_Mz(self.M200,delta)
+        for i in range(self.zarr.size):
+            N_z[:,i] *= np.diff(self.M200_edges[:,i])
+        #N_z = self.N_of_Mz(self.M200,delta)*np.diff(self.M200_edges)
+        ans = interp2d(self.zarr,np.log10(self.M),N_z,kind='cubic',fill_value=0)
+        return ans
+
     def inter_mf_logMgtr(self,delta):
         #interpolating over M500c becasue that's a constant vector at every redshift
         N_Mz = np.cumsum(self.N_of_Mz(self.M200,delta),axis = 0)
@@ -487,8 +496,13 @@ class Halo_MF(object):
         return lp + self.inter_mf_func(theta,inter)
 
     def cpsample_mf(self,delta,nsamps):
-        N_mz_inter = self.inter_mf_logM(delta)
-        N_Mz = self.N_of_Mz(self.M200,delta)
+        N_z_inter = self.inter_Nz_logM(delta)
+                                                      
+        N_z = self.N_of_Mz(self.M200,delta)
+        for i in range(self.zarr.size):
+            N_z[:,i] *= np.diff(self.M200_edges[:,i])
+
+        #N_z = self.N_of_Mz(self.M200,delta)*np.diff(self.M200_edges)
 
 #        conprobx = np.cumsum(np.sum(N_Mz,axis=0)/np.sum(N_Mz))
 #        print (N_Mz.shape)
@@ -507,7 +521,8 @@ class Halo_MF(object):
 #        return xcond,ycond
         
         
-        conprobx = ((np.sum(N_Mz,axis=1))) [::-1]
+        #conprobx = ((np.sum(N_z,axis=1))) [::-1]
+        conprobx = np.cumsum(np.sum(N_z,axis=1)/ np.sum(N_z))
         #print ((np.trapz(N_Mz,axis=1,x=self.M)).shape)
         #print ((np.sum(np.trapz(N_Mz,axis=1,x=self.M))).shape)
 
@@ -516,16 +531,20 @@ class Halo_MF(object):
         #print (np.cumsum(np.sum(N_Mz,axis=1)))
         #print (np.sum(N_Mz))
 
-        #rand1 = np.random.uniform(np.min(conprobx),1,size=nsamps)
-        rand1 = np.random.uniform(np.min(conprobx),np.max(conprobx),size=nsamps)
-        xcond = np.interp(rand1,conprobx,np.log10(self.M)[::-1])
+        print (conprobx.shape,N_z.shape)
 
-        print (conprobx)
+        rand1 = np.random.uniform(np.min(conprobx),1,size=nsamps)
+        print (rand1)
+        #rand1 = np.random.uniform(np.min(conprobx),np.max(conprobx),size=nsamps)
+        #xcond = np.interp(rand1,conprobx,np.log10(self.M)[::-1])
+        xcond = np.interp(rand1,conprobx,np.log10(self.M))
+
+        #print (conprobx)
         #print (xcond)
 
         ycond = []
         for i in xrange(len(rand1)):
-            conproby = np.cumsum(N_mz_inter(self.zarr,xcond[i])/np.sum(N_mz_inter(self.zarr,xcond[i])))
+            conproby = np.cumsum(N_z_inter(self.zarr,xcond[i])/np.sum(N_z_inter(self.zarr,xcond[i])))
             #print (conproby)
             rand2 = np.random.uniform(np.min(conproby),1,1)
             ycond = np.append(ycond,np.interp(rand2,conproby,self.zarr))
