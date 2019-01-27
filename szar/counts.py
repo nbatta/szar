@@ -531,10 +531,10 @@ class Halo_MF(object):
         #print (np.cumsum(np.sum(N_Mz,axis=1)))
         #print (np.sum(N_Mz))
 
-        print (conprobx.shape,N_z.shape)
+        #print (conprobx.shape,N_z.shape)
 
         rand1 = np.random.uniform(np.min(conprobx),1,size=nsamps)
-        print (rand1)
+        #print (rand1)
         #rand1 = np.random.uniform(np.min(conprobx),np.max(conprobx),size=nsamps)
         #xcond = np.interp(rand1,conprobx,np.log10(self.M)[::-1])
         xcond = np.interp(rand1,conprobx,np.log10(self.M))
