@@ -57,7 +57,7 @@ fix_params = dict(list(zip(fixlist,fixvals)))
 
 parlist = ['As']
 parvals = [2.0e-09]
-mmin = 14.3
+mmin = 14.2
 print(mmin)
 
 priorlist = []
@@ -76,7 +76,7 @@ filename = args.chain_name #,'mockCat_v1'
 
 if args.testMock:
     print("Testing Mockcat Numbers")
-    MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[mmin-0.1,15.7,0.01],z_grid=[0.1,2.01,0.1])
+    MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[mmin,15.7,0.01],z_grid=[0.1,2.01,0.1])
     saveNum = []
     for i in range(args.testMock):
         Nums = MC.test_Mockcat_Nums(mmin)
@@ -91,7 +91,7 @@ if args.testMock:
 else:
     check = os.path.isfile(filedir+filename+'.fits')
     if (check == False):
-        MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[mmin-0.1,15.7,0.01],z_grid=[0.1,2.01,0.1])
+        MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[mmin,15.7,0.01],z_grid=[0.1,2.01,0.1])
         MC.write_test_cat_toFits(filedir,filename)
     #MC.write_obs_cat_toFits(filedir,filename)
     else:
@@ -102,7 +102,7 @@ print('sample time',time.time() - start)
 
 MC2 = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[mmin,15.7,0.01],z_grid=[0.1,2.01,0.1])
 
-print("pre-predictions Ntot ", MC2.Total_clusters(MC2.fsky))   
+print("pre-predictions Ntot ", MC2.Total_clusters(MC2.fsky), "+/-", np.sqrt(MC2.Total_clusters(MC2.fsky)))   
 #list = fits.open(filedir+filename+'.fits')
 #if list:
 #    print "Using file", filename+'.fits'
@@ -113,7 +113,7 @@ start = time.time()
 
 filename_out = chain_out+"/test_likelival_"+args.chain_name+".dat"
 
-TL = lk.clustLikeTest(iniFile,filedir+filename,fix_params,mmin=mmin)
+TL = lk.clustLikeTest(iniFile,filedir+filename,fix_params,mmin=mmin+0.1)
 
 #print TL.mgrid
 

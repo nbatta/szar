@@ -84,7 +84,8 @@ def counts_from_config(Config,bigDataDir,version,expName,gridName,mexp_edges,z_e
         suffix += "_"+str(lkneeTOverride)
     if alphaTOverride is not None:
         suffix += "_"+str(alphaTOverride)
-    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+suffix+".pkl",'rb'),encoding='latin1')
+    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+suffix+".pkl",'rb'))
+    #mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+suffix+".pkl",'rb'),encoding='latin1')
     experimentName = expName
     cosmoDict = dict_from_section(Config,"params")
     constDict = dict_from_section(Config,'constants')
@@ -305,8 +306,9 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
 
     # Number of non-SZ params (params that will be in Planck/BAO)
     numCosmo = Config.getint(fishSection,'numCosmo')
-    #numLeft = len(paramList) - numCosmo
+    numLeft = len(paramList) - numCosmo
 
+    print("param numbers",numCosmo,numLeft)
 
     try:
         do_cmb_fisher = Config.getboolean(fishSection,"do_cmb_fisher")
@@ -387,7 +389,8 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
         external_param_list = Config.get(fishSection,'external_param_list').split(',')
     except:
         traceback.print_exc()
-        external_param_list = "H0,ombh2,omch2,tau,As,ns,mnu,w0,wa".split(',')
+        #external_param_list = "H0,ombh2,omch2,tau,As,ns,mnu,w0,wa".split(',')
+        external_param_list = "H0,ombh2,omch2,tau,As,ns".split(',')
         print("No external param list found in fisher section. Assuming ", external_param_list)
 
     nex = len(external_param_list)
@@ -406,6 +409,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
         if do_other:
             #numLeft = len(paramList) - other_fisher.shape[0]
             #other_fisher = pad_fisher(other_fisher,numLeft)
+            print("shapes",other_fisher.shape)
             all_others += other_fisher
 
     otherFish = stats.FisherMatrix(all_others,param_list=external_param_list)
