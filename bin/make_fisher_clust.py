@@ -141,10 +141,8 @@ def main():
     #should replace with function to detect zeroed columns + rows
     full_fisher.delete('b_wl')
 
-    currenttime = time.strftime("%Y-%m-%d-%H-%M-%S-%Z", time.localtime())
-
     if args.outfile is not None:
-        full_fisher.to_pickle(DIR + 'fisher_' + args.outfile + '_' + currenttime + '.pkl')
+        full_fisher.to_pickle(DIR + 'fisher_' + args.outfile + '.pkl')
 
     for key,val in full_fisher.sigmas().items():
         try:
@@ -156,7 +154,7 @@ def main():
     cov = FisherMatrix(cov, full_fisher.columns.values)
     
     if args.outfile is not None:
-        cov.to_pickle(DIR + 'covariance_' + args.outfile + '_' + currenttime  + '.pkl')
+        cov.to_pickle(DIR + 'covariance_' + args.outfile + '.pkl')
 
     if args.make_tri is not None:
         make_constraint_curves(full_fisher, args.make_tri)
