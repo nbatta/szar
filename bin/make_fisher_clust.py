@@ -37,10 +37,11 @@ def load_fisher(file_):
     elif file_extension == '.npy':
         fisher = np.load(file_)
     elif file_extension == '.pkl':
-        with open(file_, 'rb') as pickle_file:
-            try:
+        try:
+            with open(file_, 'rb') as pickle_file:
                 fisher = pickle.load(pickle_file)
-            except UnicodeDecodeError:
+        except UnicodeDecodeError:
+            with open(file_, 'rb') as pickle_file:
                 fisher = pickle.load(pickle_file, encoding='latin1')
     else:
         print(f"Filetype of extra fisher file {file_} not supported")
