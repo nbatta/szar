@@ -21,18 +21,16 @@ def main():
     INIFILE = 'input/pipeline.ini'
 
     ps_derivs = np.load(args.derivs)
-    ps_factors = np.load(args.factors
+    ps_factors = np.load(args.factors)
     ps_params = np.load(args.params).item()
     ps_params = list(ps_params.keys())
 
     ps_fisher = make_fisher(ps_derivs, ps_factors)
     ps_fisher = FisherMatrix(ps_fisher, ps_params)
 
-    full_fisher = ps_fisher.copy()
+    #ps_fisher.delete('b_wl') #should replace with function to detect zeroed columns + rows 
 
-    full_fisher.delete('b_wl') #should replace with function to detect zeroed columns + rows 
-
-    full_fisher.to_pickle(DIR + 'fisher_' + args.outfile + '.pkl')
+    ps_fisher.to_pickle(DIR + 'fisher_' + args.outfile + '.pkl')
 
 if __name__ == '__main__':
     main()
