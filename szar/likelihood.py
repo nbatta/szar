@@ -354,6 +354,21 @@ class MockCatalog(object):
         Config.optionxform=str
         Config.read(iniFile)
 
+        if mass_grid_log:
+            logm_min,logm_max,logm_spacing = mass_grid_log
+        else:
+            logm_min = 12.7
+            logm_max = 15.72
+            logm_spacing = 0.04
+        if z_grid:
+            zmin,zmax,zdel = z_grid
+        else:
+            zmin = 0.0
+            zmax = 2.01
+            zdel = 0.1
+
+
+
         self.fparams = {}
         for (key, val) in Config.items('params'):
             if ',' in val:
@@ -413,7 +428,22 @@ class MockCatalog(object):
 
     def Total_clusters(self,fsky):
         Nz = self.HMF.N_of_z()
+        print (np.trapz(self.HMF.N_of_z_500()*fsky,dx=np.diff(self.HMF.zarr)))
         ans = np.trapz(Nz*fsky,dx=np.diff(self.HMF.zarr))
+        return ans
+
+    def Total_clusters_check(self,fsky):
+        
+        Marr = np.outer(self.Mcents,np.ones(len(self.HMF.zarr)))
+        Medgearr = np.outer(self.Medges,np.ones(len(self.HMF.zarr)))
+        dn_dzdm = self.HMF.N_of_Mz(Marr,200)
+        N_z = np.zeros(self.HMF.zarr.size)
+        for i in range(self.HMF.zarr.size):
+            N_z[i] = np.dot(dn_dzdm[:,i],np.diff(Medgearr[:,i]))
+        
+        N_z *= 4.*np.pi
+        ans = np.trapz(N_z*fsky,dx=np.diff(self.HMF.zarr))
+        #print ('test diff z',np.diff(self.HMF.zarr))
         return ans
 
     def create_basic_sample(self,fsky):
@@ -554,6 +584,17 @@ class MockCatalog(object):
              fits.Column(name='Mass_err', format='E', array=sampMerr),])
 
         hdu.writeto(filedir+filename+'.fits',overwrite=True)
+
+        return 0
+
+    def test_cat_samp(self, filedir,filename, mcut):
+        '''
+        Write out the catalog
+        '''
+        f1 = filedir+filename+'_testsamp_mz'
+        sampZ,sampM = self.plot_basic_sample(f1)
+
+        print (sampM) 
 
         return 0
 

@@ -37,10 +37,11 @@ def load_fisher(file_):
     elif file_extension == '.npy':
         fisher = np.load(file_)
     elif file_extension == '.pkl':
-        with open(file_, 'rb') as pickle_file:
-            try:
+        try:
+            with open(file_, 'rb') as pickle_file:
                 fisher = pickle.load(pickle_file)
-            except UnicodeDecodeError:
+        except UnicodeDecodeError:
+            with open(file_, 'rb') as pickle_file:
                 fisher = pickle.load(pickle_file, encoding='latin1')
     else:
         print(f"Filetype of extra fisher file {file_} not supported")
@@ -63,21 +64,21 @@ def _get_latex_dict(inifile, fisherSection):
     config.optionxform=str
     config.read(inifile)
 
-    params = config.items(fisherSection, 'paramList')[1][1].split(',')
+    params = config.items(fisherSection, 'paramList')[0][1].split(',')
     latex_param_list = config.items(fisherSection, 'paramLatexList')[1][1].split(',')
     latex_paramdict = {}
     for index,key in enumerate(params):
         latex_paramdict[key] = latex_param_list[index]
     return latex_paramdict
 
-def make_constraint_curves(fisher):
+def make_constraint_curves(fisher, savefigfile):
     config = ConfigParser()
     config.optionxform=str
     INIFILE = "input/pipeline.ini"
     config.read(INIFILE)
     fisher.delete('tau')
 
-    fishSection = "clustering_noabias"
+    fishSection = "clustering"
     #paramList = config.get('fisher-'+fishSection,'paramList').split(',')
     paramList = fisher.columns.values.tolist()
     #paramLatexList = config.get('fisher-'+fishSection,'paramLatexList').split(',')
@@ -91,7 +92,7 @@ def make_constraint_curves(fisher):
     fplots.startFig()
     fplots.addSection(fishSection,paramList,paramLatexList,fparams)
     fplots.addFisher(fishSection,'test', fisher)
-    fplots.plotTri(fishSection,paramList,['test'],labels=['S4-v6'],saveFile="figs/triplot_test.png",loc='best', fmt='png')
+    fplots.plotTri(fishSection,paramList,['test'],labels=['S4-v6'],saveFile=savefigfile,loc='best', fmt='png')
 
 def main():
     parser = argparse.ArgumentParser()
@@ -100,7 +101,7 @@ def main():
     parser.add_argument("-f", "--factors", help="prefactor file for the fisher matrix")
     parser.add_argument("-p", "--params", help="parameters file for the fisher matrix")
     parser.add_argument("--extra-fishers", help="extra fisher matrix files to be added to clustering", nargs='*')
-    parser.add_argument("--make-tri", help="make triplot from fisher matrix", action='store_true')
+    parser.add_argument("--make-tri", help="make triplot from fisher matrix")
     args = parser.parse_args()
 
     DIR = 'datatest/'
@@ -140,10 +141,8 @@ def main():
     #should replace with function to detect zeroed columns + rows
     full_fisher.delete('b_wl')
 
-    currenttime = time.strftime("%Y-%m-%d-%H-%M-%S-%Z", time.localtime())
-
     if args.outfile is not None:
-        full_fisher.to_pickle(DIR + 'fisher_' + args.outfile + '_' + currenttime + '.pkl')
+        full_fisher.to_pickle(DIR + 'fisher_' + args.outfile + '.pkl')
 
     for key,val in full_fisher.sigmas().items():
         try:
@@ -155,10 +154,10 @@ def main():
     cov = FisherMatrix(cov, full_fisher.columns.values)
     
     if args.outfile is not None:
-        cov.to_pickle(DIR + 'covariance_' + args.outfile + '_' + currenttime  + '.pkl')
+        cov.to_pickle(DIR + 'covariance_' + args.outfile + '.pkl')
 
-    if args.make_tri:
-        make_constraint_curves(full_fisher)
+    if args.make_tri is not None:
+        make_constraint_curves(full_fisher, args.make_tri)
 
 if __name__ == '__main__':
     main()
