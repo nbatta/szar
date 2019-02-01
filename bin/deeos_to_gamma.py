@@ -20,7 +20,7 @@ import time
 from szar.derivatives import Derivs_Clustering, make_fisher
 from orphics.stats import FisherMatrix
 from pandas import DataFrame
-from make_fisher_clust import load_fisher, _get_params
+from futils import load_fisher
 
 def get_gamma_constraint(fisher, fisher_params):
     #equation for gamma is gamma = gamma0 + b(1 + w0 + wa/2) with b=0.05
@@ -66,17 +66,12 @@ def get_gamma_constraint(fisher, fisher_params):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--fisher", help="input fisher matrix")
-    parser.add_argument("--array", help="indicate fisher is not a FisherMatrix object but a tuple of params,ndarray", action="store_true")
     args = parser.parse_args()
 
     fisher_file = args.fisher
     fisher = load_fisher(fisher_file)
 
-    if not args.array:
-        fisher_params = fisher.columns.values
-    else:
-        fisher_params,fisher = fisher
-        fisher = FisherMatrix(fisher, fisher_params)
+    fisher_params = fisher.columns.values
 
     sigma_gamma = get_gamma_constraint(fisher, fisher_params)
     print(sigma_gamma)
