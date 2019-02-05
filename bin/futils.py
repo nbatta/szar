@@ -40,3 +40,35 @@ def load_fisher(file_):
     assert fisher.params is not None
     assert type(fisher) is FisherMatrix
     return fisher
+
+def test_load_fisher_smallfile():
+    #requires the existence of load_fisher_test.txt with the contents (after stripping #>):
+    #>#tau,H0
+    #10,0
+    #0,0
+
+    params = ['tau', 'H0']
+    fishervals = np.array([[10,0],[0,0]], dtype=float)
+
+    fishermat = FisherMatrix(fishervals, params)
+    
+    try:
+        testfishermat = load_fisher('datatest/load_fisher_test.txt')
+    except OSError as e:
+        print(e)
+        print("You probably didn't create the file datatest/load_fisher_test.txt with the contents:")
+        print("\n#tau,H0\n10,0\n0,1")
+        print("\nTrying creating that and running this test again")
+        sys.exit()
+
+    try:
+        assert fishermat.equals(testfishermat)
+        print("Test load_fisher_smallfile passed")
+    except AssertionError:
+        print("Test load_fisher_smallfile failed: here is what was expected:")
+        print(fishermat)
+        print("Here is what was loaded:")
+        print(testfishermat)
+
+if __name__ == '__main__':
+    test_load_fisher_smallfile()

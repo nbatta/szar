@@ -18,6 +18,20 @@ def _load_and_process(fisher_files):
 
     return fisher_list
 
+def _add_fishers(fisher_list):
+    zeros = np.array([[0,0],[0,0]], dtype=float)
+    dummyparam1 = 'HiMyNameIsPaulTheDummyParamISureHopeThisIsntARealParamOfYourFisher'
+    dummyparam2 = 'HiMyNameIsPaulaTheDummyParamISureHopeThisIsntARealParamOfYourFisherEither'
+    dummies = [dummyparam1, dummyparam2]
+    total = FisherMatrix(zeros, dummies)
+    
+    for fish in fisher_list:
+        total = total + fish
+
+    total.delete(dummyparam1)
+    total.delete(dummyparam2)
+    return total
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("fisher_files", help="fisher matrix file locations", nargs='+')
@@ -29,8 +43,8 @@ def main():
         sys.exit()
 
     fisher_list = _load_and_process(args.fisher_files)
-
-    fisher_sum = np.sum(fisher_list)
+    
+    fisher_sum = _add_fishers(fisher_list)
 
     assert type(fisher_sum) is FisherMatrix
 
@@ -50,7 +64,7 @@ def test_add():
     fisher2 = FisherMatrix(fisher2, params2)
     fisher3 = FisherMatrix(fisher3, params3)
     
-    fisher_sum = np.sum([fisher1, fisher2, fisher3])
+    fisher_sum = _add_fishers([fisher1, fisher2, fisher3])
     print(f"{fisher1}, \n{fisher2}, and \n{fisher3} \n\n summed to \n\n {fisher_sum}")
 
 def test_load_and_process():
@@ -78,7 +92,54 @@ def test_load_and_process():
 
     print("Loading checks passed")
 
+def test_weird_file_add():
+    test_files = ['datatest/testfisher1.txt',
+                  'datatest/testfisher2.txt',
+                  'datatest/testfisher3.txt']
+
+    test_fishers = _load_and_process(test_files)
+
+    sum_fisher = _add_fishers(test_fishers)
+
+    check_vals = np.ones((6,6))
+    check_vals += np.array([[0,0,0,0,0,0], [0,2,2,0,0,2], [0,2,2,0,0,2], [0,0,0,0,0,0], [0,0,0,0,0,0], [0,2,2,0,0,2]])
+    check_vals += np.array([[0,0,0,0,0,0], [0,0,0,0,0,0], [0,0,0,0,0,0], [0,0,0,0,0,0], [0,0,0,0,0,0], [0,0,0,0,0,10]])
+
+    check_params = ['A','B','C','D','E','F']
+    check_fisher = FisherMatrix(check_vals, check_params)
+
+    try:
+        assert check_fisher.equals(sum_fisher)
+        print("Test of weird_file_add passed")
+    except AssertionError:
+        print("Test of weird_file_add failed!")
+        print("Expected to get:")
+        print(check_fisher)
+        print("got instead")
+        print(sum_fisher)
+
+    another_small_fisher = FisherMatrix(np.array([[100,0],[0,0]]), ['F','A'])
+    asf_file = 'datatest/testfisher4.pkl'
+    another_small_fisher.to_pickle(asf_file)
+
+    asf_loaded = _load_and_process([asf_file])
+    newlist = [sum_fisher] + asf_loaded
+    newsum = _add_fishers(newlist)
+
+    check_fisher += np.array([[0,0,0,0,0,0], [0,0,0,0,0,0], [0,0,0,0,0,0], [0,0,0,0,0,0], [0,0,0,0,0,0], [0,0,0,0,0,100]])
+
+    try:
+        assert check_fisher.equals(newsum)
+        print("Test of weird_file_add passed")
+    except AssertionError:
+        print("Test of weird_file_add failed!")
+        print("Expected to get:")
+        print(check_fisher)
+        print("got instead")
+        print(newsum)
+
 if __name__ == '__main__':
     #test_load_and_process()
     #test_add()
+    #test_weird_file_add()
     main()
