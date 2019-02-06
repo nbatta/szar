@@ -92,6 +92,9 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
     ps_bars_fid = clst.fine_ps_bar(mus)
     noise = 1/np.sqrt(factors)
 
+    veff = clst.V_eff(mus)
+    flat_noise = veff
+
     def _plot_ps_diff(param, index):
         #plt.plot(ks, ps_bars_fid[:,0,0], label=r"fid")
         plt.plot(ks, ups[index][:,0,0] - ps_bars_fid[:,0,0], label=r"up - fid")
@@ -127,6 +130,7 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
         up = ups[index][:, zindex, muindex]
         down = downs[index][:, zindex, muindex]        
         nse = noise[:, zindex, muindex]
+        flat_nse = flat_noise[:, zindex, muindex]
         snr = ps_bars_fid[:, zindex, muindex]/nse
         latexp = latex_paramdict[param]
         z = zs[zindex]
@@ -143,8 +147,9 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
 
         ax[0].plot(ks, fid, label=r"$\bar P({})$".format(latexp))
         ax[0].fill_between(ks, fid - nse, fid + nse,
-                 color='orange', alpha=0.2)
+                 color='grey', alpha=0.2)
         ax[0].plot(ks, nse, label=r"$\mathrm{{noise}}$".format(latexp))
+        ax[0].plot(ks, flat_nse, label=r"$k^3/V_{{\mathrm{{eff}}}}$")
         ax[0].set_xscale('log')
         ax[0].set_yscale('log')
         ax[0].legend(loc='best')
@@ -214,7 +219,7 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
 
 #    for param in params.keys():
     muind = np.where(mus > 0.1)[0][0]
-    _plot_ps_with_ratio('wa', param_index['wa'], 0, 0)
+    _plot_ps_with_ratio('H0', param_index['H0'], 0, 0)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -230,7 +235,7 @@ def main():
     parser.add_argument("-par", "--params", help="fisher parameters")
     args = parser.parse_args()
 
-    DIR = 'figs/'
+    DIR = 'userdata/figs/'
 
     params = np.load(args.params).item()
     psups = np.load(args.upfile)
