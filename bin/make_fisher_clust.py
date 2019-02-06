@@ -11,13 +11,13 @@ from orphics.stats import FisherMatrix
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-o", "--outfile", help="name for output fisher file")
-    parser.add_argument("-d", "--derivs", help="derivative file for fisher matrix")
-    parser.add_argument("-f", "--factors", help="prefactor file for the fisher matrix")
-    parser.add_argument("-p", "--params", help="parameters file for the fisher matrix")
+    parser.add_argument("-o", "--outfile", help="name for output fisher file", required=True)
+    parser.add_argument("-d", "--derivs", help="derivative file for fisher matrix", required=True)
+    parser.add_argument("-f", "--factors", help="prefactor file for the fisher matrix", required=True)
+    parser.add_argument("-p", "--params", help="parameters file for the fisher matrix", required=True)
     args = parser.parse_args()
 
-    DIR = 'datatest/'
+    DIR = 'userdata/'
     INIFILE = 'input/pipeline.ini'
 
     ps_derivs = np.load(args.derivs)

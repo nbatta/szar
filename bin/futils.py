@@ -53,11 +53,11 @@ def test_load_fisher_smallfile():
     fishermat = FisherMatrix(fishervals, params)
     
     try:
-        testfishermat = load_fisher('datatest/load_fisher_test.txt')
+        testfishermat = load_fisher('userdata/testdata/load_fisher_test.txt')
     except OSError as e:
         print(e)
-        print("You probably didn't create the file datatest/load_fisher_test.txt with the contents:")
-        print("\n#tau,H0\n10,0\n0,1")
+        print("You probably didn't create the file userdata/testdata/load_fisher_test.txt with the contents:")
+        print("\n#tau,H0\n10,0\n0,0")
         print("\nTrying creating that and running this test again")
         sys.exit()
 

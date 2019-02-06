@@ -29,7 +29,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--inifile', help='initialization file for pipeline parameters', type=str, default='input/pipeline.ini')
     args = parser.parse_args()
     
-    DIR = "datatest/"
+    DIR = "userdata/"
     FISH_FAC_NAME = "fish_factor"
     FISH_DERIV_NAME = "fish_derivs" 
     UPNAME = "psups"

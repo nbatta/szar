@@ -35,7 +35,7 @@ def _add_fishers(fisher_list):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("fisher_files", help="fisher matrix file locations", nargs='+')
-    parser.add_argument('-o', '--outfile', help="name of file for the summed fishers", default="datatest/fisher_sum.pkl")
+    parser.add_argument('-o', '--outfile', help="name of file for the summed fishers", default="userdata/fisher_sum.pkl")
     args = parser.parse_args()
 
     if len(args.fisher_files) == 1:
@@ -73,19 +73,19 @@ def test_load_and_process():
 
     # Test pickled FM objects
     testfisher_FMObj_out = FisherMatrix(testfisher, params)
-    outfile_FMObj = 'datatest/testfisher_FMObj.pkl'
+    outfile_FMObj = 'userdata/testdata/testfisher_FMObj.pkl'
     testfisher_FMObj_out.to_pickle(outfile_FMObj)
     testfisher_FMObj_in = load_fisher(outfile_FMObj)
     assert testfisher_FMObj_out.equals(testfisher_FMObj_in)
 
     #test .txt files with hashed params
-    outfile_txt_hashparams = 'datatest/testfisher_txt_hashparams.txt'
+    outfile_txt_hashparams = 'userdata/testdata/testfisher_txt_hashparams.txt'
     np.savetxt(outfile_txt_hashparams, testfisher, delimiter=',', header=",".join(params))
     testfisher_txt_hashparams_in = load_fisher(outfile_txt_hashparams)
     assert testfisher_FMObj_out.equals(testfisher_txt_hashparams_in)
 
     #test .txt files that are space separated
-    outfile_txt_spacesep = 'datatest/testfisher_txt_spacesep.txt'
+    outfile_txt_spacesep = 'userdata/testdata/testfisher_txt_spacesep.txt'
     np.savetxt(outfile_txt_spacesep, testfisher, delimiter=' ', header=",".join(params))
     testfisher_txt_spacesep_in = load_fisher(outfile_txt_spacesep)
     assert testfisher_FMObj_out.equals(testfisher_txt_spacesep_in)
@@ -93,9 +93,9 @@ def test_load_and_process():
     print("Loading checks passed")
 
 def test_weird_file_add():
-    test_files = ['datatest/testfisher1.txt',
-                  'datatest/testfisher2.txt',
-                  'datatest/testfisher3.txt']
+    test_files = ['userdata/testdata/testfisher1.txt',
+                  'userdata/testdata/testfisher2.txt',
+                  'userdata/testdata/testfisher3.txt']
 
     test_fishers = _load_and_process(test_files)
 
@@ -119,7 +119,7 @@ def test_weird_file_add():
         print(sum_fisher)
 
     another_small_fisher = FisherMatrix(np.array([[100,0],[0,0]]), ['F','A'])
-    asf_file = 'datatest/testfisher4.pkl'
+    asf_file = 'userdata/testdata/testfisher4.pkl'
     another_small_fisher.to_pickle(asf_file)
 
     asf_loaded = _load_and_process([asf_file])
