@@ -18,12 +18,12 @@ def load_fisher(file_):
 
     if file_extension == '.txt':
         try:
-            fisher = np.loadtxt(file_, delimiter=',')
+            fisher_raw = np.loadtxt(file_, delimiter=',')
         except ValueError:
-            fisher = np.loadtxt(file_, delimiter=' ')
+            fisher_raw = np.loadtxt(file_, delimiter=' ')
 
         params = _get_header(file_)
-        fisher = FisherMatrix(fisher, params)
+        fisher = FisherMatrix(fisher_raw, params)
 
     elif file_extension == '.pkl':
         try:
