@@ -15,12 +15,20 @@ from scipy.special import j1
 
 class ILC_simple(object):
     def __init__(self,clusterCosmology, fgs,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1.,dell=1.,v3mode=-1):
+        
+        #Inputs
+        #clusterCosmology is a class that contains cosmological parameters and power spectra.
+        #fgs is a class that contains the functional forms for the foregrounds and constants
+
+        #Options
 
                  #ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt', \
                  #tsz_cib_file='input/sz_x_cib_template.dat',fg=True):
 
+        #initial set up for ILC
         self.cc = clusterCosmology
 
+        #initializing the frequency matrices
         if (len(freqs) > 1):
             fq_mat   = np.matlib.repmat(freqs,len(freqs),1) 
             fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
@@ -28,7 +36,8 @@ class ILC_simple(object):
             fq_mat   = freqs
             fq_mat_t = freqs
 
-        self.fgs = fgs#fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
+        self.fgs = fgs
+        #fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
 
         self.dell = dell
         self.evalells = np.arange(2,lmax,self.dell)
