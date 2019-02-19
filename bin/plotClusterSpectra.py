@@ -80,6 +80,7 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
     ks = clst.HMF.kh
     zs = clst.HMF.zarr[1:-1]
     delta_ks = np.diff(ks)
+    delta_mus = np.diff(mus)
 
     param_index = {key:index for index,key in enumerate(params.keys())}
 
@@ -92,8 +93,13 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
     ps_bars_fid = clst.fine_ps_bar(mus)
     noise = 1/np.sqrt(factors)
 
-    veff = clst.V_eff(mus)
-    flat_noise = veff
+    v0 = clst.v0(100)
+    ntil = clst.ntilde()[1:-1]
+    flat_noise = 1/ntil
+    shot_shape = 1/ks[..., np.newaxis]*ntil[np.newaxis, ...]
+    sn_prefac = np.sqrt((8 * np.pi)/(delta_ks[..., np.newaxis, np.newaxis] * delta_mus[np.newaxis, np.newaxis, ...] * v0[np.newaxis, ..., np.newaxis]))
+    shot_noise = 1/(ks[..., np.newaxis, np.newaxis] * ntil[np.newaxis, ..., np.newaxis])[:-1] * sn_prefac
+    cosmic_var = 1/(ks[..., np.newaxis, np.newaxis] * ps_bars_fid)[:-1, ..., :-1] * sn_prefac
 
     def _plot_ps_diff(param, index):
         #plt.plot(ks, ps_bars_fid[:,0,0], label=r"fid")
@@ -129,9 +135,13 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
         fid = ps_bars_fid[:, zindex, muindex]
         up = ups[index][:, zindex, muindex]
         down = downs[index][:, zindex, muindex]        
+
         nse = noise[:, zindex, muindex]
-        flat_nse = flat_noise[:, zindex, muindex]
+        flat_nse = np.array([flat_noise[zindex] for i in range(len(ks))])
+        shot_nse = shot_noise[:, zindex, muindex]
+        cosm_var = cosmic_var[:, zindex, muindex]
         snr = ps_bars_fid[:, zindex, muindex]/nse
+
         latexp = latex_paramdict[param]
         z = zs[zindex]
         musqr = mus[muindex]**2
@@ -146,13 +156,15 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
         fig.set_figwidth(5)
 
         ax[0].plot(ks, fid, label=r"$\bar P({})$".format(latexp))
-        ax[0].fill_between(ks, fid - nse, fid + nse,
-                 color='grey', alpha=0.2)
-        ax[0].plot(ks, nse, label=r"$\mathrm{{noise}}$".format(latexp))
-        ax[0].plot(ks, flat_nse, label=r"$k^3/V_{{\mathrm{{eff}}}}$")
+        #ax[0].fill_between(ks, fid - nse, fid + nse,
+        #         color='grey', alpha=0.2)
+        ax[0].plot(ks, nse, label=r"$\mathrm{{total\, noise}}$", linestyle='--')
+        ax[0].plot(ks, flat_nse, label=r"$1/\tilde n$")
+        ax[0].plot(ks[:-1], shot_nse, label=r"$\mathrm{shot\, noise}$", linestyle=':')
+        ax[0].plot(ks[:-1], cosm_var, label=r"$\mathrm{cosmic\, var}$", linestyle='-.')
         ax[0].set_xscale('log')
         ax[0].set_yscale('log')
-        ax[0].legend(loc='best')
+        ax[0].legend(loc='upper center', bbox_to_anchor=(0.5,-0.02), ncol=2)
         ax[0].axvspan(k_snr[0], k_snr[-1], alpha=0.1, color='blue')
         ax[0].set_ylabel(r'$\bar P(k)$')
         ax[0].set_title(f'$z = {round(z,3)}, \quad \mu^2 = {round(musqr,3)}$')
@@ -218,8 +230,8 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
         fig.savefig(dir_ + figname + '_' + f'{param}_diff_table.svg')
 
 #    for param in params.keys():
-    muind = np.where(mus > 0.1)[0][0]
-    _plot_ps_with_ratio('H0', param_index['H0'], 0, 0)
+    muind = np.where((mus < 0.01) & (mus > -0.01))[0][0]
+    _plot_ps_with_ratio('H0', param_index['H0'], 0, muind)
 
 def main():
     parser = argparse.ArgumentParser()
