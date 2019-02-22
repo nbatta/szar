@@ -18,8 +18,8 @@ default_constants = {'A_tsz': 5.6,
                      'TCMB': 2.726,
                      'nu0': 150.,
                      'TCMBmuk':2.726e6,
-                     'Td': 9.7,
-                     'al_cib': 2.2,
+                     'Td': 24., #9.7,
+                     'al_cib': 1.2, #2.2
                      'A_cibp': 6.9,
                      'A_cibc': 4.9,
                      'n_cib': 1.2,
@@ -136,6 +136,13 @@ def ffunc(nu,tcmb=None):
     nu = np.asarray(nu)
     mu = H_CGS*(1e9*nu)/(K_CGS*tcmb)
     ans = mu/np.tanh(old_div(mu,2.0)) - 4.0
+    return ans
+
+def ItoDeltaT(nu):
+    nu = np.asarray(nu)
+    tcmb = default_constants['TCMB']
+    beta  = H_CGS*(nu*1e9)/(tcmb*K_CGS)
+    ans = (1.0 / (2.0 * beta**4.0 * np.exp(beta) * (K_CGS**3.0*tcmb**2.0) / (H_CGS * C_light)**2.0 / (np.exp(beta) - 1.0)**2.0)) * 1.e6 #the 1e6 takes you from K to uK
     return ans
 
 def B_nu(Td,nu):

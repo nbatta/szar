@@ -22,9 +22,6 @@ class ILC_simple(object):
 
         #Options
 
-                 #ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt', \
-                 #tsz_cib_file='input/sz_x_cib_template.dat',fg=True):
-
         #initial set up for ILC
         self.cc = clusterCosmology
 
@@ -37,9 +34,10 @@ class ILC_simple(object):
             fq_mat_t = freqs
 
         self.fgs = fgs
-        #fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
 
+    
         self.dell = dell
+        #set-up ells to evaluate up to lmax
         self.evalells = np.arange(2,lmax,self.dell)
         self.N_ll_noILC = self.evalells*0.0
         self.N_ll_tsz = self.evalells*0.0
@@ -49,6 +47,7 @@ class ILC_simple(object):
         self.N_ll_tsz_c_cmb = self.evalells*0.0
         self.N_ll_tsz_c_cib = self.evalells*0.0
 
+        #Only for SO forecasts, including the SO atmosphere modeling
         if v3mode>-1:
             print("V3 flag enabled.")
             import szar.V3_calc_public as v3
@@ -74,18 +73,26 @@ class ILC_simple(object):
                 v3ell, N_ell_T_LA, N_ell_P_LA, Map_white_noise_levels = v3.AdvACT_noise(f_sky=fsky,ell_max=v3lmax+v3dell,delta_ell=\
 v3dell)
 
+        #initializing the weighting functions for the ilc
+        #thermal SZ weights
         self.W_ll_tsz = np.zeros([len(self.evalells),len(np.array(freqs))])
+        #CMB weights
         self.W_ll_cmb = np.zeros([len(self.evalells),len(np.array(freqs))])
+        #rayleigh scattering cross correlation weights
         self.W_ll_rsx = np.zeros([len(self.evalells),len(np.array(freqs))])
+        #thermal SZ constraining the CIB weights 
         self.W_ll_tsz_c_cib = np.zeros([len(self.evalells),len(np.array(freqs))])
+        #thermal SZ constraining the CMB weights 
         self.W_ll_tsz_c_cmb = np.zeros([len(self.evalells),len(np.array(freqs))])
+        #CMB constraining the thermal SZ weights 
         self.W_ll_cmb_c_tsz = np.zeros([len(self.evalells),len(np.array(freqs))])
         self.freq = freqs
 
-        f_nu_tsz = f_nu(self.cc.c,np.array(freqs)) 
-        f_nu_cmb = f_nu_tsz*0.0 + 1.
-        f_nu_cib = self.fgs.f_nu_cib(np.array(freqs))
-        f_nu_rsx = self.fgs.rs_nu(np.array(freqs))
+        #frequency functions for
+        f_nu_tsz = f_nu(self.cc.c,np.array(freqs)) #tSZ
+        f_nu_cmb = f_nu_tsz*0.0 + 1. #CMB
+        f_nu_cib = self.fgs.f_nu_cib(np.array(freqs)) #CIB
+        f_nu_rsx = self.fgs.rs_nu(np.array(freqs)) #Rayleigh Cross
 
         for ii in range(len(self.evalells)):
 
@@ -124,7 +131,7 @@ v3dell)
 
             self.N_ll_noILC[ii] = nells[3,3]
 
-            totfg = (self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
+            totfg = (self.fgs.rad_pst(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
                       self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) \
                       / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi 
 
