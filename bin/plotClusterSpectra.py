@@ -149,6 +149,7 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
         latexp = latex_paramdict[param]
         z = zs[zindex]
         musqr = mus[muindex]**2
+        print(ks)
 
         k_snr = ks[np.where( np.abs(snr - 1) < 0.1)]
 
@@ -168,14 +169,14 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
         ax[0].set_xscale('log')
         ax[0].set_yscale('log')
         ax[0].legend(loc='best')
-        ax[0].axvspan(k_snr[0], k_snr[-1], alpha=0.1, color='blue')
+        #ax[0].axvspan(k_snr[0], k_snr[-1], alpha=0.1, color='blue')
         ax[0].set_ylabel(r'$\bar P(k)$')
         ax[0].set_title(f'$z = {round(z,3)}, \quad \mu^2 = {round(musqr,3)}$')
         #ax[0].set_aspect(1)
 
         ax[1].plot(ks, up/fid, label=r"$\bar P({0} + \epsilon)/\bar P({0})$".format(latexp), color=sns.xkcd_palette(['green'])[0])
         ax[1].plot(ks, down/fid, label=r"$\bar P({0} - \epsilon)/\bar P({0})$".format(latexp), linestyle='--', color=sns.xkcd_palette(['pinkish red'])[0])
-        ax[1].axvspan(k_snr[0], k_snr[-1], alpha=0.1, color='blue')
+        #ax[1].axvspan(k_snr[0], k_snr[-1], alpha=0.1, color='blue')
         ax[1].set_xlabel(r'$k$')
         ax[1].set_ylabel(r'$\Delta \bar P(k)$')
         #ax[2].set_yscale('log')
@@ -185,7 +186,7 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
 
         fig.tight_layout()
         fig.set_size_inches(5.8,9)
-        fig.savefig(dir_ + figname + '_' + f'{param}_psdiffs.pdf')
+        fig.savefig(dir_ + figname + '_' + f'{param}_psdiffs.eps')
 
         plt.gcf().clear()
 
@@ -237,7 +238,7 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
 
 #    for param in params.keys():
     muind = np.where(mus < 0.8)[0][0]
-    _plot_ps_with_ratio('H0', param_index['H0'], 0, muind)
+    _plot_ps_with_ratio('wa', param_index['wa'], 0, muind)
 
 def main():
     parser = argparse.ArgumentParser()

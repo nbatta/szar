@@ -3,6 +3,35 @@ import sys
 import pickle
 import numpy as np
 from orphics.stats import FisherMatrix
+from six.moves import configparser
+import six
+if six.PY2:
+  ConfigParser = configparser.SafeConfigParser
+else:
+  ConfigParser = configparser.ConfigParser
+
+from szar.counts import ClusterCosmology
+from configparser import ConfigParser
+from orphics.io import dict_from_section,list_from_config
+from szar.clustering import Clustering
+
+def get_cc(ini):
+    Config = ConfigParser()
+    Config.optionxform=str
+    Config.read(ini)
+    clttfile = Config.get('general','clttfile')
+    constDict = dict_from_section(Config,'constants')
+
+    fparams = {}
+    for (key, val) in Config.items('params'):
+        if ',' in val:
+            param, step = val.split(',')
+            fparams[key] = float(param)
+        else:
+            fparams[key] = float(val)
+
+    cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
+    return cc
 
 def _get_header(file_):
     with open(file_) as filein:
