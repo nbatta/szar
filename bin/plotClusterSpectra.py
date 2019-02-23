@@ -78,9 +78,14 @@ def _get_latex_params(inifile):
 def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, legendloc):
     mus = np.linspace(-1,1,9)
     ks = clst.HMF.kh
+    kinds = np.where(ks <= 0.14)[0]
+    ks = ks[ks <= 0.14]
     zs = clst.HMF.zarr[1:-1]
     delta_ks = np.gradient(ks)
     delta_mus = np.gradient(mus)
+
+    ups = ups[:, kinds, ...]
+    downs = downs[:, kinds, ...]
 
     param_index = {key:index for index,key in enumerate(params.keys())}
 
@@ -89,8 +94,9 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
     for index,key in enumerate(params):
         latex_paramdict[key] = latex_params[index]
     
-    ps_bars_fid = clst.fine_ps_bar(mus)
-    noise = 1/np.sqrt(factors)
+    ps_bars_fid = clst.fine_ps_bar(mus)[kinds, ...]
+
+    noise = 1/np.sqrt(factors[kinds, ...])
 
     v0 = clst.v0(100)
     ntil = clst.ntilde()[1:-1]
@@ -149,7 +155,6 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
         latexp = latex_paramdict[param]
         z = zs[zindex]
         musqr = mus[muindex]**2
-        print(ks)
 
         k_snr = ks[np.where( np.abs(snr - 1) < 0.1)]
 
@@ -181,12 +186,13 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
         ax[1].set_ylabel(r'$\Delta \bar P(k)$')
         #ax[2].set_yscale('log')
         ax[1].set_xscale('log')
-        ax[1].legend(loc='lower center', bbox_to_anchor=(0.5, 1), ncol=2)
+        ax[1].legend(loc='center left')
+        #ax[1].legend(loc='lower center', bbox_to_anchor=(0.5, 1), ncol=2)
         #ax[1].set_aspect(1)
 
         fig.tight_layout()
         fig.set_size_inches(5.8,9)
-        fig.savefig(dir_ + figname + '_' + f'{param}_psdiffs.eps')
+        fig.savefig(dir_ + figname + '_' + f'{param}_psdiffs.svg')
 
         plt.gcf().clear()
 
@@ -238,7 +244,7 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
 
 #    for param in params.keys():
     muind = np.where(mus < 0.8)[0][0]
-    _plot_ps_with_ratio('wa', param_index['wa'], 0, muind)
+    _plot_ps_with_ratio('H0', param_index['H0'], 0, muind)
 
 def main():
     parser = argparse.ArgumentParser()
