@@ -2,7 +2,6 @@ from __future__ import print_function
 from __future__ import division
 from builtins import str
 from builtins import range
-from past.utils import old_div
 import itertools
 from szar.counts import rebinN
 import numpy as np
@@ -19,7 +18,6 @@ def marginalized_errs(Fisher,paramList):
     # print Fisher[ind,ind]
     # Fisher[ind,ind] = 1./0.01**2.
     #print Fisher[ind,ind]
-    
     Finv = np.linalg.inv(Fisher)
 
     errs = np.sqrt(np.diagonal(Finv))
@@ -57,7 +55,7 @@ def hash_func(*argv):
             hinval += str(arg)
         else:
             raise ValueError
-            
+
     return hashlib.md5(hinval).hexdigest()
 
 def pad_fisher(fisher,num_pad):
@@ -154,7 +152,7 @@ def sel_counts_from_config(Config,bigDataDir,version,expName,gridName,calName,me
             qbin_edges = np.linspace(qs[0],qs[1],int(qs[2])+1)
         else:
             raise ValueError
-        calFile = mass_grid_name_owl(bigDataDir,calName)        
+        calFile = mass_grid_name_owl(bigDataDir,calName)
         mexp_edges, z_edges, lndM = pickle.load(open(calFile,"rb"))
         dN_dmqz = hmf.N_of_mqz_SZ(lndM,qbin_edges,SZProf)
         nmzq = counts.getNmzq(dN_dmqz,mexp_edges,z_edges,qbin_edges)
@@ -169,7 +167,7 @@ def sel_counts_from_config(Config,bigDataDir,version,expName,gridName,calName,me
     M = (M_edges[1:]+M_edges[:-1])/2.
     Mexp = np.log10(M)
     msel = np.logical_and(Mexp>mmin,Mexp<=mmax)
-    
+
     Ns = nmzq.sum(axis=-1)[msel,:][:,zsel]
     return Ns #.ravel().sum()
 
@@ -203,7 +201,7 @@ def priors_from_config(Config,expName,calName,fishName,paramList,tauOverride=Non
     #         freq_to_use = Config.getfloat(calName,'freq')
     #         ind = np.where(np.isclose(freq,freq_to_use))
     #         beamFind = np.array(beam)[ind]
-    #         priorValueList.append(old_div(beamFind,2.))
+    #         priorValueList.append(beamFind/2.)
     #         print("Added sigR prior ", priorValueList[-1])
     #     except:
     #         traceback.print_exc()
@@ -216,7 +214,7 @@ def priors_from_config(Config,expName,calName,fishName,paramList,tauOverride=Non
     #     paramList.append("b_wl")
         #priorNameList.append("b_wl")
         #priorValueList.append(0.01)
-    
+
     # if "owl" in calName:
     #     if not("b_wl" in paramList):
     #         print "OWL but b_wl not found in paramList. Adding with a 1% prior."
@@ -226,7 +224,7 @@ def priors_from_config(Config,expName,calName,fishName,paramList,tauOverride=Non
 
     print (paramList, priorNameList, priorValueList)
     return paramList, priorNameList, priorValueList
-    
+
 
 def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
                                overridePlanck=None,overrideBAO=None,overrideOther=None,pickling=True,s8=False,
@@ -250,11 +248,11 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
                      matrix specified in ini. Can be zero.
     8. overrideOther - Fisher matrix to add to upper left corner of original in place of "other" fisher 
                         matrix specified in ini. Can be zero.
-    
+
     """
 
     pickling = False #!!!!!
-    
+
     bigDataDir = Config.get('general','bigDataDirectory')
     version = Config.get('general','version') 
     pzcutoff = Config.getfloat('general','photoZCutOff')
@@ -263,14 +261,14 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     fishSection = 'fisher-'+fishName
     paramList = Config.get(fishSection,'paramList').split(',')
 
-    
-    
+
+
     zs = list_from_config(Config,gridName,'zrange')
     z_edges = np.arange(zs[0],zs[1]+zs[2],zs[2])
 
 
-    
-    
+
+
 
     saveId = save_id(expName,gridName,calName,version)
     derivRoot = deriv_root(bigDataDir,saveId)
@@ -291,17 +289,17 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     # sys.exit()
 
 
-    
+
     print("Effective number of clusters: ", N_fid.sum())
 
     paramList, priorNameList, priorValueList = priors_from_config(Config,expName,calName,fishName,paramList,tauOverride)
 
     if s8:
-        zrange = old_div((z_edges[1:]+z_edges[:-1]),2.)
+        zrange = (z_edges[1:]+z_edges[:-1])/2.
         zlist = ["S8Z"+str(i) for i in range(len(zrange))]
         paramList = paramList+zlist
 
-    
+
     Fisher = getFisher(N_fid,paramList,priorNameList,priorValueList,derivRoot,pzcutoff,z_edges,fsky)
 
     # Number of non-SZ params (params that will be in Planck/BAO)
@@ -322,16 +320,16 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
 
     if do_clkk_override is not None:
         do_clkk_fisher = do_clkk_override
-        
+
     if do_clkk_fisher:
         assert do_cmb_fisher, "Sorry, currently Clkk fisher requires CMB fisher to be True as well."
         lensName = Config.get(fishSection,"clkk_section")
     else:
         lensName = None
-        
+
     if do_cmb_fisher:
 
-        
+
         import pyfisher.clFisher as pyfish
         # Load fiducials and derivatives
         cmbDerivRoot = Config.get("general","cmbDerivRoot")
@@ -350,7 +348,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
                 print("Loaded pickled CMB fisher.")
             except:
                 pass
-            
+
         if not(cmb_fisher_loaded):
             fidCls = np.loadtxt(cmbDerivRoot+'_fCls.csv',delimiter=',')
             dCls = {}
@@ -368,7 +366,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
         print("numLeft , " ,numLeft)
         cmb_fisher = pad_fisher(cmb_fisher,numLeft)
     else:
-        cmb_fisher = 0.    
+        cmb_fisher = 0.
 
     print(len(paramList))
     print(Fisher.shape)
@@ -420,7 +418,7 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     print("External params : ",otherFish.params)
 
     #print(otherFish.sigmas()['mnu']*1000.)
-    
+
     retfish = (tszFish + otherFish).ix[paramList,paramList]
     #print(stats.FisherMatrix(retfish.as_matrix(),paramList).marge_var_2param('mnu','w0'))
     return retfish.as_matrix(), paramList
@@ -437,7 +435,7 @@ def getFisher(N_fid,paramList,priorNameList,priorValueList,derivRoot,pzcutoff,z_
         if not(param1=='tau' or param2=='tau'):
             ppfstr1 = ""
             ppfstr2 = ""
-            
+
             new_z_edges, dN1 = rebinN(np.load(derivRoot+param1+ppfstr1+".npy"),pzcutoff,z_edges)#,mass_bin=None)
             new_z_edges, dN2 = rebinN(np.load(derivRoot+param2+ppfstr2+".npy"),pzcutoff,z_edges)#,mass_bin=None)
             dN1 = dN1*fsky
@@ -450,7 +448,7 @@ def getFisher(N_fid,paramList,priorNameList,priorValueList,derivRoot,pzcutoff,z_
 
 
             with np.errstate(divide='ignore'):
-                FellBlock = dN1*dN2*np.nan_to_num(old_div(1.,(N_fid)))#+(N_fid*N_fid*sovernsquare)))
+                FellBlock = dN1*dN2*np.nan_to_num(1./(N_fid))#+(N_fid*N_fid*sovernsquare)))
             #Ncollapsed = N_fid.sum(axis=0).sum(axis=-1)
             #print N_fid[np.where(Ncollapsed<1.)].sum() ," clusters fall in bins where N<1"
             #FellBlock[np.where(Ncollapsed<1.)] = 0.
@@ -460,12 +458,12 @@ def getFisher(N_fid,paramList,priorNameList,priorValueList,derivRoot,pzcutoff,z_
 
         if i==j and (param1 in priorNameList):
             priorIndex = priorNameList.index(param1)
-            priorVal = old_div(1.,priorValueList[priorIndex]**2.)
+            priorVal = 1./priorValueList[priorIndex]**2.
         else:
             priorVal = 0.
 
         Fisher[i,j] = Fell+priorVal
         if j!=i: Fisher[j,i] = Fell
 
-    
+
     return Fisher
