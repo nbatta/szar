@@ -156,16 +156,16 @@ def gfunc(nu,tcmb=None):
     beta = (nu*1e9) * H_CGS / (K_CGS*tcmb)
     ans = 2.* H_CGS**2 * (nu*1e9)**4 / (C_light**2 *K_CGS * tcmb**2) \
         * np.exp(beta) * 1. / (np.exp(beta) - 1.)**2
-    return ans
+    return 1./ans #FIXED added the 1/ans
 
 def cib_nu(nu,al_cib=None,Td=None):
     if Td is None: Td = default_constants['Td']
-    if al_cib is None: al_cib = default_constants['al_cib']
+    if al_cib is None : al_cib = default_constants['al_cib']
     nu0 = default_constants['nu0']
     mu = nu**al_cib*B_nu(Td,nu) * gfunc(nu)
     mu0 = nu0**al_cib*B_nu(Td,nu0) \
         * gfunc(nu0)
-    return mu / mu0
+    return mu / mu0 #* (ItoDeltaT(nu) / ItoDeltaT(nu0))**2
 
 def rad_ps_nu(nu,al_ps=None):
     if al_ps is None: al_ps = default_constants['al_ps']
@@ -217,10 +217,10 @@ def tSZ_CIB_nu(nu1,nu2,al_cib=None,Td=None,A_tsz=None,A_cibc=None,zeta=None):
     if A_cibc is None: A_cibc = default_constants['A_cibc']
     if Td is None: Td = default_constants['Td']
     nu0 = default_constants['nu0']
-    mu1 = nu1**al_cib*B_nu(Td,nu1) * gfunc(nu1)
-    mu2 = nu2**al_cib*B_nu(Td,nu2) * gfunc(nu2)
+    mu1 = nu1**al_cib*B_nu(Td,nu1) * gfunc(nu1) #* ItoDeltaT(nu1)**2
+    mu2 = nu2**al_cib*B_nu(Td,nu2) * gfunc(nu2) #* ItoDeltaT(nu2)**2
     mu0 = nu0**al_cib*B_nu(Td,nu0) \
-        * gfunc(nu0)
+        * gfunc(nu0) #* ItoDeltaT(nu0)**2
     fp12 = ffunc(nu1)*mu1 + ffunc(nu2)*mu2
     fp0  = 2.* ffunc(nu0)*mu0
     ans = -zeta*np.sqrt(A_tsz*A_cibc) * 2.*fp12 / fp0 
@@ -350,7 +350,7 @@ class fgNoises(object):
         mu = nu**self.c['al_cib']*self.B_nu(self.c['Td'],nu) * self.g_nu(nu)
         mu0 = self.c['nu0']**self.c['al_cib']*self.B_nu(self.c['Td'],self.c['nu0']) \
             * self.g_nu(self.c['nu0'])
-        return old_div(mu, mu0)
+        return mu/mu0
 
     def cib_p(self,ell,nu1,nu2):
         

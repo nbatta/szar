@@ -13,6 +13,19 @@ from orphics.io import Plotter
 import numpy.matlib
 from scipy.special import j1
 
+
+def weightcalculator(f,N):
+    N_i=np.linalg.inv(N)
+    C=np.matmul(np.transpose(f),np.matmul(N_i,f))
+    W=(1/C)*np.matmul(np.transpose(f),N_i)
+    return W
+
+def constweightcalculator(f_1,f_2,N):
+    C=np.matmul(np.transpose(f_2),np.matmul(N,f_1))*np.matmul(np.transpose(f_2),np.matmul(N,f_2))-(np.matmul(np.transpose(f_2),np.matmul(N,f_1)))**2
+    M=np.matmul(np.transpose(f_1),np.matmul(N,f_1))*np.matmul(np.transpose(f_2),N)-np.matmul(np.transpose(f_2),np.matmul(N,f_2))*np.matmul(np.transpose(f_1),N)
+    W=M/C
+    return W
+
 class ILC_simple(object):
     def __init__(self,clusterCosmology, fgs,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1.,dell=1.,v3mode=-1):
         
@@ -166,7 +179,20 @@ v3dell)
             N_ll_for_cmb_c_tsz_inv = N_ll_for_tsz_c_cmb_inv
             N_ll_for_tsz_c_cib_inv = np.linalg.inv(N_ll_for_tsz_c_cib)
 
+            self.W_ll_tsz[ii,:]=weightcalculator(f_nu_tsz,N_ll_for_tsz)
+            self.W_ll_rsx[ii,:]=weightcalculator(f_nu_rsx,N_ll_for_rsx)
+            self.W_ll_cmb[ii,:]=weightcalculator(f_nu_cmb,N_ll_for_cmb)
+            self.N_ll_tsz[ii] = np.dot(np.transpose(self.W_ll_tsz[ii,:]),np.dot(N_ll_for_tsz,self.W_ll_tsz[ii,:]))
+            self.N_ll_cmb[ii] = np.dot(np.transpose(self.W_ll_cmb[ii,:]),np.dot(N_ll_for_cmb,self.W_ll_cmb[ii,:]))
+            self.N_ll_rsx[ii] = np.dot(np.transpose(self.W_ll_rsx[ii,:]),np.dot(N_ll_for_rsx,self.W_ll_rsx[ii,:]))
+            self.W_ll_tsz_c_cmb[ii,:]=constweightcalculator(f_nu_cmb,f_nu_tsz,N_ll_for_tsz_c_cmb_inv)
+            self.W_ll_tsz_c_cib[ii,:]=constweightcalculator(f_nu_cib,f_nu_tsz,N_ll_for_tsz_c_cib_inv)
+            self.W_ll_cmb_c_tsz[ii,:]=constweightcalculator(f_nu_tsz,f_nu_cmb,N_ll_for_cmb_c_tsz_inv)
+            self.N_ll_tsz_c_cmb[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cmb[ii,:]),np.dot(N_ll_for_tsz_c_cmb,self.W_ll_tsz_c_cmb[ii,:]))
+            self.N_ll_cmb_c_tsz[ii] = np.dot(np.transpose(self.W_ll_cmb_c_tsz[ii,:]),np.dot(N_ll_for_cmb_c_tsz,self.W_ll_cmb_c_tsz[ii,:]))
+            self.N_ll_tsz_c_cib[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cib[ii,:]),np.dot(N_ll_for_tsz_c_cib,self.W_ll_tsz_c_cib[ii,:]))
 
+            '''
             self.W_ll_tsz[ii,:] = 1./np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_inv,f_nu_tsz)) \
                                   * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_inv)
             self.W_ll_cmb[ii,:] = 1./np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_cmb_inv,f_nu_cmb)) \
@@ -205,6 +231,7 @@ v3dell)
             self.N_ll_tsz_c_cmb[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cmb[ii,:]),np.dot(N_ll_for_tsz_c_cmb,self.W_ll_tsz_c_cmb[ii,:]))
             self.N_ll_cmb_c_tsz[ii] = np.dot(np.transpose(self.W_ll_cmb_c_tsz[ii,:]),np.dot(N_ll_for_cmb_c_tsz,self.W_ll_cmb_c_tsz[ii,:]))
             self.N_ll_tsz_c_cib[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cib[ii,:]),np.dot(N_ll_for_tsz_c_cib,self.W_ll_tsz_c_cib[ii,:]))
+            '''
 
     def Noise_ellyy(self,constraint='None'):
         if (constraint=='None'):
