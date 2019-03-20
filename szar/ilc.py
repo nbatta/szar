@@ -144,7 +144,7 @@ v3dell)
 
             self.N_ll_noILC[ii] = nells[3,3]
 
-            totfg = (self.fgs.rad_pst(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
+            totfg = (self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
                       self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) \
                       / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi 
 
@@ -303,7 +303,7 @@ v3dell)
 
         ellMids  =  old_div((ellBinEdges[1:] + ellBinEdges[:-1]), 2)
 
-        cls_rsx = self.fgs.rs_cross(self.evalells,self.freq[0]) / self.cc.c['TCMBmuK']**2. \
+        cls_rsx = self.fgs.rs_cross(self.evalells,self.freq[0]) \ #/ self.cc.c['TCMBmuK']**2. \
                 / ((self.evalells+1.)*self.evalells) * 2.* np.pi
 
         cls_rsx = old_div(cls_rsx, (self.fgs.rs_nu(self.freq[0])))  # Normalized to get Cell^rsrs fiducial 

@@ -14,7 +14,7 @@ from .tinker import dn_dlogM
 from .tinker import dsigma_dkmax_dM
 from .tinker import tinker_params
 from . import tinker as tinker
-from szar.foregrounds import fgNoises
+#from szar.foregrounds import fgNoises
 
 from orphics.io import Plotter
 from orphics.cosmology import Cosmology
