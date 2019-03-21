@@ -38,7 +38,7 @@ def tinker_params_spline(delta, z=None):
     z = np.asarray(z)
     A = A0 * (1 + z)**-.14
     a = a0 * (1 + z)**-.06
-    alpha = 10.**(-(((.75/np.log10(delta/75.)))))**1.2)
+    alpha = 10.**(-(((.75/np.log10(delta/75.))))**1.2)
     b = b0 * (1 + z)**-alpha
     c = np.zeros(np.shape(z)) + c0
     return A, a, b, c
