@@ -303,7 +303,7 @@ v3dell)
 
         ellMids  =  old_div((ellBinEdges[1:] + ellBinEdges[:-1]), 2)
 
-        cls_rsx = self.fgs.rs_cross(self.evalells,self.freq[0]) \ #/ self.cc.c['TCMBmuK']**2. \
+        cls_rsx = self.fgs.rs_cross(self.evalells,self.freq[0]) \
                 / ((self.evalells+1.)*self.evalells) * 2.* np.pi
 
         cls_rsx = old_div(cls_rsx, (self.fgs.rs_nu(self.freq[0])))  # Normalized to get Cell^rsrs fiducial 
