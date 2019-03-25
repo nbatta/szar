@@ -28,7 +28,7 @@ def constweightcalculator(f_1,f_2,N):
 
 class ILC_simple(object):
     def __init__(self,clusterCosmology, fgs,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1.,dell=1.,v3mode=-1):
-
+        
         #Inputs
         #clusterCosmology is a class that contains cosmological parameters and power spectra.
         #fgs is a class that contains the functional forms for the foregrounds and constants
@@ -48,7 +48,7 @@ class ILC_simple(object):
 
         self.fgs = fgs
 
-
+    
         self.dell = dell
         #set-up ells to evaluate up to lmax
         self.evalells = np.arange(2,lmax,self.dell)
@@ -61,7 +61,7 @@ class ILC_simple(object):
         self.N_ll_tsz_c_cib = self.evalells*0.0
 
         #Only for SO forecasts, including the SO atmosphere modeling
-        if v3mode > -1:
+        if v3mode>-1:
             print("V3 flag enabled.")
             import szar.V3_calc_public as v3
 
@@ -110,7 +110,7 @@ v3dell)
         for ii in range(len(self.evalells)):
 
             cmb_els = fq_mat*0.0 + self.cc.clttfunc(self.evalells[ii])
-
+            
             if v3mode < 0:
                 inst_noise = ( old_div(noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,dimensionless=False), self.cc.c['TCMBmuK']**2.))
                 nells = np.diag(inst_noise)
@@ -144,7 +144,7 @@ v3dell)
 
             self.N_ll_noILC[ii] = nells[3,3]
 
-            totfg = (self.fgs.rad_pst(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
+            totfg = (self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
                       self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) \
                       / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi 
 

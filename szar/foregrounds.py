@@ -242,7 +242,7 @@ def g_nu(constDict,nu):
     beta = (nu*1e9) * c['H_CGS'] / (c['K_CGS']*c['TCMB'])
     ans = 2.* c['H_CGS']**2 * (nu*1e9)**4 / (c['C']**2 *c['K_CGS'] * c['TCMB']**2) \
         * np.exp(beta) * 1. / (np.exp(beta) - 1.)**2
-    return ans
+    return 1./ans
 
 
 def totTTNoise(ells,constDict,beamFWHM,noiseT,freq,lknee,alpha,tsz_battaglia_template_csv="input/sz_template_battaglia.csv",TCMB=2.726e6):
@@ -322,7 +322,7 @@ class fgNoises(object):
         beta = (nu*1e9) * self.c['H_CGS'] / (self.c['K_CGS']*self.c['TCMB'])
         ans = 2.* self.c['H_CGS']**2 * (nu*1e9)**4 / (self.c['C']**2 *self.c['K_CGS'] * self.c['TCMB']**2) \
             * np.exp(beta) * 1. / (np.exp(beta) - 1.)**2
-        return ans
+        return 1./ans
 
     def B_nu(self,Td,nu):
         beta = (nu*1e9) * self.c['H_CGS'] / (self.c['K_CGS']*Td)
@@ -330,7 +330,7 @@ class fgNoises(object):
         return ans
 
     def rad_ps_nu(self,nu):
-        return (old_div(nu,self.c['nu0'])) ** self.c['al_ps'] \
+        return (nu/self.c['nu0']) ** self.c['al_ps'] \
             * self.g_nu(nu)  / (self.g_nu(self.c['nu0']))
         
     def rad_ps(self,ell,nu1,nu2):
