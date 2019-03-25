@@ -1,5 +1,6 @@
 from __future__ import division
 from builtins import object
+from past.utils import old_div
 import numpy as np
 from scipy.special import j0
 #from orphics.cosmology import Cosmology
@@ -49,12 +50,12 @@ class pairwise(object):
     def _pk_lin(self,zarr,kmin,kmax,knum): #Linear PK
         self.cc.pars.set_matter_power(redshifts=zarr, kmax=kmax)
         self.cc.pars.Transfer.high_precision = True
-
+        
         self.cc.pars.Linear = model.Linear_none
         self.cc.results = camb.get_results(self.cc.pars)
-
+        
         kh, z, powerZK = self.cc.results.get_matter_power_spectrum(minkh=kmin, maxkh=kmax, npoints = knum)
-
+        
         return kh, powerZK
 
     def massWeightedbias(self,q):
@@ -69,15 +70,15 @@ class pairwise(object):
         #add loop over k for bweight / bnorm
         bweight = np.trapz(dndm*blin**q*self.HMF.M200,dx=np.diff(self.HMF.M200),axis=0)
         bnorm = np.trapz(dndm*self.HMF.M200,dx=np.diff(self.HMF.M200),axis=0)
-
-        ans = bweight/bnorm
+        
+        ans = old_div(bweight,bnorm)
 
         return ans
 
     def zeta(self,rad):
 
         k_arr = self.HMF.kh.copy()
-        integ = np.trapz(k_arr**2*self.massWeightedbias(2)*j0(k_arr*rad)*self.pk,dx=np.diff(k_arr),axis=0)/ (2.*np.pi**2)
+        integ = old_div(np.trapz(k_arr**2*self.massWeightedbias(2)*j0(k_arr*rad)*self.pk,dx=np.diff(k_arr),axis=0), (2.*np.pi**2))
 
         return integ
 
@@ -92,6 +93,6 @@ class pairwise(object):
         Hubble = 1
         fg = 1.
         rad_arr = np.arange(1000) * 0.1
-        ans = -2./3.*1./(1. + self.zarr) * Hubble * fg * (rad_arr*self.zetabar(rad_arr)/(1.+self.zeta(rad_arr)))
+        ans = -2./3.*1./(1. + self.zarr) * Hubble * fg * (rad_arr*self.zetabar(rad_arr)/(1.+self.zeta(rad_arr))) 
 
         return ans

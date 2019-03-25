@@ -5,6 +5,7 @@ standard_library.install_aliases()
 from builtins import zip
 from builtins import range
 from builtins import object
+from past.utils import old_div
 import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import gaussian
@@ -109,17 +110,17 @@ class clusterLike(object):
         self.clttfile = Config.get('general','clttfile')
         self.constDict = dict_from_section(Config,'constants')
         #version = Config.get('general','version')
-
+        
         #self.mgrid,self.zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
         logm_min = 13.7
         logm_max = 15.72
         logm_spacing = 0.02
         self.mgrid = np.arange(logm_min,logm_max,logm_spacing)
-        self.zgrid = np.arange(0.1,2.01,0.1)
+        self.zgrid = np.arange(0.1,2.01,0.1)        
         #print self.mgrid
         #print self.zgrid
         self.qmin = 5.6
-
+        
         self.cc = ClusterCosmology(self.fparams,self.constDict,clTTFixFile=self.clttfile)
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
 
@@ -128,7 +129,7 @@ class clusterLike(object):
         self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, self.filteredMapsDir)
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
-
+        
         #if self.simtest or self.simpars:
         #    print "mock catalog"
             #clust_cat = nemoOutputDir + 'mockCatalog_equD56.fits' #'ACTPol_mjh_cluster_cat.fits'
@@ -139,7 +140,7 @@ class clusterLike(object):
         #    clust_cat = nemoOutputDir + 'E-D56Clusters.fits' #'ACTPol_mjh_cluster_cat.fits'
         #    self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat,self.qmin)
 
-        clust_cat = nemoOutputDir + fitsfile
+        clust_cat = nemoOutputDir + fitsfile 
         if self.simtest or self.simpars:
             print("mock catalog")
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat,self.qmin)
@@ -154,12 +155,12 @@ class clusterLike(object):
         #self.clst_xmapInd,self.clst_ymapInd = self.Find_nearest_pixel_ind(self.clst_RA,self.clst_DEC)
 
         self.num_noise_bins = 10
-        self.area_rads = 987.5/41252.9612 # fraction of sky - ACTPol D56-equ specific
+        self.area_rads = old_div(987.5,41252.9612) # fraction of sky - ACTPol D56-equ specific
         self.LgY = np.arange(-6,-3,0.01)
 
         count_temp,bin_edge =np.histogram(np.log10(self.rms_noise_map[self.rms_noise_map>0]),bins=self.num_noise_bins)
         self.frac_of_survey = count_temp*1.0 / np.sum(count_temp)
-        self.thresh_bin = 10**((bin_edge[:-1] + bin_edge[1:])/2.)
+        self.thresh_bin = 10**(old_div((bin_edge[:-1] + bin_edge[1:]),2.))
 
     def Find_nearest_pixel_ind(self,wcs,RADeg,DECDeg):
         xx = np.array([])
@@ -173,7 +174,7 @@ class clusterLike(object):
 
     def PfuncY(self,YNoise,M,z_arr,param_vals):
         LgY = self.LgY
-
+        
         P_func = np.outer(M,np.zeros([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
 
@@ -184,12 +185,12 @@ class clusterLike(object):
     def P_Yo(self, LgY, M, z,param_vals):
         #M500c has 1/h factors in it
         Ma = np.outer(M,np.ones(len(LgY[0,:])))
-        Om = (param_vals['omch2'] + param_vals['ombh2'])/(param_vals['H0']/100.)**2
+        Om = old_div((param_vals['omch2'] + param_vals['ombh2']), (old_div(param_vals['H0'],100.))**2)
         OL = 1. - Om
-        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'], H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
+        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(old_div(param_vals['H0'],100.))), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'], H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
         Y = 10**LgY
         numer = -1.*(np.log(Y/Ytilde))**2
-        ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(numer/(2.*param_vals['scat']**2))
+        ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(old_div(numer,(2.*param_vals['scat']**2)))
         return ans
 
     def Y_erf(self,Y,Ynoise):
@@ -242,7 +243,7 @@ class clusterLike(object):
 
     def Ntot_survey(self,int_HMF,fsky,Ythresh,param_vals):
 
-        z_arr = self.HMF.zarr.copy()
+        z_arr = self.HMF.zarr.copy()        
         Pfunc = self.PfuncY(Ythresh,self.HMF.M.copy(),z_arr,param_vals)
         dn_dzdm = int_HMF.dn_dM(int_HMF.M200,200.)
         #print Pfunc
@@ -258,7 +259,7 @@ class clusterLike(object):
             dn_dzdm = dn_dzdm_int(z_arr,np.log10(int_HMF.M.copy()))
             N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
             N_per = np.trapz(N_z_ind*gaussian(z_arr,c_z,c_zerr),dx=np.diff(z_arr))
-            ans = N_per
+            ans = N_per            
         else:
             Pfunc_ind = self.Pfunc_per(int_HMF.M.copy(),c_z, c_y, c_yerr,param_vals)
             #print "PFunc",Pfunc_ind
@@ -283,7 +284,7 @@ class clusterLike(object):
                 lnp += -np.inf
         except:
             pass
-
+        
         if (self.simpars):
             pars = ['omch2','ombh2','H0','As','ns']
             mins = [0.001,0.005,40.,7.389056098930651e-10,0.8]
@@ -300,7 +301,7 @@ class clusterLike(object):
 
 
     def lnlike(self,theta,parlist):
-
+        
         param_vals = alter_fparams(self.fparams,parlist,theta)
         for key in self.fix_params:
             if key not in list(param_vals.keys()): param_vals[key] = self.fix_params[key]
@@ -313,7 +314,7 @@ class clusterLike(object):
         if np.nan_to_num(self.s8)<0.1 or np.nan_to_num(self.s8)>10. or not(np.isfinite(self.s8)):
             self.s8 = 0.
         #     return -np.inf
-
+        
         #dndm_int = int_HMF.inter_dndm(200.) # delta = 200
         dndm_int = int_HMF.inter_dndmLogm(200.) # delta = 200
         cluster_prop = np.array([self.clst_z,self.clst_zerr,self.clst_y0*1e-4,self.clst_y0err*1e-4])
@@ -328,7 +329,7 @@ class clusterLike(object):
         Nind = 0
         #Nind2 = 1.
         for i in range(len(self.clst_z)):
-
+            
             N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int,param_vals)
             #if (i < 3):
                 #print np.log(N_per)
@@ -396,7 +397,7 @@ class MockCatalog(object):
             zmin = 0.0
             zmax = 2.01
             zdel = 0.1
-
+        
         if randoms:
             self.rand = 1
         else:
@@ -420,7 +421,7 @@ class MockCatalog(object):
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
 
         self.rms_noise_map = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
-
+        
         self.wcs=astWCS.WCS(FilterNoiseMapFile)
 
         self.fsky = 987.5/41252.9612 # in rads ACTPol D56-equ specific
@@ -434,14 +435,14 @@ class MockCatalog(object):
         return ans
 
     def Total_clusters_check(self,fsky):
-
+        
         Marr = np.outer(self.Mcents,np.ones(len(self.HMF.zarr)))
         Medgearr = np.outer(self.Medges,np.ones(len(self.HMF.zarr)))
         dn_dzdm = self.HMF.N_of_Mz(Marr,200)
         N_z = np.zeros(self.HMF.zarr.size)
         for i in range(self.HMF.zarr.size):
             N_z[i] = np.dot(dn_dzdm[:,i],np.diff(Medgearr[:,i]))
-
+        
         N_z *= 4.*np.pi
         ans = np.trapz(N_z*fsky,dx=np.diff(self.HMF.zarr))
         #print ('test diff z',np.diff(self.HMF.zarr))
@@ -454,6 +455,7 @@ class MockCatalog(object):
         #if (self.rand):
         #    Ntot100 = np.int32(np.ceil(self.Total_clusters(fsky))*4.) ## Note for randoms increasing the number density by factor of 100
         #else:
+        #    Ntot100 = np.int32(np.ceil(old_div(self.Total_clusters(fsky), 100.))) ## Note the default number of walkers in mcsample_mf is 100 
 
         #mlim = [np.min(self.mgrid),np.max(self.mgrid)]
         #zlim = [np.min(self.zgrid),np.max(self.zgrid)]
@@ -466,7 +468,7 @@ class MockCatalog(object):
         Ntot = np.int32(np.random.poisson(Ntot100))
         print ("Mock cat gen internal counts and Poisson draw",Ntot100,Ntot)
 
-        zsamps, msamps = self.HMF.cpsample_mf(200.,Ntot)
+        zsamps, msamps = self.HMF.cpsample_mf(200.,Ntot) 
         #print (zsamps, msamps) 
         return zsamps, msamps
 
@@ -500,35 +502,35 @@ class MockCatalog(object):
         fsky = self.fsky
         sampZ,sampM = self.create_basic_sample(fsky)
         plt.figure()
-        plt.plot(sampZ,sampM,'x')
-        plt.savefig(fname, bbox_inches='tight',format='png')
+        plt.plot(sampZ,sampM,'x') 
+        plt.savefig(fname, bbox_inches='tight',format='png')  
         return sampZ,sampM
 
     def create_obs_sample(self,fsky):
-
+        
         #include observational effects like scatter and noise into the detection of clusters
         sampZ,sampM = self.create_basic_sample(fsky)
         nsamps = len(sampM)
 
         Ytilde = sampM * 0.0
-
-        Om = (self.param_vals['omch2'] + self.param_vals['ombh2'])/(self.param_vals['H0']/100.)**2
-        OL = 1.-Om
+        
+        Om = old_div((self.param_vals['omch2'] + self.param_vals['ombh2']), (old_div(self.param_vals['H0'],100.))**2)
+        OL = 1.-Om 
         print("Omega_M", Om)
 
         #the function call now includes cosmological dependences
         for i in range(nsamps):
-            Ytilde[i], theta0, Qfilt = simsTools.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM[i]/(self.param_vals['H0']/100.)), sampZ[i], self.tckQFit,sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
+            Ytilde[i], theta0, Qfilt = simsTools.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM[i]/(old_div(self.param_vals['H0'],100.))), sampZ[i], self.tckQFit,sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
         #add scatter of 20% percent
         np.random.seed(self.seedval)
         ymod = np.exp(self.scat_val * np.random.randn(nsamps))
         sampY0 = Ytilde*ymod
-
+        
         #calculate noise for a given object for a random place on the map and save coordinates
 
         np.random.seed(self.seedval+1)
         nmap = self.rms_noise_map #[::-1,:]
-
+        
         ylims = nmap.shape[0]
         xlims = nmap.shape[1]
         xsave = np.array([])
@@ -544,7 +546,7 @@ class MockCatalog(object):
                 xsave = np.append(xsave,xtemp)
                 ysave = np.append(ysave,ytemp)
                 sampY0err = np.append(sampY0err,nmap[ytemp,xtemp])
-        return xsave,ysave,sampZ,sampY0,sampY0err,sampY0/sampY0err,sampM
+        return xsave,ysave,sampZ,sampY0,sampY0err,old_div(sampY0,sampY0err),sampM
 
     def plot_obs_sample(self,filename1='default_mockobscat',filename2='default_obs_mock_footprint'):
         fsky = self.fsky
@@ -594,7 +596,7 @@ class MockCatalog(object):
         f1 = filedir+filename+'_testsamp_mz'
         sampZ,sampM = self.plot_basic_sample(f1)
 
-        print (sampM)
+        print (sampM) 
 
         return 0
 
@@ -654,9 +656,9 @@ class MockCatalog(object):
 
         fitsfile = filedir+filename+'.fits'
         ID,x,y,ra,dec,z,zerr,Y0,Y0err,SNR,M500 = read_full_mock_cat(fitsfile)
-
-        rands = np.random.uniform(0,1,len(z))
-
+        
+        rands = np.random.uniform(0,1,len(z))        
+        
         compvals = np.load(compfile)
         inter = interp2d(compvals['log10M500c'],compvals['z'],compvals['M500Completeness'],kind='cubic',fill_value=0)
         use = 0.0*z
@@ -718,9 +720,9 @@ class clustLikeTest(object):
         self.cc = ClusterCosmology(self.fparams,self.constDict,clTTFixFile=self.clttfile)
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
 
-        self.fsky = 987.5/41252.9612
+        self.fsky = old_div(987.5,41252.9612)
         self.mmin = mmin
-        clust_cat = test_cat_file + '.fits'
+        clust_cat = test_cat_file + '.fits' 
         self.clst_z,self.clst_zerr,self.clst_m,self.clst_merr = read_test_mock_cat(clust_cat,self.mmin)
         #self.clst_z,self.clst_m = read_mock_test_cat(clust_cat,self.mmin)
 

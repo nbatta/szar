@@ -3,6 +3,7 @@ from __future__ import division
 from builtins import str
 from builtins import range
 from builtins import object
+from past.utils import old_div
 import configparser
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,7 +19,7 @@ def f_nu(nu):
     c = {'H_CGS': 6.62608e-27, 'K_CGS': 1.3806488e-16, 'TCMB': 2.7255}
     nu = np.asarray(nu)
     mu = c['H_CGS']*(1e9*nu)/(c['K_CGS']*c['TCMB'])
-    ans = mu/np.tanh(mu/2.0) - 4.0
+    ans = old_div(mu,np.tanh(old_div(mu,2.0))) - 4.0
     return ans
 
 
@@ -34,7 +35,7 @@ class BattagliaReader(object):
         mnu = 0.
         ns = 0.96
         As = 2.e-9
-        h = H0/100.
+        h = old_div(H0,100.)
         ombh2 = ob*h**2.
         omh2 = om*h**2.
         omch2 = omh2-ombh2
@@ -48,9 +49,9 @@ class BattagliaReader(object):
 
         # Snap to  Z
         alist = np.loadtxt(self.root + 'outputSel.txt')
-        zlist = np.array((1./alist) - 1.)
+        zlist = np.array((old_div(1.,alist))-1.)
         snaplist = np.arange(55,55-len(zlist),-1)
-        self.snapToZ = lambda s: zlist[snaplist==s][0]
+        self.snapToZ = lambda s: zlist[snaplist==s][0] 
         self.allSnaps = list(range(54,34,-1))
 
         # True masses : THIS NEEDS DEBUGGING
@@ -66,7 +67,7 @@ class BattagliaReader(object):
 
             self.trueM500[snap] = data[:,2]*1.e10 /h # Msun   #/h
             self.trueR500[snap] = data[:,3]*(1.+self.snapToZ(snapNum))/1.e3 #/ self.cc.h # physical Kpc/h -> comoving Mpc R500
-
+        
         # File names
 
         self.files = {}
@@ -78,24 +79,24 @@ class BattagliaReader(object):
         self.files['kszN'] = lambda massIndex, snap: self.root + "GEN_Cluster_kSZ_"+str(massIndex)+"L165.256.FBN2_snap"+str(snap)+"MAT2.d"
 
         self.PIX = 2048
-
+        
     def get_geometry(self,snap):
         # MAP DIMENSIONS: THIS NEEDS DEBUGGING
         z = self.snapToZ(snap)
-        stampWidthMpc = 8./self.h
+        stampWidthMpc = old_div(8., self.h)
         comovingMpc = self.results.comoving_radial_distance(z)
-        widthRadians = stampWidthMpc/comovingMpc
-        pixWidthRadians = widthRadians/self.PIX
+        widthRadians = old_div(stampWidthMpc,comovingMpc)
+        pixWidthRadians = old_div(widthRadians,self.PIX)
 
-        shape,wcs = enmap.geometry(pos=np.array([[-widthRadians/2., -widthRadians/2.],[widthRadians/2., widthRadians/2.]]),res=pixWidthRadians,proj="car")
+        shape,wcs = enmap.geometry(pos=np.array([[old_div(-widthRadians,2.),old_div(-widthRadians,2.)],[old_div(widthRadians,2.),old_div(widthRadians,2.)]]),res=pixWidthRadians,proj="car")
         return shape,wcs
-
+    
     def get_map(self,component,mass_index,snap,shape=None,wcs=None):
-        if shape is None:
+        if shape is None: 
             assert wcs is None
             shape,wcs = self.get_geometry(snap)
             assert np.all(shape==(self.PIX,self.PIX))
-
+        
         filen = self.files[component](mass_index,snap)
         with open(filen, 'rb') as fd:
             temp = np.fromfile(file=fd, dtype=np.float32)
@@ -109,13 +110,13 @@ class BattagliaReader(object):
 
     def get_kappa(self,mass_index,snap,source_z=1100.):
         z = self.snapToZ(snap)
-        comL  = self.results.angular_diameter_distance(z)
-        comS  = self.results.angular_diameter_distance(source_z)
-        comLS = self.results.angular_diameter_distance2(z,source_z)
+        comL  = self.results.angular_diameter_distance(z) 
+        comS  = self.results.angular_diameter_distance(source_z) 
+        comLS = self.results.angular_diameter_distance2(z,source_z) 
 
         const12 = 2.*9.571e-20 #4G/c^2 in Mpc / solar mass 
         sigmaCr = comS/np.pi/const12/comLS/comL/1e6/(1.+z)**2. # Msolar/kpc2 # NEEDS DEBUGGING!!!
-        return self.get_projected_mass_density(mass_index,snap)/sigmaCr
+        return old_div(self.get_projected_mass_density(mass_index,snap),sigmaCr)
 
     def get_tsz(self,mass_index,snap,freq_ghz,tcmb=2.7255e6):
         fnu = f_nu(freq_ghz)
@@ -128,7 +129,7 @@ class BattagliaReader(object):
         return self.get_map('ksz',mass_index,snap)*tcmb
 
     def get_ksz_special(self,mass_index,snap,tcmb=2.7255e6):
-        shape,wcs = fmaps.rect_geometry(width_arcmin=20.,px_res_arcmin=20./128.)
+        shape,wcs = fmaps.rect_geometry(width_arcmin=20.,px_res_arcmin=old_div(20.,128.))
         return self.get_map('kszN',mass_index,snap,shape=shape,wcs=wcs)*tcmb
 
     def info(self,mass_index,snap):
@@ -141,13 +142,13 @@ class BattagliaReader(object):
         dat['wcs'] = wcs
         return dat
 
-
+            
 # class BattagliaSims(object):
 
 #     def __init__(self,constDict,rootPath="/gpfs01/astro/workarea/msyriac/sims/ClusterSims/"):
 
 #         # snap 35 to 54
-
+        
 #         cosmoDict = {}
 #         lmax = 2000
 #         cosmoDict['H0'] = 72.0
@@ -159,7 +160,7 @@ class BattagliaReader(object):
 
 #         cosmoDict['ns'] = 0.96
 #         cosmoDict['As'] = 2.e-9
-
+        
 
 #         self.cc = ClusterCosmology(cosmoDict,constDict.copy(),lmax,pickling=True,skipCls=True,verbose=False)
 #         self.TCMB = 2.7255e6
@@ -207,7 +208,7 @@ class BattagliaReader(object):
 
 #                 trueMs.append(trueM500)
 #                 expMs.append(projM500)
-
+        
 #                 print("totmass ", "{:.2E}".format(projM500))
 
 #                 if not(plotRel):
@@ -256,7 +257,7 @@ class BattagliaReader(object):
 #             fac = self.cc.h # 1.
 #             if tag!="y":
 #                 fac = 1.e10*self.cc.h 
-
+    
 
 #             #reshape array into 2D array
 #             map = np.reshape(temp,(PIX,PIX))*fac
@@ -276,7 +277,7 @@ class BattagliaReader(object):
 #         pixScaleX = pixWidthArcmin*np.pi/180./60.
 #         pixScaleY = pixWidthArcmin*np.pi/180./60.
 
-
+        
 #         xMap,yMap,modRMap,xx,yy = fmaps.get_real_attributes_generic(PIX,PIX,pixScaleY,pixScaleX)
 
 #         modmapArc = modRMap*60.*180./np.pi
@@ -318,7 +319,7 @@ class BattagliaReader(object):
 
 #         return maps, z, kappa, szMapuK, projectedM500, trueM500, trueR500, pixScaleX, pixScaleY
 
-
+    
 #     def getKappaSZ(self,snap,massIndex,shape,wcs,apodWidthArcmin=None):
 
 #         from enlib import enmap,utils
@@ -343,10 +344,10 @@ class BattagliaReader(object):
 #         # io.plot_img(kappaMap,io.dout_dir+"battaglia_cluster_kappa_"+str(massIndex)+".png",verbose=False)
 #         # io.plot_img(szMap,io.dout_dir+"battaglia_cluster_tsz_"+str(massIndex)+".png",verbose=False)
 
-
+            
 #         kappaMap = enmap.project(kappaMap, shape, wcs)
 #         szMap = enmap.project(szMap, shape, wcs)
-
+        
 #         assert szMap.shape==shape
 #         assert kappaMap.shape==shape
 

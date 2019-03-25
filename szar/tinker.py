@@ -1,6 +1,7 @@
 from __future__ import division
 from builtins import zip
 from builtins import range
+from past.utils import old_div
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline as iuSpline
 np.seterr(divide='ignore', invalid='ignore')
@@ -38,7 +39,7 @@ def tinker_params_spline(delta, z=None):
     z = np.asarray(z)
     A = A0 * (1 + z)**-.14
     a = a0 * (1 + z)**-.06
-    alpha = 10.**(-(((.75/np.log10(delta/75.))))**1.2)
+    alpha = 10.**(-(((old_div(.75,np.log10(old_div(delta,75.)))))**1.2))
     b = b0 * (1 + z)**-alpha
     c = np.zeros(np.shape(z)) + c0
     return A, a, b, c
@@ -46,13 +47,13 @@ def tinker_params_spline(delta, z=None):
 def tinker_params_analytic(delta, z=None):
     alpha = None
     if np.asarray(delta).ndim == 0: # scalar delta.
-        A0, a0, b0, c0 = [p[0] for p in
+        A0, a0, b0, c0 = [p[0] for p in 
                           tinker_params(np.array([delta]), z=None)]
         if z != None:
             if delta < 75.:
                 alpha = 1.
             else:
-                alpha = 10.**(-(((.75/np.log10(delta/75.))))**1.2)
+                alpha = 10.**(-(((old_div(.75,np.log10(old_div(delta,75.)))))**1.2))
     else:
         log_delta = np.log10(delta)
         A0 = 0.1*log_delta - 0.05
@@ -69,7 +70,7 @@ def tinker_params_analytic(delta, z=None):
     A = A0 * (1 + z)**-.14
     a = a0 * (1 + z)**-.06
     if alpha is None:
-        alpha = 10.**(-(((.75/np.log10(delta/75.))))**1.2)
+        alpha = 10.**(-(((old_div(.75,np.log10(old_div(delta,75.)))))**1.2))
         alpha[delta<75.] = 1.
     b = b0 * (1 + z)**-alpha
     c = np.zeros(np.shape(z)) + c0
@@ -79,14 +80,14 @@ tinker_params = tinker_params_spline
 
 def tinker_f(sigma, params):
     A, a, b, c = params
-    return A * ( (sigma/b)**-a + 1 ) * np.exp(-c/sigma**2)
+    return A * ( (old_div(sigma,b))**-a + 1 ) * np.exp(old_div(-c,sigma**2))
 
 # Sigma-evaluation, and top-hat functions.
 def radius_from_mass(M, rho):
     """
     Convert mass M to radius R assuming density rho.
     """
-    return (3.*M / (4.*np.pi*rho))**(1/3.)
+    return (3.*M / (4.*np.pi*rho))**(old_div(1,3.))
 
 def top_hatf_poly(kR):
     """
@@ -100,13 +101,13 @@ def top_hatf(kR):
     """
     Returns the Fourier transform of the spherical top-hat function
     evaluated at a given k*R.
-
+    
     Notes:
     -------
     * This is called many times and costs a lot of runtime.
     * For small values, use Taylor series.
     """
-    out = np.nan_to_num(3*(np.sin(kR) - (kR)*np.cos(kR)))/((kR)**3)
+    out = old_div(np.nan_to_num(3*(np.sin(kR) - (kR)*np.cos(kR))),((kR)**3))
     out[kR<.1] = top_hatf_poly(kR[kR<.1])
     return out
 
@@ -114,22 +115,22 @@ def sigma_sq_integral(R_grid, power_spt, k_val):
     """
     Determines the sigma^2 parameter over the m-z grid by integrating
     over k.
-
+    
     Notes:
     -------
     * Fastest python solution I have found for this. There is probably a
       smarter way using numpy arrays.
-
+    
     """
     to_integ = np.array([top_hatf(R_grid*k)**2*np.tile(power_spt[:,i],
                      (R_grid.shape[0],1))*k**2
                      for k,i in zip(k_val,np.arange(len(k_val)))])
-
-    return np.trapz((1/(2*np.pi**2))*to_integ, k_val, axis = 0, dx=1e-6)
+    
+    return np.trapz((old_div(1,(2*np.pi**2)))*to_integ, k_val, axis = 0, dx=1e-6)
 
 def fnl_correction(sigma2,fnl):
     d_c = 1.686
-    S3 = 3.15e-4 * fnl / (sigma2**(0.838/2.0))
+    S3 = 3.15e-4 * fnl / (sigma2**(old_div(0.838,2.0)))
     del_cor = np.sqrt(1 - d_c*S3/3.0)
     ans = np.exp(S3 * d_c**3/(sigma2*6.0))*(d_c**2/(6.0*del_cor)*(-0.838*S3)+del_cor)
     return ans
@@ -183,7 +184,7 @@ def dsigma_dkmax_dM(M, z, rho, k, P, comoving=False):
     P      is  (nz,nk)
 
     Somewhat awkwardly, k and P are comoving.  rho really isn't.
-
+    
     return is  (nM,nz)
     """
     if M.ndim == 1:
@@ -199,23 +200,27 @@ def dsigma_dkmax_dM(M, z, rho, k, P, comoving=False):
         iii = ii + 3
         sigma_k[iii] = sigma_sq_integral(R, P[:iii], k[:iii])**.5
         kmax_out[iii] = k[iii]
-
+ 
     return kmax_out, sigma_k
 ###
 
 def tinker_bias_params(Delta):
+
     y = np.log10(Delta)
-    A = 1.0 + 0.24*y*np.exp(-(4./y)**4.)
+    A = 1.0 + 0.24*y*np.exp(-(old_div(4.,y))**4.)
     a = 0.44*y - 0.88
     B = 0.183
     b = 1.5
-    C = 0.019 + 0.107*y + 0.19*np.exp(-(4./y)**4.)
+    C = 0.019 + 0.107*y + 0.19*np.exp(-(old_div(4.,y))**4.)
     c = 2.4
+    
     return A,a,B,b,C,c
 
 def tinker_bias(sig,Delta):
+    
     A,a,B,b,C,c = tinker_bias_params(Delta)
     delc = 1.686
-    nu = delc/ sig
+    nu = old_div(delc, sig)
     ans = 1. - A*nu**a / (nu**a + delc**a) + B*nu**b + C*nu**c
+
     return ans

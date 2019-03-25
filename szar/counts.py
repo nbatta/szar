@@ -3,6 +3,7 @@ from __future__ import division
 from builtins import zip
 from builtins import range
 from builtins import object
+from past.utils import old_div
 import numpy as np
 import camb
 from camb import model
@@ -13,7 +14,7 @@ from .tinker import dn_dlogM
 from .tinker import dsigma_dkmax_dM
 from .tinker import tinker_params
 from . import tinker as tinker
-#from szar.foregrounds import fgNoises
+from szar.foregrounds import fgNoises
 
 from orphics.io import Plotter
 from orphics.cosmology import Cosmology
@@ -30,7 +31,7 @@ def bin_ndarray(ndarray, new_shape, operation='sum'):
     Bins an ndarray in all axes based on the target shape, by summing or
         averaging.
 
-    Number of output dimensions must match number of input dimensions and
+    Number of output dimensions must match number of input dimensions and 
         new axes must divide old ones.
 
     Example
@@ -70,7 +71,7 @@ def getA(fparams,constDict,zrange,kmax=11.):
     cc.pars.NonLinear = camb.model.NonLinear_none
     cc.results = camb.get_results(cc.pars)
     s8s =  cc.results.get_sigma8()[::-1]
-    As = s8s[1:]/s8s[0]
+    As = old_div(s8s[1:],s8s[0])
     return s8s[0],As
 
 
@@ -143,9 +144,9 @@ def getNmzq(Nmzq,mexp_edges,z_edges,q_edges):
 
 def haloBias(Mexp_edges,z_edges,rhoc0om,kh,pk):
 
-    z_arr = (z_edges[1:]+z_edges[:-1])/2.
+    z_arr = old_div((z_edges[1:]+z_edges[:-1]),2.)
     M_edges = 10**Mexp_edges
-    Masses = (M_edges[1:]+M_edges[:-1])/2.
+    Masses = old_div((M_edges[1:]+M_edges[:-1]),2.)
 
     ac = 0.75
     pc = 0.3
@@ -155,12 +156,12 @@ def haloBias(Mexp_edges,z_edges,rhoc0om,kh,pk):
     R = tinker.radius_from_mass(M, rhoc0om)
     sigsq = tinker.sigma_sq_integral(R, pk[:,:], kh)
 
-    return z_arr,1. + (((ac*(dc**2.)/sigsq)-1.)/dc) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
+    return z_arr,1. + (old_div(((ac*(dc**2.)/sigsq)-1.),dc)) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
 
 
 
 def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,z_edges,fsky,lmax=1000):
-    zs = (z_edges[1:]+z_edges[:-1])/2.
+    zs = old_div((z_edges[1:]+z_edges[:-1]),2.)
     chis = cc.results.comoving_radial_distance(zs)
 
     chi_edges = cc.results.comoving_radial_distance(z_edges)
@@ -177,11 +178,11 @@ def sampleVarianceOverNsquareOverBsquare(cc,kh,pk,z_edges,fsky,lmax=1000):
     import healpy as hp
     frac = 1.-fsky
     nsides_allowed = 2**np.arange(5,13,1)
-    nside_min = int((lmax+1.)/3.)
+    nside_min = int(old_div((lmax+1.),3.))
     nside = nsides_allowed[nsides_allowed>nside_min][0]
     npix = 12*(nside**2)
 
-    hpmap = np.ones(npix)/(1.-frac)
+    hpmap = old_div(np.ones(npix),(1.-frac))
     hpmap[:int(npix*frac)] = 0
     alms_original = hp.map2alm(hpmap)
 
@@ -219,14 +220,14 @@ class ClusterCosmology(Cosmology):
 
     def E_z(self,z):
         #hubble function
-        ans = self.results.hubble_parameter(z)/self.paramDict['H0'] # 0.1% different from sqrt(om*(1+z)^3+ol)
+        ans = old_div(self.results.hubble_parameter(z),self.paramDict['H0']) # 0.1% different from sqrt(om*(1+z)^3+ol)
         return ans
 
     def growthfunc(self,z):
         #numerical growth function
-        a = 1./(1.+z)
+        a = old_div(1.,(1.+z))
         dela = 0.000001
-        Om = (self.paramDict['omch2'] + self.paramDict['ombh2'])/ (self.paramDict['H0']/100.)**2
+        Om = old_div((self.paramDict['omch2'] + self.paramDict['ombh2']), (old_div(self.paramDict['H0'],100.))**2)
         integ = np.zeros(len(z))
 
         for i in range(len(a)):
@@ -239,7 +240,7 @@ class ClusterCosmology(Cosmology):
         return ans
 
     def fgrowth(self,z):
-        a = 1./(1. + z)
+        a = old_div(1.,(1. + z))
         a = a[::-1] #np.flip(a)
 
         dgrowth = self.growthfunc(z)#cc.results.get_redshift_evolution(self.HMF.kh, zarr, ['growth'])
@@ -284,7 +285,7 @@ class ClusterCosmology(Cosmology):
         c200 = fast.con_M_rel_duffy200(M200, z)
         Rdelc = self.rdel_c(M,z,delta) # Rdel_crit in Mpc/h
         R200m = self.rdel_m(M200,z,200.) # R200_mean in Mpc/h
-        c = c200*(Rdelc/R200m)**(1./3.)
+        c = c200*(old_div(Rdelc,R200m))**(old_div(1.,3.))
         return c[0]
 
     def theta(self,M,z,overdensity,critical,at_cluster_z):
@@ -296,7 +297,7 @@ class ClusterCosmology(Cosmology):
             r500 = self.rdel_m(M,zdensity,overdensity) # R500 in Mpc/h
 
         dAz = self.results.angular_diameter_distance(z) * self.h  # dAz in Mpc/h
-        return r500/dAz
+        return old_div(r500,dAz)
 
     def theta200_from_richness(self,richness,z):
         """
@@ -316,7 +317,7 @@ def mass_from_richness_melchior(richness,z):
     Fl = 1.12
     Gz = 0.18
 
-    return M0*((richness/lambda0)**(Fl))*((z/z0)**Gz)
+    return M0*((old_div(richness,lambda0))**(Fl))*((old_div(z,z0))**Gz)
 
 
 
@@ -331,7 +332,7 @@ class Halo_MF(object):
 
         self.cc = clusterCosmology
 
-        zcenters = (z_edges[1:]+z_edges[:-1])/2.
+        zcenters = old_div((z_edges[1:]+z_edges[:-1]),2.)
         self.zarr_edges = z_edges
         self.zarr = zcenters
 
@@ -353,7 +354,7 @@ class Halo_MF(object):
 
         M_edges = 10**Mexp_edges
         self.M_edges = M_edges
-        M = (M_edges[1:]+M_edges[:-1])/2.
+        M = old_div((M_edges[1:]+M_edges[:-1]),2.)
         Mexp = np.log10(M)
         #M = 10.**Mexp
         self.Mexp = Mexp
@@ -415,7 +416,7 @@ class Halo_MF(object):
         #Mass Function
         delts = self.zarr*0. + delta
         dn_dlnm = dn_dlogM(M,self.zarr,self.cc.rhoc0om,delts,self.kh,self.pk,'comoving')
-        dn_dm = dn_dlnm/M
+        dn_dm = old_div(dn_dlnm,M)
         return dn_dm
 
     def dsig2_dk_dm(self,M):
@@ -703,18 +704,18 @@ class Halo_MF(object):
         N_z = np.zeros(z_arr.size)
         N_tot_z = np.zeros(z_arr.size)
         for i in range(z_arr.size):
-            N_z[i] = np.dot(dn_dVdm[:,i]*P_func[:,i] / (mass_err[:,i]**2 + alpha_ym**2 * (self.sigN[:,i]/self.YM[:,i])**2),np.diff(self.M200_edges[:,i]))
+            N_z[i] = np.dot(dn_dVdm[:,i]*P_func[:,i] / (mass_err[:,i]**2 + alpha_ym**2 * (old_div(self.sigN[:,i],self.YM[:,i]))**2),np.diff(self.M200_edges[:,i]))
             N_tot_z[i] = np.dot(dn_dVdm[:,i]*P_func[:,i],np.diff(self.M200_edges[:,i]))
         err_WL_mass = 4.*np.pi* fsky*np.dot(N_z*dV_dz[:],np.diff(self.zarr_edges))
         Ntot = 4.*np.pi* fsky*np.dot(N_tot_z*dV_dz[:],np.diff(self.zarr_edges))
 
-        return np.sqrt(1./err_WL_mass)*100.,Ntot
+        return np.sqrt(old_div(1.,err_WL_mass))*100.,Ntot
 
     def N_of_mqz_SZ (self,mass_err,q_edges,SZCluster):
         # this is 3D grid for fisher matrix
         # Index MZQ
 
-        q_arr = (q_edges[1:]+q_edges[:-1])/2.
+        q_arr = old_div((q_edges[1:]+q_edges[:-1]),2.)
 
         z_arr = self.zarr
         M_arr =  np.outer(self.M,np.ones([len(z_arr)]))
@@ -743,7 +744,7 @@ class Halo_MF(object):
         # this is 3D grid for fisher matrix
         # Index MZQ
 
-        q_arr = (q_edges[1:]+q_edges[:-1])/2.
+        q_arr = old_div((q_edges[1:]+q_edges[:-1]),2.)
 
         z_arr = self.zarr
         M_arr =  np.outer(self.M,np.ones([len(z_arr)]))
@@ -792,12 +793,12 @@ class Halo_MF(object):
         #print formfac.shape
 
         for i in range (z_arr.size):
-            M200[:,i] = self.cc.Mass_con_del_2_del_mean200(M/(self.cc.H0/100.),500,z_arr[i])
+            M200[:,i] = self.cc.Mass_con_del_2_del_mean200(old_div(M,(old_div(self.cc.H0,100.))),500,z_arr[i])
             dM200[:,i] = np.gradient(M200[:,i])
             if (i > 0):
                 for j in range (len(M)):
                     for k in range (len(ell)):
-                        formfac[k,j,i] = SZCluster.Prof_tilde(ell[k], M[j]/(self.cc.H0/100.),z_arr[i])
+                        formfac[k,j,i] = SZCluster.Prof_tilde(ell[k],old_div(M[j],(old_div(self.cc.H0,100.))),z_arr[i])
 
         dn_dm = self.dn_dM(M200,200.)
         dV_dz = self.dVdz
@@ -826,5 +827,5 @@ class Halo_MF(object):
         R = tinker.radius_from_mass(M,self.cc.rhoc0om)
         sigsq = tinker.sigma_sq_integral(R, self.pk, self.kh)
 
-        return 1. + (((ac*(dc**2.)/sigsq)-1.)/dc) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
+        return 1. + (old_div(((ac*(dc**2.)/sigsq)-1.),dc)) + 2.*pc/(dc*(1.+(ac*dc*dc/sigsq)**pc))
 
