@@ -10,7 +10,8 @@ import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import gaussian
 import emcee
-import simsTools
+import signals
+#import simsTools
 from scipy import special,stats
 from scipy.interpolate import interp2d
 from astropy.io import fits
@@ -190,7 +191,7 @@ class clusterLike(object):
         Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(old_div(param_vals['H0'],100.))), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'], H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
         Y = 10**LgY
         numer = -1.*(np.log(Y/Ytilde))**2
-        ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(old_div(numer,(2.*param_vals['scat']**2)))
+        ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(numer/(2.*param_vals['scat']**2))
         return ans
 
     def Y_erf(self,Y,Ynoise):
@@ -521,7 +522,7 @@ class MockCatalog(object):
         #the function call now includes cosmological dependences
         for i in range(nsamps):
             Ytilde[i], theta0, Qfilt = simsTools.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM[i]/(old_div(self.param_vals['H0'],100.))), sampZ[i], self.tckQFit,sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
-        #add scatter of 20% percent
+        #add scatter
         np.random.seed(self.seedval)
         ymod = np.exp(self.scat_val * np.random.randn(nsamps))
         sampY0 = Ytilde*ymod
