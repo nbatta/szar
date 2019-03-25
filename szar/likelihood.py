@@ -10,8 +10,8 @@ import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import gaussian
 import emcee
-import signals
 #import simsTools
+from nemo import signals
 from scipy import special,stats
 from scipy.interpolate import interp2d
 from astropy.io import fits
@@ -24,7 +24,7 @@ from .tinker import dn_dlogM
 import time
 
 #import time
-from enlib import bench
+#from enlib import bench
 
 def read_MJH_noisemap(noiseMap,maskMap):
     #Read in filter noise map
@@ -127,7 +127,7 @@ class clusterLike(object):
 
         self.diagnosticsDir=nemoOutputDir+"diagnostics" 
         self.filteredMapsDir=nemoOutputDir+"filteredMaps"
-        self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, self.filteredMapsDir)
+        self.tckQFit=signals.fitQ(parDict, self.diagnosticsDir, self.filteredMapsDir)
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
         
@@ -188,7 +188,7 @@ class clusterLike(object):
         Ma = np.outer(M,np.ones(len(LgY[0,:])))
         Om = old_div((param_vals['omch2'] + param_vals['ombh2']), (old_div(param_vals['H0'],100.))**2)
         OL = 1. - Om
-        Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(old_div(param_vals['H0'],100.))), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'], H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
+        Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(old_div(param_vals['H0'],100.))), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'], H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
         Y = 10**LgY
         numer = -1.*(np.log(Y/Ytilde))**2
         ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(numer/(2.*param_vals['scat']**2))
@@ -417,7 +417,7 @@ class MockCatalog(object):
 
         self.diagnosticsDir=nemoOutputDir+"diagnostics"
         self.filteredMapsDir=nemoOutputDir+"filteredMaps"
-        self.tckQFit=simsTools.fitQ(parDict, self.diagnosticsDir, self.filteredMapsDir)
+        self.tckQFit=signals.fitQ(parDict, self.diagnosticsDir, self.filteredMapsDir)
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
 
@@ -521,7 +521,7 @@ class MockCatalog(object):
 
         #the function call now includes cosmological dependences
         for i in range(nsamps):
-            Ytilde[i], theta0, Qfilt = simsTools.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM[i]/(old_div(self.param_vals['H0'],100.))), sampZ[i], self.tckQFit,sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
+            Ytilde[i], theta0, Qfilt = signals.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM[i]/(old_div(self.param_vals['H0'],100.))), sampZ[i], self.tckQFit,sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
         #add scatter
         np.random.seed(self.seedval)
         ymod = np.exp(self.scat_val * np.random.randn(nsamps))

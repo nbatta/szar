@@ -11,7 +11,7 @@ from configparser import SafeConfigParser
 from orphics import io
 from orphics.io import Plotter
 from szar.counts import ClusterCosmology,Halo_MF
-from nemo import simsTools
+from nemo import signals
 from astropy.io import fits
 
 import emcee

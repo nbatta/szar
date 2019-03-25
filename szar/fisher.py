@@ -84,8 +84,8 @@ def counts_from_config(Config,bigDataDir,version,expName,gridName,mexp_edges,z_e
         suffix += "_"+str(lkneeTOverride)
     if alphaTOverride is not None:
         suffix += "_"+str(alphaTOverride)
-    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+suffix+".pkl",'rb'))
-    #mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+suffix+".pkl",'rb'),encoding='latin1')
+    #mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+suffix+".pkl",'rb'))
+    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+suffix+".pkl",'rb'),encoding='latin1')
     experimentName = expName
     cosmoDict = dict_from_section(Config,"params")
     constDict = dict_from_section(Config,'constants')

@@ -6,10 +6,10 @@ from szar.szproperties import SZ_Cluster_Model
 from szar.foregrounds import fgNoises, f_nu
 from szar.ilc import ILC_simple
 import sys,os
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
-from orphics.tools.io import dictFromSection, listFromConfig, Plotter
-from orphics.tools.cmb import noise_func
+from configparser import SafeConfigParser 
+import pickle as pickle
+from orphics.io import dict_from_section, list_from_config, Plotter
+from orphics.cosmology import noise_func
 
 #Read ini file
 
@@ -18,8 +18,8 @@ Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
 
-constDict = dictFromSection(Config,'constants')
-clusterDict = dictFromSection(Config,'cluster_params')
+constDict = dict_from_section(Config,'constants')
+clusterDict = dict_from_section(Config,'cluster_params')
 fparams = {}   # the 
 for (key, val) in Config.items('params'):
     if ',' in val:
@@ -41,7 +41,7 @@ constraint_tag = ['','_constrained']
 
 #choose experiment
 experimentName = "CCATP"
-beams = listFromConfig(Config,experimentName,'beams')
+beams = list_from_config(Config,experimentName,'beams')
 noises = listFromConfig(Config,experimentName,'noises')
 freqs = listFromConfig(Config,experimentName,'freqs')
 lmax = int(Config.getfloat(experimentName,'lmax'))
@@ -65,8 +65,8 @@ if (cf == 0):
 if (cf == 1):
     el_il,  cls_il,  err_il,  s2ny  = ILC.Forecast_Cellyy(lsedges,fsky,constraint="cmb")
     el_ilc,  cls_ilc,  err_ilc,  s2n  = ILC.Forecast_Cellcmb(lsedges,fsky,constraint="tsz")
-print 'S/N y', s2ny
-print 'S/N CMB', s2n
+print ('S/N y', s2ny)
+print ('S/N CMB', s2n)
 
 
 #Extra stuff
