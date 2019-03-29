@@ -62,7 +62,14 @@ def load_fisher(file_):
             with open(file_, 'rb') as pickle_file:
                 fisher = pickle.load(pickle_file, encoding='latin1')
 
-        fisher.params = fisher.columns.values.tolist()
+        try:
+            fisher.params = fisher.columns.values.tolist()
+        except AttributeError as e:
+            assert isinstance(fisher[0], list)
+            assert isinstance(fisher[1], np.ndarray)
+            params = fisher[0]
+            fisher_raw = fisher[1]
+            fisher = FisherMatrix(fisher_raw, params)
     else:
         print(f"Filetype of extra fisher file {file_} not supported")
         sys.exit()
@@ -80,7 +87,7 @@ def test_load_fisher_smallfile():
     fishervals = np.array([[10,0],[0,0]], dtype=float)
 
     fishermat = FisherMatrix(fishervals, params)
-    
+
     try:
         testfishermat = load_fisher('userdata/testdata/load_fisher_test.txt')
     except OSError as e:

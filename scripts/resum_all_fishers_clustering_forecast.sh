@@ -8,19 +8,19 @@ pl2="userdata/planck/savedFisher_szar_MidEllPlanck_fsky_0.4_mnuwwa_step_0.01.txt
 pl3="userdata/planck/savedFisher_szar_LowEllPlanck_fsky_0.6_mnuwwa_step_0.01.txt"
 
 #SO base files
-so_b_abund="userdata/so/base/so_v3_base_40_tsz_counts_no_cmb_no_desi_no_tau_prior_mnu_w_w0.txt"
-so_b_clust="userdata/so/base/fisher_dc_SO-v3_base_40_owl2_v0.6_2019-02-05-21-18-27-EST.pkl"
-so_b_clust_abias="userdata/so/base/fisher_dc_SO-v3_base_40_owl2_v0.6_2019-02-05-20-29-02-EST_abias.pkl"
+so_b_abund="userdata/so/base/savedFisher_SO-v3-base-40_grid-owl2_owl2_v1.1_no_planck.pkl"
+so_b_clust="userdata/so/base/fisher_dc_SO-v3_base_40_owl2_v1.1_2019-03-22-14-02-36-EDT.pkl"
+so_b_clust_abias="userdata/so/base/fisher_dc_SO-v3_base_40_owl2_v1.1_2019-03-22-11-59-14-EDT_abias.pkl"
 
 #SO goal files
-so_g_abund="userdata/so/goal/so_v3_goal_40_tsz_counts_no_cmb_no_desi_no_tau_prior_mnu_w_w0.txt"
-so_g_clust="userdata/so/goal/fisher_dc_SO-v3_goal_40_owl2_v0.6_2019-02-05-21-32-31-EST.pkl"
-so_g_clust_abias="userdata/so/goal/fisher_dc_SO-v3_goal_40_owl2_v0.6_2019-02-05-20-39-44-EST_abias.pkl"
+so_g_abund="userdata/so/goal/savedFisher_SO-v3-goal-40_grid-owl2_owl2_v1.1_no_planck.pkl"
+so_g_clust="userdata/so/goal/fisher_dc_SO-v3_goal_40_owl2_v1.1_2019-03-22-14-11-22-EDT.pkl"
+so_g_clust_abias="userdata/so/goal/fisher_dc_SO-v3_goal_40_owl2_v1.1_2019-03-22-12-28-15-EDT_abias.pkl"
 
 #S4 files
-s4_abund="userdata/s4/s4_v3style_40_tsz_counts_no_cmb_no_desi_no_tau_prior_mnu_w_w0.txt"
-s4_clust="userdata/s4/fisher_dc_S4-1.0-CDT_grid-owl2_v0.6_2019-02-05-21-04-25-EST.pkl"
-s4_clust_abias="userdata/s4/fisher_dc_S4-1.0-CDT_grid-owl2_v0.6_2019-02-05-17-41-47-EST_abias.pkl"
+s4_abund="userdata/s4/savedFisher_S4-1.0-CDT_grid-owl2_owl2_v1.1_no_planck.pkl"
+s4_clust="userdata/s4/fisher_dc_S4-1.0-CDT_grid-owl2_v1.1_2019-03-22-13-52-58-EDT.pkl"
+s4_clust_abias="userdata/s4/fisher_dc_S4-1.0-CDT_grid-owl2_v1.1_2019-03-22-12-36-44-EDT_abias.pkl"
 
 python bin/combine_fishers.py -o userdata/so/base/sum_so_base_abund_plus_planck.pkl $so_b_abund $pl1 $pl2 $pl3
 python bin/combine_fishers.py -o userdata/so/base/sum_so_base_abund_plus_planck_clustering.pkl $so_b_abund $so_b_clust $pl1 $pl2 $pl3
