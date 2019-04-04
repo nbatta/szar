@@ -3,6 +3,35 @@ import sys
 import pickle
 import numpy as np
 from orphics.stats import FisherMatrix
+from six.moves import configparser
+import six
+if six.PY2:
+  ConfigParser = configparser.SafeConfigParser
+else:
+  ConfigParser = configparser.ConfigParser
+
+from szar.counts import ClusterCosmology
+from configparser import ConfigParser
+from orphics.io import dict_from_section,list_from_config
+from szar.clustering import Clustering
+
+def get_cc(ini):
+    Config = ConfigParser()
+    Config.optionxform=str
+    Config.read(ini)
+    clttfile = Config.get('general','clttfile')
+    constDict = dict_from_section(Config,'constants')
+
+    fparams = {}
+    for (key, val) in Config.items('params'):
+        if ',' in val:
+            param, step = val.split(',')
+            fparams[key] = float(param)
+        else:
+            fparams[key] = float(val)
+
+    cc = ClusterCosmology(fparams,constDict,clTTFixFile=clttfile)
+    return cc
 
 def _get_header(file_):
     with open(file_) as filein:
@@ -33,7 +62,14 @@ def load_fisher(file_):
             with open(file_, 'rb') as pickle_file:
                 fisher = pickle.load(pickle_file, encoding='latin1')
 
-        fisher.params = fisher.columns.values.tolist()
+        try:
+            fisher.params = fisher.columns.values.tolist()
+        except AttributeError as e:
+            assert isinstance(fisher[0], list)
+            assert isinstance(fisher[1], np.ndarray)
+            params = fisher[0]
+            fisher_raw = fisher[1]
+            fisher = FisherMatrix(fisher_raw, params)
     else:
         print(f"Filetype of extra fisher file {file_} not supported")
         sys.exit()
@@ -51,7 +87,7 @@ def test_load_fisher_smallfile():
     fishervals = np.array([[10,0],[0,0]], dtype=float)
 
     fishermat = FisherMatrix(fishervals, params)
-    
+
     try:
         testfishermat = load_fisher('userdata/testdata/load_fisher_test.txt')
     except OSError as e:
