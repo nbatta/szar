@@ -124,3 +124,16 @@ def make_fisher(derivs, prefactors):
     fisher_terms = prefactors[np.newaxis, ...] * derivs
     fisher_mat = np.einsum('aijk,bijk->ab', derivs, fisher_terms)
     return fisher_mat
+
+def _make_fisher_cutks(derivs, prefactors, clst, maxkh=0.14, minkh=1e-5):
+    ks = clst.HMF.kh
+    kindices = np.where(ks <= maxkh)[0]
+
+    derivs_cut = derivs[:, kindices, ...]
+    prefactors_cut = prefactors[kindices, ...]
+
+    fisher_terms = prefactors_cut[np.newaxis, ...] * derivs_cut
+    assert fisher_terms.shape[1] == kindices.size
+
+    fisher_mat = np.einsum('aijk,bijk->ab', derivs_cut, fisher_terms)
+    return fisher_mat

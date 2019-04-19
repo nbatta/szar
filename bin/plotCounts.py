@@ -63,12 +63,12 @@ Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
 clttfile = Config.get('general','clttfile')
 
-#gridName = "grid-owl2"
-gridName = "grid-default"
+gridName = "grid-owl2"
+#gridName = "grid-default"
 #version = "0.3_ysig_0.127"
-version = "1.0"#"0.7"
-#cal = "owl2"#"CMB_all"
-cal = "CMB_all_PICO"
+version = ["1.0","1.1"]#"0.7"
+cal = "owl2"#"CMB_all"
+#cal = "CMB_all_PICO"
 #cal = "CMB_pol_miscentered"
 
 from orphics.io import dict_from_section, list_from_config
@@ -96,7 +96,7 @@ from matplotlib.patches import Rectangle
 #expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
 #expList = ['SO-v3-goal-40','SO-v3-base-40']#,'SO-v3-goal-20','SO-v3-base-20','SO-v3-goal-10','SO-v3-base-10']
 expList = ['CMB-Probe-v4-CBE','CMB-Probe-v4-REQ']
-
+expList = ['SO-v3-goal-40','SO-v3-goal-40']
 
 pad = 0.05
 
@@ -104,9 +104,13 @@ pl = Plotter(xlabel="$z$",ylabel="$N(z)$",ftsize=12,yscale='log')
 #pl = Plotter(labelX="$z$",labelY="$N(z)$",ftsize=12)
 
 colList = ['C0','C1','C2','C3','C4','C5']
-for expName,col in zip(expList,colList):
+for expName,col,ver in zip(expList,colList,version):
 
-    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
+    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + ver+".pkl",'rb'))
+
+#for expName,col in zip(expList,colList):
+
+#    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
 
     if (cal == 'owl2'):    
 	    massGridName = bigDataDir+"lensgrid_grid-"+cal+"_"+cal+".pkl"
@@ -133,7 +137,7 @@ for expName,col in zip(expList,colList):
     print(Nofzs.sum())
     #sys.exit()
 
-    saveId = expName + "_" + gridName + "_" + cal + "_v" + version
+    saveId = expName + "_" + gridName + "_" + cal + "_v" + ver
     Nmzq = np.load(bigDataDir+"N_mzq_"+saveId+"_fid.npy")*fsky
     Nmz = Nmzq.sum(axis=-1)
     Nz = Nmzq.sum(axis=0).sum(axis=-1)

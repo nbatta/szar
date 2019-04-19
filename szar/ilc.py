@@ -13,14 +13,32 @@ from orphics.io import Plotter
 import numpy.matlib
 from scipy.special import j1
 
+
+def weightcalculator(f,N):
+    N_i=np.linalg.inv(N)
+    C=np.matmul(np.transpose(f),np.matmul(N_i,f))
+    W=(1/C)*np.matmul(np.transpose(f),N_i)
+    return W
+
+def constweightcalculator(f_1,f_2,N):
+    C=np.matmul(np.transpose(f_2),np.matmul(N,f_1))*np.matmul(np.transpose(f_2),np.matmul(N,f_2))-(np.matmul(np.transpose(f_2),np.matmul(N,f_1)))**2
+    M=np.matmul(np.transpose(f_1),np.matmul(N,f_1))*np.matmul(np.transpose(f_2),N)-np.matmul(np.transpose(f_2),np.matmul(N,f_2))*np.matmul(np.transpose(f_1),N)
+    W=M/C
+    return W
+
 class ILC_simple(object):
     def __init__(self,clusterCosmology, fgs,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1.,dell=1.,v3mode=-1):
+        
+        #Inputs
+        #clusterCosmology is a class that contains cosmological parameters and power spectra.
+        #fgs is a class that contains the functional forms for the foregrounds and constants
 
-                 #ksz_file='input/ksz_BBPS.txt',ksz_p_file='input/ksz_p_BBPS.txt', \
-                 #tsz_cib_file='input/sz_x_cib_template.dat',fg=True):
+        #Options
 
+        #initial set up for ILC
         self.cc = clusterCosmology
 
+        #initializing the frequency matrices
         if (len(freqs) > 1):
             fq_mat   = np.matlib.repmat(freqs,len(freqs),1) 
             fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
@@ -28,9 +46,11 @@ class ILC_simple(object):
             fq_mat   = freqs
             fq_mat_t = freqs
 
-        self.fgs = fgs#fgNoises(self.cc.c,ksz_file=ksz_file,ksz_p_file=ksz_p_file,tsz_cib_file=tsz_cib_file,tsz_battaglia_template_csv="data/sz_template_battaglia.csv")
+        self.fgs = fgs
 
+    
         self.dell = dell
+        #set-up ells to evaluate up to lmax
         self.evalells = np.arange(2,lmax,self.dell)
         self.N_ll_noILC = self.evalells*0.0
         self.N_ll_tsz = self.evalells*0.0
@@ -40,6 +60,7 @@ class ILC_simple(object):
         self.N_ll_tsz_c_cmb = self.evalells*0.0
         self.N_ll_tsz_c_cib = self.evalells*0.0
 
+        #Only for SO forecasts, including the SO atmosphere modeling
         if v3mode>-1:
             print("V3 flag enabled.")
             import szar.V3_calc_public as v3
@@ -65,18 +86,26 @@ class ILC_simple(object):
                 v3ell, N_ell_T_LA, N_ell_P_LA, Map_white_noise_levels = v3.AdvACT_noise(f_sky=fsky,ell_max=v3lmax+v3dell,delta_ell=\
 v3dell)
 
+        #initializing the weighting functions for the ilc
+        #thermal SZ weights
         self.W_ll_tsz = np.zeros([len(self.evalells),len(np.array(freqs))])
+        #CMB weights
         self.W_ll_cmb = np.zeros([len(self.evalells),len(np.array(freqs))])
+        #rayleigh scattering cross correlation weights
         self.W_ll_rsx = np.zeros([len(self.evalells),len(np.array(freqs))])
+        #thermal SZ constraining the CIB weights 
         self.W_ll_tsz_c_cib = np.zeros([len(self.evalells),len(np.array(freqs))])
+        #thermal SZ constraining the CMB weights 
         self.W_ll_tsz_c_cmb = np.zeros([len(self.evalells),len(np.array(freqs))])
+        #CMB constraining the thermal SZ weights 
         self.W_ll_cmb_c_tsz = np.zeros([len(self.evalells),len(np.array(freqs))])
         self.freq = freqs
 
-        f_nu_tsz = f_nu(self.cc.c,np.array(freqs)) 
-        f_nu_cmb = f_nu_tsz*0.0 + 1.
-        f_nu_cib = self.fgs.f_nu_cib(np.array(freqs))
-        f_nu_rsx = self.fgs.rs_nu(np.array(freqs))
+        #frequency functions for
+        f_nu_tsz = f_nu(self.cc.c,np.array(freqs)) #tSZ
+        f_nu_cmb = f_nu_tsz*0.0 + 1. #CMB
+        f_nu_cib = self.fgs.f_nu_cib(np.array(freqs)) #CIB
+        f_nu_rsx = self.fgs.rs_nu(np.array(freqs)) #Rayleigh Cross
 
         for ii in range(len(self.evalells)):
 
@@ -150,7 +179,20 @@ v3dell)
             N_ll_for_cmb_c_tsz_inv = N_ll_for_tsz_c_cmb_inv
             N_ll_for_tsz_c_cib_inv = np.linalg.inv(N_ll_for_tsz_c_cib)
 
+            self.W_ll_tsz[ii,:]=weightcalculator(f_nu_tsz,N_ll_for_tsz)
+            self.W_ll_rsx[ii,:]=weightcalculator(f_nu_rsx,N_ll_for_rsx)
+            self.W_ll_cmb[ii,:]=weightcalculator(f_nu_cmb,N_ll_for_cmb)
+            self.N_ll_tsz[ii] = np.dot(np.transpose(self.W_ll_tsz[ii,:]),np.dot(N_ll_for_tsz,self.W_ll_tsz[ii,:]))
+            self.N_ll_cmb[ii] = np.dot(np.transpose(self.W_ll_cmb[ii,:]),np.dot(N_ll_for_cmb,self.W_ll_cmb[ii,:]))
+            self.N_ll_rsx[ii] = np.dot(np.transpose(self.W_ll_rsx[ii,:]),np.dot(N_ll_for_rsx,self.W_ll_rsx[ii,:]))
+            self.W_ll_tsz_c_cmb[ii,:]=constweightcalculator(f_nu_cmb,f_nu_tsz,N_ll_for_tsz_c_cmb_inv)
+            self.W_ll_tsz_c_cib[ii,:]=constweightcalculator(f_nu_cib,f_nu_tsz,N_ll_for_tsz_c_cib_inv)
+            self.W_ll_cmb_c_tsz[ii,:]=constweightcalculator(f_nu_tsz,f_nu_cmb,N_ll_for_cmb_c_tsz_inv)
+            self.N_ll_tsz_c_cmb[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cmb[ii,:]),np.dot(N_ll_for_tsz_c_cmb,self.W_ll_tsz_c_cmb[ii,:]))
+            self.N_ll_cmb_c_tsz[ii] = np.dot(np.transpose(self.W_ll_cmb_c_tsz[ii,:]),np.dot(N_ll_for_cmb_c_tsz,self.W_ll_cmb_c_tsz[ii,:]))
+            self.N_ll_tsz_c_cib[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cib[ii,:]),np.dot(N_ll_for_tsz_c_cib,self.W_ll_tsz_c_cib[ii,:]))
 
+            '''
             self.W_ll_tsz[ii,:] = 1./np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_inv,f_nu_tsz)) \
                                   * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_inv)
             self.W_ll_cmb[ii,:] = 1./np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_cmb_inv,f_nu_cmb)) \
@@ -189,6 +231,7 @@ v3dell)
             self.N_ll_tsz_c_cmb[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cmb[ii,:]),np.dot(N_ll_for_tsz_c_cmb,self.W_ll_tsz_c_cmb[ii,:]))
             self.N_ll_cmb_c_tsz[ii] = np.dot(np.transpose(self.W_ll_cmb_c_tsz[ii,:]),np.dot(N_ll_for_cmb_c_tsz,self.W_ll_cmb_c_tsz[ii,:]))
             self.N_ll_tsz_c_cib[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cib[ii,:]),np.dot(N_ll_for_tsz_c_cib,self.W_ll_tsz_c_cib[ii,:]))
+            '''
 
     def Noise_ellyy(self,constraint='None'):
         if (constraint=='None'):
@@ -260,7 +303,7 @@ v3dell)
 
         ellMids  =  old_div((ellBinEdges[1:] + ellBinEdges[:-1]), 2)
 
-        cls_rsx = self.fgs.rs_cross(self.evalells,self.freq[0]) / self.cc.c['TCMBmuK']**2. \
+        cls_rsx = self.fgs.rs_cross(self.evalells,self.freq[0]) \
                 / ((self.evalells+1.)*self.evalells) * 2.* np.pi
 
         cls_rsx = old_div(cls_rsx, (self.fgs.rs_nu(self.freq[0])))  # Normalized to get Cell^rsrs fiducial 

@@ -100,7 +100,7 @@ else:
 print('sample time',time.time() - start)    
 
 
-MC2 = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[mmin,15.7,0.01],z_grid=[0.1,2.01,0.1])
+MC2 = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[mmin+0.1,15.7,0.01],z_grid=[0.1,2.01,0.1])
 
 print("pre-predictions Ntot ", MC2.Total_clusters(MC2.fsky), "+/-", np.sqrt(MC2.Total_clusters(MC2.fsky)))   
 #list = fits.open(filedir+filename+'.fits')
@@ -117,7 +117,7 @@ TL = lk.clustLikeTest(iniFile,filedir+filename,fix_params,mmin=mmin+0.1)
 
 #print TL.mgrid
 
-parvals_arr = parvals*(1+np.arange(-0.1,0.1001,0.05))
+parvals_arr = parvals*(1+np.arange(-0.05,0.0501,0.01))
 ansout = parvals_arr*0.0
 for ii, vals in enumerate(parvals_arr):
         #print ii, vals

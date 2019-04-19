@@ -10,7 +10,8 @@ import numpy as np
 from szar.counts import ClusterCosmology,Halo_MF
 from szar.szproperties import gaussian
 import emcee
-import simsTools
+import signals
+#import simsTools
 from scipy import special,stats
 from scipy.interpolate import interp2d
 from astropy.io import fits
@@ -119,7 +120,7 @@ class clusterLike(object):
         self.zgrid = np.arange(0.1,2.01,0.1)        
         #print self.mgrid
         #print self.zgrid
-        self.qmin = 4.5
+        self.qmin = 5.6
         
         self.cc = ClusterCosmology(self.fparams,self.constDict,clTTFixFile=self.clttfile)
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
@@ -149,6 +150,7 @@ class clusterLike(object):
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat,self.qmin)
 
         self.rms_noise_map  = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
+        print ('Number of clusters',len(self.clst_zerr))
         #self.wcs=astWCS.WCS(FilterNoiseMapFile) 
         #self.clst_RA,self.clst_DEC,
         #self.clst_xmapInd,self.clst_ymapInd = self.Find_nearest_pixel_ind(self.clst_RA,self.clst_DEC)
@@ -188,14 +190,14 @@ class clusterLike(object):
         OL = 1. - Om
         Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(old_div(param_vals['H0'],100.))), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'], H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
         Y = 10**LgY
-        numer = -1.*(np.log(old_div(Y,Ytilde)))**2
-        ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(old_div(numer,(2.*param_vals['scat']**2)))
+        numer = -1.*(np.log(Y/Ytilde))**2
+        ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(numer/(2.*param_vals['scat']**2))
         return ans
 
     def Y_erf(self,Y,Ynoise):
         qmin = self.qmin  # fixed 
         #Gaussian
-        ans = 0.5 * (1. + special.erf(old_div((Y - qmin*Ynoise),(np.sqrt(2.)*Ynoise))))
+        ans = 0.5 * (1. + special.erf((Y - qmin*Ynoise)/(np.sqrt(2.)*Ynoise)))
         #Heavy side
         #ans = Y*0.0
         #ans[Y - qmin*Ynoise > 0] = 1.
@@ -305,6 +307,7 @@ class clusterLike(object):
         for key in self.fix_params:
             if key not in list(param_vals.keys()): param_vals[key] = self.fix_params[key]
 
+        print (param_vals)
         int_cc = ClusterCosmology(param_vals,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
         int_HMF = Halo_MF(int_cc,self.mgrid,self.zgrid) # internal HMF call
         self.s8 = int_HMF.cc.s8
@@ -519,7 +522,7 @@ class MockCatalog(object):
         #the function call now includes cosmological dependences
         for i in range(nsamps):
             Ytilde[i], theta0, Qfilt = simsTools.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM[i]/(old_div(self.param_vals['H0'],100.))), sampZ[i], self.tckQFit,sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
-        #add scatter of 20% percent
+        #add scatter
         np.random.seed(self.seedval)
         ymod = np.exp(self.scat_val * np.random.randn(nsamps))
         sampY0 = Ytilde*ymod

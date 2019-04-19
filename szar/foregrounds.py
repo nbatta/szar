@@ -18,8 +18,8 @@ default_constants = {'A_tsz': 5.6,
                      'TCMB': 2.726,
                      'nu0': 150.,
                      'TCMBmuk':2.726e6,
-                     'Td': 9.7,
-                     'al_cib': 2.2,
+                     'Td': 24., #9.7,
+                     'al_cib': 1.2, #2.2
                      'A_cibp': 6.9,
                      'A_cibc': 4.9,
                      'n_cib': 1.2,
@@ -138,6 +138,13 @@ def ffunc(nu,tcmb=None):
     ans = mu/np.tanh(old_div(mu,2.0)) - 4.0
     return ans
 
+def ItoDeltaT(nu):
+    nu = np.asarray(nu)
+    tcmb = default_constants['TCMB']
+    beta  = H_CGS*(nu*1e9)/(tcmb*K_CGS)
+    ans = (1.0 / (2.0 * beta**4.0 * np.exp(beta) * (K_CGS**3.0*tcmb**2.0) / (H_CGS * C_light)**2.0 / (np.exp(beta) - 1.0)**2.0)) * 1.e6 #the 1e6 takes you from K to uK
+    return ans
+
 def B_nu(Td,nu):
     beta = (nu*1e9) * H_CGS / (K_CGS*Td)
     ans = 2.* H_CGS * nu**3 / (C_light)**2 / (np.exp(beta) - 1.)
@@ -149,16 +156,16 @@ def gfunc(nu,tcmb=None):
     beta = (nu*1e9) * H_CGS / (K_CGS*tcmb)
     ans = 2.* H_CGS**2 * (nu*1e9)**4 / (C_light**2 *K_CGS * tcmb**2) \
         * np.exp(beta) * 1. / (np.exp(beta) - 1.)**2
-    return ans
+    return 1./ans #FIXED added the 1/ans
 
 def cib_nu(nu,al_cib=None,Td=None):
     if Td is None: Td = default_constants['Td']
-    if al_cib is None: al_cib = default_constants['al_cib']
+    if al_cib is None : al_cib = default_constants['al_cib']
     nu0 = default_constants['nu0']
     mu = nu**al_cib*B_nu(Td,nu) * gfunc(nu)
     mu0 = nu0**al_cib*B_nu(Td,nu0) \
         * gfunc(nu0)
-    return mu / mu0
+    return mu / mu0 #* (ItoDeltaT(nu) / ItoDeltaT(nu0))**2
 
 def rad_ps_nu(nu,al_ps=None):
     if al_ps is None: al_ps = default_constants['al_ps']
@@ -210,10 +217,10 @@ def tSZ_CIB_nu(nu1,nu2,al_cib=None,Td=None,A_tsz=None,A_cibc=None,zeta=None):
     if A_cibc is None: A_cibc = default_constants['A_cibc']
     if Td is None: Td = default_constants['Td']
     nu0 = default_constants['nu0']
-    mu1 = nu1**al_cib*B_nu(Td,nu1) * gfunc(nu1)
-    mu2 = nu2**al_cib*B_nu(Td,nu2) * gfunc(nu2)
+    mu1 = nu1**al_cib*B_nu(Td,nu1) * gfunc(nu1) #* ItoDeltaT(nu1)**2
+    mu2 = nu2**al_cib*B_nu(Td,nu2) * gfunc(nu2) #* ItoDeltaT(nu2)**2
     mu0 = nu0**al_cib*B_nu(Td,nu0) \
-        * gfunc(nu0)
+        * gfunc(nu0) #* ItoDeltaT(nu0)**2
     fp12 = ffunc(nu1)*mu1 + ffunc(nu2)*mu2
     fp0  = 2.* ffunc(nu0)*mu0
     ans = -zeta*np.sqrt(A_tsz*A_cibc) * 2.*fp12 / fp0 
@@ -235,7 +242,7 @@ def g_nu(constDict,nu):
     beta = (nu*1e9) * c['H_CGS'] / (c['K_CGS']*c['TCMB'])
     ans = 2.* c['H_CGS']**2 * (nu*1e9)**4 / (c['C']**2 *c['K_CGS'] * c['TCMB']**2) \
         * np.exp(beta) * 1. / (np.exp(beta) - 1.)**2
-    return ans
+    return 1./ans
 
 
 def totTTNoise(ells,constDict,beamFWHM,noiseT,freq,lknee,alpha,tsz_battaglia_template_csv="input/sz_template_battaglia.csv",TCMB=2.726e6):
@@ -315,7 +322,7 @@ class fgNoises(object):
         beta = (nu*1e9) * self.c['H_CGS'] / (self.c['K_CGS']*self.c['TCMB'])
         ans = 2.* self.c['H_CGS']**2 * (nu*1e9)**4 / (self.c['C']**2 *self.c['K_CGS'] * self.c['TCMB']**2) \
             * np.exp(beta) * 1. / (np.exp(beta) - 1.)**2
-        return ans
+        return 1./ans
 
     def B_nu(self,Td,nu):
         beta = (nu*1e9) * self.c['H_CGS'] / (self.c['K_CGS']*Td)
@@ -323,7 +330,7 @@ class fgNoises(object):
         return ans
 
     def rad_ps_nu(self,nu):
-        return (old_div(nu,self.c['nu0'])) ** self.c['al_ps'] \
+        return (nu/self.c['nu0']) ** self.c['al_ps'] \
             * self.g_nu(nu)  / (self.g_nu(self.c['nu0']))
         
     def rad_ps(self,ell,nu1,nu2):
@@ -343,7 +350,7 @@ class fgNoises(object):
         mu = nu**self.c['al_cib']*self.B_nu(self.c['Td'],nu) * self.g_nu(nu)
         mu0 = self.c['nu0']**self.c['al_cib']*self.B_nu(self.c['Td'],self.c['nu0']) \
             * self.g_nu(self.c['nu0'])
-        return old_div(mu, mu0)
+        return mu/mu0
 
     def cib_p(self,ell,nu1,nu2):
         

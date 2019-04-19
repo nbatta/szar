@@ -137,7 +137,7 @@ if args.mockcat or args.randcat:
     parvals = [0.1225,0.0245,70,2.0e-09,0.97,0.06,1.0,0.08,0.2]
 
     if args.mockcat:
-        MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[14.0,15.7,0.01],z_grid=[0.1,2.01,0.1])
+        MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[13.6,15.7,0.01],z_grid=[0.1,2.01,0.1])
     if args.randcat:
         MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[np.log10(2e14),np.log10(7e15),0.01],z_grid=[0.1,1.01,0.1],randoms=True)
     
@@ -278,8 +278,8 @@ if args.simtest:
     
     parvals_arr = parvals*(1+np.arange(-0.1,0.1001,0.02))
     ansout = parvals_arr*0.0
+    
     for ii, vals in enumerate(parvals_arr):
-        #print ii, vals
         ansout[ii] = CL.lnlike([vals],parlist)
     
     f = open(filename, "w")
