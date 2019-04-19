@@ -5,7 +5,7 @@ import math
 import numpy as np
 # import numba as nb
 
-    
+
 
 
 # @nb.jit("f8(f8)",nopython=True)
@@ -24,7 +24,7 @@ def rdel_c(M,z,delta,rhocz):
 # @nb.jit("f8(f8,f8,f8,f8)",nopython=True)
 def rdel_m(M,z,delta,rhoc0om):
     #spherical overdensity radius w.r.t. the mean matter density
-    ans = (3. * M / (4. * np.pi * delta*rhoc0om*(1.+z)**3.))**(old_div(1.0,3.0)) 
+    ans = (3. * M / (4. * np.pi * delta*rhoc0om*(1.+z)**3.))**(old_div(1.0,3.0))
     return ans
 
 
@@ -54,7 +54,7 @@ def Mass_con_del_2_del_mean200(Mdel,delta,z,rhocz,rhoc0om,ERRTOL):
     rdels = rdel_c(Mdel,z,delta,rhocz)
     ans = Mass*0.0
     for i in range(len(Mdel)):
-        while abs(old_div(ans[i],Mass[i]) - 1) > ERRTOL : 
+        while abs(old_div(ans[i],Mass[i]) - 1) > ERRTOL :
             ans[i] = Mass[i]
             conz = con_M_rel_duffy200(Mass[i],z) #DUFFY
             rs = old_div(rdel_m(Mass[i],z,200,rhoc0om),conz)

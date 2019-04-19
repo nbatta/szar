@@ -47,7 +47,7 @@ def tinker_params_spline(delta, z=None):
 def tinker_params_analytic(delta, z=None):
     alpha = None
     if np.asarray(delta).ndim == 0: # scalar delta.
-        A0, a0, b0, c0 = [p[0] for p in 
+        A0, a0, b0, c0 = [p[0] for p in
                           tinker_params(np.array([delta]), z=None)]
         if z != None:
             if delta < 75.:
@@ -101,7 +101,7 @@ def top_hatf(kR):
     """
     Returns the Fourier transform of the spherical top-hat function
     evaluated at a given k*R.
-    
+
     Notes:
     -------
     * This is called many times and costs a lot of runtime.
@@ -115,17 +115,17 @@ def sigma_sq_integral(R_grid, power_spt, k_val):
     """
     Determines the sigma^2 parameter over the m-z grid by integrating
     over k.
-    
+
     Notes:
     -------
     * Fastest python solution I have found for this. There is probably a
       smarter way using numpy arrays.
-    
+
     """
     to_integ = np.array([top_hatf(R_grid*k)**2*np.tile(power_spt[:,i],
                      (R_grid.shape[0],1))*k**2
                      for k,i in zip(k_val,np.arange(len(k_val)))])
-    
+
     return np.trapz((old_div(1,(2*np.pi**2)))*to_integ, k_val, axis = 0, dx=1e-6)
 
 def fnl_correction(sigma2,fnl):
@@ -145,7 +145,7 @@ def dn_dlogM(M, z, rho, delta, k, P, comoving=False):
     P      is  (nz,nk)
 
     Somewhat awkwardly, k and P are comoving.  rho really isn't.
-    
+
     return is  (nM,nz)
     """
     if M.ndim == 1:
@@ -184,7 +184,7 @@ def dsigma_dkmax_dM(M, z, rho, k, P, comoving=False):
     P      is  (nz,nk)
 
     Somewhat awkwardly, k and P are comoving.  rho really isn't.
-    
+
     return is  (nM,nz)
     """
     if M.ndim == 1:
@@ -200,7 +200,7 @@ def dsigma_dkmax_dM(M, z, rho, k, P, comoving=False):
         iii = ii + 3
         sigma_k[iii] = sigma_sq_integral(R, P[:iii], k[:iii])**.5
         kmax_out[iii] = k[iii]
- 
+
     return kmax_out, sigma_k
 ###
 
@@ -213,11 +213,11 @@ def tinker_bias_params(Delta):
     b = 1.5
     C = 0.019 + 0.107*y + 0.19*np.exp(-(old_div(4.,y))**4.)
     c = 2.4
-    
+
     return A,a,B,b,C,c
 
 def tinker_bias(sig,Delta):
-    
+
     A,a,B,b,C,c = tinker_bias_params(Delta)
     delc = 1.686
     nu = old_div(delc, sig)
