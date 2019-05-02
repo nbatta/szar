@@ -1,5 +1,6 @@
-import matplotlib
-matplotlib.use('Agg')
+#import matplotlib
+#matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import numpy as np
 from szar.counts import ClusterCosmology
 from szar.szproperties import SZ_Cluster_Model
@@ -42,11 +43,11 @@ constraint_tag = ['','_constrained']
 #choose experiment
 experimentName = "CCATP"
 beams = list_from_config(Config,experimentName,'beams')
-noises = listFromConfig(Config,experimentName,'noises')
-freqs = listFromConfig(Config,experimentName,'freqs')
+noises = list_from_config(Config,experimentName,'noises')
+freqs = list_from_config(Config,experimentName,'freqs')
 lmax = int(Config.getfloat(experimentName,'lmax'))
-lknee = listFromConfig(Config,experimentName,'lknee')[0]
-alpha = listFromConfig(Config,experimentName,'alpha')[0]
+lknee = list_from_config(Config,experimentName,'lknee')[0]
+alpha = list_from_config(Config,experimentName,'alpha')[0]
 fsky = Config.getfloat(experimentName,'fsky')
 
 
@@ -56,18 +57,32 @@ fsky = Config.getfloat(experimentName,'fsky')
 ILC  = ILC_simple(cc,fgs, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
 
 #set ells
-lsedges = np.arange(100,2001,100)
+lsedges = np.arange(10,4001,50)
 
 #calc ILC
 if (cf == 0):
     el_il,  cls_il,  err_il,  s2ny  = ILC.Forecast_Cellyy(lsedges,fsky)
     el_ilc,  cls_ilc,  err_ilc,  s2n  = ILC.Forecast_Cellcmb(lsedges,fsky)
+    el_ilr,  cls_ilr,  err_ilr,  s2nr  = ILC.Forecast_Cellrsx(lsedges,fsky)
+    el_ilr2,  cls_ilr2,  err_ilr2,  s2nr2  = ILC.Forecast_Cellrsx(lsedges,fsky,option='NoILC')
 if (cf == 1):
     el_il,  cls_il,  err_il,  s2ny  = ILC.Forecast_Cellyy(lsedges,fsky,constraint="cmb")
     el_ilc,  cls_ilc,  err_ilc,  s2n  = ILC.Forecast_Cellcmb(lsedges,fsky,constraint="tsz")
 print ('S/N y', s2ny)
 print ('S/N CMB', s2n)
+print ('S/N rs', s2nr)
+print ('S/N rs', s2nr2)
 
+plt.figure()
+plt.loglog(el_ilc,  cls_ilc) 
+plt.errorbar(el_ilc,  cls_ilc,yerr=err_ilc)
+plt.errorbar(el_ilr,  np.abs(cls_ilr),yerr=err_ilr)
+plt.errorbar(el_ilr2,  np.abs(cls_ilr2),yerr=err_ilr2)
+plt.show()
+
+
+#print (err_ilr2/err_ilr)
+#print (cls_ilc/cls_ilr)
 
 #Extra stuff
 

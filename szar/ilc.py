@@ -52,10 +52,10 @@ class ILC_simple(object):
         self.dell = dell
         #set-up ells to evaluate up to lmax
         self.evalells = np.arange(2,lmax,self.dell)
-        self.N_ll_noILC = self.evalells*0.0
         self.N_ll_tsz = self.evalells*0.0
         self.N_ll_cmb = self.evalells*0.0
         self.N_ll_rsx = self.evalells*0.0
+        self.N_ll_rsx_NoFG = self.evalells*0.0 
         self.N_ll_cmb_c_tsz = self.evalells*0.0
         self.N_ll_tsz_c_cmb = self.evalells*0.0
         self.N_ll_tsz_c_cib = self.evalells*0.0
@@ -93,6 +93,8 @@ v3dell)
         self.W_ll_cmb = np.zeros([len(self.evalells),len(np.array(freqs))])
         #rayleigh scattering cross correlation weights
         self.W_ll_rsx = np.zeros([len(self.evalells),len(np.array(freqs))])
+        #rayleigh scattering cross correlation weights NO foregrounds
+        self.W_ll_rsx_NF = np.zeros([len(self.evalells),len(np.array(freqs))])
         #thermal SZ constraining the CIB weights 
         self.W_ll_tsz_c_cib = np.zeros([len(self.evalells),len(np.array(freqs))])
         #thermal SZ constraining the CMB weights 
@@ -142,7 +144,7 @@ v3dell)
                 #nells[3,4] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
                 #nells[4,3] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
 
-            self.N_ll_noILC[ii] = nells[3,3]
+            #self.N_ll_noILC[ii] = nells[3,3]
 
             totfg = (self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
                       self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) \
@@ -179,12 +181,16 @@ v3dell)
             N_ll_for_cmb_c_tsz_inv = N_ll_for_tsz_c_cmb_inv
             N_ll_for_tsz_c_cib_inv = np.linalg.inv(N_ll_for_tsz_c_cib)
 
+            N_ll_noFG = nells
+
             self.W_ll_tsz[ii,:]=weightcalculator(f_nu_tsz,N_ll_for_tsz)
             self.W_ll_rsx[ii,:]=weightcalculator(f_nu_rsx,N_ll_for_rsx)
+            self.W_ll_rsx_NF[ii,:]=weightcalculator(f_nu_rsx,N_ll_noFG)
             self.W_ll_cmb[ii,:]=weightcalculator(f_nu_cmb,N_ll_for_cmb)
             self.N_ll_tsz[ii] = np.dot(np.transpose(self.W_ll_tsz[ii,:]),np.dot(N_ll_for_tsz,self.W_ll_tsz[ii,:]))
             self.N_ll_cmb[ii] = np.dot(np.transpose(self.W_ll_cmb[ii,:]),np.dot(N_ll_for_cmb,self.W_ll_cmb[ii,:]))
             self.N_ll_rsx[ii] = np.dot(np.transpose(self.W_ll_rsx[ii,:]),np.dot(N_ll_for_rsx,self.W_ll_rsx[ii,:]))
+            self.N_ll_rsx_NoFG[ii] = np.dot(np.transpose(self.W_ll_rsx_NF[ii,:]),np.dot(N_ll_noFG,self.W_ll_rsx_NF[ii,:]))
             self.W_ll_tsz_c_cmb[ii,:]=constweightcalculator(f_nu_cmb,f_nu_tsz,N_ll_for_tsz_c_cmb_inv)
             self.W_ll_tsz_c_cib[ii,:]=constweightcalculator(f_nu_cib,f_nu_tsz,N_ll_for_tsz_c_cib_inv)
             self.W_ll_cmb_c_tsz[ii,:]=constweightcalculator(f_nu_tsz,f_nu_cmb,N_ll_for_cmb_c_tsz_inv)
@@ -301,18 +307,18 @@ v3dell)
 
     def Forecast_Cellrsx(self,ellBinEdges,fsky,option='None'):
 
-        ellMids  =  old_div((ellBinEdges[1:] + ellBinEdges[:-1]), 2)
+        ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1])/ 2.
 
-        cls_rsx = self.fgs.rs_cross(self.evalells,self.freq[0]) \
+        cls_rsx = self.fgs.rs_cross(self.evalells,self.fgs.nu_rs) / self.cc.c['TCMBmuK']**2.\
                 / ((self.evalells+1.)*self.evalells) * 2.* np.pi
 
-        cls_rsx = old_div(cls_rsx, (self.fgs.rs_nu(self.freq[0])))  # Normalized to get Cell^rsrs fiducial 
+        #cls_rsx = cls_rsx  / (self.fgs.rs_nu(self.freq[0]))  # Normalized to get Cell^rsrs fiducial 
 
         LF = LensForecast()
         if (option=='None'):        
             LF.loadGenericCls("rr",self.evalells,cls_rsx,self.evalells,self.N_ll_rsx)
         elif (option=='NoILC'):
-            LF.loadGenericCls("rr",self.evalells,cls_rsx,self.evalells,self.N_ll_noILC)
+            LF.loadGenericCls("rr",self.evalells,cls_rsx,self.evalells,self.N_ll_rsx_NoFG)
         else:
             return "Wrong option"
 

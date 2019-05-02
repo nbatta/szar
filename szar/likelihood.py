@@ -127,7 +127,7 @@ class clusterLike(object):
 
         self.diagnosticsDir=nemoOutputDir+"diagnostics" 
         self.filteredMapsDir=nemoOutputDir+"filteredMaps"
-        self.tckQFit=signals.fitQ(parDict, self.diagnosticsDir, self.filteredMapsDir)
+        self.tckQFit=signals.fitQ(parDict)#, self.diagnosticsDir, self.filteredMapsDir)
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
         
@@ -415,9 +415,11 @@ class MockCatalog(object):
         self.cc = ClusterCosmology(self.param_vals,self.constDict,clTTFixFile=self.clttfile)
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
 
+        print (self.cc.rhoc0om)
+
         self.diagnosticsDir=nemoOutputDir+"diagnostics"
         self.filteredMapsDir=nemoOutputDir+"filteredMaps"
-        self.tckQFit=signals.fitQ(parDict, self.diagnosticsDir, self.filteredMapsDir)
+        self.tckQFit=signals.fitQ(parDict)#, self.diagnosticsDir, self.filteredMapsDir)
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
 

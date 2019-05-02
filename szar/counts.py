@@ -416,7 +416,7 @@ class Halo_MF(object):
         #Mass Function
         delts = self.zarr*0. + delta
         dn_dlnm = dn_dlogM(M,self.zarr,self.cc.rhoc0om,delts,self.kh,self.pk,'comoving')
-        dn_dm = old_div(dn_dlnm,M)
+        dn_dm = dn_dlnm/M
         return dn_dm
 
     def dsig2_dk_dm(self,M):

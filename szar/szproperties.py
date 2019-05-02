@@ -14,6 +14,7 @@ from orphics.stats import timeit
 from orphics import io
 from scipy.interpolate import interp1d
 import os
+from numpy.matlib import repmat
 
 default_profile_params = {
     'P0': 8.403,
@@ -189,8 +190,8 @@ class SZ_Cluster_Model(object):
         f_nu_tsz = f_nu(self.cc.c,np.array(freqs))
  
         if (len(freqs) > 1):
-            fq_mat   = np.matlib.repmat(freqs,len(freqs),1)
-            fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
+            fq_mat   = repmat(freqs,len(freqs),1)
+            fq_mat_t = np.transpose(repmat(freqs,len(freqs),1))
         else:
             fq_mat   = np.array(freqs)
             fq_mat_t = np.array(freqs)
