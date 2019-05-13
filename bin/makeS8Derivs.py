@@ -46,7 +46,7 @@ mexprange, zrange, lndM = pickle.load(open(calFile,"rb"))
 bigDataDir = Config.get('general','bigDataDirectory')
 pzcutoff = Config.getfloat('general','photoZCutOff')
 
-mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
+mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'),encoding='latin1')
 
 
 assert np.all(mgrid==mexprange)

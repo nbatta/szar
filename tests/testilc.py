@@ -41,6 +41,7 @@ cf = 0
 constraint_tag = ['','_constrained']
 
 #choose experiment
+#experimentName = "SO-v3-goal-40"
 experimentName = "CCATP"
 beams = list_from_config(Config,experimentName,'beams')
 noises = list_from_config(Config,experimentName,'noises')
@@ -49,12 +50,15 @@ lmax = int(Config.getfloat(experimentName,'lmax'))
 lknee = list_from_config(Config,experimentName,'lknee')[0]
 alpha = list_from_config(Config,experimentName,'alpha')[0]
 fsky = Config.getfloat(experimentName,'fsky')
-
+try:
+        v3mode = Config.getint(expName,'V3mode')
+except:
+        v3mode = -1
 
 #SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
 
 #initialize ILC
-ILC  = ILC_simple(cc,fgs, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
+ILC  = ILC_simple(cc,fgs, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha,v3mode=v3mode)
 
 #set ells
 lsedges = np.arange(10,4001,50)
@@ -71,13 +75,15 @@ if (cf == 1):
 print ('S/N y', s2ny)
 print ('S/N CMB', s2n)
 print ('S/N rs', s2nr)
-print ('S/N rs', s2nr2)
+print ('S/N rs NF', s2nr2)
+
+facts = el_ilc*(el_ilc+1) / (2*np.pi) * cc.c['TCMBmuK']**2.
 
 plt.figure()
-plt.loglog(el_ilc,  cls_ilc) 
-plt.errorbar(el_ilc,  cls_ilc,yerr=err_ilc)
-plt.errorbar(el_ilr,  np.abs(cls_ilr),yerr=err_ilr)
-plt.errorbar(el_ilr2,  np.abs(cls_ilr2),yerr=err_ilr2)
+plt.loglog(el_ilc,  cls_ilc*facts) 
+plt.errorbar(el_ilc,  cls_ilc*facts,yerr=err_ilc*facts)
+plt.errorbar(el_ilr,  np.abs(cls_ilr*facts),yerr=err_ilr*facts)
+#plt.errorbar(el_ilr2,  np.abs(cls_ilr2*facts),yerr=err_ilr2*facts)
 plt.show()
 
 

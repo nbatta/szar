@@ -66,7 +66,7 @@ clttfile = Config.get('general','clttfile')
 gridName = "grid-owl2"
 #gridName = "grid-default"
 #version = "0.3_ysig_0.127"
-version = ["1.0","1.1"]#"0.7"
+version = ["1.1","1.11"]#,"1.1"]#"0.7"
 cal = "owl2"#"CMB_all"
 #cal = "CMB_all_PICO"
 #cal = "CMB_pol_miscentered"
@@ -95,7 +95,7 @@ from matplotlib.patches import Rectangle
 #expList = ['S4-2.0-0.4']#,'S4-1.5-0.4','S4-1.5-0.3','S4-1.5-0.2','S4-1.5-0.1','S4-1.5-0.05']
 #expList = ['S4-1.0-0.4','S4-1.5-0.4','S4-2.0-0.4','S4-2.5-0.4','S4-3.0-0.4']
 #expList = ['SO-v3-goal-40','SO-v3-base-40']#,'SO-v3-goal-20','SO-v3-base-20','SO-v3-goal-10','SO-v3-base-10']
-expList = ['CMB-Probe-v4-CBE','CMB-Probe-v4-REQ']
+#expList = ['CMB-Probe-v4-CBE','CMB-Probe-v4-REQ']
 expList = ['SO-v3-goal-40','SO-v3-goal-40']
 
 pad = 0.05
@@ -106,7 +106,7 @@ pl = Plotter(xlabel="$z$",ylabel="$N(z)$",ftsize=12,yscale='log')
 colList = ['C0','C1','C2','C3','C4','C5']
 for expName,col,ver in zip(expList,colList,version):
 
-    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + ver+".pkl",'rb'))
+    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + ver+".pkl",'rb'),encoding='latin1')
 
 #for expName,col in zip(expList,colList):
 
@@ -118,7 +118,7 @@ for expName,col,ver in zip(expList,colList,version):
 	    massGridName = bigDataDir+"lensgrid_"+expName+"_"+gridName+"_"+cal+ "_v" + version+".pkl"
 	    
 
-    mexp_edges, z_edges, lndM = pickle.load(open(massGridName,"rb"))
+    mexp_edges, z_edges, lndM = pickle.load(open(massGridName,"rb"),encoding='latin1')
 
     zrange = (z_edges[1:]+z_edges[:-1])/2.
 
@@ -157,13 +157,13 @@ for expName,col,ver in zip(expList,colList,version):
 
     zbins = z_edges #np.arange(0.,3.5,0.5)
     for zleft,zright in zip(zbins[:-1],zbins[1:]):
-        zcent = (zleft+zright)/2.
-        xerr = (zright-zleft)/2.
-        N = Nofzs[np.logical_and(zrange>zleft,zrange<=zright)].sum()
-        print(zcent,N)
-	testcount += N
-        N2 = Nz[np.logical_and(zrange>zleft,zrange<=zright)].sum()
-        currentAxis.add_patch(Rectangle((zcent - xerr+pad, 0), 2*xerr-pad/2., N, facecolor=col))#,alpha=0.5))
+	    zcent = (zleft+zright)/2.
+	    xerr = (zright-zleft)/2.
+	    N = Nofzs[np.logical_and(zrange>zleft,zrange<=zright)].sum()
+	    print (zcent,N)
+	    testcount += N
+	    N2 = Nz[np.logical_and(zrange>zleft,zrange<=zright)].sum()
+	    currentAxis.add_patch(Rectangle((zcent - xerr+pad, 0), 2*xerr-pad/2., N, facecolor=col))#,alpha=0.5))
         #currentAxis.add_patch(Rectangle((zcent - xerr+pad+pad/3., 0), 2*xerr-pad/2., N2, facecolor=col))
     pl.add([0,0],[0,0],ls='-',linewidth=4,label=expName,color=col)
     massSense = lndM #*100./np.sqrt(Nmz)

@@ -262,7 +262,7 @@ v3dell)
 
     def Forecast_Cellyy(self,ellBinEdges,fsky,constraint='None'):
 
-        ellMids  =  old_div((ellBinEdges[1:] + ellBinEdges[:-1]), 2)
+        ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1])/ 2
 
         cls_tsz = self.fgs.tSZ(self.evalells,self.freq[0],self.freq[0]) / self.cc.c['TCMBmuK']**2. \
                 / ((self.evalells+1.)*self.evalells) * 2.* np.pi
@@ -308,6 +308,9 @@ v3dell)
     def Forecast_Cellrsx(self,ellBinEdges,fsky,option='None'):
 
         ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1])/ 2.
+
+        #cls_rsx = self.fgs.rs_cross(self.evalells,self.fgs.rs_nu(self.freq[0])) / self.cc.c['TCMBmuK']**2.\
+        #        / ((self.evalells+1.)*self.evalells) * 2.* np.pi
 
         cls_rsx = self.fgs.rs_cross(self.evalells,self.fgs.nu_rs) / self.cc.c['TCMBmuK']**2.\
                 / ((self.evalells+1.)*self.evalells) * 2.* np.pi
