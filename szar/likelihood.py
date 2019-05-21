@@ -15,6 +15,7 @@ from nemo import signals
 from scipy import special,stats
 from scipy.interpolate import interp2d
 from astropy.io import fits
+import astropy.io.fits as pyfits
 from astLib import astWCS
 from configparser import SafeConfigParser
 from orphics.io import dict_from_section
@@ -88,6 +89,31 @@ def alter_fparams(fparams,parlist,parvals):
     for k,parvals in enumerate(parvals):
         fparams[parlist[k]] = parvals
     return fparams
+
+def loadAreaMask(extName, DIR):
+    """Loads the survey area mask (i.e., after edge-trimming and point source masking, produced by nemo).
+    Returns map array, wcs
+    """
+
+    areaImg=pyfits.open(DIR+"areaMask#%s.fits.gz" % (extName))
+    areaMap=areaImg[0].data
+    wcs=astWCS.WCS(areaImg[0].header, mode = 'pyfits')
+    areaImg.close()
+
+    return areaMap, wcs
+
+def loadRMSmap(expName, DIR):
+    """Loads the survey RMS map (produced by nemo).
+    Returns map array, wcs
+    """
+
+    areaImg=pyfits.open(DIR+"RMSMap_Arnaud_M2e14_z0p4%s.fits.gz" % (extName))
+    areaMap=areaImg[0].data
+    wcs=astWCS.WCS(areaImg[0].header, mode = 'pyfits')
+    areaImg.close()
+
+    return areaMap, wcs
+
 
 class clusterLike(object):
     def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,fix_params,fitsfile,test=False,simtest=False,simpars=False):
@@ -476,7 +502,9 @@ class MockCatalog(object):
         return zsamps, msamps
 
     def create_basic_sample_Mat(self,fsky):
-        '''                                                                                                                                                               Create simple mock catalog of Mass and Redshift by sampling the mass function                                                                                     '''
+        '''
+        Create simple mock catalog of Mass and Redshift by sampling the mass function
+        '''
         nmzdensity = HMF.N_of_Mz(self.HMF.M200,200.)
         Ndz = np.multiply(nmzdensity,np.diff(self.zgrid).reshape((1,self.zgrid.size-1)))
         Nmz = np.multiply(Ndz,np.diff(10**self.mgrid).reshape((self.mgrid.size-1,1))) * 4.* np.pi
