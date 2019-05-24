@@ -543,7 +543,7 @@ class Halo_MF(object):
         #print (xcond)
 
         ycond = []
-        for i in xrange(len(rand1)):
+        for i in range(len(rand1)):
             conproby = np.cumsum(N_z_inter(self.zarr,xcond[i])/np.sum(N_z_inter(self.zarr,xcond[i])))
             #print (conproby)
             rand2 = np.random.uniform(np.min(conproby),1,1)

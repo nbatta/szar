@@ -14,6 +14,7 @@ import emcee
 from nemo import signals
 from scipy import special,stats
 from scipy.interpolate import interp2d
+from scipy import interpolate
 from astropy.io import fits
 import astropy.io.fits as pyfits
 from astLib import astWCS
@@ -114,6 +115,28 @@ def loadRMSmap(expName, DIR):
 
     return areaMap, wcs
 
+def loadQ(pickledQFileName,pickleopt=False):
+    """Loads tckQFitDict from given path.
+    """
+
+    if (pickleopt):
+        with open(pickledQFileName, "rb") as pickleFile:
+            unpickler=pickle.Unpickler(pickleFile)
+            QTabDict=unpickler.load()
+
+        tckDict={}
+        for key in QTabDict:
+            tckDict[key]=interpolate.splrep(QTabDict[key]['theta500Arcmin'], QTabDict[key]['Q'])
+
+    else:
+        Qstuff= pyfits.open(pickledQFileName)
+        QTabDict = Qstuff[1].data
+
+        tckDict={}
+        tckDict=interpolate.splrep(QTabDict['theta500Arcmin'], QTabDict['Q'])
+
+    return tckDict
+
 
 class clusterLike(object):
     def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,fix_params,fitsfile,test=False,simtest=False,simpars=False):
@@ -153,7 +176,9 @@ class clusterLike(object):
 
         self.diagnosticsDir=nemoOutputDir+"diagnostics" 
         self.filteredMapsDir=nemoOutputDir+"filteredMaps"
-        self.tckQFit=signals.fitQ(parDict)#, self.diagnosticsDir, self.filteredMapsDir)
+        self.tckQFit=loadQ(self.diagnosticsDir + '/QFit.fits')
+
+        #signals.fitQ(parDict)#, self.diagnosticsDir, self.filteredMapsDir)
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
         
@@ -212,7 +237,7 @@ class clusterLike(object):
     def P_Yo(self, LgY, M, z,param_vals):
         #M500c has 1/h factors in it
         Ma = np.outer(M,np.ones(len(LgY[0,:])))
-        Om = old_div((param_vals['omch2'] + param_vals['ombh2']), (old_div(param_vals['H0'],100.))**2)
+        Om = (param_vals['omch2'] + param_vals['ombh2']) / (param_vals['H0']/100.)**2
         OL = 1. - Om
         Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(old_div(param_vals['H0'],100.))), z, self.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'], H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
         Y = 10**LgY
@@ -377,7 +402,7 @@ class clusterLike(object):
         return lp + lnlike,np.nan_to_num(self.s8)
 
 class MockCatalog(object):
-    def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,params,parlist,mass_grid_log=None,z_grid=None,randoms=False):
+    def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,params,parlist,mass_grid_log=None,z_grid=None,randoms=False,noscat=False):
 
         Config = SafeConfigParser()
         Config.optionxform=str
@@ -430,6 +455,11 @@ class MockCatalog(object):
         else:
             self.rand = 0
 
+        if noscat:
+            self.noscat = True
+        else:
+            self.noscat = False
+
         self.mgrid = np.arange(logm_min,logm_max,logm_spacing)
         self.zgrid = np.arange(zmin,zmax,zdel)
 
@@ -445,7 +475,8 @@ class MockCatalog(object):
 
         self.diagnosticsDir=nemoOutputDir+"diagnostics"
         self.filteredMapsDir=nemoOutputDir+"filteredMaps"
-        self.tckQFit=signals.fitQ(parDict)#, self.diagnosticsDir, self.filteredMapsDir)
+        self.tckQFit=loadQ(self.diagnosticsDir + '/QFit.fits')
+        #self.tckQFit=signals.fitQ(parDict)#, self.diagnosticsDir, self.filteredMapsDir)
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
 
@@ -552,10 +583,15 @@ class MockCatalog(object):
         #the function call now includes cosmological dependences
         for i in range(nsamps):
             Ytilde[i], theta0, Qfilt = signals.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM[i]/(old_div(self.param_vals['H0'],100.))), sampZ[i], self.tckQFit,sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
+
         #add scatter
         np.random.seed(self.seedval)
-        ymod = np.exp(self.scat_val * np.random.randn(nsamps))
-        sampY0 = Ytilde*ymod
+
+        if (self.noscat):
+            sampY0 = Ytilde
+        else:
+            ymod = np.exp(self.scat_val * np.random.randn(nsamps))
+            sampY0 = Ytilde*ymod
         
         #calculate noise for a given object for a random place on the map and save coordinates
 
@@ -751,7 +787,7 @@ class clustLikeTest(object):
         self.cc = ClusterCosmology(self.fparams,self.constDict,clTTFixFile=self.clttfile)
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
 
-        self.fsky = old_div(987.5,41252.9612)
+        self.fsky = 987.5/41252.9612
         self.mmin = mmin
         clust_cat = test_cat_file + '.fits' 
         self.clst_z,self.clst_zerr,self.clst_m,self.clst_merr = read_test_mock_cat(clust_cat,self.mmin)

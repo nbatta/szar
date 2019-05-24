@@ -22,6 +22,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Run likelihood.')
 parser.add_argument("chain_name", type=str,help='Root name of run.')
 parser.add_argument("-t", "--testMock",     type=int,  default=0,help="number of mocks.")
+parser.add_argument("-y", "--ymocktest",     type=int,  default=0,help="number of mocks.")
 
 args = parser.parse_args()
 
