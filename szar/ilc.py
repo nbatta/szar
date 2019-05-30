@@ -27,7 +27,7 @@ def constweightcalculator(f_1,f_2,N):
     return W
 
 class ILC_simple(object):
-    def __init__(self,clusterCosmology, fgs,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1.,dell=1.,v3mode=-1):
+    def __init__(self,clusterCosmology, fgs,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1.,dell=1.,v3mode=-1,fsky=None):
         
         #Inputs
         #clusterCosmology is a class that contains cosmological parameters and power spectra.
@@ -39,12 +39,6 @@ class ILC_simple(object):
         self.cc = clusterCosmology
 
         #initializing the frequency matrices
-        if (len(freqs) > 1):
-            fq_mat   = np.matlib.repmat(freqs,len(freqs),1) 
-            fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
-        else:
-            fq_mat   = freqs
-            fq_mat_t = freqs
 
         self.fgs = fgs
 
@@ -106,6 +100,34 @@ class ILC_simple(object):
                 v3dell = np.diff(self.evalells)[0]
                 v3ell, N_ell_T_LA, N_ell_P_LA, Map_white_noise_levels = v3.AdvACT_noise(f_sky=fsky,ell_max=v3lmax+v3dell,delta_ell=\
 v3dell)
+            elif v3mode == 5:
+                import szar.lat_noise_190528_w350ds4 as ccatp
+                tubes = (0,0,0,2,2,1)
+                lat = ccatp.CcatLatv2(v3mode,el=50.,survey_years=4000/24./365.24,survey_efficiency=1.0,N_tubes=tubes)
+                vfreqs = lat.get_bands()# v3.Simons_Observatory_V3_LA_bands()
+                print("CCATP")
+                print("Replacing ",freqs,  " with ", vfreqs)
+                N_bands = len(vfreqs)
+                freqs = vfreqs
+                vbeams = lat.get_beams()#v3.Simons_Observatory_V3_LA_beams() 
+                print("Replacing ",fwhms,  " with ", vbeams)
+                fwhms = vbeams
+
+                v3lmax = self.evalells.max()
+                v3dell = np.diff(self.evalells)[0]
+                print("Using ",fsky," for fsky")
+
+                v3ell,N_ell_T_LA_full, N_ell_P_LA = lat.get_noise_curves(fsky, v3lmax+v3dell, v3dell, full_covar=True, deconv_beam=True)
+
+                N_ell_T_LA = np.diagonal(N_ell_T_LA_full).T
+                Map_white_noise_levels = lat.get_white_noise(fsky)**.5
+
+        if (len(freqs) > 1):
+            fq_mat   = np.matlib.repmat(freqs,len(freqs),1) 
+            fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
+        else:
+            fq_mat   = freqs
+            fq_mat_t = freqs
 
         #initializing the weighting functions for the ilc
         #thermal SZ weights
@@ -139,18 +161,6 @@ v3dell)
                 nells = np.diag(inst_noise)
             elif v3mode<=2:
                 nells = N_ell_T_LA_full[:,:,ii]/ self.cc.c['TCMBmuK']**2.
-                #ndiags = []
-                #for ff in range(len(freqs)):
-                #    inst_noise = old_div(N_ell_T_LA[ff,ii], self.cc.c['TCMBmuK']**2.)
-                #    ndiags.append(inst_noise)
-                #nells = np.diag(np.array(ndiags))
-                # Adding in atmo. freq-freq correlations 
-                #nells[0,1] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
-                #nells[1,0] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
-                #nells[2,3] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
-                #nells[3,2] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
-                #nells[4,5] = N_ell_T_LA[8,ii]/ self.cc.c['TCMBmuK']**2.
-                #nells[5,4] = N_ell_T_LA[8,ii]/ self.cc.c['TCMBmuK']**2.
 
             elif v3mode==3:
                 ndiags = []
@@ -158,15 +168,10 @@ v3dell)
                     inst_noise = old_div(N_ell_T_LA[ff,ii], self.cc.c['TCMBmuK']**2.)
                     ndiags.append(inst_noise)
                 nells = np.diag(np.array(ndiags))
-                # Adding in atmo. freq-freq correlations
-                #nells[0,1] = N_ell_T_LA[5,ii]/ self.cc.c['TCMBmuK']**2.
-                #nells[1,0] = N_ell_T_LA[5,ii]/ self.cc.c['TCMBmuK']**2.
-                #nells[2,3] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
-                #nells[3,2] = N_ell_T_LA[6,ii]/ self.cc.c['TCMBmuK']**2.
-                #nells[3,4] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
-                #nells[4,3] = N_ell_T_LA[7,ii]/ self.cc.c['TCMBmuK']**2.
 
-            #self.N_ll_noILC[ii] = nells[3,3]
+            elif v3mode==5:
+                nells = N_ell_T_LA_full[:,:,ii]/ self.cc.c['TCMBmuK']**2.
+
 
             totfg = (self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
                       self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) \

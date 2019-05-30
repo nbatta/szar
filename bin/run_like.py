@@ -74,7 +74,7 @@ if args.test:
     fixvals = [0.022,0.96,0.06,0.80,0.08,0.2]
 elif args.simtest:
     fixlist = ['omch2','ombh2','H0','ns','tau','massbias','yslope','scat']
-    fixvals = [0.1225,0.0245,70,0.97,0.06,1.0,0.08,0.001]
+    fixvals = [0.1225,0.0245,70,0.97,0.06,1.0,0.08,0.2]
 elif args.simpars:
     fixlist = ['H0','ns','tau','massbias','yslope','scat']
     fixvals = [70,0.97,0.06,1.0,0.08,0.2]
@@ -134,7 +134,7 @@ else:
 
 if args.mockcat or args.randcat:
     parlist = ['omch2','ombh2','H0','As','ns','tau','massbias','yslope','scat']
-    parvals = [0.1225,0.0245,70,2.0e-09,0.97,0.06,1.0,0.08,0.001]
+    parvals = [0.1225,0.0245,70,2.0e-09,0.97,0.06,1.0,0.08,0.20]
 
     if args.mockcat:
         MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[13.6,15.7,0.01],z_grid=[0.1,2.01,0.1])
@@ -171,7 +171,7 @@ if args.mockcat or args.randcat:
     print('sample time',time.time() - start)    
     sys.exit(0)
 
-CL = lk.clusterLike(iniFile,pardict,nemoOutputDir,noise_file,fix_params,fitsfile,test=args.test,simtest=simtst,simpars=args.simpars)
+CL = lk.clusterLike(iniFile,pardict,nemoOutputDir,noise_file,fix_params,fixvals,fixlist,fitsfile,test=args.test,simtest=simtst,simpars=args.simpars)
 
 if (args.printtest):
 
