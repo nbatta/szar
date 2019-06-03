@@ -82,7 +82,7 @@ def test_ps_tilde_interpol(cc, paper_plots=False):
                 for count,kindex in enumerate(ksamp_indices):
                     ax[muindex, count].plot(zs, coarse_ps_tils[kindex,:,muindex], marker='o', linestyle='None')
                     ax[muindex, count].plot(fine_zs, ps_interps[kindex,:,muindex])
-            
+
             cols = [r'$k = {}$'.format(round(ks[kindex],3)) for kindex in ksamp_indices]
             rows = [r'$\mu = {}$'.format(round(mu, 3)) for mu in mus]
 
@@ -96,19 +96,19 @@ def test_ps_tilde_interpol(cc, paper_plots=False):
                 axis.set_xlabel(r'$z$')
 
             fig.tight_layout()
-            fig.savefig('ps_tilde_interpols_test.eps')
+            fig.savefig('ps_tilde_interpols_test.pdf')
     else:
         plt.plot(zs, coarse_ps_tils[0,:,:], marker='o', label="on grid")
         plt.plot(fine_zs, ps_interps[0,:,:], label="interpolated")
         plt.xlabel(r'$z_\ell$')
         plt.ylabel(r'$\tilde P(z_\ell, k={})$'.format(ks[0]))
         plt.legend(loc='best')
-        plt.savefig('ps_tilde_interpols_test.eps')
+        plt.savefig('ps_tilde_interpols_test.pdf')
 
     plt.gcf().clear()
 
 def test_fine_ps_bar(cc, nsamps):
-    mus = np.array([0])
+    mus = np.array([0, 0.75, 0.95, 1])
     ks = cc.HMF.kh
     zs = cc.HMF.zarr
 
@@ -136,23 +136,24 @@ def test_fine_ps_bar(cc, nsamps):
         prefac = prefac[..., np.newaxis]
         return prefac * ps_tils
 
-    plt.plot(zs, coarse_ps_bar[0,:,0], marker='o', label="coarse")
-    plt.plot(zs[1:-1], fine_ps_bars[0,:,0], marker='.', label="fine")
+    plt.plot(zs, coarse_ps_bar[0,:,:], marker='o', label="coarse")
+    plt.plot(zs[1:-1], fine_ps_bars[0,:,:], marker='.', label="fine")
     plt.xlabel(r'$z_\ell$')
     plt.ylabel(r'$\bar P(z_\ell, \mu = 0, k={})$'.format(ks[0]))
     plt.legend(loc='best')
-    plt.savefig('fine_ps_bars_test_nsamps{}.eps'.format(nsamps))
+    plt.savefig('fine_ps_bars_test_nsamps{}.pdf'.format(nsamps))
 
     plt.gcf().clear()
 
-    plt.plot(ks, coarse_ps_bar[:,1,0], label="coarse")
-    plt.plot(ks, fine_ps_bars[:,0,0], label="fine")
+    plt.plot(ks, coarse_ps_bar[:,18,:], label="coarse")
+    plt.plot(ks, fine_ps_bars[:,17,:], label="fine")
     plt.xscale('log')
     plt.yscale('log')
+    plt.ylim((1e-1, 1e8))
     plt.xlabel(r'$k$')
     plt.ylabel(r'$\bar P(z = {}, \mu = 0, k)$'.format(round(zs[1],3)))
     plt.legend(loc='best')
-    plt.savefig('fine_ps_bars_kspace_nsamps{}.eps'.format(nsamps))
+    plt.savefig('fine_ps_bars_kspace_nsamps{}.pdf'.format(nsamps))
 
     plt.gcf().clear()
 
@@ -162,7 +163,7 @@ def test_fine_ps_bar(cc, nsamps):
     plt.plot(finer_zs, integrand[0, :, 0])
     plt.xlabel(r'$z$')
     plt.ylabel(r'$\frac{dV}{dz} \, \tilde n^2\, \tilde P$')
-    plt.savefig('fine_ps_bar_integrand_test_nsamps{}.eps'.format(nsamps))
+    plt.savefig('fine_ps_bar_integrand_test_nsamps{}.pdf'.format(nsamps))
 
     plt.gcf().clear()
 
@@ -198,7 +199,7 @@ def test_fine_sfunc(cc):
     plt.xlabel(r'$z_\ell$')
     plt.ylabel(r'${} \times S(z_\ell)$'.format(scale))
     plt.legend(loc='best')
-    plt.savefig('fine_sfunc_test.eps')
+    plt.savefig('fine_sfunc_test.pdf')
 
     plt.gcf().clear()
 
@@ -237,7 +238,7 @@ def test_ntils(cc):
     plt.xlabel(r'$z_\ell$')
     plt.ylabel(r'$\tilde n(z_\ell)$')
     plt.legend(loc='best')
-    plt.savefig('n_tilde_interpols_test.eps')
+    plt.savefig('n_tilde_interpols_test.pdf')
     plt.gcf().clear()
 
 
