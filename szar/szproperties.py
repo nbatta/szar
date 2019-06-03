@@ -14,6 +14,7 @@ from orphics.stats import timeit
 from orphics import io
 from scipy.interpolate import interp1d
 import os
+from numpy.matlib import repmat
 
 default_profile_params = {
     'P0': 8.403,
@@ -97,19 +98,27 @@ class SZ_Cluster_Model(object):
             import szar.V3_calc_public as v3
 
             if v3mode <= 2:
-                vfreqs = v3.Simons_Observatory_V3_LA_bands()
+                import szar.so_noise_lat_v3_1_CAND as v3_1
+                lat = v3_1.SOLatV3point1(v3mode,el=50.)
+                vfreqs = lat.get_bands()# v3.Simons_Observatory_V3_LA_bands()
                 print("Simons Obs")
                 print("Replacing ",freqs,  " with ", vfreqs)
+                N_bands = len(vfreqs)
                 freqs = vfreqs
-                vbeams = v3.Simons_Observatory_V3_LA_beams()
+                vbeams = lat.get_beams()#v3.Simons_Observatory_V3_LA_beams()
                 print("Replacing ",fwhms,  " with ", vbeams)
                 fwhms = vbeams
                 
                 v3lmax = self.evalells.max()
                 v3dell = np.diff(self.evalells)[0]
                 print("Using ",fsky," for fsky")
-                
-                v3ell, N_ell_T_LA, N_ell_P_LA, Map_white_noise_levels = v3.Simons_Observatory_V3_LA_noise(sensitivity_mode=v3mode,f_sky=fsky,ell_max=v3lmax+v3dell,delta_ell=v3dell)
+
+                v3ell,N_ell_T_LA_full, N_ell_P_LA = lat.get_noise_curves(fsky, v3lmax+v3dell, v3dell, full_covar=True, deconv_beam=True)
+
+                N_ell_T_LA = np.diagonal(N_ell_T_LA_full).T
+                Map_white_noise_levels = lat.get_white_noise(fsky)**.5
+
+                #v3ell, N_ell_T_LA, N_ell_P_LA, Map_white_noise_levels = v3.Simons_Observatory_V3_LA_noise(sensitivity_mode=v3mode,f_sky=fsky,ell_max=v3lmax+v3dell,delta_ell=v3dell)
             elif v3mode == 3:
                 vfreqs = v3.AdvACT_bands()
                 print("AdvACT")
@@ -124,6 +133,7 @@ class SZ_Cluster_Model(object):
                 print("Using ",fsky," for fsky")
 
                 v3ell, N_ell_T_LA, N_ell_P_LA, Map_white_noise_levels = v3.AdvACT_noise(f_sky=fsky,ell_max=v3lmax+v3dell,delta_ell=v3dell)
+
             elif v3mode == 4:
                 import szar.s4lat as s4
                 mode = 2
@@ -145,6 +155,28 @@ class SZ_Cluster_Model(object):
                 N_ell_T_LA = np.diagonal(N_ell_T_LA_full).T
                 print(N_ell_T_LA.shape)
 
+            if v3mode == 5:
+                import szar.lat_noise_190528_w350ds4 as ccatp
+                tubes = (0,0,0,2,2,1)
+                lat = ccatp.CcatLatv2(v3mode,el=50.,survey_years=4000/24./365.24,survey_efficiency=1.0,N_tubes=tubes)
+                vfreqs = lat.get_bands()# v3.Simons_Observatory_V3_LA_bands()
+                print("CCATP")
+                print("Replacing ",freqs,  " with ", vfreqs)
+                N_bands = len(vfreqs)
+                freqs = vfreqs
+                vbeams = lat.get_beams()#v3.Simons_Observatory_V3_LA_beams()
+                print("Replacing ",fwhms,  " with ", vbeams)
+                fwhms = vbeams
+                
+                v3lmax = self.evalells.max()
+                v3dell = np.diff(self.evalells)[0]
+                print("Using ",fsky," for fsky")
+
+                v3ell,N_ell_T_LA_full, N_ell_P_LA = lat.get_noise_curves(fsky, v3lmax+v3dell, v3dell, full_covar=True, deconv_beam=True)
+
+                N_ell_T_LA = np.diagonal(N_ell_T_LA_full).T
+                Map_white_noise_levels = lat.get_white_noise(fsky)**.5
+
             assert np.all(v3ell==self.evalells)
         
         # pl = io.Plotter(yscale='log',xlabel='l',ylabel='D_l')
@@ -154,9 +186,9 @@ class SZ_Cluster_Model(object):
 
 
             if v3mode>-1:
-                inst_noise = old_div(N_ell_T_LA[ii], self.cc.c['TCMBmuK']**2.)
+                inst_noise = N_ell_T_LA[ii] / self.cc.c['TCMBmuK']**2.
             else:
-                inst_noise = ( old_div(noise_func(self.evalells,fwhm,noise,lknee,alpha,dimensionless=False), self.cc.c['TCMBmuK']**2.))
+                inst_noise = (noise_func(self.evalells,fwhm,noise,lknee,alpha,dimensionless=False)/ self.cc.c['TCMBmuK']**2.)
 
             # pl.add(self.evalells,inst_noise*self.evalells**2.,color="C"+str(ii))
             # pl.add(self.evalells,N_ell_T_LA[ii]*self.evalells**2./ self.cc.c['TCMBmuK']**2.,color="C"+str(ii),ls="--")
@@ -181,16 +213,16 @@ class SZ_Cluster_Model(object):
         # pl.add(self.evalells,self.cc.clttfunc(self.evalells)*self.evalells**2.,color='k',lw=3)
         # pl.done(io.dout_dir+"v3comp.png")
         
-        self.nl_old = old_div(1.,self.nlinv)
-        self.nl_cmb = old_div(1.,self.nlinv_cmb)
-        self.nl_nofg = old_div(1.,self.nlinv_nofg)
-        self.nl_cmb_nofg = old_div(1.,self.nlinv_cmb_nofg)
+        self.nl_old = (1./self.nlinv)
+        self.nl_cmb = (1./self.nlinv_cmb)
+        self.nl_nofg = (1./self.nlinv_nofg)
+        self.nl_cmb_nofg = (1./self.nlinv_cmb_nofg)
 
         f_nu_tsz = f_nu(self.cc.c,np.array(freqs))
  
         if (len(freqs) > 1):
-            fq_mat   = np.matlib.repmat(freqs,len(freqs),1)
-            fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
+            fq_mat   = repmat(freqs,len(freqs),1)
+            fq_mat_t = np.transpose(repmat(freqs,len(freqs),1))
         else:
             fq_mat   = np.array(freqs)
             fq_mat_t = np.array(freqs)
@@ -204,18 +236,29 @@ class SZ_Cluster_Model(object):
                 inst_noise = ( old_div(noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,dimensionless=False), self.cc.c['TCMBmuK']**2.))
                 nells = np.diag(inst_noise)
             elif v3mode<=2:
-                ndiags = []
-                for ff in range(len(freqs)):
-                    inst_noise = old_div(N_ell_T_LA[ff,ii], self.cc.c['TCMBmuK']**2.)
-                    ndiags.append(inst_noise)
-                nells = np.diag(np.array(ndiags))
-                # Adding in atmo. freq-freq correlations
-                nells[0,1] = old_div(N_ell_T_LA[6,ii], self.cc.c['TCMBmuK']**2.)
-                nells[1,0] = old_div(N_ell_T_LA[6,ii], self.cc.c['TCMBmuK']**2.)
-                nells[2,3] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
-                nells[3,2] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
-                nells[4,5] = old_div(N_ell_T_LA[8,ii], self.cc.c['TCMBmuK']**2.)
-                nells[5,4] = old_div(N_ell_T_LA[8,ii], self.cc.c['TCMBmuK']**2.)
+                nells = N_ell_T_LA_full[:,:,ii]/ self.cc.c['TCMBmuK']**2.
+
+                #corr_pairs = [(0,1),(2,3),(4,5)]
+
+                #N_ell_LA_T  = N_ell_LA_T_full[range(N_bands),range(N_bands)]
+                #N_ell_LA_Tx = [N_ell_LA_T_full[i,j] for i,j in corr_pairs]
+                #N_ell_LA_P  = N_ell_LA_P_full[range(N_bands),range(N_bands)]
+                #N_ell_LA_Px = [N_ell_LA_P_full[i,j] for i,j in corr_pairs]
+
+                #nells = N_ell_LA_Tx
+
+                #ndiags = []
+                #for ff in range(len(freqs)):
+                #    inst_noise = old_div(N_ell_T_LA[ff,ii], self.cc.c['TCMBmuK']**2.)
+                #    ndiags.append(inst_noise)
+                #nells = np.diag(np.array(ndiags))
+                ## Adding in atmo. freq-freq correlations
+                #nells[0,1] = old_div(N_ell_T_LA[6,ii], self.cc.c['TCMBmuK']**2.)
+                #nells[1,0] = old_div(N_ell_T_LA[6,ii], self.cc.c['TCMBmuK']**2.)
+                #nells[2,3] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
+                #nells[3,2] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
+                #nells[4,5] = old_div(N_ell_T_LA[8,ii], self.cc.c['TCMBmuK']**2.)
+                #nells[5,4] = old_div(N_ell_T_LA[8,ii], self.cc.c['TCMBmuK']**2.)
             elif v3mode==3:
                 ndiags = []
                 for ff in range(len(freqs)):
@@ -230,13 +273,10 @@ class SZ_Cluster_Model(object):
                 nells[3,4] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
                 nells[4,3] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
             elif v3mode==4:
-                nells = old_div(N_ell_T_LA_full[:,:,ii], self.cc.c['TCMBmuK']**2.)
-                # ndiags = []
-                # # Adding in atmo. freq-freq correlations
-                # for ff in range(len(freqs)):
-                #     for gg in range(len(freqs)):
-                #         inst_noise = old_div(N_ell_T_LA_full[ff,gg,ii], self.cc.c['TCMBmuK']**2.)
-                        
+                nells = N_ell_T_LA_full[:,:,ii]/ self.cc.c['TCMBmuK']**2.
+            elif v3mode==5:
+                nells = N_ell_T_LA_full[:,:,ii]/ self.cc.c['TCMBmuK']**2.
+
             totfg = (fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) 
                      + fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t)) \
                      / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi

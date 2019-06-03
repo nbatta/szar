@@ -12,7 +12,7 @@ from configparser import SafeConfigParser
 from orphics import io
 from orphics.io import Plotter
 from szar.counts import ClusterCosmology,Halo_MF
-from nemo import simsTools
+from nemo import signals
 
 import emcee
 import time, sys, os
@@ -134,7 +134,7 @@ else:
 
 if args.mockcat or args.randcat:
     parlist = ['omch2','ombh2','H0','As','ns','tau','massbias','yslope','scat']
-    parvals = [0.1225,0.0245,70,2.0e-09,0.97,0.06,1.0,0.08,0.2]
+    parvals = [0.1225,0.0245,70,2.0e-09,0.97,0.06,1.0,0.08,0.20]
 
     if args.mockcat:
         MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[13.6,15.7,0.01],z_grid=[0.1,2.01,0.1])
@@ -171,7 +171,7 @@ if args.mockcat or args.randcat:
     print('sample time',time.time() - start)    
     sys.exit(0)
 
-CL = lk.clusterLike(iniFile,pardict,nemoOutputDir,noise_file,fix_params,fitsfile,test=args.test,simtest=simtst,simpars=args.simpars)
+CL = lk.clusterLike(iniFile,pardict,nemoOutputDir,noise_file,fix_params,fixvals,fixlist,fitsfile,test=args.test,simtest=simtst,simpars=args.simpars)
 
 if (args.printtest):
 
@@ -203,7 +203,7 @@ if (args.printtest):
     print(parvals)
     print("ln prob", np.log(CL.Prob_per_cluster(int_HMF,cluster_props[:,clustind],dn_dzdm_int,param_vals)))
     print(LgYa[-1,-1])
-    Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(old_div(param_vals['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])
+    Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(old_div(param_vals['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])
     print("ln Y val",np.log10(Y[-1,-1]))
     print("ln Y~", np.log10(Ytilde[-1,-1]))
     print(old_div(Y[-1,30:35],Ytilde[-1,-1]))
@@ -218,7 +218,7 @@ if (args.printtest):
     print('pars2', parvals2)
     print("ln prop", np.log(CL.Prob_per_cluster(int_HMF2,cluster_props[:,clustind],dn_dzdm_int2,param_vals2)))
     print(LgYa[-1,-1])
-    Ytilde, theta0, Qfilt =simsTools.y0FromLogM500(np.log10(param_vals2['massbias']*Ma/(old_div(param_vals2['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals2['scat'],B0=param_vals2['yslope'])
+    Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals2['massbias']*Ma/(old_div(param_vals2['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals2['scat'],B0=param_vals2['yslope'])
     print("ln Y val",np.log10(Y[-1,-1]))
     print("ln Y~", np.log10(Ytilde[-1,-1]))
     #print np.log(Ytilde[-1,30:35])

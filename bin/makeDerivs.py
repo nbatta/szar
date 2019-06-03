@@ -119,9 +119,9 @@ if rank==0:
 
     version = Config.get('general','version')
     # load the mass calibration grid
-    mexp_edges, z_edges, lndM = pickle.load(open(calFile,"rb"))
+    mexp_edges, z_edges, lndM = pickle.load(open(calFile,"rb"),encoding='latin1')
 
-    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
+    mgrid,zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'),encoding='latin1')
     assert np.all(mgrid==mexp_edges)
     assert np.all(z_edges==zgrid)
     

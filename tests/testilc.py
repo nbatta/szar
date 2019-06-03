@@ -1,15 +1,16 @@
-import matplotlib
-matplotlib.use('Agg')
+#import matplotlib
+#matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import numpy as np
 from szar.counts import ClusterCosmology
 from szar.szproperties import SZ_Cluster_Model
 from szar.foregrounds import fgNoises, f_nu
 from szar.ilc import ILC_simple
 import sys,os
-from ConfigParser import SafeConfigParser 
-import cPickle as pickle
-from orphics.tools.io import dictFromSection, listFromConfig, Plotter
-from orphics.tools.cmb import noise_func
+from configparser import SafeConfigParser 
+import pickle as pickle
+from orphics.io import dict_from_section, list_from_config, Plotter
+from orphics.cosmology import noise_func
 
 #Read ini file
 
@@ -18,8 +19,8 @@ Config = SafeConfigParser()
 Config.optionxform=str
 Config.read(iniFile)
 
-constDict = dictFromSection(Config,'constants')
-clusterDict = dictFromSection(Config,'cluster_params')
+constDict = dict_from_section(Config,'constants')
+clusterDict = dict_from_section(Config,'cluster_params')
 fparams = {}   # the 
 for (key, val) in Config.items('params'):
     if ',' in val:
@@ -40,34 +41,56 @@ cf = 0
 constraint_tag = ['','_constrained']
 
 #choose experiment
-experimentName = "CCATP"
-beams = listFromConfig(Config,experimentName,'beams')
-noises = listFromConfig(Config,experimentName,'noises')
-freqs = listFromConfig(Config,experimentName,'freqs')
+experimentName = "SO-v3-goal-40"
+#experimentName = "CCATp-v1-40"
+beams = list_from_config(Config,experimentName,'beams')
+noises = list_from_config(Config,experimentName,'noises')
+freqs = list_from_config(Config,experimentName,'freqs')
 lmax = int(Config.getfloat(experimentName,'lmax'))
-lknee = listFromConfig(Config,experimentName,'lknee')[0]
-alpha = listFromConfig(Config,experimentName,'alpha')[0]
+lknee = list_from_config(Config,experimentName,'lknee')[0]
+alpha = list_from_config(Config,experimentName,'alpha')[0]
 fsky = Config.getfloat(experimentName,'fsky')
+try:
+        v3mode = Config.getint(experimentName,'V3mode')
+except:
+        v3mode = -1
 
 
+print (v3mode)
 #SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
 
 #initialize ILC
-ILC  = ILC_simple(cc,fgs, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
+ILC  = ILC_simple(cc,fgs, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha,v3mode=v3mode,fsky=fsky)
 
 #set ells
-lsedges = np.arange(100,2001,100)
+lsedges = np.arange(10,4001,50)
 
 #calc ILC
 if (cf == 0):
     el_il,  cls_il,  err_il,  s2ny  = ILC.Forecast_Cellyy(lsedges,fsky)
     el_ilc,  cls_ilc,  err_ilc,  s2n  = ILC.Forecast_Cellcmb(lsedges,fsky)
+    el_ilr,  cls_ilr,  err_ilr,  s2nr  = ILC.Forecast_Cellrsx(lsedges,fsky)
+    el_ilr2,  cls_ilr2,  err_ilr2,  s2nr2  = ILC.Forecast_Cellrsx(lsedges,fsky,option='NoILC')
 if (cf == 1):
     el_il,  cls_il,  err_il,  s2ny  = ILC.Forecast_Cellyy(lsedges,fsky,constraint="cmb")
     el_ilc,  cls_ilc,  err_ilc,  s2n  = ILC.Forecast_Cellcmb(lsedges,fsky,constraint="tsz")
-print 'S/N y', s2ny
-print 'S/N CMB', s2n
+print ('S/N y', s2ny)
+print ('S/N CMB', s2n)
+print ('S/N rs', s2nr)
+print ('S/N rs NF', s2nr2)
 
+facts = el_ilc*(el_ilc+1) / (2*np.pi) * cc.c['TCMBmuK']**2.
+
+plt.figure()
+plt.loglog(el_ilc,  cls_ilc*facts) 
+plt.errorbar(el_ilc,  cls_ilc*facts,yerr=err_ilc*facts)
+plt.errorbar(el_ilr,  np.abs(cls_ilr*facts),yerr=err_ilr*facts)
+#plt.errorbar(el_ilr2,  np.abs(cls_ilr2*facts),yerr=err_ilr2*facts)
+plt.show()
+
+
+#print (err_ilr2/err_ilr)
+#print (cls_ilc/cls_ilr)
 
 #Extra stuff
 

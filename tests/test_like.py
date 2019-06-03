@@ -6,7 +6,7 @@ import szar.likelihood as lk
 import matplotlib.pyplot as plt
 from scipy import stats
 from configparser import SafeConfigParser
-from orphics.tools.io import dictFromSection
+from orphics.io import dict_from_section
 from szar.counts import ClusterCosmology,Halo_MF
 import emcee
 import time
@@ -17,7 +17,7 @@ Config.optionxform=str
 Config.read(iniFile)
 bigDataDir = Config.get('general','bigDataDirectory')
 clttfile = Config.get('general','clttfile')
-constDict = dictFromSection(Config,'constants')
+constDict = dict_from_section(Config,'constants')
 version = Config.get('general','version')
 expName = "S4-1.0-CDT"
 gridName = "grid-owl2"

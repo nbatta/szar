@@ -416,7 +416,7 @@ class Halo_MF(object):
         #Mass Function
         delts = self.zarr*0. + delta
         dn_dlnm = dn_dlogM(M,self.zarr,self.cc.rhoc0om,delts,self.kh,self.pk,'comoving')
-        dn_dm = old_div(dn_dlnm,M)
+        dn_dm = dn_dlnm/M
         return dn_dm
 
     def dsig2_dk_dm(self,M):
@@ -543,7 +543,7 @@ class Halo_MF(object):
         #print (xcond)
 
         ycond = []
-        for i in xrange(len(rand1)):
+        for i in range(len(rand1)):
             conproby = np.cumsum(N_z_inter(self.zarr,xcond[i])/np.sum(N_z_inter(self.zarr,xcond[i])))
             #print (conproby)
             rand2 = np.random.uniform(np.min(conproby),1,1)

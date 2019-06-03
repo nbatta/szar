@@ -417,7 +417,7 @@ class fgNoises(object):
         return ans
     
     def rs_nu(self,nu):
-        return (old_div(nu,self.nu_rs))**4
+        return (nu/self.nu_rs)**4
 
     def rs_auto(self,ell,nu1,nu2):
         ans = self.rs_auto_func(ell) * self.rs_nu(nu1) * self.rs_nu(nu2)

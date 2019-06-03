@@ -64,6 +64,10 @@ if (YWLcorrflag == 0 and FisherTot[-1,-1] == 0):
     paramList = paramList[:len(paramList)-2]
 
 pickle.dump((paramList,FisherTot),open(bigDataDir+"savedFisher_"+saveId+"_"+saveName+".pkl",'wb'))
+
+#from orphics import stats
+#tszFish = stats.FisherMatrix(Fisher+cmb_fisher,param_list=paramList)
+#stats.write_fisher("tsz_fish.txt",tszFish)
     
 Finv = np.linalg.inv(FisherTot)
 

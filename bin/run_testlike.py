@@ -11,7 +11,7 @@ from configparser import SafeConfigParser
 from orphics import io
 from orphics.io import Plotter
 from szar.counts import ClusterCosmology,Halo_MF
-from nemo import simsTools
+from nemo import signals
 from astropy.io import fits
 
 import emcee
@@ -22,6 +22,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Run likelihood.')
 parser.add_argument("chain_name", type=str,help='Root name of run.')
 parser.add_argument("-t", "--testMock",     type=int,  default=0,help="number of mocks.")
+parser.add_argument("-y", "--ymocktest",     type=int,  default=0,help="number of mocks.")
 
 args = parser.parse_args()
 
