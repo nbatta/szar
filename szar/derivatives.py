@@ -63,7 +63,7 @@ class Derivs_Clustering(object):
                 if stepsizes[key] is None:
                     print("You selected a param that has no defined stepsize!")
                     sys.exit()
-        
+
         param_ups = []
         param_downs = []
         for key,val in selected_params.items():
@@ -112,7 +112,7 @@ class Derivs_Clustering(object):
         deltaks = self.deltaks[..., np.newaxis, np.newaxis]
         deltamus = self.deltamus[np.newaxis, np.newaxis, ...]
 
-        fisher_factors = (self.veff_fid * ks**2 * deltaks * deltamus) / (8 * np.pi**2 * self.ps_fid**2) 
+        fisher_factors = (self.veff_fid * ks**2 * deltaks * deltamus) / (8 * np.pi**2 * self.ps_fid**2)
 
         steps = self.steps[..., np.newaxis, np.newaxis, np.newaxis]
 
@@ -125,7 +125,7 @@ def make_fisher(derivs, prefactors):
     fisher_mat = np.einsum('aijk,bijk->ab', derivs, fisher_terms)
     return fisher_mat
 
-def _make_fisher_cutks(derivs, prefactors, clst, maxkh=0.14, minkh=1e-5):
+def _make_fisher_cutks(derivs, prefactors, clst, maxkh=0.14):
     ks = clst.HMF.kh
     kindices = np.where(ks <= maxkh)[0]
 

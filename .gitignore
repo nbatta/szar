@@ -8,3 +8,13 @@
 V3_calc_public.py
 *.svg
 __pycache__
+*.eps
+*.pdf
+
+.DS_Store
+input/pipeline.ini
+ipynbs/.ipynb_checkpoints/
+szar.egg-info/
+tests/fisher_matrix_precision.py
+tests/plot_tests.py
+userdata/
