@@ -185,7 +185,7 @@ class Clustering(object):
         pklin = pklin[..., np.newaxis]
 
         ans = np.multiply(prefac,pklin.T).T
-        return ans * self.w_redshift_err(mu)
+        return ans * self.w_redshift_err(mu)**2
 
     def ps_tilde_interpol(self, zarr_int, mu):
         ps_tils = self.ps_tilde(mu)
