@@ -170,7 +170,7 @@ class Clustering(object):
         kr_sqr = ks[:, None]**2 * (1 - mu[None, :]**2)
         sigma_z = self.cc.paramDict['sigma_z']
         h_z = self.HMF.cc.results.h_of_z(zs)[None, ..., None]
-        return np.exp(-(sigma_z/(2*h_z)**2) * kr_sqr[:, None, :])
+        return np.exp(-0.5*(sigma_z/h_z)**2 * kr_sqr[:, None, :])
 
     def ps_tilde(self,mu):
         beff_arr = self.b_eff_z()[..., np.newaxis]
