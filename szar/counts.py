@@ -354,7 +354,7 @@ class Halo_MF(object):
 
         M_edges = 10**Mexp_edges
         self.M_edges = M_edges
-        M = old_div((M_edges[1:]+M_edges[:-1]),2.)
+        M = (M_edges[1:]+M_edges[:-1])/2.
         Mexp = np.log10(M)
         #M = 10.**Mexp
         self.Mexp = Mexp

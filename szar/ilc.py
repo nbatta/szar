@@ -122,6 +122,28 @@ v3dell)
                 N_ell_T_LA = np.diagonal(N_ell_T_LA_full).T
                 Map_white_noise_levels = lat.get_white_noise(fsky)**.5
 
+            elif v3mode == 6:
+                import szar.lat_noise_190528_w350ds4 as ccatp
+                #tubes = (0,0,0,2,2,1)
+                lat = ccatp.CcatSOLat(v3mode,el=50.,survey_years=4000/24./365.24,survey_efficiency=1.0)
+                vfreqs = lat.get_bands()# v3.Simons_Observatory_V3_LA_bands()
+                print("CCATP + SO goal")
+                print("Replacing ",freqs,  " with ", vfreqs)
+                N_bands = len(vfreqs)
+                freqs = vfreqs
+                vbeams = lat.get_beams()#v3.Simons_Observatory_V3_LA_beams() 
+                print("Replacing ",fwhms,  " with ", vbeams)
+                fwhms = vbeams
+
+                v3lmax = self.evalells.max()
+                v3dell = np.diff(self.evalells)[0]
+                print("Using ",fsky," for fsky")
+
+                v3ell,N_ell_T_LA_full, N_ell_P_LA = lat.get_noise_curves(fsky, v3lmax+v3dell, v3dell, full_covar=True, deconv_beam=True)
+
+                N_ell_T_LA = np.diagonal(N_ell_T_LA_full).T
+                Map_white_noise_levels = lat.get_white_noise(fsky)**.5
+
         if (len(freqs) > 1):
             fq_mat   = np.matlib.repmat(freqs,len(freqs),1) 
             fq_mat_t = np.transpose(np.matlib.repmat(freqs,len(freqs),1))
@@ -169,9 +191,9 @@ v3dell)
                     ndiags.append(inst_noise)
                 nells = np.diag(np.array(ndiags))
 
-            elif v3mode==5:
+            elif v3mode>=5:
                 nells = N_ell_T_LA_full[:,:,ii]/ self.cc.c['TCMBmuK']**2.
-
+                
 
             totfg = (self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
                       self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) \
@@ -197,8 +219,8 @@ v3dell)
             N_ll_for_cmb = nells + totfg + tsz + ksz 
             N_ll_for_rsx = nells + totfg + tsz + ksz + cmb_els
 
-            N_ll_for_tsz_c_cmb = nells + totfg 
-            N_ll_for_cmb_c_tsz = N_ll_for_tsz_c_cmb + ksz
+            N_ll_for_tsz_c_cmb = nells + totfg + ksz 
+            N_ll_for_cmb_c_tsz = N_ll_for_tsz_c_cmb 
             N_ll_for_tsz_c_cib = nells + totfg_cib + cmb_els + ksz
 
             N_ll_for_tsz_inv = np.linalg.inv(N_ll_for_tsz)
@@ -225,47 +247,6 @@ v3dell)
             self.N_ll_cmb_c_tsz[ii] = np.dot(np.transpose(self.W_ll_cmb_c_tsz[ii,:]),np.dot(N_ll_for_cmb_c_tsz,self.W_ll_cmb_c_tsz[ii,:]))
             self.N_ll_tsz_c_cib[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cib[ii,:]),np.dot(N_ll_for_tsz_c_cib,self.W_ll_tsz_c_cib[ii,:]))
 
-            '''
-            self.W_ll_tsz[ii,:] = 1./np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_inv,f_nu_tsz)) \
-                                  * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_inv)
-            self.W_ll_cmb[ii,:] = 1./np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_cmb_inv,f_nu_cmb)) \
-                                  * np.dot(np.transpose(f_nu_cmb),N_ll_for_cmb_inv)
-            self.W_ll_rsx[ii,:] = 1./np.dot(np.transpose(f_nu_rsx),np.dot(N_ll_for_rsx_inv,f_nu_rsx)) \
-                                  * np.dot(np.transpose(f_nu_rsx),N_ll_for_rsx_inv)
-
-            self.N_ll_tsz[ii] = np.dot(np.transpose(self.W_ll_tsz[ii,:]),np.dot(N_ll_for_tsz,self.W_ll_tsz[ii,:]))
-            self.N_ll_cmb[ii] = np.dot(np.transpose(self.W_ll_cmb[ii,:]),np.dot(N_ll_for_cmb,self.W_ll_cmb[ii,:]))
-            self.N_ll_rsx[ii] = np.dot(np.transpose(self.W_ll_rsx[ii,:]),np.dot(N_ll_for_rsx,self.W_ll_rsx[ii,:]))
-
-            self.W_ll_tsz_c_cmb[ii,:] = old_div((np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)) \
-                                             * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_c_cmb_inv) \
-                                             - np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)) \
-                                             * np.dot(np.transpose(f_nu_cmb),N_ll_for_tsz_c_cmb_inv)), \
-                                        (np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)) \
-                                             * np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_tsz)) \
-                                             - (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cmb_inv,f_nu_cmb)))**2))
-
-            self.W_ll_tsz_c_cib[ii,:] = old_div((np.dot(np.transpose(f_nu_cib),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
-                                             * np.dot(np.transpose(f_nu_tsz),N_ll_for_tsz_c_cib_inv) \
-                                             - np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
-                                             * np.dot(np.transpose(f_nu_cib),N_ll_for_tsz_c_cib_inv)), \
-                                        (np.dot(np.transpose(f_nu_cib),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)) \
-                                             * np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_tsz)) \
-                                             - (np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_tsz_c_cib_inv,f_nu_cib)))**2))
-
-            self.W_ll_cmb_c_tsz[ii,:] = old_div((np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_cmb_c_tsz_inv,f_nu_tsz)) \
-                                             * np.dot(np.transpose(f_nu_cmb),N_ll_for_cmb_c_tsz_inv) \
-                                             - np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_cmb_c_tsz_inv,f_nu_tsz)) \
-                                             * np.dot(np.transpose(f_nu_tsz),N_ll_for_cmb_c_tsz_inv)), \
-                                        (np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_cmb_c_tsz_inv,f_nu_cmb)) \
-                                             * np.dot(np.transpose(f_nu_tsz),np.dot(N_ll_for_cmb_c_tsz_inv,f_nu_tsz)) \
-                                             - (np.dot(np.transpose(f_nu_cmb),np.dot(N_ll_for_cmb_c_tsz_inv,f_nu_tsz)))**2))
-
-            self.N_ll_tsz_c_cmb[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cmb[ii,:]),np.dot(N_ll_for_tsz_c_cmb,self.W_ll_tsz_c_cmb[ii,:]))
-            self.N_ll_cmb_c_tsz[ii] = np.dot(np.transpose(self.W_ll_cmb_c_tsz[ii,:]),np.dot(N_ll_for_cmb_c_tsz,self.W_ll_cmb_c_tsz[ii,:]))
-            self.N_ll_tsz_c_cib[ii] = np.dot(np.transpose(self.W_ll_tsz_c_cib[ii,:]),np.dot(N_ll_for_tsz_c_cib,self.W_ll_tsz_c_cib[ii,:]))
-            '''
-
     def Noise_ellyy(self,constraint='None'):
         if (constraint=='None'):
             return self.evalells,self.N_ll_tsz
@@ -284,8 +265,13 @@ v3dell)
         else:
             return "Wrong option"
 
-    def Noise_ellrsx(self):
-        return self.evalells,self.N_ll_rsx
+    def Noise_ellrsx(self,option='None'):
+        if (option=='None'):
+            return self.evalells,self.N_ll_rsx
+        elif (option=='NoILC'):
+            return self.evalells,self.N_ll_rsx_NoFG
+        else:
+            return "Wrong option"
 
     def Forecast_Cellyy(self,ellBinEdges,fsky,constraint='None'):
 
@@ -294,7 +280,7 @@ v3dell)
         cls_tsz = self.fgs.tSZ(self.evalells,self.freq[0],self.freq[0]) / self.cc.c['TCMBmuK']**2. \
                 / ((self.evalells+1.)*self.evalells) * 2.* np.pi
 
-        cls_yy = old_div(cls_tsz, (f_nu(self.cc.c,self.freq[0]))**2)  # Normalized to get Cell^yy
+        cls_yy = cls_tsz /(f_nu(self.cc.c,self.freq[0]))**2  # Normalized to get Cell^yy
 
         LF = LensForecast()
         if (constraint=='None'):
@@ -314,7 +300,7 @@ v3dell)
 
     def Forecast_Cellcmb(self,ellBinEdges,fsky,constraint='None'):
 
-        ellMids  =  old_div((ellBinEdges[1:] + ellBinEdges[:-1]), 2)
+        ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1])/ 2.
 
         cls_cmb = self.cc.clttfunc(self.evalells)
 
@@ -336,13 +322,18 @@ v3dell)
 
         ellMids  =  (ellBinEdges[1:] + ellBinEdges[:-1])/ 2.
 
-        #cls_rsx = self.fgs.rs_cross(self.evalells,self.fgs.rs_nu(self.freq[0])) / self.cc.c['TCMBmuK']**2.\
-        #        / ((self.evalells+1.)*self.evalells) * 2.* np.pi
-
-        cls_rsx = self.fgs.rs_cross(self.evalells,self.fgs.nu_rs) / self.cc.c['TCMBmuK']**2.\
+        cls_rsx = self.fgs.rs_cross(self.evalells,self.freq[0]) / self.cc.c['TCMBmuK']**2.\
                 / ((self.evalells+1.)*self.evalells) * 2.* np.pi
 
-        #cls_rsx = cls_rsx  / (self.fgs.rs_nu(self.freq[0]))  # Normalized to get Cell^rsrs fiducial 
+        #print (cls_rsx, self.freq[0],self.fgs.nu_rs)
+        
+        #cls_rsx2 = self.fgs.rs_cross(self.evalells,self.fgs.nu_rs) / self.cc.c['TCMBmuK']**2.\
+        #        / ((self.evalells+1.)*self.evalells) * 2.* np.pi
+        
+        #print (cls_rsx2)
+        cls_rsx = cls_rsx  / (self.fgs.rs_nu(self.freq[0]))  # Normalized to get Cell^rsrs fiducial 
+
+        #print (cls_rsx, self.fgs.rs_nu(self.freq[0]), self.fgs.rs_nu(145.))
 
         LF = LensForecast()
         if (option=='None'):        

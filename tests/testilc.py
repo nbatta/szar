@@ -41,7 +41,8 @@ cf = 0
 constraint_tag = ['','_constrained']
 
 #choose experiment
-experimentName = "SO-v3-goal-40"
+#experimentName = "SO-v3-goal-40"
+experimentName = "CCATpSOg-v1-40"
 #experimentName = "CCATp-v1-40"
 beams = list_from_config(Config,experimentName,'beams')
 noises = list_from_config(Config,experimentName,'noises')
@@ -79,14 +80,37 @@ print ('S/N CMB', s2n)
 print ('S/N rs', s2nr)
 print ('S/N rs NF', s2nr2)
 
-facts = el_ilc*(el_ilc+1) / (2*np.pi) * cc.c['TCMBmuK']**2.
+eln, nell_rsx = ILC.Noise_ellrsx()
+eln, nell_rsx2 = ILC.Noise_ellrsx(option='NoILC')
 
+facts = el_ilc*(el_ilc+1) / (2*np.pi) * cc.c['TCMBmuK']**2.
+factsn = eln*(eln+1) / (2*np.pi) * cc.c['TCMBmuK']**2.
+
+'''
 plt.figure()
 plt.loglog(el_ilc,  cls_ilc*facts) 
-plt.errorbar(el_ilc,  cls_ilc*facts,yerr=err_ilc*facts)
-plt.errorbar(el_ilr,  np.abs(cls_ilr*facts),yerr=err_ilr*facts)
+#plt.errorbar(el_ilc,  cls_ilc*facts,yerr=err_ilc*facts)
+#plt.errorbar(el_ilr,  np.abs(cls_ilr*facts),yerr=err_ilr*facts)
+plt.plot(el_ilr,  np.abs(cls_ilr*facts))
+plt.plot(el_ilr,  err_ilr*facts)
+#plt.plot(eln, nell_rsx2*factsn)
+
 #plt.errorbar(el_ilr2,  np.abs(cls_ilr2*facts),yerr=err_ilr2*facts)
 plt.show()
+'''
+
+rxs280 = ILC.fgs.rs_cross(eln,280)
+
+elrsx,rs_cross,rs_crossEE = np.loadtxt('input/fiducial_scalCls_lensed_1_4.txt',unpack=True,usecols=[0,1,2])
+
+plt.figure()
+plt.plot(eln,rxs280)
+#plt.plot(elrsx,rs_cross)
+plt.plot(elrsx,rs_cross/ILC.fgs.rs_nu(93),'--')
+#plt.plot(elrsx,rs_cross*(1 + 1/ILC.fgs.rs_nu(145)),'--')
+plt.show()
+
+
 
 
 #print (err_ilr2/err_ilr)

@@ -28,10 +28,10 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--params', help='parameters to include in the derivative calculation', type=str, default='allParams')
     parser.add_argument('-i', '--inifile', help='initialization file for pipeline parameters', type=str, default='input/pipeline.ini')
     args = parser.parse_args()
-    
+
     DIR = "userdata/"
     FISH_FAC_NAME = "fish_factor"
-    FISH_DERIV_NAME = "fish_derivs" 
+    FISH_DERIV_NAME = "fish_derivs"
     UPNAME = "psups"
     DOWNNAME = "psdowns"
     STEPNAME = "steps"
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     deriv = Derivs_Clustering(args.inifile, args.expname, args.gridname, args.version)
 
     selected_params = args.params.replace(' ', '').split(',')
-    
+
     if "allParams" in selected_params:
         if len(selected_params) != 1:
             print("Please don't select more than allParams... It's greedy.")

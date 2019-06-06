@@ -29,6 +29,9 @@ parser.add_argument("-S", "--simpars", action='store_true',help='Do a test quick
 parser.add_argument("-p", "--printtest", action='store_true',help='Do quick print tests of likelihood functions.')
 parser.add_argument("-m", "--mockcat", action='store_true',help='test making a mock catalog.')
 parser.add_argument("-r", "--randcat", action='store_true',help='making a random catalog.')
+parser.add_argument("-y", "--y0test", action='store_true',help='Do a test quickly by setting Ntot=60 and just 1 params.')
+parser.add_argument("-ym", "--y0testmock", action='store_true',help='Do a test quickly by setting Ntot=60 and just 1 params.')
+
 
 args = parser.parse_args()
 
@@ -69,6 +72,9 @@ noise_file = 'RMSMap_Arnaud_M2e14_z0p4.fits'
 fitsfile = '../'+args.chain_name + '.fits'
 
 
+if args.y0test:
+    args.simtest = True
+
 if args.test:
     fixlist = ['ombh2','ns','tau','massbias','yslope','scat']
     fixvals = [0.022,0.96,0.06,0.80,0.08,0.2]
@@ -88,7 +94,6 @@ if args.printtest or args.simtest:
     simtst = True
 else:
     simtst = False
-
 
 if args.test:
     parlist = ['omch2','H0','As']
@@ -132,7 +137,7 @@ else:
     # priorwth = np.array([0.0009,0.02,3.6,0.12,0.1])
     priorvals = np.array([prioravg,priorwth])
 
-if args.mockcat or args.randcat:
+if args.mockcat or args.randcat or args.y0testmock:
     parlist = ['omch2','ombh2','H0','As','ns','tau','massbias','yslope','scat']
     parvals = [0.1225,0.0245,70,2.0e-09,0.97,0.06,1.0,0.08,0.20]
 
@@ -140,7 +145,10 @@ if args.mockcat or args.randcat:
         MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[13.6,15.7,0.01],z_grid=[0.1,2.01,0.1])
     if args.randcat:
         MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[np.log10(2e14),np.log10(7e15),0.01],z_grid=[0.1,1.01,0.1],randoms=True)
-    
+    if args.y0testmock:
+        print ("y0 mock")
+        MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[13.6,15.7,0.01],z_grid=[0.1,2.01,0.1],y0thresh=True)
+
     #print MC.Total_clusters(MC.fsky)
     #start = time.time()
     #blah = MC.create_basic_sample(MC.fsky)
@@ -171,7 +179,7 @@ if args.mockcat or args.randcat:
     print('sample time',time.time() - start)    
     sys.exit(0)
 
-CL = lk.clusterLike(iniFile,pardict,nemoOutputDir,noise_file,fix_params,fixvals,fixlist,fitsfile,test=args.test,simtest=simtst,simpars=args.simpars)
+CL = lk.clusterLike(iniFile,pardict,nemoOutputDir,noise_file,fix_params,fixvals,fixlist,fitsfile,test=args.test,simtest=simtst,simpars=args.simpars,y0thresh=args.y0test)
 
 if (args.printtest):
 
@@ -276,12 +284,41 @@ if args.simtest:
     
     filename = chain_out+"/sz_likelival_"+args.chain_name+".dat"
     
-    parvals_arr = parvals*(1+np.arange(-0.1,0.1001,0.02))
+    parvals_arr = parvals*(1.+np.arange(-0.1,0.1001,0.02))
+    #parvals_arr = parvals*(1.+np.arange(-0.01,0.0101,0.02))
+
     ansout = parvals_arr*0.0
     
+    print (CL.thresh_bin)
+    print (CL.frac_of_survey, np.sum(CL.frac_of_survey))
+
+    from szar.counts import Halo_MF, ClusterCosmology
+    from szar.likelihood import alter_fparams
+
+    param_vals_int = alter_fparams(CL.param_vals0,parlist,parvals)
+
+    int_cc = ClusterCosmology(param_vals_int,CL.constDict,clTTFixFile=CL.clttfile) # internal HMF call                                                              
+    int_HMF = Halo_MF(int_cc,CL.mgrid,CL.zgrid)
+
+    print (CL.area_rads,CL.thresh_bin)
+
+    N1 = 0
+    N2 = 0
+    for i in range(len(CL.frac_of_survey)):
+        N1 = (CL.Ntot_survey_thresh(int_HMF,CL.area_rads*CL.frac_of_survey[i],CL.thresh_bin[i],param_vals_int))
+        N2 = (CL.Ntot_survey(int_HMF,CL.area_rads*CL.frac_of_survey[i],CL.thresh_bin[i],param_vals_int))
+
+    print (N1,N2)
+    #print (CL.PfuncY()
+    #sys.exit(0)
+
     for ii, vals in enumerate(parvals_arr):
         ansout[ii] = CL.lnlike([vals],parlist)
-    
+    #print(parvals_arr,parlist)
+    #CL.lnlike([parvals_arr[3:5]],parlist)
+    #print(parvals_arr[3:5])
+
+    sys.exit(0)
     f = open(filename, "w")
     savemat = [parvals_arr,ansout]
     np.savetxt(f,savemat)

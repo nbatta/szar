@@ -93,7 +93,7 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
     latex_paramdict = {}
     for index,key in enumerate(params):
         latex_paramdict[key] = latex_params[index]
-    
+
     ps_bars_fid = clst.fine_ps_bar(mus)[kinds, ...]
 
     noise = 1/np.sqrt(factors[kinds, ...])
@@ -142,7 +142,7 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
     def _plot_ps_with_ratio(param, index, zindex, muindex):
         fid = ps_bars_fid[:, zindex, muindex]
         up = ups[index][:, zindex, muindex]
-        down = downs[index][:, zindex, muindex]        
+        down = downs[index][:, zindex, muindex]
 
         nse = noise[:, zindex, muindex]
         flat_nse = np.array([flat_noise[zindex] for i in range(len(ks))])
@@ -192,7 +192,7 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
 
         fig.tight_layout()
         fig.set_size_inches(5.8,9)
-        fig.savefig(dir_ + figname + '_' + f'{param}_psdiffs.svg')
+        fig.savefig(dir_ + figname + '_' + f'{param}_psdiffs.pdf')
 
         plt.gcf().clear()
 
@@ -206,7 +206,7 @@ def make_plots_upvdown(ini, clst, ups, downs, factors, params, figname, dir_, le
         #with sns.plotting_context("paper"):
         fig, ax = plt.subplots(musamp_indices.size, zsamp_indices.size, sharex='col')
         fig.set_figheight(6)
-        fig.set_figwidth(12)    
+        fig.set_figwidth(12)
         for mucount,muindex in enumerate(musamp_indices):
             for zcount,zindex in enumerate(zsamp_indices):
                 fid = ps_bars_fid[:, zindex, muindex]
@@ -266,7 +266,7 @@ def main():
     psups = np.load(args.upfile)
     psdowns = np.load(args.downfile)
     prefacs = np.load(args.prefacfile)
-    
+
     cc = get_cc(args.inifile)
     clst = Clustering(args.inifile, args.expname, args.gridname, args.version, cc)
     make_plots_upvdown(args.inifile, clst, psups, psdowns, prefacs, params, args.figname, DIR, args.legendloc)
