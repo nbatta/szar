@@ -101,12 +101,12 @@ plt.show()
 
 rxs280 = ILC.fgs.rs_cross(eln,280)
 
-elrsx,rs_cross,rs_crossEE = np.loadtxt('input/fiducial_scalCls_lensed_1_5.txt',unpack=True,usecols=[0,1,2])
+elrsx,rs_cross,rs_crossEE = np.loadtxt('input/fiducial_scalCls_lensed_1_4.txt',unpack=True,usecols=[0,1,2])
 
 plt.figure()
 plt.plot(eln,rxs280)
 #plt.plot(elrsx,rs_cross)
-plt.plot(elrsx,rs_cross/ILC.fgs.rs_nu(145),'--')
+plt.plot(elrsx,rs_cross/ILC.fgs.rs_nu(93),'--')
 #plt.plot(elrsx,rs_cross*(1 + 1/ILC.fgs.rs_nu(145)),'--')
 plt.show()
 
