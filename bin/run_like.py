@@ -80,7 +80,7 @@ if args.test:
     fixvals = [0.022,0.96,0.06,0.80,0.08,0.2]
 elif args.simtest:
     fixlist = ['omch2','ombh2','H0','ns','tau','massbias','yslope','scat']
-    fixvals = [0.1225,0.0245,70,0.97,0.06,1.0,0.08,0.001]
+    fixvals = [0.1225,0.0245,70,0.97,0.06,1.0,0.08,0.2]
 elif args.simpars:
     fixlist = ['H0','ns','tau','massbias','yslope','scat']
     fixvals = [70,0.97,0.06,1.0,0.08,0.2]
@@ -139,7 +139,7 @@ else:
 
 if args.mockcat or args.randcat or args.y0testmock:
     parlist = ['omch2','ombh2','H0','As','ns','tau','massbias','yslope','scat']
-    parvals = [0.1225,0.0245,70,2.0e-09,0.97,0.06,1.0,0.08,0.001]
+    parvals = [0.1225,0.0245,70,2.0e-09,0.97,0.06,1.0,0.08,0.20]
 
     if args.mockcat:
         MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[13.6,15.7,0.01],z_grid=[0.1,2.01,0.1])
@@ -284,15 +284,33 @@ if args.simtest:
     
     filename = chain_out+"/sz_likelival_"+args.chain_name+".dat"
     
-    #parvals_arr = parvals*(1.+np.arange(-0.1,0.1001,0.02))
-    parvals_arr = parvals*(1.+np.arange(-0.01,0.0101,0.02))
+    parvals_arr = parvals*(1.+np.arange(-0.1,0.1001,0.02))
+    #parvals_arr = parvals*(1.+np.arange(-0.01,0.0101,0.02))
 
     ansout = parvals_arr*0.0
     
     print (CL.thresh_bin)
     print (CL.frac_of_survey, np.sum(CL.frac_of_survey))
+
+    from szar.counts import Halo_MF, ClusterCosmology
+    from szar.likelihood import alter_fparams
+
+    param_vals_int = alter_fparams(CL.param_vals0,parlist,parvals)
+
+    int_cc = ClusterCosmology(param_vals_int,CL.constDict,clTTFixFile=CL.clttfile) # internal HMF call                                                              
+    int_HMF = Halo_MF(int_cc,CL.mgrid,CL.zgrid)
+
+    print (CL.area_rads,CL.thresh_bin)
+
+    N1 = 0
+    N2 = 0
+    for i in range(len(CL.frac_of_survey)):
+        N1 = (CL.Ntot_survey_thresh(int_HMF,CL.area_rads*CL.frac_of_survey[i],CL.thresh_bin[i],param_vals_int))
+        N2 = (CL.Ntot_survey(int_HMF,CL.area_rads*CL.frac_of_survey[i],CL.thresh_bin[i],param_vals_int))
+
+    print (N1,N2)
     #print (CL.PfuncY()
-    #sys.exit()
+    #sys.exit(0)
 
     for ii, vals in enumerate(parvals_arr):
         ansout[ii] = CL.lnlike([vals],parlist)
