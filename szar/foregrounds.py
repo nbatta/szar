@@ -63,11 +63,11 @@ def power_y(ells,A_tsz=None,fill_type="extrapolate"):
     cls = A_tsz * dls*2.*np.pi*np.nan_to_num(1./ells/(ells+1.)) / ffunc(nu0)**2./tcmb**2.
     return cls
 
-def power_tsz(ells,nu1,nu2=None,A_tsz=None,fill_type="extrapolate",tcmb=None):
+def power_tsz(ells,nu1,nu2=None,A_tsz=None,fill_type="extrapolate",tcmb=None,yy=None):
     """
     tcmb in muK
     """
-    yy = power_y(ells,A_tsz=A_tsz,fill_type=fill_type)
+    if yy is None: yy = power_y(ells,A_tsz=A_tsz,fill_type=fill_type)
     if tcmb is None: tcmb = default_constants['TCMBmuk']
     if nu2 is None: nu2 = nu1
     return yy * ffunc(nu1) * ffunc(nu2) * tcmb**2.
