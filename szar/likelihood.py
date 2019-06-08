@@ -118,31 +118,6 @@ def loadRMSmap(expName, DIR):
 
     return areaMap, wcs
 
-def loadQ(pickledQFileName,pickleopt=False):
-    """Loads tckQFitDict from given path.
-    """
-
-    if (pickleopt):
-        with open(pickledQFileName, "rb") as pickleFile:
-            unpickler=pickle.Unpickler(pickleFile)
-            QTabDict=unpickler.load()
-
-        tckDict={}
-        for key in QTabDict:
-            tckDict[key]=interpolate.splrep(QTabDict[key]['theta500Arcmin'], QTabDict[key]['Q'])
-
-    else:
-        #Qstuff= pyfits.open(pickledQFileName)
-        Qstuff = astropy.table.Table().read(pickledQFileName)
-
-        #QTabDict = Qstuff[1].data
-
-        tckDict={}
-        tckDict=interpolate.splrep(QTabDict['theta500Arcmin'], QTabDict['Q'])
-
-    return tckDict
-
-
 class clusterLike(object):
     def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,fix_params,params,parlist,fitsfile,test=False,simtest=False,simpars=False,y0thresh=False):
         self.fix_params = fix_params
@@ -421,7 +396,6 @@ class clusterLike(object):
         for key in self.fix_params:
             if key not in list(param_vals.keys()): param_vals[key] = self.fix_params[key]
 
-        print ("values going in",param_vals)
         int_cc = ClusterCosmology(param_vals,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
         int_HMF = Halo_MF(int_cc,self.mgrid,self.zgrid) # internal HMF call
         self.s8 = int_HMF.cc.s8
@@ -444,18 +418,12 @@ class clusterLike(object):
                 for i in range(len(self.frac_of_survey)):
                     Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
             
-        #print 'NTOT', Ntot
         Nind = 0
-        #Nind2 = 1.
-        for i in range(len(self.clst_z)):
-            
+        for i in range(len(self.clst_z)):            
             N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int,param_vals)
-            #if (i < 3):
-                #print np.log(N_per)
             Nind = Nind + np.log(N_per)
-            #Nind2 *= N_per
-            #print N_per
-        print(-Ntot, Nind, -Ntot + Nind, theta)#, np.log(np.exp(-Ntot)*Nind2)
+
+        print(-Ntot, Nind, -Ntot + Nind, theta)
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist, priorval, priorlist):
