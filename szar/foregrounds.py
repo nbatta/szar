@@ -266,7 +266,7 @@ class fgNoises(object):
     Returns fgPower * l(l+1)/2pi in uK^2                                                                                            
     '''
 
-    def __init__(self,constDict,ksz_file=root_dir+'input/ksz_BBPS.txt',ksz_p_file=root_dir+'input/ksz_p_BBPS.txt',tsz_cib_file=root_dir+'input/sz_x_cib_template.txt',ksz_battaglia_test_csv=None,tsz_battaglia_template_csv=root_dir+"input/sz_template_battaglia.csv",rs_template=root_dir+"input/fiducial_scalCls_lensed_7_7.txt",rsx_template=root_dir+"input/fiducial_scalCls_lensed_1_7.txt",components=None,lmax=None):
+    def __init__(self,constDict,ksz_file=root_dir+'input/ksz_BBPS.txt',ksz_p_file=root_dir+'input/ksz_p_BBPS.txt',tsz_cib_file=root_dir+'input/sz_x_cib_template.txt',ksz_battaglia_test_csv=None,tsz_battaglia_template_csv=root_dir+"input/sz_template_battaglia.csv",rs_template=root_dir+"input/fiducial_scalCls_lensed_5_5.txt",rsx_template=root_dir+"input/fiducial_scalCls_lensed_1_5.txt",components=None,lmax=None):
         self.c = constDict
         el,ksz = np.loadtxt(ksz_file,unpack=True)
         self.ksz_func = interp1d(el,ksz,bounds_error=False,fill_value=0.)
@@ -281,7 +281,7 @@ class fgNoises(object):
         self.rs_cross_func = interp1d(elrsx,rs_cross,bounds_error=False,fill_value=0.)
         self.rs_cross_funcEE = interp1d(elrsx,rs_crossEE,bounds_error=False,fill_value=0.)
 
-        self.nu_rs = 280. ## hard coded from template
+        self.nu_rs = 145.#280. ## hard coded from template
 
         if ksz_battaglia_test_csv is not None:
             ells,cls = np.loadtxt(ksz_battaglia_test_csv,delimiter=',',unpack=True)
