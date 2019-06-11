@@ -42,10 +42,10 @@ constraint_tag = ['','_constrained']
 
 #choose experiment
 #experimentName = "SO-v3-goal-40"
-#experimentName = "CCATpSOg-v1-40"
-#experimentName = "CMB-Probe-v4-CBE"
+#experimentName = "CCATpSOg-v1-40-noatm"
+experimentName = "CMB-Probe-v4-CBE"
 #experimentName = "CCATp-v1-40"
-experimentName = "CCATp-v1-40-noatm"
+#experimentName = "CCATp-v1-40-noatm"
 beams = list_from_config(Config,experimentName,'beams')
 noises = list_from_config(Config,experimentName,'noises')
 freqs = list_from_config(Config,experimentName,'freqs')
