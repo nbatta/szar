@@ -42,8 +42,10 @@ constraint_tag = ['','_constrained']
 
 #choose experiment
 #experimentName = "SO-v3-goal-40"
-experimentName = "CCATpSOg-v1-40"
+#experimentName = "CCATpSOg-v1-40"
+#experimentName = "CMB-Probe-v4-CBE"
 #experimentName = "CCATp-v1-40"
+experimentName = "CCATp-v1-40-noatm"
 beams = list_from_config(Config,experimentName,'beams')
 noises = list_from_config(Config,experimentName,'noises')
 freqs = list_from_config(Config,experimentName,'freqs')
@@ -56,12 +58,16 @@ try:
 except:
         v3mode = -1
 
+try:
+        noatm = Config.getint(experimentName,'noatm')
+except:
+        noatm = False
 
-print (v3mode)
+print (v3mode,noatm)
 #SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
 
 #initialize ILC
-ILC  = ILC_simple(cc,fgs, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha,v3mode=v3mode,fsky=fsky)
+ILC  = ILC_simple(cc,fgs, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha,v3mode=v3mode,fsky=fsky,noatm=noatm)
 
 #set ells
 lsedges = np.arange(10,4001,50)

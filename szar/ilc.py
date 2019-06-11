@@ -124,10 +124,16 @@ v3dell)
                 v3lmax = self.evalells.max()
                 v3dell = np.diff(self.evalells)[0]
                 print("Using ",fsky," for fsky")
-
-                v3ell,N_ell_T_LA_full, N_ell_P_LA = lat.get_noise_curves(fsky, v3lmax+v3dell, v3dell, full_covar=True, deconv_beam=True)
+                
+                if (noatm):
+                    print("No ATM")
+                    v3ell,N_ell_T_LA_full, N_ell_P_LA = lat.get_noise_curves_noatm(fsky, v3lmax+v3dell, v3dell, full_covar=True, deconv_beam=True)
+                else:
+                    print("ATM")
+                    v3ell,N_ell_T_LA_full, N_ell_P_LA = lat.get_noise_curves(fsky, v3lmax+v3dell, v3dell, full_covar=True, deconv_beam=True)
 
                 N_ell_T_LA = np.diagonal(N_ell_T_LA_full).T
+                print (N_ell_T_LA[3,:])
                 Map_white_noise_levels = lat.get_white_noise(fsky)**.5
 
             elif v3mode == 6:
@@ -147,7 +153,12 @@ v3dell)
                 v3dell = np.diff(self.evalells)[0]
                 print("Using ",fsky," for fsky")
 
-                v3ell,N_ell_T_LA_full, N_ell_P_LA = lat.get_noise_curves(fsky, v3lmax+v3dell, v3dell, full_covar=True, deconv_beam=True)
+                if (noatm):
+                    print("No ATM")
+                    v3ell,N_ell_T_LA_full, N_ell_P_LA = lat.get_noise_curves_noatm(fsky, v3lmax+v3dell, v3dell, full_covar=True, deconv_beam=True)
+                else:
+                    print("ATM")
+                    v3ell,N_ell_T_LA_full, N_ell_P_LA = lat.get_noise_curves(fsky, v3lmax+v3dell, v3dell, full_covar=True, deconv_beam=True)
 
                 N_ell_T_LA = np.diagonal(N_ell_T_LA_full).T
                 Map_white_noise_levels = lat.get_white_noise(fsky)**.5
@@ -240,7 +251,10 @@ v3dell)
             N_ll_for_cmb_c_tsz_inv = N_ll_for_tsz_c_cmb_inv
             N_ll_for_tsz_c_cib_inv = np.linalg.inv(N_ll_for_tsz_c_cib)
 
+            N_ll_noFG_new = 1./(np.sum (1./np.diagonal(nells)))
+
             N_ll_noFG = nells
+            
             N_ll_noFG_inv = np.linalg.inv(nells)
 
             self.W_ll_tsz[ii,:]=weightcalculator(f_nu_tsz,N_ll_for_tsz)
@@ -251,7 +265,8 @@ v3dell)
             self.N_ll_tsz[ii] = np.dot(np.transpose(self.W_ll_tsz[ii,:]),np.dot(N_ll_for_tsz,self.W_ll_tsz[ii,:]))
             self.N_ll_cmb[ii] = np.dot(np.transpose(self.W_ll_cmb[ii,:]),np.dot(N_ll_for_cmb,self.W_ll_cmb[ii,:]))
             self.N_ll_rsx[ii] = np.dot(np.transpose(self.W_ll_rsx[ii,:]),np.dot(N_ll_for_rsx,self.W_ll_rsx[ii,:]))
-            self.N_ll_rsx_NoFG[ii] = np.dot(np.transpose(self.W_ll_rsx_NF[ii,:]),np.dot(N_ll_noFG,self.W_ll_rsx_NF[ii,:]))
+            self.N_ll_rsx_NoFG[ii] = N_ll_noFG_new
+            #np.dot(np.transpose(self.W_ll_rsx_NF[ii,:]),np.dot(N_ll_noFG,self.W_ll_rsx_NF[ii,:]))
             self.N_ll_cmb_NoFG[ii] = np.dot(np.transpose(self.W_ll_cmb_NF[ii,:]),np.dot(N_ll_noFG,self.W_ll_cmb_NF[ii,:]))
             self.W_ll_tsz_c_cmb[ii,:]=constweightcalculator(f_nu_cmb,f_nu_tsz,N_ll_for_tsz_c_cmb_inv)
             self.W_ll_tsz_c_cib[ii,:]=constweightcalculator(f_nu_cib,f_nu_tsz,N_ll_for_tsz_c_cib_inv)
