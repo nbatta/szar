@@ -318,7 +318,6 @@ if args.simtest:
     #CL.lnlike([parvals_arr[3:5]],parlist)
     #print(parvals_arr[3:5])
 
-    sys.exit(0)
     f = open(filename, "w")
     savemat = [parvals_arr,ansout]
     np.savetxt(f,savemat)
