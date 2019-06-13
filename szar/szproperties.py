@@ -155,7 +155,7 @@ class SZ_Cluster_Model(object):
                 N_ell_T_LA = np.diagonal(N_ell_T_LA_full).T
                 print(N_ell_T_LA.shape)
 
-            if v3mode == 5:
+            elif v3mode == 5:
                 import szar.lat_noise_190528_w350ds4 as ccatp
                 tubes = (0,0,0,2,2,1)
                 lat = ccatp.CcatLatv2(v3mode,el=50.,survey_years=4000/24./365.24,survey_efficiency=1.0,N_tubes=tubes)
@@ -176,6 +176,22 @@ class SZ_Cluster_Model(object):
 
                 N_ell_T_LA = np.diagonal(N_ell_T_LA_full).T
                 Map_white_noise_levels = lat.get_white_noise(fsky)**.5
+
+            if v3mode >= 7:
+                vfreqs = v3.Simons_Observatory_V3_LA_bands()
+                print("Simons Obs")
+                print("Replacing ",freqs,  " with ", vfreqs)
+                N_bands = len(vfreqs)
+                freqs = vfreqs
+                vbeams = v3.Simons_Observatory_V3_LA_beams()
+                print("Replacing ",fwhms,  " with ", vbeams)
+                fwhms = vbeams
+                
+                v3lmax = self.evalells.max()
+                v3dell = np.diff(self.evalells)[0]
+                print("Using ",fsky," for fsky")
+
+                v3ell, N_ell_T_LA, N_ell_P_LA, Map_white_noise_levels = v3.Simons_Observatory_V3_LA_noise(sensitivity_mode=v3mode-6,f_sky=fsky,ell_max=v3lmax+v3dell,delta_ell=v3dell)
 
             assert np.all(v3ell==self.evalells)
         
@@ -276,6 +292,20 @@ class SZ_Cluster_Model(object):
                 nells = N_ell_T_LA_full[:,:,ii]/ self.cc.c['TCMBmuK']**2.
             elif v3mode==5:
                 nells = N_ell_T_LA_full[:,:,ii]/ self.cc.c['TCMBmuK']**2.
+            elif v3mode>=7:
+                ndiags = []
+                for ff in range(len(freqs)):
+                    inst_noise = old_div(N_ell_T_LA[ff,ii], self.cc.c['TCMBmuK']**2.)
+                    ndiags.append(inst_noise)
+                nells = np.diag(np.array(ndiags))
+                # Adding in atmo. freq-freq correlations
+                nells[0,1] = old_div(N_ell_T_LA[5,ii], self.cc.c['TCMBmuK']**2.)
+                nells[1,0] = old_div(N_ell_T_LA[5,ii], self.cc.c['TCMBmuK']**2.)
+                nells[2,3] = old_div(N_ell_T_LA[6,ii], self.cc.c['TCMBmuK']**2.)
+                nells[3,2] = old_div(N_ell_T_LA[6,ii], self.cc.c['TCMBmuK']**2.)
+                nells[3,4] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
+                nells[4,3] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
+
 
             totfg = (fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) 
                      + fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t)) \
