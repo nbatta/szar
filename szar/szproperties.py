@@ -178,10 +178,13 @@ class SZ_Cluster_Model(object):
                 Map_white_noise_levels = lat.get_white_noise(fsky)**.5
 
             if v3mode >= 7:
+
+                usemode = v3mode-6
+                print ("V3mode ",usemode)
+
                 vfreqs = v3.Simons_Observatory_V3_LA_bands()
                 print("Simons Obs")
                 print("Replacing ",freqs,  " with ", vfreqs)
-                N_bands = len(vfreqs)
                 freqs = vfreqs
                 vbeams = v3.Simons_Observatory_V3_LA_beams()
                 print("Replacing ",fwhms,  " with ", vbeams)
@@ -190,8 +193,8 @@ class SZ_Cluster_Model(object):
                 v3lmax = self.evalells.max()
                 v3dell = np.diff(self.evalells)[0]
                 print("Using ",fsky," for fsky")
-
-                v3ell, N_ell_T_LA, N_ell_P_LA, Map_white_noise_levels = v3.Simons_Observatory_V3_LA_noise(sensitivity_mode=v3mode-6,f_sky=fsky,ell_max=v3lmax+v3dell,delta_ell=v3dell)
+                
+                v3ell, N_ell_T_LA, N_ell_P_LA, Map_white_noise_levels = v3.Simons_Observatory_V3_LA_noise(sensitivity_mode=usemode,f_sky=fsky,ell_max=v3lmax+v3dell,delta_ell=v3dell)
 
             assert np.all(v3ell==self.evalells)
         
@@ -299,13 +302,12 @@ class SZ_Cluster_Model(object):
                     ndiags.append(inst_noise)
                 nells = np.diag(np.array(ndiags))
                 # Adding in atmo. freq-freq correlations
-                nells[0,1] = old_div(N_ell_T_LA[5,ii], self.cc.c['TCMBmuK']**2.)
-                nells[1,0] = old_div(N_ell_T_LA[5,ii], self.cc.c['TCMBmuK']**2.)
-                nells[2,3] = old_div(N_ell_T_LA[6,ii], self.cc.c['TCMBmuK']**2.)
-                nells[3,2] = old_div(N_ell_T_LA[6,ii], self.cc.c['TCMBmuK']**2.)
-                nells[3,4] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
-                nells[4,3] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
-
+                nells[0,1] = old_div(N_ell_T_LA[6,ii], self.cc.c['TCMBmuK']**2.)
+                nells[1,0] = old_div(N_ell_T_LA[6,ii], self.cc.c['TCMBmuK']**2.)
+                nells[2,3] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
+                nells[3,2] = old_div(N_ell_T_LA[7,ii], self.cc.c['TCMBmuK']**2.)
+                nells[4,5] = old_div(N_ell_T_LA[8,ii], self.cc.c['TCMBmuK']**2.)
+                nells[5,4] = old_div(N_ell_T_LA[8,ii], self.cc.c['TCMBmuK']**2.)
 
             totfg = (fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) 
                      + fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t)) \

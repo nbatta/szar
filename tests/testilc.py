@@ -66,6 +66,8 @@ except:
 print (v3mode,noatm)
 #SZProfExample = SZ_Cluster_Model(clusterCosmology=cc,clusterDict=clusterDict,rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha)
 
+fsky = 0.01
+
 #initialize ILC
 ILC  = ILC_simple(cc,fgs, rms_noises = noises,fwhms=beams,freqs=freqs,lmax=lmax,lknee=lknee,alpha=alpha,v3mode=v3mode,fsky=fsky,noatm=noatm)
 
