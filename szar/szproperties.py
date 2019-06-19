@@ -135,23 +135,28 @@ class SZ_Cluster_Model(object):
                 v3ell, N_ell_T_LA, N_ell_P_LA, Map_white_noise_levels = v3.AdvACT_noise(f_sky=fsky,ell_max=v3lmax+v3dell,delta_ell=v3dell)
 
             elif v3mode == 4:
-                import szar.s4lat as s4
-                mode = 2
-                ncalc = s4.S4LatV1(mode, N_tels=2)
-                vfreqs = ncalc.get_bands()
+                import szar.noise_model_190604d_public as s4
+                #mode = 2
+                #ncalc = s4.S4LatV1(mode, N_tels=2)
+                #vfreqs = ncalc.get_bands()
                 print("S4")
-                print("Replacing ",freqs,  " with ", vfreqs)
-                freqs = vfreqs
-                vbeams = ncalc.get_beams()
-                print("Replacing ",fwhms,  " with ", vbeams)
-                fwhms = vbeams
 
                 v3lmax = self.evalells.max()
                 v3dell = np.diff(self.evalells)[0]
+
+                v3ell = np.arange(2,v3lmax +1,v3dell)
+                #print (v3ell, self.evalells)
+                info, vfreqs, Nmatrix = s4.get_model('hires_deepwide','TT', v3ell,gal_cut=10,deconv_beam=True)
+                print("Replacing ",freqs,  " with ", vfreqs)
+
                 print("Using ",fsky," for fsky")
 
-                v3ell, N_ell_T_LA_full, _ = ncalc.get_noise_curves(
-                    fsky, v3lmax+v3dell, v3dell, full_covar=True, deconv_beam=True)
+                freqs = vfreqs
+                #vbeams = ncalc.get_beams()
+                #print("Replacing ",fwhms,  " with ", vbeams)
+                fwhms = freqs*1. #not used
+
+                N_ell_T_LA_full = Nmatrix
                 N_ell_T_LA = np.diagonal(N_ell_T_LA_full).T
                 print(N_ell_T_LA.shape)
 
