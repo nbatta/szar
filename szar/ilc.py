@@ -21,6 +21,13 @@ def weightcalculator(f,N):
     return W
 
 def constweightcalculator(f_1,f_2,N):
+    '''
+    Contrained ILC weight calculation
+    Pars
+    f_1 is the frequency dependence of component to minimize
+    f_2 in the frequency dependence of component to maximize
+    N is the inverse noise matrix
+    '''
     C=np.matmul(np.transpose(f_1),np.matmul(N,f_1))*np.matmul(np.transpose(f_2),np.matmul(N,f_2))-(np.matmul(np.transpose(f_2),np.matmul(N,f_1)))**2
     M=np.matmul(np.transpose(f_1),np.matmul(N,f_1))*np.matmul(np.transpose(f_2),N)-np.matmul(np.transpose(f_2),np.matmul(N,f_1))*np.matmul(np.transpose(f_1),N)
     W=M/C
@@ -458,26 +465,32 @@ class Filters(object):
         ans = self.inner_app(ell,theta_a)-self.outer_app(ell,theta_a,theta_b)
         return ans
 
-    def filter_var (self,theta1,theta2,ells,Nell,beam=1.):
-        if (beam != 1):
-            beam = self.beam_func(ells,beam)
-
-        if (theta1 == theta2):
-            ans  = np.trapz(ells*Nell*beam**2*self.AP_filter(ells,theta1,self.disc_fac*theta1)**2,dx=np.diff(ells))
-            ans  /= 2*np.pi
-        else:
-            var1  = np.trapz(ells*Nell*beam**2*self.AP_filter(ells,theta1,self.disc_fac*theta1)**2,dx=np.diff(ells))
-            var2  = np.trapz(ells*Nell*beam**2*self.AP_filter(ells,theta2,self.disc_fac*theta2)**2,dx=np.diff(ells))
-            var12 = np.trapz(ells*Nell*beam**2*self.AP_filter(ells,theta1,self.disc_fac*theta1)
-                       *self.AP_filter(ells,theta2,self.disc_fac*theta2),dx=np.diff(ells))
-            #ans = old_div((var1 + var2 - 2.*var12),(2.*np.pi))
-            ans = (var1 + var2 - 2.*var12)/(2.*np.pi)
+    ## Edit by JCH
+    def filter_var(self,theta1,theta2,ells,Nell,beam):
+        beam_func_loc = self.beam_func(ells,beam)
+        
+        if (theta1 == theta2): #diagonal element -- see Eq. 9 of http://adsabs.harvard.edu/abs/2015MNRAS.451.1606F
+            theta_D = theta1
+            theta_A = theta1*self.disc_fac
+            var_D   = np.trapz(ells*Nell*beam_func_loc**2*self.inner_app(ells,theta_D)**2.,dx=np.diff(ells))
+            var_A   = np.trapz(ells*Nell*beam_func_loc**2*self.outer_app(ells,theta_D,theta_A)**2.,dx=np.diff(ells))
+            var_AD  = np.trapz(ells*Nell*beam_func_loc**2*self.inner_app(ells,theta_D)*self.outer_app(ells,theta_D,theta_A),dx=np.diff(ells))
+            ans     = (var_D + var_A - 2.*var_AD)/(2.*np.pi)
+        else: #off-diagonal element -- derive following Apps. C/D of http://adsabs.harvard.edu/abs/2015MNRAS.451.1606F
+            theta_D1 = theta1
+            theta_A1 = theta1*self.disc_fac
+            theta_D2 = theta2
+            theta_A2 = theta2*self.disc_fac
+            var_D1D2 = np.trapz(ells*Nell*beam_func_loc**2*self.inner_app(ells,theta_D1)*self.inner_app(ells,theta_D2),dx=np.diff(ells))
+            var_A1A2 = np.trapz(ells*Nell*beam_func_loc**2*self.outer_app(ells,theta_D1,theta_A1)*self.outer_app(ells,theta_D2,theta_A2),dx=np.diff(ells))
+            var_D1A2 = np.trapz(ells*Nell*beam_func_loc**2*self.inner_app(ells,theta_D1)*self.outer_app(ells,theta_D2,theta_A2),dx=np.diff(ells))
+            var_D2A1 = np.trapz(ells*Nell*beam_func_loc**2*self.inner_app(ells,theta_D2)*self.outer_app(ells,theta_D1,theta_A1),dx=np.diff(ells))
+            ans      = (var_D1D2 + var_A1A2 - var_D1A2 - var_D2A1)/(2.*np.pi)
         return ans
-
-    def beam_func(self,ell,theta_b):
-        theta_b /= 60.
-        theta_b *= np.pi/180.
-        ans = np.exp(-1.0*ell**2*theta_b**2/(16.*np.log(2.0)))
+    
+    def beam_func(self,ell,theta_b): #theta_b = FWHM [arcmin]
+        theta_b_loc = theta_b/60. * np.pi/180. 
+        ans = np.exp(-1.0*ell*(ell+1.)*theta_b_loc**2/(16.*np.log(2.0)))
         return ans
 
 #    def variance(self,ell,theta,disc_fac,cltot):
