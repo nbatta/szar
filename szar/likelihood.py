@@ -367,19 +367,39 @@ class clusterLike(object):
 
     def Y_prob (self,Y_c,LgY,YNoise):
         Y = 10**(LgY)
+        print (Y.shape)
         ans = gaussian(Y,Y_c,YNoise)
         return ans
 
-    def Pfunc_per(self,MM,zz,Y_c,Y_err,param_vals):
+    def Pfunc_per(self,Marr,zarr,Y_c,Y_err,param_vals):
         LgY = self.LgY
-        LgYa = np.outer(np.ones(len(MM)),LgY)
+        LgYa = np.outer(np.ones(Marr.shape[0]),LgY)
 
-        #LgYa = np.outer(np.ones([len(MM),len(zz)]),LgY)
-        #LgYa2 = np.reshape(LgYa,(len(MM),len(zz),len(LgY)))
+        LgYa = np.outer(np.ones([Marr.shape[0],Marr.shape[1]]),LgY)
+        LgYa2 = np.reshape(LgYa,(Marr.shape[0],Marr.shape[1],len(LgY)))
 
-        P_Y_sig = self.Y_prob(Y_c,LgY,Y_err)
-        P_Y = np.nan_to_num(self.P_Yo_perz(LgYa,MM,zz,param_vals))
-        ans = np.trapz(P_Y*P_Y_sig,LgY,np.diff(LgY),axis=1)
+        #LgYa = np.outer(np.ones([len(Marr),len(zz)]),LgY)
+        #LgYa2 = np.reshape(LgYa,(len(Marr),len(zz),len(LgY)))
+
+        #Marr =  np.outer(MM,np.ones([len(zz)]))
+        #zarr = np.outer(np.ones([len(MM)]),zz)
+
+        print (LgYa2.shape,Marr.shape,zarr.shape)
+
+        Yc_arr = np.outer(np.ones(Marr.shape[0]),Y_c)
+        Yerr_arr =  np.outer(np.ones(Marr.shape[0]),Y_err)
+
+        Yc_arr = np.repeat(Yc_arr[:, :, np.newaxis], len(LgY), axis=2)
+        Yerr_arr = np.repeat(Yerr_arr[:, :, np.newaxis], len(LgY), axis=2)
+
+        print (LgYa2.shape,Yc_arr.shape,Yerr_arr.shape)
+
+        P_Y_sig = self.Y_prob(Yc_arr,LgYa2,Yerr_arr)
+        P_Y = np.nan_to_num(self.P_Yo(LgYa2,Marr,zarr,param_vals))
+        #ans = np.trapz(P_Y*P_Y_sig,LgY,np.diff(LgY),axis=1)
+
+        ans = np.trapz(P_Y*P_Y_sig,x=LgY,axis=2) #* np.log(10) should be there but doesn't actually matter for relative likelihood
+
         return ans
 
     def Pfunc_per_zarr(self,MM,z_arr,Y_c,Y_err,int_HMF,param_vals):
@@ -424,9 +444,23 @@ class clusterLike(object):
         return Ntot
 
     def Prob_per_cluster(self,int_HMF,cluster_props,dn_dzdm_int,param_vals):
-        c_z, c_zerr, c_y, c_yerr = cluster_props
-        
-        if (c_zerr > 0):
+        #c_z, c_zerr, c_y, c_yerr = cluster_props
+        print (cluster_props.shape)
+        tempz = cluster_props[0,:]
+        zind = np.argsort(tempz)
+        tempz = 0.
+        c_z = cluster_props[0,zind]
+        c_zerr = cluster_props[1,zind]
+        c_y = cluster_props[2,zind]
+        c_yerr = cluster_props[3,zind]
+
+        Marr =  np.outer(int_HMF.M.copy(),np.ones([len(c_z)]))
+        zarr = np.outer(np.ones([len(int_HMF.M.copy())]),c_z)
+
+        M200 = Marr*0.0
+        #dn_dzdm = Marr*0.0
+
+        if (c_zerr.any() > 0):
             z_arr = np.arange(-3.*c_zerr,(3.+0.1)*c_zerr,c_zerr) + c_z
             Pfunc_ind = self.Pfunc_per_zarr(int_HMF.M.copy(),z_arr,c_y,c_yerr,int_HMF,param_vals)
             M200 = int_HMF.cc.Mass_con_del_2_del_mean200(int_HMF.M.copy(),500,c_z) ## FIX THIS?
@@ -435,10 +469,27 @@ class clusterLike(object):
             N_per = np.trapz(N_z_ind*gaussian(z_arr,c_z,c_zerr),dx=np.diff(z_arr))
             ans = N_per            
         else:
-            Pfunc_ind = self.Pfunc_per(int_HMF.M.copy(),c_z, c_y, c_yerr,param_vals)
+            Pfunc_ind = self.Pfunc_per(Marr,zarr, c_y, c_yerr,param_vals)
             #print "PFunc",Pfunc_ind
-            M200 = int_HMF.cc.Mass_con_del_2_del_mean200(int_HMF.M.copy(),500,c_z)
-            dn_dzdm = dn_dzdm_int(c_z,np.log10(int_HMF.M.copy()))[:,0]
+            #for i in range(len(c_z)):
+            #    M200[:,i] = int_HMF.cc.Mass_con_del_2_del_mean200(int_HMF.M.copy(),500,c_z[i])
+                #dn_dzdm[:,i] = dn_dzdm_int(c_z[i],np.log10(int_HMF.M.copy()))[:,0]
+            #print (dn_dzdm.shape)
+            
+            dn_dzdm = (dn_dzdm_int(c_z,np.log10(int_HMF.M.copy())))
+            #print (np.sum((M200 - int_HMF.M200_int(c_z,int_HMF.M.copy()))/M200) / len(M200))
+
+            M200 = int_HMF.M200_int(c_z,int_HMF.M.copy())
+            #print (dn_dzdm.shape)
+            #print (dn_dzdm2[0:2,0:2], dn_dzdm[0:2,0:2])
+            #print (np.sum((dn_dzdm - dn_dzdm2)/dn_dzdm))
+
+            #inds = 4
+            #outtest = np.zeros((len(int_HMF.M.copy()),inds))
+            #print ("extra test")
+            #for i in range(inds):
+            #    outtest[:,i] = dn_dzdm_int(c_z[i],np.log10(int_HMF.M.copy()))[:,0]
+            #print (outtest , dn_dzdm_int(c_z[0:inds],np.log10(int_HMF.M.copy())))
             #print "dndm", dn_dzdm,dn_dzdm_int(c_z,np.log10(int_HMF.M.copy()))
             #print "M200", M200
             N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
@@ -476,22 +527,30 @@ class clusterLike(object):
 
     def lnlike(self,theta,parlist):
         
+        start = time.time()
         param_vals = alter_fparams(self.param_vals0,parlist,theta)
         for key in self.fix_params:
             if key not in list(param_vals.keys()): param_vals[key] = self.fix_params[key]
-
+        print('Par setup',time.time() - start)
+        
+        start = time.time()
         int_cc = ClusterCosmology(param_vals,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
+        print('int_cc setup',time.time() - start)
+        start = time.time()
         int_HMF = Halo_MF(int_cc,self.mgrid,self.zgrid) # internal HMF call
         self.s8 = int_HMF.cc.s8
 
         if np.nan_to_num(self.s8)<0.1 or np.nan_to_num(self.s8)>10. or not(np.isfinite(self.s8)):
             self.s8 = 0.
         #     return -np.inf
-        
+        print('HMF setup',time.time() - start)
+        start = time.time()
         #dndm_int = int_HMF.inter_dndm(200.) # delta = 200
         dndm_int = int_HMF.inter_dndmLogm(200.) # delta = 200
         cluster_prop = np.array([self.clst_z,self.clst_zerr,self.clst_y0*1e-4,self.clst_y0err*1e-4])
+        print('interp setup',time.time() - start)
 
+        start = time.time()
         if self.test:
             Ntot = 60.
         else:
@@ -501,11 +560,18 @@ class clusterLike(object):
             else:
                 for i in range(len(self.frac_of_survey)):
                     Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
-            
-        Nind = 0
-        for i in range(len(self.clst_z)):            
-            N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int,param_vals)
-            Nind = Nind + np.log(N_per)
+        print('Ntot time',time.time() - start)    
+                #Ntot_perfrac = self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey,self.thresh_bin,param_vals)
+                #Ntot = np.sum(Ntot_perfrac)
+
+        #Nind = 0
+        #for i in range(len(self.clst_z)):            
+        #    N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int,param_vals)
+        #    Nind = Nind + np.log(N_per)
+        start = time.time()
+        N_per = np.log(self.Prob_per_cluster(int_HMF,cluster_prop,dndm_int,param_vals))
+        Nind = np.sum(N_per)
+        print('N_per time',time.time() - start)
 
         print(-Ntot, Nind, -Ntot + Nind, theta)
         return -Ntot + Nind

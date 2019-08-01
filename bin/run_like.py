@@ -216,10 +216,13 @@ if (args.printtest):
     #print(parvals)
 
     start = time.time()
-    print("ln prob", np.log(CL.Prob_per_cluster(int_HMF,cluster_props[:,clustind],dn_dzdm_int,param_vals)))
+    print("ln prob", np.log(CL.Prob_per_cluster(int_HMF,cluster_props,dn_dzdm_int,param_vals))[clustind])
+    #print("ln prob", np.log(CL.Prob_per_cluster(int_HMF,cluster_props,dn_dzdm_int,param_vals)))
     print('Ln Prob time',time.time() - start)
 
     #CL.Ntot_survey_thresh(int_HMF, ,
+
+    #sys.exit(0)
 
     start = time.time()
     print(CL.lnlike(parvals,parlist))#,priorvals,priorlist)
