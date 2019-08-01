@@ -203,19 +203,36 @@ if (args.printtest):
     LgYa = np.outer(np.ones(len(int_HMF.M.copy())),CL.LgY)
     Y = 10**LgYa
     Ma = np.outer(int_HMF.M.copy(),np.ones(len(LgYa[0,:])))
+    Marr =  np.outer(int_HMF.M.copy(),np.ones([len(int_HMF.zarr)]))
+    z_arr = np.outer(np.ones([len(int_HMF.M.copy())]),int_HMF.zarr) 
+    ii = 1
+#    print (CL.P_of_gt_SNold(CL.LgY,Marr[:,ii],int_HMF.zarr[ii],CL.thresh_bin[0],param_vals))
+    print (CL.P_of_gt_SN(CL.LgY,Marr,z_arr,CL.thresh_bin[0],param_vals))
+
     clustind = 1
 
+    #print(cluster_props[:,clustind])
+    #print(parlist)
+    #print(parvals)
 
-    print(cluster_props[:,clustind])
-    print(parlist)
-    print(parvals)
+    start = time.time()
     print("ln prob", np.log(CL.Prob_per_cluster(int_HMF,cluster_props[:,clustind],dn_dzdm_int,param_vals)))
+    print('Ln Prob time',time.time() - start)
+
+    #CL.Ntot_survey_thresh(int_HMF, ,
+
+    start = time.time()
+    print(CL.lnlike(parvals,parlist))#,priorvals,priorlist)
+    print("Like call time", time.time() - start)
+
+    sys.exit(0)
+
     print(LgYa[-1,-1])
-    Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(old_div(param_vals['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])
-    print("ln Y val",np.log10(Y[-1,-1]))
-    print("ln Y~", np.log10(Ytilde[-1,-1]))
-    print(old_div(Y[-1,30:35],Ytilde[-1,-1]))
-    print(np.log(Y[-1,-1]) - np.log(Ytilde[-1,-1]))
+    #Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(old_div(param_vals['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])
+    #print("ln Y val",np.log10(Y[-1,-1]))
+    #print("ln Y~", np.log10(Ytilde[-1,-1]))
+    #print(old_div(Y[-1,30:35],Ytilde[-1,-1]))
+    #print(np.log(Y[-1,-1]) - np.log(Ytilde[-1,-1]))
     print("P of Y", CL.P_Yo(LgYa,int_HMF.M.copy(),int_HMF.zarr[zbins],param_vals)[-1,-1], end=' ') 
  
     param_vals2= lk.alter_fparams(fparams,parlist,parvals2)
@@ -226,12 +243,12 @@ if (args.printtest):
     print('pars2', parvals2)
     print("ln prop", np.log(CL.Prob_per_cluster(int_HMF2,cluster_props[:,clustind],dn_dzdm_int2,param_vals2)))
     print(LgYa[-1,-1])
-    Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals2['massbias']*Ma/(old_div(param_vals2['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals2['scat'],B0=param_vals2['yslope'])
-    print("ln Y val",np.log10(Y[-1,-1]))
-    print("ln Y~", np.log10(Ytilde[-1,-1]))
+#    Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals2['massbias']*Ma/(old_div(param_vals2['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals2['scat'],B0=param_vals2['yslope'])
+    #print("ln Y val",np.log10(Y[-1,-1]))
+    #print("ln Y~", np.log10(Ytilde[-1,-1]))
     #print np.log(Ytilde[-1,30:35])
-    print(old_div(Y[-1,-1],Ytilde[-1,-1]))
-    print(np.log(old_div(Y[-1,-1],Ytilde[-1,-1])))
+    #print(old_div(Y[-1,-1],Ytilde[-1,-1]))
+    #print(np.log(old_div(Y[-1,-1],Ytilde[-1,-1])))
     #print -1.*(np.log(Y[-1,30:35]/Ytilde[-1,30:35]))
 
     print("P of Y", CL.P_Yo(np.outer(np.ones(len(int_HMF.M.copy())),CL.LgY),int_HMF2.M.copy(),int_HMF2.zarr[zbins],param_vals2)[-1,-1])

@@ -222,8 +222,11 @@ class clusterLike(object):
         P_func = np.outer(M,np.zeros([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
 
-        for i in range(z_arr.size):
-            P_func[:,i] = self.P_of_gt_SN(LgY,M_arr[:,i],z_arr[i],YNoise,param_vals)
+        zarr = np.outer(np.ones([len(M)]),z_arr)
+        #for i in range(z_arr.size):
+        #    P_func[:,i] = self.P_of_gt_SN(LgY,M_arr[:,i],z_arr[i],YNoise,param_vals)
+
+        P_func = self.P_of_gt_SN(LgY,M_arr,zarr,YNoise,param_vals)
         return P_func
 
     def PfuncY_thresh(self,YNoise,M,z_arr,param_vals):
@@ -235,7 +238,8 @@ class clusterLike(object):
         OL = 1. - Om
 
         cosmoModel=FlatLambdaCDM(H0 = param_vals['H0'], Om0 = Om, Ob0 = Ob, Tcmb0 = 2.725)
-
+        
+        '''
         for i in range(z_arr.size):
             
             Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals['massbias']*M_arr[:,i]/(param_vals['H0']/100.)), z_arr[i], self.tckQFit['Q'],sigma_int=param_vals['scat'],B0=param_vals['yslope'] , cosmoModel=cosmoModel)
@@ -244,12 +248,41 @@ class clusterLike(object):
             #P_func[:,i] = 0.5 * (1. + special.erf((Ytilde - self.qmin*YNoise)/(np.sqrt(2.)*YNoise)))
             #Heavy Side
             P_func[Ytilde - self.qmin*YNoise > 0.,i] = 1.
+        '''
+
+        Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals['massbias']*M_arr/(param_vals['H0']/100.)),z_arr, self.tckQFit['Q'],sigma_int=param_vals['scat'],B0=param_vals['yslope'] , cosmoModel=cosmoModel)
+
+        P_func[Ytilde - self.qmin*YNoise > 0.] = 1.
 
         #print (len(Ytilde))
         return P_func
 
 
     def P_Yo(self, LgY, M, z,param_vals):
+        #M500c has 1/h factors in it
+        #Ma = np.outer(M,np.ones(len(LgY[0,:])))
+        Om = (param_vals['omch2'] + param_vals['ombh2']) / (param_vals['H0']/100.)**2
+        Ob = param_vals['ombh2'] / (param_vals['H0']/100.)**2
+        OL = 1. - Om
+
+        cosmoModel=FlatLambdaCDM(H0 = param_vals['H0'], Om0 = Om, Ob0 = Ob, Tcmb0 = 2.725)
+
+        Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals['massbias']*M/(param_vals['H0']/100.)), z, self.tckQFit['Q'],sigma_int=param_vals['scat'],B0=param_vals['yslope'] , cosmoModel=cosmoModel)# H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
+        Y = 10**LgY
+
+        #print (Ytilde)
+        #Ytilde = Ytilde[..., np.newaxis]
+        Ytilde = np.repeat(Ytilde[:, :, np.newaxis], LgY.shape[2], axis=2)
+        #print (Ytilde[:,:,5])
+
+        #print (Ytilde.shape,Y.shape)
+        numer = -1.*(np.log(Y/Ytilde))**2
+        ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(numer/(2.*param_vals['scat']**2))
+        #print ("P_yo",param_vals['scat'],np.trapz(ans,x=LgY,axis=1))
+        #ans = Ytilde
+        return ans
+
+    def P_Yo_perz(self, LgY, M, z,param_vals):
         #M500c has 1/h factors in it
         Ma = np.outer(M,np.ones(len(LgY[0,:])))
         Om = (param_vals['omch2'] + param_vals['ombh2']) / (param_vals['H0']/100.)**2
@@ -260,6 +293,13 @@ class clusterLike(object):
 
         Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit['Q'],sigma_int=param_vals['scat'],B0=param_vals['yslope'] , cosmoModel=cosmoModel)# H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
         Y = 10**LgY
+
+        #print (Ytilde.shape,Y.shape)
+        #Ytilde = Ytilde[..., np.newaxis]
+        #Ytilde = np.repeat(Ytilde[:, :, np.newaxis], LgY.shape[2], axis=2)
+        #print (Ytilde[:,:,5])
+
+        #print (Ytilde.shape,Y.shape)
         numer = -1.*(np.log(Y/Ytilde))**2
         ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(numer/(2.*param_vals['scat']**2))
         #print ("P_yo",param_vals['scat'],np.trapz(ans,x=LgY,axis=1))
@@ -277,6 +317,31 @@ class clusterLike(object):
 
     def P_of_gt_SN(self,LgY,MM,zz,Ynoise,param_vals):
         Y = 10**LgY
+        
+        #sig_thresh = np.outer(np.ones(len(MM)),self.Y_erf(Y,Ynoise))
+        sig_tr = np.outer(np.ones([MM.shape[0],MM.shape[1]]),self.Y_erf(Y,Ynoise))
+        sig_thresh = np.reshape(sig_tr,(MM.shape[0],MM.shape[1],len(self.Y_erf(Y,Ynoise))))
+
+        #print ("sig thresh",sig_thresh)
+
+        #print ('MM',MM.shape)
+        #print ('MM',MM.shape[0])
+        #print ('zz',zz.shape)
+        #print ('sig_thresh',sig_thresh.shape)
+        LgYa = np.outer(np.ones([MM.shape[0],MM.shape[1]]),LgY)
+        #LgYa = np.repeat(Ytilde[:, :, np.newaxis], LgY.shape[2], axis=2)
+        LgYa2 = np.reshape(LgYa,(MM.shape[0],MM.shape[1],len(LgY)))
+        #print ("LgYa2",LgYa2.shape,LgYa2[:,:,0])
+
+        P_Y = np.nan_to_num(self.P_Yo(LgYa2,MM,zz,param_vals))
+        
+        #ans = np.trapz(P_Y*sig_thresh,LgY,np.diff(LgY),axis=1)
+        ans = np.trapz(P_Y*sig_thresh,x=LgY,axis=2) * np.log(10)
+        #print ('shape of P_of_gt_SN', len(ans))
+        return ans
+
+    def P_of_gt_SNold(self,LgY,MM,zz,Ynoise,param_vals):
+        Y = 10**LgY
         sig_thresh = np.outer(np.ones(len(MM)),self.Y_erf(Y,Ynoise))
         #print ("sig thresh",sig_thresh)
         
@@ -291,7 +356,12 @@ class clusterLike(object):
     def P_of_Y_per(self,LgY,MM,zz,Y_c,Y_err,param_vals):
         P_Y_sig = np.outer(np.ones(len(MM)),self.Y_prob(Y_c,LgY,Y_err))
         LgYa = np.outer(np.ones(len(MM)),LgY)
-        P_Y = np.nan_to_num(self.P_Yo(LgYa,MM,zz,param_vals))
+
+
+        LgYa = np.outer(np.ones([MM.shape[0],MM.shape[1]]),LgY)
+        LgYa2 = np.reshape(LgYa,(MM.shape[0],MM.shape[1],len(LgY)))
+
+        P_Y = np.nan_to_num(self.P_Yo(LgYa2,MM,zz,param_vals))
         ans = np.trapz(P_Y*P_Y_sig,LgY,np.diff(LgY),axis=1) * np.log(10)
         return ans
 
@@ -303,8 +373,12 @@ class clusterLike(object):
     def Pfunc_per(self,MM,zz,Y_c,Y_err,param_vals):
         LgY = self.LgY
         LgYa = np.outer(np.ones(len(MM)),LgY)
+
+        #LgYa = np.outer(np.ones([len(MM),len(zz)]),LgY)
+        #LgYa2 = np.reshape(LgYa,(len(MM),len(zz),len(LgY)))
+
         P_Y_sig = self.Y_prob(Y_c,LgY,Y_err)
-        P_Y = np.nan_to_num(self.P_Yo(LgYa,MM,zz,param_vals))
+        P_Y = np.nan_to_num(self.P_Yo_perz(LgYa,MM,zz,param_vals))
         ans = np.trapz(P_Y*P_Y_sig,LgY,np.diff(LgY),axis=1)
         return ans
 
@@ -314,10 +388,18 @@ class clusterLike(object):
         P_func = np.outer(MM,np.zeros([len(z_arr)]))
         M_arr =  np.outer(MM,np.ones([len(z_arr)]))
         M200 = np.outer(MM,np.zeros([len(z_arr)]))
-        for i in range(z_arr.size):
-            P_func[:,i] = self.P_of_Y_per(LgY,M_arr[:,i],z_arr[i],Y_c,Y_err,param_vals)
-            M200[:,i] = int_HMF.cc.Mass_con_del_2_del_mean200(self.HMF.M.copy(),500,z_arr[i])
-        return P_func,M200
+        zarr = np.outer(np.ones([len(M)]),z_arr)
+
+        P_func = self.P_of_Y_per(LgY,M_arr,zarr,Y_c,Y_err,param_vals)
+
+        print("HERE")
+
+        #for i in range(z_arr.size):
+        #    P_func[:,i] = self.P_of_Y_per(LgY,M_arr[:,i],z_arr[i],Y_c,Y_err,param_vals)
+        #    M200[:,i] = int_HMF.cc.Mass_con_del_2_del_mean200(self.HMF.M.copy(),500,z_arr[i])
+
+
+        return P_func#,M200 FIX THIS?
 
     def Ntot_survey(self,int_HMF,fsky,Ythresh,param_vals):
 
@@ -343,9 +425,11 @@ class clusterLike(object):
 
     def Prob_per_cluster(self,int_HMF,cluster_props,dn_dzdm_int,param_vals):
         c_z, c_zerr, c_y, c_yerr = cluster_props
+        
         if (c_zerr > 0):
             z_arr = np.arange(-3.*c_zerr,(3.+0.1)*c_zerr,c_zerr) + c_z
-            Pfunc_ind,M200 = self.Pfunc_per_zarr(int_HMF.M.copy(),z_arr,c_y,c_yerr,int_HMF,param_vals)
+            Pfunc_ind = self.Pfunc_per_zarr(int_HMF.M.copy(),z_arr,c_y,c_yerr,int_HMF,param_vals)
+            M200 = int_HMF.cc.Mass_con_del_2_del_mean200(int_HMF.M.copy(),500,c_z) ## FIX THIS?
             dn_dzdm = dn_dzdm_int(z_arr,np.log10(int_HMF.M.copy()))
             N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
             N_per = np.trapz(N_z_ind*gaussian(z_arr,c_z,c_zerr),dx=np.diff(z_arr))
