@@ -79,8 +79,10 @@ if args.test:
     fixlist = ['ombh2','ns','tau','massbias','yslope','scat']
     fixvals = [0.022,0.96,0.06,0.80,0.08,0.2]
 elif args.simtest:
-    fixlist = ['omch2','ombh2','H0','ns','tau','massbias','yslope','scat']
-    fixvals = [0.1225,0.0245,70,0.97,0.06,1.0,0.08,0.2]
+    #fixlist = ['omch2','ombh2','H0','ns','tau','massbias','yslope','scat']
+    #fixvals = [0.1225,0.0245,70,0.97,0.06,1.0,0.08,0.2]
+    fixlist = ['ombh2','H0','ns','tau','massbias','yslope','scat']
+    fixvals = [0.0245,70,0.97,0.06,1.0,0.08,0.2]
 elif args.simpars:
     fixlist = ['H0','ns','tau','massbias','yslope','scat']
     fixvals = [70,0.97,0.06,1.0,0.08,0.2]
@@ -104,8 +106,8 @@ if args.test:
     priorwth = np.array([3])
     priorvals = np.array([prioravg,priorwth])
 elif args.simtest:
-    parlist = ['As']
-    parvals = [2.0e-09]
+    parlist = ['omch2','As']
+    parvals = [0.1225,2.0e-09]
 
     priorlist = []
     prioravg = np.array([])
@@ -142,6 +144,7 @@ if args.mockcat or args.randcat or args.y0testmock:
     parvals = [0.1225,0.0245,70,2.0e-09,0.97,0.06,1.0,0.08,0.20]
 
     if args.mockcat:
+        nemoOutputDir = '/Users/nab//Desktop/Projects/ACTPol_Cluster_Like/selFn_MFMF_prelimS18_nightOnly_tiles_v4/'
         MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[13.6,15.7,0.01],z_grid=[0.1,2.01,0.1])
     if args.randcat:
         nemoOutputDir = '/Users/nab//Desktop/Projects/ACTPol_Cluster_Like/selFn_MFMF_prelimS18_nightOnly_tiles_v4/'
@@ -306,6 +309,10 @@ if args.simtest:
     filename = chain_out+"/sz_likelival_"+args.chain_name+".dat"
     
     parvals_arr = parvals*(1.+np.arange(-0.1,0.1001,0.02))
+
+    print (parvals_arr)
+
+    sys.exit(0)
     #parvals_arr = parvals*(1.+np.arange(-0.01,0.0101,0.02))
 
     ansout = parvals_arr*0.0

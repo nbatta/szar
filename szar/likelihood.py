@@ -178,7 +178,7 @@ class clusterLike(object):
         #    self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat,self.qmin)
 
         clust_cat = nemoOutputDir + fitsfile 
-        if self.simtest or self.simpars:
+        if self.simtest or self.simpars or self.test:
             print("mock catalog")
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat,self.qmin)
         else:
@@ -551,15 +551,15 @@ class clusterLike(object):
         print('interp setup',time.time() - start)
 
         start = time.time()
-        if self.test:
-            Ntot = 60.
+        #if self.test:
+        #    Ntot = 60.
+        #else:
+        Ntot = 0.
+        if self.y0thresh: 
+            Ntot = self.Ntot_survey(int_HMF,self.area_rads,self.thresh_bin,param_vals)
         else:
-            Ntot = 0.
-            if self.y0thresh: 
-                Ntot = self.Ntot_survey(int_HMF,self.area_rads,self.thresh_bin,param_vals)
-            else:
-                for i in range(len(self.frac_of_survey)):
-                    Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
+            for i in range(len(self.frac_of_survey)):
+                Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
         print('Ntot time',time.time() - start)    
                 #Ntot_perfrac = self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey,self.thresh_bin,param_vals)
                 #Ntot = np.sum(Ntot_perfrac)
@@ -679,7 +679,7 @@ class MockCatalog(object):
 
     def Total_clusters(self,fsky):
         Nz = self.HMF.N_of_z()
-        print (np.trapz(self.HMF.N_of_z_500()*fsky,dx=np.diff(self.HMF.zarr)))
+        #print (np.trapz(self.HMF.N_of_z_500()*fsky,dx=np.diff(self.HMF.zarr)))
         ans = np.trapz(Nz*fsky,dx=np.diff(self.HMF.zarr))
         return ans
 
@@ -736,7 +736,7 @@ class MockCatalog(object):
         Nmz = np.multiply(Ndz,np.diff(10**self.mgrid).reshape((self.mgrid.size-1,1))) * 4.* np.pi
         Ntot = Nmz.sum() * fsky
 
-        print ("fsky test",Ntot, np.int32(np.ceil(self.Total_clusters(fsky))))
+        #print ("fsky test",Ntot, np.int32(np.ceil(self.Total_clusters(fsky))))
 
         np.random.seed(self.seedval)
         nclusters = int(np.random.poisson(Ntot)) #if poisson else int(self.ntot)
@@ -744,7 +744,7 @@ class MockCatalog(object):
 
         msamps = np.zeros((nclusters),dtype=np.float32)
         zsamps = np.zeros((nclusters),dtype=np.float32)
-        print("Generating Nmz catalog...")
+        #print("Generating Nmz catalog...")
         for i in range(nclusters):
             linear_idx = np.random.choice(self.Nmz.size, p=self.Nmz.ravel()/float(self.Nmz.sum()))
             x, y = np.unravel_index(linear_idx, self.Nmz.shape)
@@ -824,7 +824,7 @@ class MockCatalog(object):
         Om = (self.param_vals['omch2'] + self.param_vals['ombh2']) / ((self.param_vals['H0']/100.)**2)
         Ob = self.param_vals['ombh2'] / (self.param_vals['H0']/100.)**2
         OL = 1.-Om 
-        print("Omega_M", Om)
+        #print("Omega_M", Om)
 
         cosmoModel=FlatLambdaCDM(H0 = self.param_vals['H0'], Om0 = Om, Ob0 = Ob, Tcmb0 = 2.725)
 
@@ -843,7 +843,7 @@ class MockCatalog(object):
         for i in range(len(tilearea)):
             
             fsky = tilearea[i]/41252.9612
-            print (fsky)
+            #print (fsky)
             if tilearea[i] > 1:
             #include observational effects like scatter and noise into the detection of clusters
                 sampZ,sampM = self.create_basic_sample(fsky)
@@ -890,7 +890,7 @@ class MockCatalog(object):
                         ysave = np.append(ysave,ytemp)
                         ra,dec = mwcs.pix2wcs(xtemp,ytemp)
                         RAsave = np.append(RAsave,ra)
-                        DECsave = np.append(DECsave,ra)
+                        DECsave = np.append(DECsave,dec)
                 
                         if self.y0thresh:
                             sampY0err = np.append(sampY0err,self.y0_thresh)
