@@ -106,12 +106,12 @@ def loadAreaMask(extName, DIR):
 
     return areaMap, wcs
 
-def loadRMSmap(expName, DIR):
+def loadRMSmap(extName, DIR):
     """Loads the survey RMS map (produced by nemo).
     Returns map array, wcs
     """
 
-    areaImg=pyfits.open(DIR+"RMSMap_Arnaud_M2e14_z0p4%s.fits.gz" % (extName))
+    areaImg=pyfits.open(DIR+"RMSMap_Arnaud_M2e14_z0p4#%s.fits.gz" % (extName))
     areaMap=areaImg[0].data
     wcs=astWCS.WCS(areaImg[0].header, mode = 'pyfits')
     areaImg.close()
@@ -606,8 +606,6 @@ class MockCatalog(object):
             zmax = 2.01
             zdel = 0.1
 
-
-
         self.fparams = {}
         for (key, val) in Config.items('params'):
             if ',' in val:
@@ -664,14 +662,15 @@ class MockCatalog(object):
 
         self.diagnosticsDir=nemoOutputDir+"diagnostics"
         self.filteredMapsDir=nemoOutputDir+"filteredMaps"
-        self.tckQFit=signals.loadQ(self.diagnosticsDir + '/QFit.fits')
+        self.tckQFit=signals.loadQ(nemoOutputDir + '/QFit.fits')
         #self.tckQFit=signals.fitQ(parDict)#, self.diagnosticsDir, self.filteredMapsDir)
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
 
-        self.rms_noise_map = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
-        
-        self.wcs=astWCS.WCS(FilterNoiseMapFile)
+        self.nemodir = nemoOutputDir
+
+        #self.rms_noise_map = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
+        #self.wcs=astWCS.WCS(FilterNoiseMapFile)
 
         self.fsky = 987.5/41252.9612 # in rads ACTPol D56-equ specific
         self.seedval = np.int(np.round(time.time())) #1
@@ -716,7 +715,13 @@ class MockCatalog(object):
 
         Ntot100 = self.Total_clusters(fsky) # np.int32(np.ceil(self.Total_clusters(fsky))) 
         Ntot = np.int32(np.random.poisson(Ntot100))
-        print ("Mock cat gen internal counts and Poisson draw",Ntot100,Ntot)
+
+        if (self.rand):
+            Ntot = np.int32(np.random.poisson(Ntot100*20.))
+        else:
+            Ntot = np.int32(np.random.poisson(Ntot100))
+
+        print ("Mock cat gen internal counts and Poisson draw",Ntot100,Ntot,self.rand)
 
         zsamps, msamps = self.HMF.cpsample_mf(200.,Ntot) 
         #print (zsamps, msamps) 
@@ -811,6 +816,89 @@ class MockCatalog(object):
                     sampY0err = np.append(sampY0err,nmap[ytemp,xtemp])
         return xsave,ysave,sampZ,sampY0,sampY0err,sampY0/sampY0err,sampM
 
+
+    def create_obs_sample_tile(self):
+
+        filetile = self.nemodir + 'tileAreas.txt'
+
+        Om = (self.param_vals['omch2'] + self.param_vals['ombh2']) / ((self.param_vals['H0']/100.)**2)
+        Ob = self.param_vals['ombh2'] / (self.param_vals['H0']/100.)**2
+        OL = 1.-Om 
+        print("Omega_M", Om)
+
+        cosmoModel=FlatLambdaCDM(H0 = self.param_vals['H0'], Om0 = Om, Ob0 = Ob, Tcmb0 = 2.725)
+
+        xsave = np.array([])
+        ysave = np.array([])
+        zsave = np.array([])
+        msave = np.array([])
+        Y0save = np.array([])
+        RAsave = np.array([])
+        DECsave = np.array([])
+        sampY0err = np.array([])
+
+        tilenames = np.loadtxt(filetile,dtype=np.str,usecols = 0,unpack=True)
+        tilearea = np.loadtxt(filetile,dtype=np.float,usecols = 1,unpack=True)
+
+        for i in range(len(tilearea)):
+            
+            fsky = tilearea[i]/41252.9612
+            print (fsky)
+            if tilearea[i] > 1:
+            #include observational effects like scatter and noise into the detection of clusters
+                sampZ,sampM = self.create_basic_sample(fsky)
+                nsamps = len(sampM)
+            
+            #Ytilde = sampM * 0.0
+            #the function call now includes cosmological dependences
+            #for i in range(nsamps):
+            #    Ytilde[i], theta0, Qfilt = signals.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM[i]/(self.param_vals['H0']/100.)), sampZ[i], self.tckQFit['Q'],sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], cosmoModel=cosmoModel)# H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
+
+            
+                Ytilde, theta0, Qfilt = signals.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM/(self.param_vals['H0']/100.)), sampZ, self.tckQFit[tilenames[i]],sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], cosmoModel=cosmoModel)# H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
+
+            #add scatter
+                np.random.seed(self.seedval+i)
+
+                ymod = np.exp(self.param_vals['scat'] * np.random.randn(nsamps))
+                sampY0 = Ytilde*ymod
+                
+                msave = np.append(msave,sampM)
+                zsave = np.append(zsave,sampZ)
+                Y0save = np.append(Y0save,sampY0)
+
+            #calculate noise for a given object for a random place on the map and save coordinates
+
+                np.random.seed(self.seedval+len(tilearea)+1+i)
+
+                mask,mwcs = loadAreaMask(tilenames[i],self.nemodir)
+                print (tilenames[i])
+                rms,rwcs = loadRMSmap(tilenames[i],self.nemodir)
+
+                nmap = mask * rms
+                
+                ylims = nmap.shape[0]
+                xlims = nmap.shape[1]
+                
+                count = 0
+                while count < nsamps:
+                    ytemp = np.int32(np.floor(np.random.uniform(0,ylims)))
+                    xtemp = np.int32(np.floor(np.random.uniform(0,xlims)))
+                    if nmap[ytemp,xtemp] > 0:
+                        count += 1
+                        xsave = np.append(xsave,xtemp)
+                        ysave = np.append(ysave,ytemp)
+                        ra,dec = mwcs.pix2wcs(xtemp,ytemp)
+                        RAsave = np.append(RAsave,ra)
+                        DECsave = np.append(DECsave,ra)
+                
+                        if self.y0thresh:
+                            sampY0err = np.append(sampY0err,self.y0_thresh)
+                        else:
+                            sampY0err = np.append(sampY0err,nmap[ytemp,xtemp])
+
+        return xsave,ysave,RAsave,DECsave,zsave,Y0save,sampY0err,Y0save/sampY0err,msave
+
     def plot_obs_sample(self,filename1='default_mockobscat',filename2='default_obs_mock_footprint'):
         fsky = self.fsky
         xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = self.create_obs_sample(fsky)
@@ -881,6 +969,7 @@ class MockCatalog(object):
 
         xsave,ysave,z,sampY0,sampY0err,SNR,sampM = self.plot_obs_sample(filename1=f1,filename2=f2)
 
+
         ind = np.where(SNR >= 4.0)[0]
         ind2 = np.where(SNR >= 5.6)[0]
         print("number of clusters SNR >= 5.6", len(ind2), " SNR >= 4.0",len(ind))
@@ -907,6 +996,38 @@ class MockCatalog(object):
              fits.Column(name='err_fixed_y_c', format='E', array=sampY0err[ind]*1e4),
              fits.Column(name='fixed_SNR', format='E', array=SNR[ind]),
              fits.Column(name='M500', format='E', array=sampM[ind]),])
+
+        hdu.writeto(filedir+filename+'.fits',overwrite=True)
+
+        return 0
+
+    def write_obstile_cat_toFits(self, filedir,filename):
+        '''          
+        Write out the catalog
+        '''
+        f1 = filedir+filename+'_mockobscat'
+        f2 = filedir+filename+'_obs_mock_footprint'
+
+        #xsave,ysave,z,sampY0,sampY0err,SNR,sampM = self.plot_obs_sample(filename1=f1,filename2=f2)
+        xsave,ysave,RAsave,DECsave,zsave,Y0save,sampY0err,SNR,msave = self.create_obs_sample_tile()
+
+        ind = np.where(SNR >= 4.0)[0]
+        ind2 = np.where(SNR >= 5.6)[0]
+        print("number of clusters SNR >= 5.6", len(ind2), " SNR >= 4.0",len(ind))
+
+        clusterID = ind.astype(str)
+        hdu = fits.BinTableHDU.from_columns(
+            [fits.Column(name='Cluster_ID', format='20A', array=clusterID),
+             fits.Column(name='x_ind', format='E', array=xsave[ind]),
+             fits.Column(name='y_ind', format='E', array=ysave[ind]),
+             fits.Column(name='RA', format='E', array=RAsave[ind]),
+             fits.Column(name='DEC', format='E', array=DECsave[ind]),
+             fits.Column(name='redshift', format='E', array=zsave[ind]),
+             fits.Column(name='redshiftErr', format='E', array=zsave[ind]*0.0),
+             fits.Column(name='fixed_y_c', format='E', array=Y0save[ind]*1e4),
+             fits.Column(name='err_fixed_y_c', format='E', array=sampY0err[ind]*1e4),
+             fits.Column(name='fixed_SNR', format='E', array=SNR[ind]),
+             fits.Column(name='M500', format='E', array=msave[ind]),])
 
         hdu.writeto(filedir+filename+'.fits',overwrite=True)
 

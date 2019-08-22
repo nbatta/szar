@@ -144,6 +144,7 @@ if args.mockcat or args.randcat or args.y0testmock:
     if args.mockcat:
         MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[13.6,15.7,0.01],z_grid=[0.1,2.01,0.1])
     if args.randcat:
+        nemoOutputDir = '/Users/nab//Desktop/Projects/ACTPol_Cluster_Like/selFn_MFMF_prelimS18_nightOnly_tiles_v4/'
         MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[np.log10(2e14),np.log10(7e15),0.01],z_grid=[0.1,1.01,0.1],randoms=True)
     if args.y0testmock:
         print ("y0 mock")
@@ -164,12 +165,12 @@ if args.mockcat or args.randcat or args.y0testmock:
     filedir = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/'
     filename = args.chain_name #,'mockCat_v1'
     compfile = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/M500Completeness_HSC_SNRCut4.0.npz'
-    compflag = 1
+    compflag = 0#1
 
     import os.path
     check = os.path.isfile(filedir+filename+'.fits')
     if (check == False):
-        MC.write_obs_cat_toFits(filedir,filename)
+        MC.write_obstile_cat_toFits(filedir,filename)
     else:
         print("Mockcat already exists")
 
