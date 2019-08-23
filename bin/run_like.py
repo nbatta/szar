@@ -308,15 +308,17 @@ if args.simtest:
     
     filename = chain_out+"/sz_likelival_"+args.chain_name+".dat"
     
-    parvals_arr = parvals*(1.+np.arange(-0.1,0.1001,0.02))
+    parvals_arr1 = parvals[0]*(1.+np.arange(-0.1,0.1001,0.02))
+    parvals_arr2 = parvals[1]*(1.+np.arange(-0.1,0.1001,0.02))
 
-    print (parvals_arr)
+    #parvals_arr = parvals*(1.+np.arange(-0.1,0.1001,0.02)) #np.array([parvals_arr1])
 
-    sys.exit(0)
+    #sys.exit(0)
     #parvals_arr = parvals*(1.+np.arange(-0.01,0.0101,0.02))
 
-    ansout = parvals_arr*0.0
-    
+    #ansout = parvals_arr*0.0
+    ansout = np.zeros((len(parvals_arr1),len(parvals_arr2)))
+
     print (CL.thresh_bin)
     print (CL.frac_of_survey, np.sum(CL.frac_of_survey))
 
@@ -328,26 +330,31 @@ if args.simtest:
     int_cc = ClusterCosmology(param_vals_int,CL.constDict,clTTFixFile=CL.clttfile) # internal HMF call                                                              
     int_HMF = Halo_MF(int_cc,CL.mgrid,CL.zgrid)
 
-    print (CL.area_rads,CL.thresh_bin)
+    #print (CL.area_rads,CL.thresh_bin)
 
-    N1 = 0
-    N2 = 0
-    for i in range(len(CL.frac_of_survey)):
-        N1 = (CL.Ntot_survey_thresh(int_HMF,CL.area_rads*CL.frac_of_survey[i],CL.thresh_bin[i],param_vals_int))
-        N2 = (CL.Ntot_survey(int_HMF,CL.area_rads*CL.frac_of_survey[i],CL.thresh_bin[i],param_vals_int))
+    #N1 = 0
+    #N2 = 0
+    #for i in range(len(CL.frac_of_survey)):
+    #    N1 = (CL.Ntot_survey_thresh(int_HMF,CL.area_rads*CL.frac_of_survey[i],CL.thresh_bin[i],param_vals_int))
+    #    N2 = (CL.Ntot_survey(int_HMF,CL.area_rads*CL.frac_of_survey[i],CL.thresh_bin[i],param_vals_int))
 
-    print (N1,N2)
+    #print (N1,N2)
     #print (CL.PfuncY()
     #sys.exit(0)
 
-    for ii, vals in enumerate(parvals_arr):
-        ansout[ii] = CL.lnlike([vals],parlist)
+    #for ii, vals in enumerate(parvals_arr):
+    #    ansout[ii] = CL.lnlike([vals],parlist)
+
+    for ii in range(len(parvals_arr1)):
+        for jj in range(len(parvals_arr2)):
+            ansout[ii,jj] = CL.lnlike([parvals_arr1[ii],parvals_arr2[jj]],parlist)
     #print(parvals_arr,parlist)
     #CL.lnlike([parvals_arr[3:5]],parlist)
     #print(parvals_arr[3:5])
 
     f = open(filename, "w")
-    savemat = [parvals_arr,ansout]
+    #savemat = [parvals_arr,ansout]
+    savemat = ansout #[parvals_arr1,parvals_arr2,ansout]
     np.savetxt(f,savemat)
 
     indmin = np.argmax(ansout)
