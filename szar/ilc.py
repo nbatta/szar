@@ -243,26 +243,27 @@ v3dell)
             if v3mode < 0:
                 inst_noise = ( old_div(noise_func(self.evalells[ii],np.array(fwhms),np.array(rms_noises),lknee,alpha,dimensionless=False), self.cc.c['TCMBmuK']**2.))
                 nells = np.diag(inst_noise)
-                nellsee=nells*np.sqrt(2.)
+                nellsee = nells*np.sqrt(2.)
             elif v3mode<=2:
                 nells = N_ell_T_LA_full[:,:,ii]/ self.cc.c['TCMBmuK']**2.
+                nellsee = N_ell_P_LA[:,:,ii]/ self.cc.c['TCMBmuK']**2.
 
             elif v3mode==3:
                 ndiags = []
                 for ff in range(len(freqs)):
-                    inst_noise = old_div(N_ell_T_LA[ff,ii], self.cc.c['TCMBmuK']**2.)
+                    inst_noise = N_ell_T_LA[ff,ii] / self.cc.c['TCMBmuK']**2.
                     ndiags.append(inst_noise)
                 nells = np.diag(np.array(ndiags))
 
             elif v3mode>=5:
                 nells = N_ell_T_LA_full[:,:,ii]/ self.cc.c['TCMBmuK']**2.
                 nellsee = N_ell_P_LA[:,:,ii]/ self.cc.c['TCMBmuK']**2.
-                nell_ee_ll.append(np.diagonal(nellsee* self.cc.c['TCMBmuK']**2.))
+
+            nell_ee_ll.append(np.diagonal(nellsee* self.cc.c['TCMBmuK']**2.))
             nell_ll.append(np.diagonal(nells* self.cc.c['TCMBmuK']**2.))
             self.nell_ll=nell_ll
             self.nell_ee_ll=nell_ee_ll
                 
-
             totfg = (self.fgs.rad_ps(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.cib_p(self.evalells[ii],fq_mat,fq_mat_t) +
                       self.fgs.cib_c(self.evalells[ii],fq_mat,fq_mat_t) + self.fgs.tSZ_CIB(self.evalells[ii],fq_mat,fq_mat_t)) \
                       / self.cc.c['TCMBmuK']**2. / ((self.evalells[ii]+1.)*self.evalells[ii]) * 2.* np.pi 
