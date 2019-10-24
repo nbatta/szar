@@ -13,6 +13,7 @@ from orphics import io
 from orphics.io import Plotter
 from szar.counts import ClusterCosmology,Halo_MF
 from nemo import signals
+from nemo import MockSurvey
 
 import emcee
 import time, sys, os
@@ -31,6 +32,7 @@ parser.add_argument("-m", "--mockcat", action='store_true',help='test making a m
 parser.add_argument("-r", "--randcat", action='store_true',help='making a random catalog.')
 parser.add_argument("-y", "--y0test", action='store_true',help='Do a test quickly by setting Ntot=60 and just 1 params.')
 parser.add_argument("-ym", "--y0testmock", action='store_true',help='Do a test quickly by setting Ntot=60 and just 1 params.')
+parser.add_argument("-c", "--compnemo", action='store_true',help='Compare with nemo.')
 
 
 args = parser.parse_args()
@@ -139,11 +141,11 @@ else:
     # priorwth = np.array([0.0009,0.02,3.6,0.12,0.1])
     priorvals = np.array([prioravg,priorwth])
 
-if args.mockcat or args.randcat or args.y0testmock:
+if args.mockcat or args.randcat or args.y0testmock or args.compnemo:
     parlist = ['omch2','ombh2','H0','As','ns','tau','massbias','yslope','scat']
     parvals = [0.1225,0.0245,70,2.0e-09,0.97,0.06,1.0,0.08,0.20]
 
-    if args.mockcat:
+    if args.mockcat or args.compnemo:
         nemoOutputDir = '/Users/nab//Desktop/Projects/ACTPol_Cluster_Like/selFn_MFMF_prelimS18_nightOnly_tiles_v4/'
         MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[13.6,15.7,0.01],z_grid=[0.1,2.01,0.1])
     if args.randcat:
@@ -153,7 +155,11 @@ if args.mockcat or args.randcat or args.y0testmock:
         print ("y0 mock")
         MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[13.6,15.7,0.01],z_grid=[0.1,2.01,0.1],y0thresh=True)
 
-    #print MC.Total_clusters(MC.fsky)
+    if args.compnemo:
+        print (MC.fsky,MC.Total_clusters(MC.fsky))
+        MS = MockSurvey.MockSurvey(13.6,960,0.1,2.0,parvals[2],parvals[0]/parvals[2]**2,parvals[1]/parvals[2]**2,0.8)
+        sys.exit(0)
+
     #start = time.time()
     #blah = MC.create_basic_sample(MC.fsky)
     #print ('sample time',time.time() - start)

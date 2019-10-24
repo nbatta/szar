@@ -50,6 +50,17 @@ def doubleweightcalculator(f_1,f_2,N):
     W=M/C
     return W
 
+def combineexpnoise(A1,A2):
+    '''
+    Add together noise matrices of uncorrelated experiements
+    '''
+    #assert the shape of A,B 
+    assert A1.shape[0] == A1.shape[1], "Matrix is not square"
+    assert A2.shape[0] == A2.shape[1], "Matrix is not square"
+    #add together matrices with uncorrelated experiments
+    ans = np.block([[A1,np.zeros((len(A1), len(A2)))],[np.zeros((len(A2), len(A1))),A2]])
+    return ans
+
 class ILC_simple(object):
     def __init__(self,clusterCosmology, fgs,fwhms=[1.5],rms_noises =[1.], freqs = [150.],lmax=8000,lknee=0.,alpha=1.,dell=1.,v3mode=-1,fsky=None,noatm=False):
         
