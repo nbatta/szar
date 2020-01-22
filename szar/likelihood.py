@@ -78,6 +78,20 @@ def read_full_mock_cat(fitsfile):
     M = data.field('M500')
     return ID,x,y,ra,dec,z,zerr,Y0,Y0err,SNR,M
 
+def read_matt_mock_cat(fitsfile,qmin):
+    list = fits.open(fitsfile)
+    data = list[1].data
+    ra = data.field('RADeg')
+    dec = data.field('decDeg')
+    z = data.field('redshift')
+    zerr = data.field('redshiftErr')
+    Y0 = data.field('fixed_y_c')
+    Y0err = data.field('fixed_err_y_c')
+    SNR = data.field('fixed_SNR')
+    M = data.field('true_M500')
+    ind = np.where(SNR >= qmin)[0]
+    return z[ind],zerr[ind],Y0[ind],Y0err[ind]
+
 def read_test_mock_cat(fitsfile,mmin):
     list = fits.open(fitsfile)
     data = list[1].data
@@ -119,7 +133,7 @@ def loadRMSmap(extName, DIR):
     return areaMap, wcs
 
 class clusterLike(object):
-    def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,fix_params,params,parlist,fitsfile,test=False,simtest=False,simpars=False,y0thresh=False):
+    def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,fix_params,params,parlist,fitsfile,test=False,simtest=False,simpars=False,y0thresh=False,qmin=5.6):
         self.fix_params = fix_params
         self.test = test
         self.simtest = simtest
@@ -138,23 +152,17 @@ class clusterLike(object):
 
         self.param_vals0 = alter_fparams(self.fparams,parlist,params)
 
-        #print (self.param_vals0)
-        #sys.exit()
-
         bigDataDir = Config.get('general','bigDataDirectory')
         self.clttfile = Config.get('general','clttfile')
         self.constDict = dict_from_section(Config,'constants')
         #version = Config.get('general','version')
         
-        #self.mgrid,self.zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
         logm_min = 13.7
         logm_max = 15.72
         logm_spacing = 0.02
         self.mgrid = np.arange(logm_min,logm_max,logm_spacing)
         self.zgrid = np.arange(0.1,2.01,0.05)        
-        #print self.mgrid
-        #print self.zgrid
-        self.qmin = 5.6
+        self.qmin = qmin
         
         self.cc = ClusterCosmology(self.param_vals0,self.constDict,clTTFixFile=self.clttfile)
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
@@ -181,6 +189,7 @@ class clusterLike(object):
         if self.simtest or self.simpars or self.test:
             print("mock catalog")
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat,self.qmin)
+            #self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_matt_mock_cat(clust_cat,self.qmin)
         else:
             print("real catalog")
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat,self.qmin)
@@ -662,15 +671,16 @@ class MockCatalog(object):
 
         self.diagnosticsDir=nemoOutputDir+"diagnostics"
         self.filteredMapsDir=nemoOutputDir+"filteredMaps"
-        self.tckQFit=signals.loadQ(nemoOutputDir + '/QFit.fits')
+        self.tckQFit=signals.loadQ(self.diagnosticsDir + '/QFit.fits')
+        #self.tckQFit=signals.loadQ(nemoOutputDir + '/QFit.fits')
         #self.tckQFit=signals.fitQ(parDict)#, self.diagnosticsDir, self.filteredMapsDir)
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
 
         self.nemodir = nemoOutputDir
 
-        #self.rms_noise_map = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
-        #self.wcs=astWCS.WCS(FilterNoiseMapFile)
+        self.rms_noise_map = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
+        self.wcs=astWCS.WCS(FilterNoiseMapFile)
 
         self.fsky = 987.5/41252.9612 # in rads ACTPol D56-equ specific
         self.seedval = np.int(np.round(time.time())) #1

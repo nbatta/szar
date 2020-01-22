@@ -83,8 +83,10 @@ if args.test:
 elif args.simtest:
     #fixlist = ['omch2','ombh2','H0','ns','tau','massbias','yslope','scat']
     #fixvals = [0.1225,0.0245,70,0.97,0.06,1.0,0.08,0.2]
+    #fixlist = ['ombh2','H0','ns','tau','massbias','yslope','scat']
+    #fixvals = [0.0245,70,0.97,0.06,1.0,0.08,0.2]
     fixlist = ['ombh2','H0','ns','tau','massbias','yslope','scat']
-    fixvals = [0.0245,70,0.97,0.06,1.0,0.08,0.2]
+    fixvals = [0.0245,70,0.97,0.06,0.68,0.08,0.2]
 elif args.simpars:
     fixlist = ['H0','ns','tau','massbias','yslope','scat']
     fixvals = [70,0.97,0.06,1.0,0.08,0.2]
