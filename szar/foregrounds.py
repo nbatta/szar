@@ -31,20 +31,20 @@ H_CGS = 6.62608e-27
 K_CGS = 1.3806488e-16
 C_light = 2.99792e+10
 
-def y_kappa_corrcoeff(ells,fill_type="extrapolate"):
+def y_kappa_corrcoeff(ells,fill_type="extrapolate",silence=False):
     path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
     ls,icls = np.loadtxt(path+"/../input/y-phi_theory_cross-correlation_coefficient.txt",unpack=True,delimiter=' ')
-    dls = dl_filler(ells,ls,icls,fill_type=fill_type)
+    dls = dl_filler(ells,ls,icls,fill_type=fill_type,silence=silence)
     return dls
 
-def kappa_cib_corrcoeff(ells,fill_type="extrapolate"):
+def kappa_cib_corrcoeff(ells,fill_type="extrapolate",silence=False):
     path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
     ls,icls = np.loadtxt(path+"/../input/kappa_cib_corr.txt",unpack=True,delimiter=' ')
-    dls = dl_filler(ells,ls,icls,fill_type=fill_type)
+    dls = dl_filler(ells,ls,icls,fill_type=fill_type,silence=silence)
     return dls
     
 
-def power_y(ells,A_tsz=None,fill_type="extrapolate"):
+def power_y(ells,A_tsz=None,fill_type="extrapolate",silence=False):
     """
     fill_type can be "zeros" , "extrapolate" or "constant_dl"
 
@@ -58,28 +58,28 @@ def power_y(ells,A_tsz=None,fill_type="extrapolate"):
     assert np.all(ells>=0)
     path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
     ls,icls = np.loadtxt(path+"/../input/sz_template_battaglia.csv",unpack=True,delimiter=',')
-    dls = dl_filler(ells,ls,icls,fill_type=fill_type,fill_positive=True)
+    dls = dl_filler(ells,ls,icls,fill_type=fill_type,fill_positive=True,silence=silence)
     nu0 = default_constants['nu0'] ; tcmb = default_constants['TCMBmuk']
-    cls = A_tsz * dls*2.*np.pi*np.nan_to_num(1./ells/(ells+1.)) / ffunc(nu0)**2./tcmb**2.
+    with np.errstate(divide='ignore'): cls = A_tsz * dls*2.*np.pi*np.nan_to_num(1./ells/(ells+1.)) / ffunc(nu0)**2./tcmb**2.
     return cls
 
-def power_tsz(ells,nu1,nu2=None,A_tsz=None,fill_type="extrapolate",tcmb=None,yy=None):
+def power_tsz(ells,nu1,nu2=None,A_tsz=None,fill_type="extrapolate",tcmb=None,yy=None,silence=False):
     """
     tcmb in muK
     """
-    if yy is None: yy = power_y(ells,A_tsz=A_tsz,fill_type=fill_type)
+    if yy is None: yy = power_y(ells,A_tsz=A_tsz,fill_type=fill_type,silence=silence)
     if tcmb is None: tcmb = default_constants['TCMBmuk']
     if nu2 is None: nu2 = nu1
     return yy * ffunc(nu1) * ffunc(nu2) * tcmb**2.
 
-def power_tsz_cib(ells,nu1,nu2=None,fill_type="extrapolate",al_cib=None,Td=None,A_tsz=None,A_cibc=None,zeta=None):
+def power_tsz_cib(ells,nu1,nu2=None,fill_type="extrapolate",al_cib=None,Td=None,A_tsz=None,A_cibc=None,zeta=None,silence=False):
     if nu2 is None: nu2 = nu1
     ells = np.asarray(ells)
     assert np.all(ells>=0)
     path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
     tsz_cib_file=path+'/../input/sz_x_cib_template.txt'    
     ls,icls = np.loadtxt(tsz_cib_file,unpack=True)
-    dls = dl_filler(ells,ls,icls,fill_type=fill_type)
+    dls = dl_filler(ells,ls,icls,fill_type=fill_type,silence=silence)
     cls = dls*2.*np.pi*np.nan_to_num(1./ells/(ells+1.)) 
     return cls * tSZ_CIB_nu(nu1,nu2,al_cib=al_cib,Td=Td,A_tsz=A_tsz,A_cibc=A_cibc,zeta=zeta)
 
@@ -91,14 +91,14 @@ def power_cibp(ells,nu1,nu2=None,A_cibp=None,al_cib=None,Td=None):
 def power_cibp_raw(ells,A_cibp=None,al_cib=None,Td=None):
     if A_cibp is None: A_cibp = default_constants['A_cibp']
     ell0sec = default_constants['ell0sec']
-    ans = A_cibp * (ells/ell0sec) ** 2.0  *2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
+    with np.errstate(divide='ignore'): ans = A_cibp * (ells/ell0sec) ** 2.0  *2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
     return ans
 
 def power_cibc_raw(ells,A_cibc=None,n_cib=None,al_cib=None,Td=None):
     if A_cibc is None: A_cibc = default_constants['A_cibc']
     if n_cib is None: n_cib = default_constants['n_cib']
     ell0sec = default_constants['ell0sec']
-    ans = A_cibc * (ells/ell0sec) ** (2.-n_cib)  *2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
+    with np.errstate(divide='ignore'): ans = A_cibc * (ells/ell0sec) ** (2.-n_cib)  *2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
     return ans
 
 def power_cibc(ells,nu1,nu2=None,A_cibc=None,n_cib=None,al_cib=None,Td=None):
@@ -110,20 +110,22 @@ def power_radps(ells,nu1,nu2=None,A_ps=None,al_ps=None):
     if A_ps is None: A_ps = default_constants['A_ps']
     if nu2 is None: nu2 = nu1
     ell0sec = default_constants['ell0sec']
-    return A_ps * (ells/ell0sec)**2 * rad_ps_nu(nu1,al_ps)*rad_ps_nu(nu2,al_ps) *2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
+    with np.errstate(divide='ignore'): 
+        ret = A_ps * (ells/ell0sec)**2 * rad_ps_nu(nu1,al_ps)*rad_ps_nu(nu2,al_ps) *2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
+    return ret
 
-def power_ksz_reion(ells,A_rksz=1,fill_type="extrapolate"):
+def power_ksz_reion(ells,A_rksz=1,fill_type="extrapolate",silence=False):
     path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
     ls,icls = np.loadtxt(path+"/../input/early_ksz.txt",unpack=True)
-    dls = dl_filler(ells,ls,icls,fill_type=fill_type,fill_positive=True)
-    cls = A_rksz * dls*2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
+    dls = dl_filler(ells,ls,icls,fill_type=fill_type,fill_positive=True,silence=silence)
+    with np.errstate(divide='ignore',over='ignore'): cls = A_rksz * dls*2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
     return cls
 
-def power_ksz_late(ells,A_lksz=1,fill_type="extrapolate"):
+def power_ksz_late(ells,A_lksz=1,fill_type="extrapolate",silence=False):
     path = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
     ls,icls = np.loadtxt(path+"/../input/late_ksz.txt",unpack=True)
-    dls = dl_filler(ells,ls,icls,fill_type=fill_type,fill_positive=True)
-    cls = A_lksz * dls*2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
+    dls = dl_filler(ells,ls,icls,fill_type=fill_type,fill_positive=True,silence=silence)
+    with np.errstate(divide='ignore'): cls = A_lksz * dls*2.*np.pi*np.nan_to_num(1./ells/(ells+1.))
     return cls
 
 
@@ -174,14 +176,15 @@ def rad_ps_nu(nu,al_ps=None):
         * gfunc(nu)  / (gfunc(nu0))
 
 
-def dl_filler(ells,ls,cls,fill_type="extrapolate",fill_positive=False):
+def dl_filler(ells,ls,cls,fill_type="extrapolate",fill_positive=False,silence=False):
     ells = np.asarray(ells)
-    if ells.max()>ls.max() and fill_type=="extrapolate":
-        warnings.warn("Warning: Requested ells go higher than available." + \
-              " Extrapolating above highest ell.")
-    elif ells.max()>ls.max() and fill_type=="constant_dl":
-        warnings.warn("Warning: Requested ells go higher than available." + \
-              " Filling with constant ell^2C_ell above highest ell.")
+    if not(silence):
+        if ells.max()>ls.max() and fill_type=="extrapolate":
+            warnings.warn("Warning: Requested ells go higher than available." + \
+                  " Extrapolating above highest ell.")
+        elif ells.max()>ls.max() and fill_type=="constant_dl":
+            warnings.warn("Warning: Requested ells go higher than available." + \
+                  " Filling with constant ell^2C_ell above highest ell.")
     if fill_type=="constant_dl":
         fill_value = (0,cls[-1])
     elif fill_type=="extrapolate":
