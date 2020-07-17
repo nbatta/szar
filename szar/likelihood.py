@@ -78,6 +78,20 @@ def read_full_mock_cat(fitsfile):
     M = data.field('M500')
     return ID,x,y,ra,dec,z,zerr,Y0,Y0err,SNR,M
 
+def read_matt_mock_cat(fitsfile,qmin):
+    list = fits.open(fitsfile)
+    data = list[1].data
+    ra = data.field('RADeg')
+    dec = data.field('decDeg')
+    z = data.field('redshift')
+    zerr = data.field('redshiftErr')
+    Y0 = data.field('fixed_y_c')
+    Y0err = data.field('fixed_err_y_c')
+    SNR = data.field('fixed_SNR')
+    M = data.field('true_M500')
+    ind = np.where(SNR >= qmin)[0]
+    return z[ind],zerr[ind],Y0[ind],Y0err[ind]
+
 def read_test_mock_cat(fitsfile,mmin):
     list = fits.open(fitsfile)
     data = list[1].data
@@ -106,45 +120,20 @@ def loadAreaMask(extName, DIR):
 
     return areaMap, wcs
 
-def loadRMSmap(expName, DIR):
+def loadRMSmap(extName, DIR):
     """Loads the survey RMS map (produced by nemo).
     Returns map array, wcs
     """
 
-    areaImg=pyfits.open(DIR+"RMSMap_Arnaud_M2e14_z0p4%s.fits.gz" % (extName))
+    areaImg=pyfits.open(DIR+"RMSMap_Arnaud_M2e14_z0p4#%s.fits.gz" % (extName))
     areaMap=areaImg[0].data
     wcs=astWCS.WCS(areaImg[0].header, mode = 'pyfits')
     areaImg.close()
 
     return areaMap, wcs
 
-def loadQ(pickledQFileName,pickleopt=False):
-    """Loads tckQFitDict from given path.
-    """
-
-    if (pickleopt):
-        with open(pickledQFileName, "rb") as pickleFile:
-            unpickler=pickle.Unpickler(pickleFile)
-            QTabDict=unpickler.load()
-
-        tckDict={}
-        for key in QTabDict:
-            tckDict[key]=interpolate.splrep(QTabDict[key]['theta500Arcmin'], QTabDict[key]['Q'])
-
-    else:
-        #Qstuff= pyfits.open(pickledQFileName)
-        Qstuff = astropy.table.Table().read(pickledQFileName)
-
-        #QTabDict = Qstuff[1].data
-
-        tckDict={}
-        tckDict=interpolate.splrep(QTabDict['theta500Arcmin'], QTabDict['Q'])
-
-    return tckDict
-
-
 class clusterLike(object):
-    def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,fix_params,params,parlist,fitsfile,test=False,simtest=False,simpars=False,y0thresh=False):
+    def __init__(self,iniFile,parDict,nemoOutputDir,noiseFile,fix_params,params,parlist,fitsfile,test=False,simtest=False,simpars=False,y0thresh=False,qmin=5.6):
         self.fix_params = fix_params
         self.test = test
         self.simtest = simtest
@@ -163,23 +152,17 @@ class clusterLike(object):
 
         self.param_vals0 = alter_fparams(self.fparams,parlist,params)
 
-        #print (self.param_vals0)
-        #sys.exit()
-
         bigDataDir = Config.get('general','bigDataDirectory')
         self.clttfile = Config.get('general','clttfile')
         self.constDict = dict_from_section(Config,'constants')
         #version = Config.get('general','version')
         
-        #self.mgrid,self.zgrid,siggrid = pickle.load(open(bigDataDir+"szgrid_"+expName+"_"+gridName+ "_v" + version+".pkl",'rb'))
         logm_min = 13.7
         logm_max = 15.72
         logm_spacing = 0.02
         self.mgrid = np.arange(logm_min,logm_max,logm_spacing)
         self.zgrid = np.arange(0.1,2.01,0.05)        
-        #print self.mgrid
-        #print self.zgrid
-        self.qmin = 5.6
+        self.qmin = qmin
         
         self.cc = ClusterCosmology(self.param_vals0,self.constDict,clTTFixFile=self.clttfile)
         self.HMF = Halo_MF(self.cc,self.mgrid,self.zgrid)
@@ -203,9 +186,10 @@ class clusterLike(object):
         #    self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat,self.qmin)
 
         clust_cat = nemoOutputDir + fitsfile 
-        if self.simtest or self.simpars:
+        if self.simtest or self.simpars or self.test:
             print("mock catalog")
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_mock_cat(clust_cat,self.qmin)
+            #self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_matt_mock_cat(clust_cat,self.qmin)
         else:
             print("real catalog")
             self.clst_z,self.clst_zerr,self.clst_y0,self.clst_y0err = read_clust_cat(clust_cat,self.qmin)
@@ -247,8 +231,11 @@ class clusterLike(object):
         P_func = np.outer(M,np.zeros([len(z_arr)]))
         M_arr =  np.outer(M,np.ones([len(z_arr)]))
 
-        for i in range(z_arr.size):
-            P_func[:,i] = self.P_of_gt_SN(LgY,M_arr[:,i],z_arr[i],YNoise,param_vals)
+        zarr = np.outer(np.ones([len(M)]),z_arr)
+        #for i in range(z_arr.size):
+        #    P_func[:,i] = self.P_of_gt_SN(LgY,M_arr[:,i],z_arr[i],YNoise,param_vals)
+
+        P_func = self.P_of_gt_SN(LgY,M_arr,zarr,YNoise,param_vals)
         return P_func
 
     def PfuncY_thresh(self,YNoise,M,z_arr,param_vals):
@@ -260,7 +247,8 @@ class clusterLike(object):
         OL = 1. - Om
 
         cosmoModel=FlatLambdaCDM(H0 = param_vals['H0'], Om0 = Om, Ob0 = Ob, Tcmb0 = 2.725)
-
+        
+        '''
         for i in range(z_arr.size):
             
             Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals['massbias']*M_arr[:,i]/(param_vals['H0']/100.)), z_arr[i], self.tckQFit['Q'],sigma_int=param_vals['scat'],B0=param_vals['yslope'] , cosmoModel=cosmoModel)
@@ -269,12 +257,41 @@ class clusterLike(object):
             #P_func[:,i] = 0.5 * (1. + special.erf((Ytilde - self.qmin*YNoise)/(np.sqrt(2.)*YNoise)))
             #Heavy Side
             P_func[Ytilde - self.qmin*YNoise > 0.,i] = 1.
+        '''
+
+        Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals['massbias']*M_arr/(param_vals['H0']/100.)),z_arr, self.tckQFit['Q'],sigma_int=param_vals['scat'],B0=param_vals['yslope'] , cosmoModel=cosmoModel)
+
+        P_func[Ytilde - self.qmin*YNoise > 0.] = 1.
 
         #print (len(Ytilde))
         return P_func
 
 
     def P_Yo(self, LgY, M, z,param_vals):
+        #M500c has 1/h factors in it
+        #Ma = np.outer(M,np.ones(len(LgY[0,:])))
+        Om = (param_vals['omch2'] + param_vals['ombh2']) / (param_vals['H0']/100.)**2
+        Ob = param_vals['ombh2'] / (param_vals['H0']/100.)**2
+        OL = 1. - Om
+
+        cosmoModel=FlatLambdaCDM(H0 = param_vals['H0'], Om0 = Om, Ob0 = Ob, Tcmb0 = 2.725)
+
+        Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals['massbias']*M/(param_vals['H0']/100.)), z, self.tckQFit['Q'],sigma_int=param_vals['scat'],B0=param_vals['yslope'] , cosmoModel=cosmoModel)# H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
+        Y = 10**LgY
+
+        #print (Ytilde)
+        #Ytilde = Ytilde[..., np.newaxis]
+        Ytilde = np.repeat(Ytilde[:, :, np.newaxis], LgY.shape[2], axis=2)
+        #print (Ytilde[:,:,5])
+
+        #print (Ytilde.shape,Y.shape)
+        numer = -1.*(np.log(Y/Ytilde))**2
+        ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(numer/(2.*param_vals['scat']**2))
+        #print ("P_yo",param_vals['scat'],np.trapz(ans,x=LgY,axis=1))
+        #ans = Ytilde
+        return ans
+
+    def P_Yo_perz(self, LgY, M, z,param_vals):
         #M500c has 1/h factors in it
         Ma = np.outer(M,np.ones(len(LgY[0,:])))
         Om = (param_vals['omch2'] + param_vals['ombh2']) / (param_vals['H0']/100.)**2
@@ -285,6 +302,13 @@ class clusterLike(object):
 
         Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(param_vals['H0']/100.)), z, self.tckQFit['Q'],sigma_int=param_vals['scat'],B0=param_vals['yslope'] , cosmoModel=cosmoModel)# H0 = param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
         Y = 10**LgY
+
+        #print (Ytilde.shape,Y.shape)
+        #Ytilde = Ytilde[..., np.newaxis]
+        #Ytilde = np.repeat(Ytilde[:, :, np.newaxis], LgY.shape[2], axis=2)
+        #print (Ytilde[:,:,5])
+
+        #print (Ytilde.shape,Y.shape)
         numer = -1.*(np.log(Y/Ytilde))**2
         ans = 1./(param_vals['scat'] * np.sqrt(2*np.pi)) * np.exp(numer/(2.*param_vals['scat']**2))
         #print ("P_yo",param_vals['scat'],np.trapz(ans,x=LgY,axis=1))
@@ -302,6 +326,31 @@ class clusterLike(object):
 
     def P_of_gt_SN(self,LgY,MM,zz,Ynoise,param_vals):
         Y = 10**LgY
+        
+        #sig_thresh = np.outer(np.ones(len(MM)),self.Y_erf(Y,Ynoise))
+        sig_tr = np.outer(np.ones([MM.shape[0],MM.shape[1]]),self.Y_erf(Y,Ynoise))
+        sig_thresh = np.reshape(sig_tr,(MM.shape[0],MM.shape[1],len(self.Y_erf(Y,Ynoise))))
+
+        #print ("sig thresh",sig_thresh)
+
+        #print ('MM',MM.shape)
+        #print ('MM',MM.shape[0])
+        #print ('zz',zz.shape)
+        #print ('sig_thresh',sig_thresh.shape)
+        LgYa = np.outer(np.ones([MM.shape[0],MM.shape[1]]),LgY)
+        #LgYa = np.repeat(Ytilde[:, :, np.newaxis], LgY.shape[2], axis=2)
+        LgYa2 = np.reshape(LgYa,(MM.shape[0],MM.shape[1],len(LgY)))
+        #print ("LgYa2",LgYa2.shape,LgYa2[:,:,0])
+
+        P_Y = np.nan_to_num(self.P_Yo(LgYa2,MM,zz,param_vals))
+        
+        #ans = np.trapz(P_Y*sig_thresh,LgY,np.diff(LgY),axis=1)
+        ans = np.trapz(P_Y*sig_thresh,x=LgY,axis=2) * np.log(10)
+        #print ('shape of P_of_gt_SN', len(ans))
+        return ans
+
+    def P_of_gt_SNold(self,LgY,MM,zz,Ynoise,param_vals):
+        Y = 10**LgY
         sig_thresh = np.outer(np.ones(len(MM)),self.Y_erf(Y,Ynoise))
         #print ("sig thresh",sig_thresh)
         
@@ -316,21 +365,50 @@ class clusterLike(object):
     def P_of_Y_per(self,LgY,MM,zz,Y_c,Y_err,param_vals):
         P_Y_sig = np.outer(np.ones(len(MM)),self.Y_prob(Y_c,LgY,Y_err))
         LgYa = np.outer(np.ones(len(MM)),LgY)
-        P_Y = np.nan_to_num(self.P_Yo(LgYa,MM,zz,param_vals))
+
+
+        LgYa = np.outer(np.ones([MM.shape[0],MM.shape[1]]),LgY)
+        LgYa2 = np.reshape(LgYa,(MM.shape[0],MM.shape[1],len(LgY)))
+
+        P_Y = np.nan_to_num(self.P_Yo(LgYa2,MM,zz,param_vals))
         ans = np.trapz(P_Y*P_Y_sig,LgY,np.diff(LgY),axis=1) * np.log(10)
         return ans
 
     def Y_prob (self,Y_c,LgY,YNoise):
         Y = 10**(LgY)
+        print (Y.shape)
         ans = gaussian(Y,Y_c,YNoise)
         return ans
 
-    def Pfunc_per(self,MM,zz,Y_c,Y_err,param_vals):
+    def Pfunc_per(self,Marr,zarr,Y_c,Y_err,param_vals):
         LgY = self.LgY
-        LgYa = np.outer(np.ones(len(MM)),LgY)
-        P_Y_sig = self.Y_prob(Y_c,LgY,Y_err)
-        P_Y = np.nan_to_num(self.P_Yo(LgYa,MM,zz,param_vals))
-        ans = np.trapz(P_Y*P_Y_sig,LgY,np.diff(LgY),axis=1)
+        LgYa = np.outer(np.ones(Marr.shape[0]),LgY)
+
+        LgYa = np.outer(np.ones([Marr.shape[0],Marr.shape[1]]),LgY)
+        LgYa2 = np.reshape(LgYa,(Marr.shape[0],Marr.shape[1],len(LgY)))
+
+        #LgYa = np.outer(np.ones([len(Marr),len(zz)]),LgY)
+        #LgYa2 = np.reshape(LgYa,(len(Marr),len(zz),len(LgY)))
+
+        #Marr =  np.outer(MM,np.ones([len(zz)]))
+        #zarr = np.outer(np.ones([len(MM)]),zz)
+
+        print (LgYa2.shape,Marr.shape,zarr.shape)
+
+        Yc_arr = np.outer(np.ones(Marr.shape[0]),Y_c)
+        Yerr_arr =  np.outer(np.ones(Marr.shape[0]),Y_err)
+
+        Yc_arr = np.repeat(Yc_arr[:, :, np.newaxis], len(LgY), axis=2)
+        Yerr_arr = np.repeat(Yerr_arr[:, :, np.newaxis], len(LgY), axis=2)
+
+        print (LgYa2.shape,Yc_arr.shape,Yerr_arr.shape)
+
+        P_Y_sig = self.Y_prob(Yc_arr,LgYa2,Yerr_arr)
+        P_Y = np.nan_to_num(self.P_Yo(LgYa2,Marr,zarr,param_vals))
+        #ans = np.trapz(P_Y*P_Y_sig,LgY,np.diff(LgY),axis=1)
+
+        ans = np.trapz(P_Y*P_Y_sig,x=LgY,axis=2) #* np.log(10) should be there but doesn't actually matter for relative likelihood
+
         return ans
 
     def Pfunc_per_zarr(self,MM,z_arr,Y_c,Y_err,int_HMF,param_vals):
@@ -339,10 +417,18 @@ class clusterLike(object):
         P_func = np.outer(MM,np.zeros([len(z_arr)]))
         M_arr =  np.outer(MM,np.ones([len(z_arr)]))
         M200 = np.outer(MM,np.zeros([len(z_arr)]))
-        for i in range(z_arr.size):
-            P_func[:,i] = self.P_of_Y_per(LgY,M_arr[:,i],z_arr[i],Y_c,Y_err,param_vals)
-            M200[:,i] = int_HMF.cc.Mass_con_del_2_del_mean200(self.HMF.M.copy(),500,z_arr[i])
-        return P_func,M200
+        zarr = np.outer(np.ones([len(M)]),z_arr)
+
+        P_func = self.P_of_Y_per(LgY,M_arr,zarr,Y_c,Y_err,param_vals)
+
+        print("HERE")
+
+        #for i in range(z_arr.size):
+        #    P_func[:,i] = self.P_of_Y_per(LgY,M_arr[:,i],z_arr[i],Y_c,Y_err,param_vals)
+        #    M200[:,i] = int_HMF.cc.Mass_con_del_2_del_mean200(self.HMF.M.copy(),500,z_arr[i])
+
+
+        return P_func#,M200 FIX THIS?
 
     def Ntot_survey(self,int_HMF,fsky,Ythresh,param_vals):
 
@@ -367,19 +453,52 @@ class clusterLike(object):
         return Ntot
 
     def Prob_per_cluster(self,int_HMF,cluster_props,dn_dzdm_int,param_vals):
-        c_z, c_zerr, c_y, c_yerr = cluster_props
-        if (c_zerr > 0):
+        #c_z, c_zerr, c_y, c_yerr = cluster_props
+        print (cluster_props.shape)
+        tempz = cluster_props[0,:]
+        zind = np.argsort(tempz)
+        tempz = 0.
+        c_z = cluster_props[0,zind]
+        c_zerr = cluster_props[1,zind]
+        c_y = cluster_props[2,zind]
+        c_yerr = cluster_props[3,zind]
+
+        Marr =  np.outer(int_HMF.M.copy(),np.ones([len(c_z)]))
+        zarr = np.outer(np.ones([len(int_HMF.M.copy())]),c_z)
+
+        M200 = Marr*0.0
+        #dn_dzdm = Marr*0.0
+
+        if (c_zerr.any() > 0):
             z_arr = np.arange(-3.*c_zerr,(3.+0.1)*c_zerr,c_zerr) + c_z
-            Pfunc_ind,M200 = self.Pfunc_per_zarr(int_HMF.M.copy(),z_arr,c_y,c_yerr,int_HMF,param_vals)
+            Pfunc_ind = self.Pfunc_per_zarr(int_HMF.M.copy(),z_arr,c_y,c_yerr,int_HMF,param_vals)
+            M200 = int_HMF.cc.Mass_con_del_2_del_mean200(int_HMF.M.copy(),500,c_z) ## FIX THIS?
             dn_dzdm = dn_dzdm_int(z_arr,np.log10(int_HMF.M.copy()))
             N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
             N_per = np.trapz(N_z_ind*gaussian(z_arr,c_z,c_zerr),dx=np.diff(z_arr))
             ans = N_per            
         else:
-            Pfunc_ind = self.Pfunc_per(int_HMF.M.copy(),c_z, c_y, c_yerr,param_vals)
+            Pfunc_ind = self.Pfunc_per(Marr,zarr, c_y, c_yerr,param_vals)
             #print "PFunc",Pfunc_ind
-            M200 = int_HMF.cc.Mass_con_del_2_del_mean200(int_HMF.M.copy(),500,c_z)
-            dn_dzdm = dn_dzdm_int(c_z,np.log10(int_HMF.M.copy()))[:,0]
+            #for i in range(len(c_z)):
+            #    M200[:,i] = int_HMF.cc.Mass_con_del_2_del_mean200(int_HMF.M.copy(),500,c_z[i])
+                #dn_dzdm[:,i] = dn_dzdm_int(c_z[i],np.log10(int_HMF.M.copy()))[:,0]
+            #print (dn_dzdm.shape)
+            
+            dn_dzdm = (dn_dzdm_int(c_z,np.log10(int_HMF.M.copy())))
+            #print (np.sum((M200 - int_HMF.M200_int(c_z,int_HMF.M.copy()))/M200) / len(M200))
+
+            M200 = int_HMF.M200_int(c_z,int_HMF.M.copy())
+            #print (dn_dzdm.shape)
+            #print (dn_dzdm2[0:2,0:2], dn_dzdm[0:2,0:2])
+            #print (np.sum((dn_dzdm - dn_dzdm2)/dn_dzdm))
+
+            #inds = 4
+            #outtest = np.zeros((len(int_HMF.M.copy()),inds))
+            #print ("extra test")
+            #for i in range(inds):
+            #    outtest[:,i] = dn_dzdm_int(c_z[i],np.log10(int_HMF.M.copy()))[:,0]
+            #print (outtest , dn_dzdm_int(c_z[0:inds],np.log10(int_HMF.M.copy())))
             #print "dndm", dn_dzdm,dn_dzdm_int(c_z,np.log10(int_HMF.M.copy()))
             #print "M200", M200
             N_z_ind = np.trapz(dn_dzdm*Pfunc_ind,dx=np.diff(M200,axis=0),axis=0)
@@ -417,45 +536,53 @@ class clusterLike(object):
 
     def lnlike(self,theta,parlist):
         
+        start = time.time()
         param_vals = alter_fparams(self.param_vals0,parlist,theta)
         for key in self.fix_params:
             if key not in list(param_vals.keys()): param_vals[key] = self.fix_params[key]
-
-        print ("values going in",param_vals)
+        print('Par setup',time.time() - start)
+        
+        start = time.time()
         int_cc = ClusterCosmology(param_vals,self.constDict,clTTFixFile=self.clttfile) # internal HMF call
+        print('int_cc setup',time.time() - start)
+        start = time.time()
         int_HMF = Halo_MF(int_cc,self.mgrid,self.zgrid) # internal HMF call
         self.s8 = int_HMF.cc.s8
 
         if np.nan_to_num(self.s8)<0.1 or np.nan_to_num(self.s8)>10. or not(np.isfinite(self.s8)):
             self.s8 = 0.
         #     return -np.inf
-        
+        print('HMF setup',time.time() - start)
+        start = time.time()
         #dndm_int = int_HMF.inter_dndm(200.) # delta = 200
         dndm_int = int_HMF.inter_dndmLogm(200.) # delta = 200
         cluster_prop = np.array([self.clst_z,self.clst_zerr,self.clst_y0*1e-4,self.clst_y0err*1e-4])
+        print('interp setup',time.time() - start)
 
-        if self.test:
-            Ntot = 60.
+        start = time.time()
+        #if self.test:
+        #    Ntot = 60.
+        #else:
+        Ntot = 0.
+        if self.y0thresh: 
+            Ntot = self.Ntot_survey(int_HMF,self.area_rads,self.thresh_bin,param_vals)
         else:
-            Ntot = 0.
-            if self.y0thresh: 
-                Ntot = self.Ntot_survey(int_HMF,self.area_rads,self.thresh_bin,param_vals)
-            else:
-                for i in range(len(self.frac_of_survey)):
-                    Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
-            
-        #print 'NTOT', Ntot
-        Nind = 0
-        #Nind2 = 1.
-        for i in range(len(self.clst_z)):
-            
-            N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int,param_vals)
-            #if (i < 3):
-                #print np.log(N_per)
-            Nind = Nind + np.log(N_per)
-            #Nind2 *= N_per
-            #print N_per
-        print(-Ntot, Nind, -Ntot + Nind, theta)#, np.log(np.exp(-Ntot)*Nind2)
+            for i in range(len(self.frac_of_survey)):
+                Ntot += self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey[i],self.thresh_bin[i],param_vals)
+        print('Ntot time',time.time() - start)    
+                #Ntot_perfrac = self.Ntot_survey(int_HMF,self.area_rads*self.frac_of_survey,self.thresh_bin,param_vals)
+                #Ntot = np.sum(Ntot_perfrac)
+
+        #Nind = 0
+        #for i in range(len(self.clst_z)):            
+        #    N_per = self.Prob_per_cluster(int_HMF,cluster_prop[:,i],dndm_int,param_vals)
+        #    Nind = Nind + np.log(N_per)
+        start = time.time()
+        N_per = np.log(self.Prob_per_cluster(int_HMF,cluster_prop,dndm_int,param_vals))
+        Nind = np.sum(N_per)
+        print('N_per time',time.time() - start)
+
+        print(-Ntot, Nind, -Ntot + Nind, theta)
         return -Ntot + Nind
 
     def lnprob(self,theta, parlist, priorval, priorlist):
@@ -487,8 +614,6 @@ class MockCatalog(object):
             zmin = 0.0
             zmax = 2.01
             zdel = 0.1
-
-
 
         self.fparams = {}
         for (key, val) in Config.items('params'):
@@ -547,12 +672,14 @@ class MockCatalog(object):
         self.diagnosticsDir=nemoOutputDir+"diagnostics"
         self.filteredMapsDir=nemoOutputDir+"filteredMaps"
         self.tckQFit=signals.loadQ(self.diagnosticsDir + '/QFit.fits')
+        #self.tckQFit=signals.loadQ(nemoOutputDir + '/QFit.fits')
         #self.tckQFit=signals.fitQ(parDict)#, self.diagnosticsDir, self.filteredMapsDir)
         FilterNoiseMapFile = nemoOutputDir + noiseFile
         MaskMapFile = self.diagnosticsDir + '/areaMask.fits'
 
+        self.nemodir = nemoOutputDir
+
         self.rms_noise_map = read_MJH_noisemap(FilterNoiseMapFile,MaskMapFile)
-        
         self.wcs=astWCS.WCS(FilterNoiseMapFile)
 
         self.fsky = 987.5/41252.9612 # in rads ACTPol D56-equ specific
@@ -562,7 +689,7 @@ class MockCatalog(object):
 
     def Total_clusters(self,fsky):
         Nz = self.HMF.N_of_z()
-        print (np.trapz(self.HMF.N_of_z_500()*fsky,dx=np.diff(self.HMF.zarr)))
+        #print (np.trapz(self.HMF.N_of_z_500()*fsky,dx=np.diff(self.HMF.zarr)))
         ans = np.trapz(Nz*fsky,dx=np.diff(self.HMF.zarr))
         return ans
 
@@ -598,7 +725,13 @@ class MockCatalog(object):
 
         Ntot100 = self.Total_clusters(fsky) # np.int32(np.ceil(self.Total_clusters(fsky))) 
         Ntot = np.int32(np.random.poisson(Ntot100))
-        print ("Mock cat gen internal counts and Poisson draw",Ntot100,Ntot)
+
+        if (self.rand):
+            Ntot = np.int32(np.random.poisson(Ntot100*20.))
+        else:
+            Ntot = np.int32(np.random.poisson(Ntot100))
+
+        print ("Mock cat gen internal counts and Poisson draw",Ntot100,Ntot,self.rand)
 
         zsamps, msamps = self.HMF.cpsample_mf(200.,Ntot) 
         #print (zsamps, msamps) 
@@ -613,7 +746,7 @@ class MockCatalog(object):
         Nmz = np.multiply(Ndz,np.diff(10**self.mgrid).reshape((self.mgrid.size-1,1))) * 4.* np.pi
         Ntot = Nmz.sum() * fsky
 
-        print ("fsky test",Ntot, np.int32(np.ceil(self.Total_clusters(fsky))))
+        #print ("fsky test",Ntot, np.int32(np.ceil(self.Total_clusters(fsky))))
 
         np.random.seed(self.seedval)
         nclusters = int(np.random.poisson(Ntot)) #if poisson else int(self.ntot)
@@ -621,7 +754,7 @@ class MockCatalog(object):
 
         msamps = np.zeros((nclusters),dtype=np.float32)
         zsamps = np.zeros((nclusters),dtype=np.float32)
-        print("Generating Nmz catalog...")
+        #print("Generating Nmz catalog...")
         for i in range(nclusters):
             linear_idx = np.random.choice(self.Nmz.size, p=self.Nmz.ravel()/float(self.Nmz.sum()))
             x, y = np.unravel_index(linear_idx, self.Nmz.shape)
@@ -693,6 +826,89 @@ class MockCatalog(object):
                     sampY0err = np.append(sampY0err,nmap[ytemp,xtemp])
         return xsave,ysave,sampZ,sampY0,sampY0err,sampY0/sampY0err,sampM
 
+
+    def create_obs_sample_tile(self):
+
+        filetile = self.nemodir + 'tileAreas.txt'
+
+        Om = (self.param_vals['omch2'] + self.param_vals['ombh2']) / ((self.param_vals['H0']/100.)**2)
+        Ob = self.param_vals['ombh2'] / (self.param_vals['H0']/100.)**2
+        OL = 1.-Om 
+        #print("Omega_M", Om)
+
+        cosmoModel=FlatLambdaCDM(H0 = self.param_vals['H0'], Om0 = Om, Ob0 = Ob, Tcmb0 = 2.725)
+
+        xsave = np.array([])
+        ysave = np.array([])
+        zsave = np.array([])
+        msave = np.array([])
+        Y0save = np.array([])
+        RAsave = np.array([])
+        DECsave = np.array([])
+        sampY0err = np.array([])
+
+        tilenames = np.loadtxt(filetile,dtype=np.str,usecols = 0,unpack=True)
+        tilearea = np.loadtxt(filetile,dtype=np.float,usecols = 1,unpack=True)
+
+        for i in range(len(tilearea)):
+            
+            fsky = tilearea[i]/41252.9612
+            #print (fsky)
+            if tilearea[i] > 1:
+            #include observational effects like scatter and noise into the detection of clusters
+                sampZ,sampM = self.create_basic_sample(fsky)
+                nsamps = len(sampM)
+            
+            #Ytilde = sampM * 0.0
+            #the function call now includes cosmological dependences
+            #for i in range(nsamps):
+            #    Ytilde[i], theta0, Qfilt = signals.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM[i]/(self.param_vals['H0']/100.)), sampZ[i], self.tckQFit['Q'],sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], cosmoModel=cosmoModel)# H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
+
+            
+                Ytilde, theta0, Qfilt = signals.y0FromLogM500(np.log10(self.param_vals['massbias']*10**sampM/(self.param_vals['H0']/100.)), sampZ, self.tckQFit[tilenames[i]],sigma_int=self.param_vals['scat'],B0=self.param_vals['yslope'], cosmoModel=cosmoModel)# H0 = self.param_vals['H0'], OmegaM0 = Om, OmegaL0 = OL)
+
+            #add scatter
+                np.random.seed(self.seedval+i)
+
+                ymod = np.exp(self.param_vals['scat'] * np.random.randn(nsamps))
+                sampY0 = Ytilde*ymod
+                
+                msave = np.append(msave,sampM)
+                zsave = np.append(zsave,sampZ)
+                Y0save = np.append(Y0save,sampY0)
+
+            #calculate noise for a given object for a random place on the map and save coordinates
+
+                np.random.seed(self.seedval+len(tilearea)+1+i)
+
+                mask,mwcs = loadAreaMask(tilenames[i],self.nemodir)
+                print (tilenames[i])
+                rms,rwcs = loadRMSmap(tilenames[i],self.nemodir)
+
+                nmap = mask * rms
+                
+                ylims = nmap.shape[0]
+                xlims = nmap.shape[1]
+                
+                count = 0
+                while count < nsamps:
+                    ytemp = np.int32(np.floor(np.random.uniform(0,ylims)))
+                    xtemp = np.int32(np.floor(np.random.uniform(0,xlims)))
+                    if nmap[ytemp,xtemp] > 0:
+                        count += 1
+                        xsave = np.append(xsave,xtemp)
+                        ysave = np.append(ysave,ytemp)
+                        ra,dec = mwcs.pix2wcs(xtemp,ytemp)
+                        RAsave = np.append(RAsave,ra)
+                        DECsave = np.append(DECsave,dec)
+                
+                        if self.y0thresh:
+                            sampY0err = np.append(sampY0err,self.y0_thresh)
+                        else:
+                            sampY0err = np.append(sampY0err,nmap[ytemp,xtemp])
+
+        return xsave,ysave,RAsave,DECsave,zsave,Y0save,sampY0err,Y0save/sampY0err,msave
+
     def plot_obs_sample(self,filename1='default_mockobscat',filename2='default_obs_mock_footprint'):
         fsky = self.fsky
         xsave,ysave,sampZ,sampY0,sampY0err,SNR,sampM = self.create_obs_sample(fsky)
@@ -763,6 +979,7 @@ class MockCatalog(object):
 
         xsave,ysave,z,sampY0,sampY0err,SNR,sampM = self.plot_obs_sample(filename1=f1,filename2=f2)
 
+
         ind = np.where(SNR >= 4.0)[0]
         ind2 = np.where(SNR >= 5.6)[0]
         print("number of clusters SNR >= 5.6", len(ind2), " SNR >= 4.0",len(ind))
@@ -789,6 +1006,38 @@ class MockCatalog(object):
              fits.Column(name='err_fixed_y_c', format='E', array=sampY0err[ind]*1e4),
              fits.Column(name='fixed_SNR', format='E', array=SNR[ind]),
              fits.Column(name='M500', format='E', array=sampM[ind]),])
+
+        hdu.writeto(filedir+filename+'.fits',overwrite=True)
+
+        return 0
+
+    def write_obstile_cat_toFits(self, filedir,filename):
+        '''          
+        Write out the catalog
+        '''
+        f1 = filedir+filename+'_mockobscat'
+        f2 = filedir+filename+'_obs_mock_footprint'
+
+        #xsave,ysave,z,sampY0,sampY0err,SNR,sampM = self.plot_obs_sample(filename1=f1,filename2=f2)
+        xsave,ysave,RAsave,DECsave,zsave,Y0save,sampY0err,SNR,msave = self.create_obs_sample_tile()
+
+        ind = np.where(SNR >= 4.0)[0]
+        ind2 = np.where(SNR >= 5.6)[0]
+        print("number of clusters SNR >= 5.6", len(ind2), " SNR >= 4.0",len(ind))
+
+        clusterID = ind.astype(str)
+        hdu = fits.BinTableHDU.from_columns(
+            [fits.Column(name='Cluster_ID', format='20A', array=clusterID),
+             fits.Column(name='x_ind', format='E', array=xsave[ind]),
+             fits.Column(name='y_ind', format='E', array=ysave[ind]),
+             fits.Column(name='RA', format='E', array=RAsave[ind]),
+             fits.Column(name='DEC', format='E', array=DECsave[ind]),
+             fits.Column(name='redshift', format='E', array=zsave[ind]),
+             fits.Column(name='redshiftErr', format='E', array=zsave[ind]*0.0),
+             fits.Column(name='fixed_y_c', format='E', array=Y0save[ind]*1e4),
+             fits.Column(name='err_fixed_y_c', format='E', array=sampY0err[ind]*1e4),
+             fits.Column(name='fixed_SNR', format='E', array=SNR[ind]),
+             fits.Column(name='M500', format='E', array=msave[ind]),])
 
         hdu.writeto(filedir+filename+'.fits',overwrite=True)
 

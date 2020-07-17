@@ -374,8 +374,10 @@ def cluster_fisher_from_config(Config,expName,gridName,calName,fishName,
     print(Fisher.shape)
 
     from orphics import stats
+    Fisherout = stats.FisherMatrix(Fisher,param_list=paramList)
     tszFish = stats.FisherMatrix(Fisher+cmb_fisher,param_list=paramList)
-    stats.write_fisher("tsz_fish.txt",tszFish)
+    stats.write_fisher("tsz_fish.txt",Fisherout)
+    #stats.write_fisher("tsz_fish.txt",tszFish)
     #np.savetxt("tsz.txt",Fisher)
 
     try:

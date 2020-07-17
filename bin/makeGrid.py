@@ -151,10 +151,14 @@ if rank == 0:
             #     0: threshold, 
             #     1: baseline, 
             #     2: goal
-            senstr = ['threshold','base','goal'][v3mode]
+
+            v3mode_fudge = 2 #HACK
+            fstr_fudge = 40 #HACK
+            senstr = ['threshold','base','goal'][v3mode_fudge]
             fstr = expName[-2:]
-            fskystr = {'10':'4000','20':'8000','40':'16000'}[fstr]
-            
+            #fskystr = {'10':'4000','20':'8000','40':'16000'}[fstr_fudge]
+            fskystr = '16000'
+
             ls,Nls,_ = np.loadtxt(bigDataDir+"so_v3_halo_lensing_nmv_%s_%s.txt" % (senstr,fskystr),unpack=True)
             print("=== Loaded SO Halo Lensing Noise ===")
         else:

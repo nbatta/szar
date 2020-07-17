@@ -13,6 +13,7 @@ from orphics import io
 from orphics.io import Plotter
 from szar.counts import ClusterCosmology,Halo_MF
 from nemo import signals
+from nemo import MockSurvey
 
 import emcee
 import time, sys, os
@@ -31,6 +32,7 @@ parser.add_argument("-m", "--mockcat", action='store_true',help='test making a m
 parser.add_argument("-r", "--randcat", action='store_true',help='making a random catalog.')
 parser.add_argument("-y", "--y0test", action='store_true',help='Do a test quickly by setting Ntot=60 and just 1 params.')
 parser.add_argument("-ym", "--y0testmock", action='store_true',help='Do a test quickly by setting Ntot=60 and just 1 params.')
+parser.add_argument("-c", "--compnemo", action='store_true',help='Compare with nemo.')
 
 
 args = parser.parse_args()
@@ -79,8 +81,12 @@ if args.test:
     fixlist = ['ombh2','ns','tau','massbias','yslope','scat']
     fixvals = [0.022,0.96,0.06,0.80,0.08,0.2]
 elif args.simtest:
-    fixlist = ['omch2','ombh2','H0','ns','tau','massbias','yslope','scat']
-    fixvals = [0.1225,0.0245,70,0.97,0.06,1.0,0.08,0.2]
+    #fixlist = ['omch2','ombh2','H0','ns','tau','massbias','yslope','scat']
+    #fixvals = [0.1225,0.0245,70,0.97,0.06,1.0,0.08,0.2]
+    #fixlist = ['ombh2','H0','ns','tau','massbias','yslope','scat']
+    #fixvals = [0.0245,70,0.97,0.06,1.0,0.08,0.2]
+    fixlist = ['ombh2','H0','ns','tau','massbias','yslope','scat']
+    fixvals = [0.0245,70,0.97,0.06,0.68,0.08,0.2]
 elif args.simpars:
     fixlist = ['H0','ns','tau','massbias','yslope','scat']
     fixvals = [70,0.97,0.06,1.0,0.08,0.2]
@@ -104,8 +110,8 @@ if args.test:
     priorwth = np.array([3])
     priorvals = np.array([prioravg,priorwth])
 elif args.simtest:
-    parlist = ['As']
-    parvals = [2.0e-09]
+    parlist = ['omch2','As']
+    parvals = [0.1225,2.0e-09]
 
     priorlist = []
     prioravg = np.array([])
@@ -137,19 +143,25 @@ else:
     # priorwth = np.array([0.0009,0.02,3.6,0.12,0.1])
     priorvals = np.array([prioravg,priorwth])
 
-if args.mockcat or args.randcat or args.y0testmock:
+if args.mockcat or args.randcat or args.y0testmock or args.compnemo:
     parlist = ['omch2','ombh2','H0','As','ns','tau','massbias','yslope','scat']
     parvals = [0.1225,0.0245,70,2.0e-09,0.97,0.06,1.0,0.08,0.20]
 
-    if args.mockcat:
+    if args.mockcat or args.compnemo:
+        nemoOutputDir = '/Users/nab//Desktop/Projects/ACTPol_Cluster_Like/selFn_MFMF_prelimS18_nightOnly_tiles_v4/'
         MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[13.6,15.7,0.01],z_grid=[0.1,2.01,0.1])
     if args.randcat:
+        nemoOutputDir = '/Users/nab//Desktop/Projects/ACTPol_Cluster_Like/selFn_MFMF_prelimS18_nightOnly_tiles_v4/'
         MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[np.log10(2e14),np.log10(7e15),0.01],z_grid=[0.1,1.01,0.1],randoms=True)
     if args.y0testmock:
         print ("y0 mock")
         MC = lk.MockCatalog(iniFile,pardict,nemoOutputDir,noise_file,parvals,parlist,mass_grid_log=[13.6,15.7,0.01],z_grid=[0.1,2.01,0.1],y0thresh=True)
 
-    #print MC.Total_clusters(MC.fsky)
+    if args.compnemo:
+        print (MC.fsky,MC.Total_clusters(MC.fsky))
+        MS = MockSurvey.MockSurvey(13.6,960,0.1,2.0,parvals[2],parvals[0]/parvals[2]**2,parvals[1]/parvals[2]**2,0.8)
+        sys.exit(0)
+
     #start = time.time()
     #blah = MC.create_basic_sample(MC.fsky)
     #print ('sample time',time.time() - start)
@@ -164,12 +176,12 @@ if args.mockcat or args.randcat or args.y0testmock:
     filedir = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/'
     filename = args.chain_name #,'mockCat_v1'
     compfile = '/Users/nab/Desktop/Projects/ACTPol_Cluster_Like/M500Completeness_HSC_SNRCut4.0.npz'
-    compflag = 1
+    compflag = 0#1
 
     import os.path
     check = os.path.isfile(filedir+filename+'.fits')
     if (check == False):
-        MC.write_obs_cat_toFits(filedir,filename)
+        MC.write_obstile_cat_toFits(filedir,filename)
     else:
         print("Mockcat already exists")
 
@@ -203,19 +215,39 @@ if (args.printtest):
     LgYa = np.outer(np.ones(len(int_HMF.M.copy())),CL.LgY)
     Y = 10**LgYa
     Ma = np.outer(int_HMF.M.copy(),np.ones(len(LgYa[0,:])))
+    Marr =  np.outer(int_HMF.M.copy(),np.ones([len(int_HMF.zarr)]))
+    z_arr = np.outer(np.ones([len(int_HMF.M.copy())]),int_HMF.zarr) 
+    ii = 1
+#    print (CL.P_of_gt_SNold(CL.LgY,Marr[:,ii],int_HMF.zarr[ii],CL.thresh_bin[0],param_vals))
+    print (CL.P_of_gt_SN(CL.LgY,Marr,z_arr,CL.thresh_bin[0],param_vals))
+
     clustind = 1
 
+    #print(cluster_props[:,clustind])
+    #print(parlist)
+    #print(parvals)
 
-    print(cluster_props[:,clustind])
-    print(parlist)
-    print(parvals)
-    print("ln prob", np.log(CL.Prob_per_cluster(int_HMF,cluster_props[:,clustind],dn_dzdm_int,param_vals)))
+    start = time.time()
+    print("ln prob", np.log(CL.Prob_per_cluster(int_HMF,cluster_props,dn_dzdm_int,param_vals))[clustind])
+    #print("ln prob", np.log(CL.Prob_per_cluster(int_HMF,cluster_props,dn_dzdm_int,param_vals)))
+    print('Ln Prob time',time.time() - start)
+
+    #CL.Ntot_survey_thresh(int_HMF, ,
+
+    #sys.exit(0)
+
+    start = time.time()
+    print(CL.lnlike(parvals,parlist))#,priorvals,priorlist)
+    print("Like call time", time.time() - start)
+
+    sys.exit(0)
+
     print(LgYa[-1,-1])
-    Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(old_div(param_vals['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])
-    print("ln Y val",np.log10(Y[-1,-1]))
-    print("ln Y~", np.log10(Ytilde[-1,-1]))
-    print(old_div(Y[-1,30:35],Ytilde[-1,-1]))
-    print(np.log(Y[-1,-1]) - np.log(Ytilde[-1,-1]))
+    #Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals['massbias']*Ma/(old_div(param_vals['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals['scat'],B0=param_vals['yslope'])
+    #print("ln Y val",np.log10(Y[-1,-1]))
+    #print("ln Y~", np.log10(Ytilde[-1,-1]))
+    #print(old_div(Y[-1,30:35],Ytilde[-1,-1]))
+    #print(np.log(Y[-1,-1]) - np.log(Ytilde[-1,-1]))
     print("P of Y", CL.P_Yo(LgYa,int_HMF.M.copy(),int_HMF.zarr[zbins],param_vals)[-1,-1], end=' ') 
  
     param_vals2= lk.alter_fparams(fparams,parlist,parvals2)
@@ -226,12 +258,12 @@ if (args.printtest):
     print('pars2', parvals2)
     print("ln prop", np.log(CL.Prob_per_cluster(int_HMF2,cluster_props[:,clustind],dn_dzdm_int2,param_vals2)))
     print(LgYa[-1,-1])
-    Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals2['massbias']*Ma/(old_div(param_vals2['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals2['scat'],B0=param_vals2['yslope'])
-    print("ln Y val",np.log10(Y[-1,-1]))
-    print("ln Y~", np.log10(Ytilde[-1,-1]))
+#    Ytilde, theta0, Qfilt =signals.y0FromLogM500(np.log10(param_vals2['massbias']*Ma/(old_div(param_vals2['H0'],100.))), int_HMF.zarr[zbins], CL.tckQFit,sigma_int=param_vals2['scat'],B0=param_vals2['yslope'])
+    #print("ln Y val",np.log10(Y[-1,-1]))
+    #print("ln Y~", np.log10(Ytilde[-1,-1]))
     #print np.log(Ytilde[-1,30:35])
-    print(old_div(Y[-1,-1],Ytilde[-1,-1]))
-    print(np.log(old_div(Y[-1,-1],Ytilde[-1,-1])))
+    #print(old_div(Y[-1,-1],Ytilde[-1,-1]))
+    #print(np.log(old_div(Y[-1,-1],Ytilde[-1,-1])))
     #print -1.*(np.log(Y[-1,30:35]/Ytilde[-1,30:35]))
 
     print("P of Y", CL.P_Yo(np.outer(np.ones(len(int_HMF.M.copy())),CL.LgY),int_HMF2.M.copy(),int_HMF2.zarr[zbins],param_vals2)[-1,-1])
@@ -284,11 +316,17 @@ if args.simtest:
     
     filename = chain_out+"/sz_likelival_"+args.chain_name+".dat"
     
-    parvals_arr = parvals*(1.+np.arange(-0.1,0.1001,0.02))
+    parvals_arr1 = parvals[0]*(1.+np.arange(-0.1,0.1001,0.02))
+    parvals_arr2 = parvals[1]*(1.+np.arange(-0.1,0.1001,0.02))
+
+    #parvals_arr = parvals*(1.+np.arange(-0.1,0.1001,0.02)) #np.array([parvals_arr1])
+
+    #sys.exit(0)
     #parvals_arr = parvals*(1.+np.arange(-0.01,0.0101,0.02))
 
-    ansout = parvals_arr*0.0
-    
+    #ansout = parvals_arr*0.0
+    ansout = np.zeros((len(parvals_arr1),len(parvals_arr2)))
+
     print (CL.thresh_bin)
     print (CL.frac_of_survey, np.sum(CL.frac_of_survey))
 
@@ -300,27 +338,31 @@ if args.simtest:
     int_cc = ClusterCosmology(param_vals_int,CL.constDict,clTTFixFile=CL.clttfile) # internal HMF call                                                              
     int_HMF = Halo_MF(int_cc,CL.mgrid,CL.zgrid)
 
-    print (CL.area_rads,CL.thresh_bin)
+    #print (CL.area_rads,CL.thresh_bin)
 
-    N1 = 0
-    N2 = 0
-    for i in range(len(CL.frac_of_survey)):
-        N1 = (CL.Ntot_survey_thresh(int_HMF,CL.area_rads*CL.frac_of_survey[i],CL.thresh_bin[i],param_vals_int))
-        N2 = (CL.Ntot_survey(int_HMF,CL.area_rads*CL.frac_of_survey[i],CL.thresh_bin[i],param_vals_int))
+    #N1 = 0
+    #N2 = 0
+    #for i in range(len(CL.frac_of_survey)):
+    #    N1 = (CL.Ntot_survey_thresh(int_HMF,CL.area_rads*CL.frac_of_survey[i],CL.thresh_bin[i],param_vals_int))
+    #    N2 = (CL.Ntot_survey(int_HMF,CL.area_rads*CL.frac_of_survey[i],CL.thresh_bin[i],param_vals_int))
 
-    print (N1,N2)
+    #print (N1,N2)
     #print (CL.PfuncY()
     #sys.exit(0)
 
-    for ii, vals in enumerate(parvals_arr):
-        ansout[ii] = CL.lnlike([vals],parlist)
+    #for ii, vals in enumerate(parvals_arr):
+    #    ansout[ii] = CL.lnlike([vals],parlist)
+
+    for ii in range(len(parvals_arr1)):
+        for jj in range(len(parvals_arr2)):
+            ansout[ii,jj] = CL.lnlike([parvals_arr1[ii],parvals_arr2[jj]],parlist)
     #print(parvals_arr,parlist)
     #CL.lnlike([parvals_arr[3:5]],parlist)
     #print(parvals_arr[3:5])
 
-    sys.exit(0)
     f = open(filename, "w")
-    savemat = [parvals_arr,ansout]
+    #savemat = [parvals_arr,ansout]
+    savemat = ansout #[parvals_arr1,parvals_arr2,ansout]
     np.savetxt(f,savemat)
 
     indmin = np.argmax(ansout)

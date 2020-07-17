@@ -332,7 +332,7 @@ class Halo_MF(object):
 
         self.cc = clusterCosmology
 
-        zcenters = old_div((z_edges[1:]+z_edges[:-1]),2.)
+        zcenters = (z_edges[1:]+z_edges[:-1])/2.
         self.zarr_edges = z_edges
         self.zarr = zcenters
 
@@ -368,6 +368,8 @@ class Halo_MF(object):
 
         for i in range(self.zarr.size):
             self.M200_edges[:,i] = self.cc.Mass_con_del_2_del_mean200(M_edges,500,self.zarr[i])
+
+        self.M200_int = self.inter_M200()
 
     def _pk(self,zarr,kmin,kmax,knum):
         self.cc.pars.set_matter_power(redshifts=np.append(zarr,0), kmax=kmax,silent=True)
@@ -452,6 +454,10 @@ class Halo_MF(object):
         ans = interp2d(self.zarr,self.M,N_Mz,kind='linear',fill_value=0) 
         return ans
 
+    def inter_M200(self):
+        ans = interp2d(self.zarr,self.M,self.M200,kind='linear',fill_value=0)
+        return ans
+
     def inter_mf_logM(self,delta):
         #interpolating over M500c becasue that's a constant vector at every redshift
         N_Mz = self.N_of_Mz(self.M200,delta)
@@ -472,7 +478,6 @@ class Halo_MF(object):
         N_Mz = np.cumsum(self.N_of_Mz(self.M200,delta),axis = 0)
         ans = interp2d(self.zarr,np.log10(self.M),N_Mz,kind='linear',fill_value=0)
         return ans
-
 
     def inter_mf_bound(self,theta,mthresh,zthresh):
         a1,a2temp = theta

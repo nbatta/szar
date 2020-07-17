@@ -66,7 +66,7 @@ clttfile = Config.get('general','clttfile')
 gridName = "grid-owl2"
 #gridName = "grid-default"
 #version = "0.3_ysig_0.127"
-version = ["1.1","1.11"]#,"1.1"]#"0.7"
+version = ["1.12e","1.12"]#,"1.1"]#"0.7"
 cal = "owl2"#"CMB_all"
 #cal = "CMB_all_PICO"
 #cal = "CMB_pol_miscentered"
@@ -135,6 +135,7 @@ for expName,col,ver in zip(expList,colList,version):
     SZProf = SZ_Cluster_Model(cc,clusterDict,rms_noises = noise,fwhms=beam,freqs=freq,lknee=lknee,alpha=alpha)
     Nofzs = np.multiply(HMF.N_of_z_SZ(fsky,SZProf),np.diff(z_edges).reshape(1,z_edges.size-1)).ravel()
     print(Nofzs.sum())
+    print(Nofzs,zrange)
     #sys.exit()
 
     saveId = expName + "_" + gridName + "_" + cal + "_v" + ver
@@ -142,13 +143,16 @@ for expName,col,ver in zip(expList,colList,version):
     Nmz = Nmzq.sum(axis=-1)
     Nz = Nmzq.sum(axis=0).sum(axis=-1)
     print(Nz.shape)
-
+    print(Nz[10:],zrange[10:],np.sum(Nz[10:]))
+    
 
     m_edges = 10**mexp_edges
     masses = (m_edges[1:]+m_edges[:-1])/2.
     mexp_new = np.log10(np.linspace(masses[0],masses[-1],10))
     z_new = np.linspace(0.25,2.75,10)
     print(Nmz.sum())
+    #print(Nmz)
+
     rn = resample_bin(Nmz,factors=[float(mexp_new.size)/Nmz.shape[0],float(z_new.size)/Nmz.shape[1]],axes=[-2,-1])
 
     currentAxis = plt.gca()
